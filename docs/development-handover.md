@@ -2,6 +2,16 @@
 
 Last reviewed: 2026-11-04. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
+## Exact NCN artifact recovery — 4 November 2026
+
+The previous quota/entrypoint checkpoints below are historical. PR #270 is merged
+at `b103af36fb165dac1820915138f619d522042b2a`; publication run 41890999302
+failed safely on exact candidate pins. PR #271 recovers the original exact archive
+using the pinned original writer and reuses it without publication-time regeneration.
+See [artifact cause, original pins, provenance and bounded recovery](ncn-artifact-recovery-20261104.md).
+Use the latest issue #194 publication receipt for final live state. Never reuse the
+consumed original authorisation or rerun a failed publication.
+
 ## Quota preflight follow-up — 4 November 2026
 
 Run 41864030136 has **failed**, superseding the queued checkpoint below. Hosting

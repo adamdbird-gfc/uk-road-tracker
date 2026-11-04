@@ -8,6 +8,7 @@ on:
       - 'scripts/*ncn_publication*'
       - 'scripts/publish_ncn_reference.py'
       - 'scripts/test_ncn_reference.py'
+      - 'scripts/setup_ncn_writer.sh'
   push:
     branches: [main]
     paths: ['.github/ncn-reference/request.json']
@@ -23,10 +24,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: {persist-credentials: false}
+      - run: python -m pip install -r requirements-ncn-deal.txt
       - name: Offline publication contract and quota tests
         env: {PYTHONPATH: scripts}
         run: |
-          python -m unittest scripts.test_ncn_reference scripts.test_ncn_publication_quota scripts.test_controlled_ncn_publication -v
+          python -m unittest scripts.test_ncn_reference scripts.test_ncn_publication_quota scripts.test_controlled_ncn_publication scripts.test_prepare_ncn_publication -v
           python -m py_compile scripts/prepare_ncn_publication.py
           python - <<'PY'
           import json
@@ -40,7 +42,7 @@ jobs:
           assert r=={'action':'publish','revision':m['revision'],'database_sha256':m['sha256'],'compressed_sha256':m['compressed_sha256'],'source_baseline':'2ae2b89276f5541bf5c13d61c6371a5cbc7c2c6e'}
           PY
   publish:
-    permissions: {contents: write}
+    permissions: {contents: write, actions: read}
     needs: offline
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
@@ -79,6 +81,14 @@ jobs:
             android-prototype/app/src/main/assets/historic-counties/boundaries.bin
           key: reference-pins-v2-${{ runner.os }}-${{ hashFiles('android-prototype/app/src/main/assets/ncn-national/manifest.json', 'android-prototype/app/src/main/assets/historic-counties/catalogue.json') }}
           fail-on-cache-miss: true
+      - name: Restore exact immutable candidate archive
+        uses: actions/download-artifact@v4
+        with:
+          artifact-ids: '13357563539'
+          run-id: '41900022422'
+          github-token: ${{ github.token }}
+          path: ncn-publication-evidence
+          merge-multiple: true
       - name: Reuse verified reference cache and exact candidate pins offline
         run: python -m scripts.prepare_ncn_publication
       - name: Enforce unchanged live baseline before publication
@@ -117,6 +127,46 @@ jobs:
             ncn-publication-evidence/attempt.json
             ncn-publication-evidence/baseline-transfer.json
             .github/ncn-reference/controlled-authorisation.json
+            .github/ncn-reference/recovery-authorisation.json
+            docs/data-trials/ncn-publication-readiness-20261104/recovered-artifact.json
+            ncn-publication-evidence/candidate-verification.json
             ncn-publication-evidence/hosting/*.json
             ncn-publication-evidence/candidate/manifest.json
 
+  recovery-candidate:
+    if: github.event_name == 'pull_request'
+    permissions: {contents: read, actions: read}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install -r requirements-ncn-deal.txt
+      - uses: actions/cache/restore@v4
+        with:
+          path: |
+            .cache/ncn/catalogue.db
+            android-prototype/app/src/main/assets/historic-counties/boundaries.bin
+          key: reference-pins-v2-${{ runner.os }}-${{ hashFiles('android-prototype/app/src/main/assets/ncn-national/manifest.json', 'android-prototype/app/src/main/assets/historic-counties/catalogue.json') }}
+          fail-on-cache-miss: true
+      - name: Restore exact immutable candidate archive
+        uses: actions/download-artifact@v4
+        with:
+          artifact-ids: '13357563539'
+          run-id: '41900022422'
+          github-token: ${{ github.token }}
+          path: ncn-publication-evidence
+          merge-multiple: true
+      - name: Verify original archive independently without regeneration
+        env: {PYTHONPATH: scripts}
+        run: |
+          python -m unittest scripts.test_prepare_ncn_publication -v
+          python -m scripts.prepare_ncn_publication
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ncn-r4-recovery-verification-${{ github.run_id }}
+          retention-days: 90
+          path: ncn-publication-evidence/candidate-verification.json

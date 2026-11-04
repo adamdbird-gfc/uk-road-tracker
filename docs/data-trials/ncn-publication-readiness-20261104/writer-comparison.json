@@ -1,0 +1,141 @@
+{
+  "local_sqlite": "3.53.1",
+  "local_zlib": "1.3.2",
+  "tables": {
+    "meta": {
+      "different_rows": 0,
+      "different_blobs": 0,
+      "different_logical_values": 0
+    },
+    "network": {
+      "different_rows": 0,
+      "different_blobs": 0,
+      "different_logical_values": 0
+    },
+    "nodes": {
+      "different_rows": 0,
+      "different_blobs": 0,
+      "different_logical_values": 0
+    },
+    "overview": {
+      "different_rows": 0,
+      "different_blobs": 0,
+      "different_logical_values": 0
+    },
+    "paths": {
+      "different_rows": 0,
+      "different_blobs": 0,
+      "different_logical_values": 0
+    },
+    "routes": {
+      "different_rows": 0,
+      "different_blobs": 0,
+      "different_logical_values": 0
+    },
+    "targets": {
+      "different_rows": 0,
+      "different_blobs": 0,
+      "different_logical_values": 0
+    }
+  },
+  "blob_examples": [],
+  "header_differences": [
+    {
+      "offset": 98,
+      "original": 149,
+      "hosted": 118
+    },
+    {
+      "offset": 99,
+      "original": 201,
+      "hosted": 137
+    }
+  ],
+  "page_size": 4096,
+  "pages_differing": 2427,
+  "total_pages": 60374,
+  "differing_bytes": 70089,
+  "first_differences": [
+    {
+      "offset": 98,
+      "original": 149,
+      "hosted": 118
+    },
+    {
+      "offset": 99,
+      "original": 201,
+      "hosted": 137
+    },
+    {
+      "offset": 4351,
+      "original": 130,
+      "hosted": 0
+    },
+    {
+      "offset": 4352,
+      "original": 15,
+      "hosted": 0
+    },
+    {
+      "offset": 4353,
+      "original": 13,
+      "hosted": 0
+    },
+    {
+      "offset": 4354,
+      "original": 4,
+      "hosted": 0
+    },
+    {
+      "offset": 4355,
+      "original": 27,
+      "hosted": 0
+    },
+    {
+      "offset": 4356,
+      "original": 132,
+      "hosted": 0
+    },
+    {
+      "offset": 4357,
+      "original": 21,
+      "hosted": 0
+    },
+    {
+      "offset": 4358,
+      "original": 78,
+      "hosted": 0
+    },
+    {
+      "offset": 4359,
+      "original": 67,
+      "hosted": 0
+    },
+    {
+      "offset": 4360,
+      "original": 78,
+      "hosted": 0
+    },
+    {
+      "offset": 4361,
+      "original": 58,
+      "hosted": 0
+    },
+    {
+      "offset": 4362,
+      "original": 49,
+      "hosted": 0
+    },
+    {
+      "offset": 4363,
+      "original": 53,
+      "hosted": 0
+    },
+    {
+      "offset": 4364,
+      "original": 48,
+      "hosted": 0
+    }
+  ],
+  "cause": "SQLite 3.53.1 versus 3.45.1 physical database serialization; all stored SQL row values and compressed BLOB bytes identical. Header-only restoration insufficient."
+}
