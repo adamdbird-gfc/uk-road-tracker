@@ -39,34 +39,6 @@ jobs:
               assess(json.loads(Path(policy).read_text()),m)
           assert r=={'action':'publish','revision':m['revision'],'database_sha256':m['sha256'],'compressed_sha256':m['compressed_sha256'],'source_baseline':'2ae2b89276f5541bf5c13d61c6371a5cbc7c2c6e'}
           PY
-  recovery-candidate:
-    if: github.event_name == 'pull_request'
-    permissions: {contents: read}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-        with: {persist-credentials: false}
-      - uses: actions/setup-python@v5
-        with: {python-version: '3.12'}
-      - run: python -m pip install -r requirements-ncn-deal.txt
-      - uses: actions/cache/restore@v4
-        with:
-          path: |
-            .cache/ncn/catalogue.db
-            android-prototype/app/src/main/assets/historic-counties/boundaries.bin
-          key: reference-pins-v2-${{ runner.os }}-${{ hashFiles('android-prototype/app/src/main/assets/ncn-national/manifest.json', 'android-prototype/app/src/main/assets/historic-counties/catalogue.json') }}
-          fail-on-cache-miss: true
-      - name: Recover exact original bytes offline
-        run: python -m scripts.prepare_ncn_publication
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: ncn-r4-exact-recovery-${{ github.run_id }}
-          retention-days: 90
-          path: |
-            ncn-publication-evidence/candidate/manifest.json
-            ncn-publication-evidence/candidate/catalogue.db.gz
   publish:
     permissions: {contents: write}
     needs: offline
@@ -148,3 +120,38 @@ jobs:
             ncn-publication-evidence/hosting/*.json
             ncn-publication-evidence/candidate/manifest.json
 
+  recovery-candidate:
+    if: github.event_name == 'pull_request'
+    permissions: {contents: read}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install -r requirements-ncn-deal.txt
+      - uses: actions/cache/restore@v4
+        with:
+          path: |
+            .cache/ncn/catalogue.db
+            android-prototype/app/src/main/assets/historic-counties/boundaries.bin
+          key: reference-pins-v2-${{ runner.os }}-${{ hashFiles('android-prototype/app/src/main/assets/ncn-national/manifest.json', 'android-prototype/app/src/main/assets/historic-counties/catalogue.json') }}
+          fail-on-cache-miss: true
+      - name: Validate replacement candidate offline (no publication)
+        run: python -m scripts.prepare_ncn_publication --prepare-replacement
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ncn-r4-replacement-${{ github.run_id }}
+          retention-days: 90
+          compression-level: 0
+          path: |
+            ncn-publication-evidence/candidate/manifest.json
+            ncn-publication-evidence/candidate/catalogue.db.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ncn-r4-recovery-cached-input
+          retention-days: 7
+          path: .cache/ncn/catalogue.db
+          include-hidden-files: true
