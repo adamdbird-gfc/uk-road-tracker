@@ -1,0 +1,76 @@
+{
+  "date": "2026-11-05",
+  "baseline": "24278f5256bf367039b9a3adf986d619754ccb15",
+  "branch": "docs/ncn-national-return-audit-20261105",
+  "target": "main",
+  "decision": "STOP",
+  "audit_status": "exact accounting/fragmentation/screen complete; underlying semantic classification and positive recovery forecasts not established",
+  "runtime": {
+    "python": "3.12.14",
+    "sqlite": "3.53.1"
+  },
+  "archive_sha256": {
+    "revision4_github_artifact_zip": "856439159d35e161d7a324fc3224e66f419c206db5a3e5c79dee437675d90448",
+    "classification_archive": "0d8367fdf0ad5dd3d6a44bacc7bea6677fc6032eceb317e47f1102d8182c0abf",
+    "corridor_archive": "5a60dc576c07103beb2ce6cc62454ea1879c36b1ab6fd06a89351d61f4b0a628",
+    "fresh_live_manifest": "f709361dfd5d8f87c0a8eda15ccb971e70f947e4ba7538c80b1922a500fc5d9d"
+  },
+  "input_pins": {
+    "database": "be0c803d508ff548db8458a57a2fba18b4f75249f2f9b37401be3526b3cddb2f",
+    "historical_inventory": "1ebb14d7489e5add77dac77dcb25c5beda2ce53c7c3994eccc22696944955dcb",
+    "screen": "9be024c03383cfea419a5017257a5ff2c32d02d0fc4d941ec9b1d0fdb27aa947",
+    "review": "e76571514408eaa7b20a7e9cd88acce42cdcd188822cde09948161faee18c9ab",
+    "chapel": "f356c3d4b25410d3e913e07446362e380f76bcd7f5f8205d39f3f652b34c7359"
+  },
+  "validation": {
+    "register_arithmetic": "passed",
+    "reversed_mapping_and_shared_union_controls": "passed",
+    "endpoint_precision_sensitivity": {
+      "7": {
+        "count": 128521,
+        "over_1km": 112,
+        "over_1km_m": 295717.12615356134,
+        "largest_100_m": 283267.10447252245
+      },
+      "8": {
+        "count": 128636,
+        "over_1km": 113,
+        "over_1km_m": 294952.02096829895,
+        "largest_100_m": 281435.2212892823
+      },
+      "9": {
+        "count": 129626,
+        "over_1km": 119,
+        "over_1km_m": 283291.5646465039,
+        "largest_100_m": 263017.73295595974
+      }
+    },
+    "interpretation": "Precision sensitivity describes geometry grouping only; it does not prove common cause or eligible recovery."
+  },
+  "register": {
+    "library_file_id": "libfile_b87229b9ccfc819180fb4569a9e7f978",
+    "file_name": "canonical-intervals.csv.gz",
+    "bytes": 5002347,
+    "sha256": "812f14b6bb46eda408e0aa690133740791c53cefb6d16b5ec1ddfcfbe4e04ee7"
+  },
+  "output_sha256": {
+    "DECISION.md": "72db4abedec600b18d7faf5fa71e41d64ce04d1f1ff469ace656426027a3bbec",
+    "REPORT.md": "23ffed4b5f1227c10c3deb6ebb02547436bea5c718fc57edc1633305acc55481",
+    "REPRODUCE.md": "b3302b004243f4797b31f56797459f735254da2f37d838a7521a72a6221b4f42",
+    "audit.py": "69107a1dc25c31f5790ff70bdc6e12d52aae5174b64fd7a516a5cf500dc64b7b",
+    "live-manifest.json": "f709361dfd5d8f87c0a8eda15ccb971e70f947e4ba7538c80b1922a500fc5d9d",
+    "results/historical-regions.csv": "6a9cd122b9330b4dd46e966f5958a480e39314de506d373c8ad2c6be1d763a18",
+    "results/largest-clusters.csv": "7ba8f2a51b57d9a6268c64a01b551fdbdc379dfe25d7fd4c495b84ccd799e3f8",
+    "results/results.json": "e102d32b522868d5d45aa06fbc9f12136cd91ad9969e4dcfca52c7f4e9f3c4dc",
+    "results/routes.csv": "c661be8369282f1a804406b0f133812d92f122aa3c6d46bb4470a5aec8a428ba",
+    "results/screen-source-groups.csv": "f1b7b51f45f59e58e841356daf1ec3706d0692cea0fcf68ff73acdd0acd8f08d",
+    "results/validation.json": "3bc51a7b6a94096abb8faf441b5b7c9df9f77b0a45e1be22fbc7b976da23116e",
+    "validate.py": "75cb1611871a4165a44d79e4fb8dc183348aeea4f42cbe024da8747907ea2bed"
+  },
+  "integrated": false,
+  "deployment": null,
+  "apk": null,
+  "issues_closed": [],
+  "device_acceptance": "not performed",
+  "usage": "Allowance meter unavailable; no usage percentage inferred"
+}
