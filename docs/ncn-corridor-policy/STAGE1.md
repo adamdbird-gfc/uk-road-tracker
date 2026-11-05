@@ -1,5 +1,7 @@
 # Stage 1 investigation and correction report
 
+Historical PR #274 receipt. See the [final delivery audit](delivery/DELIVERY.md) for subsequent exact revision-4 inspection, recovered GPX evidence and the unpublished Chapel Lane candidate.
+
 5 November 2026 · issue #265 · [owner register](DECISIONS.md).
 **Investigation delivered; no production correction substantiated to all acceptance gates.**
 No global threshold changed. This is not an implementation or publication receipt.

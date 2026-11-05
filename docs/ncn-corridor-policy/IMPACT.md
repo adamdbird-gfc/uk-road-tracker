@@ -1,5 +1,7 @@
 # Quantified impact report
 
+Historical PR #274 receipt. See the [final delivery audit](delivery/DELIVERY.md) for subsequent exact revision-4 inspection, recovered GPX evidence and the unpublished Chapel Lane candidate.
+
 5 November 2026. **No new bindings or production behaviour changes.**
 Baseline figures reuse revision 4's retained capacity receipt, with fresh live
 manifest identity verification; no national capacity calculation was repeated.

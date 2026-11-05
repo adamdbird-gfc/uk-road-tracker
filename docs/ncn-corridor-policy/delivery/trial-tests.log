@@ -1,0 +1,8 @@
+/workspace/scratch/9a47a7f1caf3/roadprints/scripts/ncn_trial/scope_review.py:97: DeprecationWarning: The 'shapely.ops.transform()' function is deprecated. Use 'shapely.transform()' or 'shapely.transform_coordseq()' instead. See https://shapely.readthedocs.io/en/latest/manual.html#shapely.ops.transform for more details.
+  'diagnostic_only': True, 'corridor_m': (10 if exception in ('official_open_main_without_source', 'official_open_main_without_eligible', 'source_outside_official_open_main') else None), **properties}, 'geometry': mapping(transform(inverse, part))})
+Source snapshots checked: 2/2; errors: 0
+Source snapshots checked: 2/2; errors: 0
+----------------------------------------------------------------------
+Ran 333 tests in 4.397s
+
+OK

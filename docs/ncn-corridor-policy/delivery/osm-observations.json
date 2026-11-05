@@ -1,0 +1,147 @@
+{
+  "date": "2026-11-05",
+  "observations": [
+    {
+      "records": [
+        {
+          "coordinates": [
+            [
+              -2.9242844,
+              54.652334
+            ],
+            [
+              -2.9242236,
+              54.6519376
+            ],
+            [
+              -2.9241516,
+              54.6509145
+            ],
+            [
+              -2.9240962,
+              54.6501275
+            ],
+            [
+              -2.9235402,
+              54.6462477
+            ],
+            [
+              -2.9232326,
+              54.6437967
+            ],
+            [
+              -2.9231974,
+              54.6435165
+            ],
+            [
+              -2.9231089,
+              54.6430398
+            ],
+            [
+              -2.9231053,
+              54.6430093
+            ]
+          ],
+          "id": 23385711,
+          "nodes": [
+            244056391,
+            11812200271,
+            2996076233,
+            11807541981,
+            243355629,
+            11812444963,
+            243355628,
+            6121813815,
+            244056344
+          ],
+          "tags": {
+            "cycleway:both": "no",
+            "highway": "tertiary",
+            "lane_markings": "no",
+            "lit": "no",
+            "maxspeed": "60 mph",
+            "maxspeed:type": "GB:nsl_single",
+            "ncn_name": "C2C",
+            "surface": "asphalt"
+          },
+          "timestamp": "2024-04-12T19:15:36Z",
+          "type": "way",
+          "version": 12
+        }
+      ],
+      "source": "https://api.openstreetmap.org/api/0.6/way/23385711/full.json"
+    },
+    {
+      "records": [
+        {
+          "id": 11017,
+          "relevant_members": [
+            {
+              "ref": 463641622,
+              "role": "",
+              "type": "way"
+            },
+            {
+              "ref": 23385711,
+              "role": "",
+              "type": "way"
+            }
+          ],
+          "tags": {
+            "colour": "red",
+            "cycle_network": "UK:National Cycle Network",
+            "network": "ncn",
+            "operator": "Walk Wheel Cycle Trust",
+            "operator:wikidata": "Q606877",
+            "ref": "7",
+            "route": "bicycle",
+            "type": "route",
+            "website": "https://www.walkwheelcycletrust.org.uk/find-a-route-on-the-national-cycle-network/route-7/",
+            "wikidata": "Q6972072",
+            "wikipedia": "en:National Cycle Route 7"
+          },
+          "timestamp": "2026-10-24T17:08:15Z",
+          "type": "relation",
+          "version": 1517
+        }
+      ],
+      "source": "https://api.openstreetmap.org/api/0.6/way/23385711/relations.json"
+    },
+    {
+      "records": [
+        {
+          "id": 11017,
+          "relevant_members": [
+            {
+              "ref": 463641622,
+              "role": "",
+              "type": "way"
+            },
+            {
+              "ref": 23385711,
+              "role": "",
+              "type": "way"
+            }
+          ],
+          "tags": {
+            "colour": "red",
+            "cycle_network": "UK:National Cycle Network",
+            "network": "ncn",
+            "operator": "Walk Wheel Cycle Trust",
+            "operator:wikidata": "Q606877",
+            "ref": "7",
+            "route": "bicycle",
+            "type": "route",
+            "website": "https://www.walkwheelcycletrust.org.uk/find-a-route-on-the-national-cycle-network/route-7/",
+            "wikidata": "Q6972072",
+            "wikipedia": "en:National Cycle Route 7"
+          },
+          "timestamp": "2026-10-24T17:08:15Z",
+          "type": "relation",
+          "version": 1517
+        }
+      ],
+      "source": "https://api.openstreetmap.org/api/0.6/way/463641622/relations.json"
+    }
+  ]
+}
