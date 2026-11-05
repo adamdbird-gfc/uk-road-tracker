@@ -36,8 +36,8 @@ publication and retrospective awards are separate states.
 | COR-01 / NAT-01 | Derry NCN92, 30268009 | Investigate candidate cycleway equivalence and finite correspondence | Candidate only; verify finite admission, ordered target anchors and connectors |
 | COR-02 / NAT-02 | Highland NCN7, 463641622 | Investigate road membership, connectivity and geometry | Candidate only; distinguish admitted end section from unadmitted road |
 | COR-03 / REF-deal | Deal NCN1 designated cycleway, 4471747 | Accept existing 561.888736534 m revision 4 correction | Already published; never count again |
-| COR-04 / NAT-03 | Deal Chapel Lane NCN1, 4471919 | Investigate bounded minor-geometry correction | Candidate only; verify source support at the target endpoint |
-| COR-05 / REF-23385711 | Cumbria NCN6/NCN7, 23385711 | Investigate genuine shared-route membership | NCN7 supported; NCN6 unproved; no alias or duplicate network grant |
+| COR-04 / NAT-03 | Deal Chapel Lane NCN1, 4471919 | Investigate bounded minor-geometry correction | Implemented finite endpoint candidate, unpublished; see [delivery audit](delivery/DELIVERY.md) |
+| COR-05 / REF-23385711 | Cumbria NCN6/NCN7, 23385711 | Investigate genuine shared-route membership | OSM NCN7 membership and supplied GPX overlap verified; revision-4 NCN6/NCN7 extent conflict blocks dual attribution; see [delivery audit](delivery/DELIVERY.md) |
 | COR-06 / REF-1289002662 | East Sussex RCN90, 1289002662 | Accept historical source-version compatibility principle; verify target correspondence | Same-feature node movement accepted as evidence, not a target grant |
 | COR-07 / REF-1050757473 | London Mudlarks Boulevard NCN1 | Retain complete journey; attribute only verified NCN1 section | Existing finite admission retained; non-NCN continuation stays ordinary travel |
 | COR-08 / REF-59306268 | Newry Canal Towpath NCN9 | Accept existing matching; no correction | Positive control; no new recovery |

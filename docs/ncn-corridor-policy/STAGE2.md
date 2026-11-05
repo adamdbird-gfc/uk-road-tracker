@@ -1,5 +1,7 @@
 # Stage 2 corridor equivalence register
 
+Historical PR #274 receipt. See the [final delivery audit](delivery/DELIVERY.md) for subsequent exact revision-4 inspection, recovered GPX evidence and the unpublished Chapel Lane candidate.
+
 5 November 2026 · [owner decisions](DECISIONS.md) · all four cases remain open.
 These are investigations, not approved alternatives. No speculative national rule.
 

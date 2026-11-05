@@ -1,0 +1,312 @@
+{
+  "bounded_comparisons": [
+    {
+      "file": "NCN_1_North_Sea_Cycle_Route.gpx",
+      "nearby_gpx_points": [
+        [
+          1.37278,
+          51.1531
+        ],
+        [
+          1.373,
+          51.15293
+        ],
+        [
+          1.37379,
+          51.15317
+        ],
+        [
+          1.37396,
+          51.15352
+        ],
+        [
+          1.37318,
+          51.15392
+        ],
+        [
+          1.3726,
+          51.15446
+        ],
+        [
+          1.37186,
+          51.15495
+        ],
+        [
+          1.37129,
+          51.15515
+        ],
+        [
+          1.37183,
+          51.15549
+        ],
+        [
+          1.3723,
+          51.15577
+        ]
+      ],
+      "sampling": "101 equally spaced source stations; sampled diagnostic, not continuous bound",
+      "source_to_gpx_max_sampled_m": 9.378603192674978,
+      "source_to_gpx_min_sampled_m": 0.031372302512525874,
+      "target_midpoint_distance_m": {
+        "open-edge:3fe4dec638a6549282d935d47544f15a8663ec613d9ee6d1401a6464a98bde3b": 5.739536577341827,
+        "open-edge:4b0a6d3b19fb9e5c78f7a30b0d8097ad3577ca9e235442a04c2030cb58e73524": 7.0687143961848,
+        "open-edge:96aac48b8463b443ba916d6dbb020a5118f70a5abc29a814e5e1c00a680a9bf1": 6.237080719755908
+      },
+      "way": "4471919"
+    },
+    {
+      "file": "NCN_66_Central_Pennines.gpx",
+      "nearby_gpx_points": [
+        [
+          -1.7548,
+          53.792
+        ],
+        [
+          -1.75426,
+          53.79214
+        ],
+        [
+          -1.75406,
+          53.79256
+        ],
+        [
+          -1.75316,
+          53.79312
+        ]
+      ],
+      "sampling": "101 equally spaced source stations; sampled diagnostic, not continuous bound",
+      "source_to_gpx_max_sampled_m": 45.45193496794159,
+      "source_to_gpx_min_sampled_m": 0.25688612125891047,
+      "target_midpoint_distance_m": {
+        "open-edge:217a655a165d169e07ab9a7689b0e47e6827b3fd0c6dc1de1155f518dc1c2c0a": 18.994924513348412,
+        "open-edge:2a8582fbfaffb2b8d160197c5f2632381695d536779a31f8a2f7ea9d6c1d7276": 2.825195984026319,
+        "open-edge:9745adf866eb787d316e8c5b43cca4c693d8cb8032805a4c2ab132b103864ea9": 42.00342788286715,
+        "open-edge:b76c5f24827c2003e9a5e471368a5069aec93c2c9c69f86cc26896101c1e8e69": 64.78859654274756,
+        "open-edge:c7286ee85171a3104f46b4c8373aa0fab7488704d770e93519338abead31a691": 11.072716981595482
+      },
+      "way": "159311690"
+    },
+    {
+      "file": "NCN_7.gpx",
+      "nearby_gpx_points": [
+        [
+          -3.76459,
+          57.24944
+        ],
+        [
+          -3.76536,
+          57.24949
+        ],
+        [
+          -3.76658,
+          57.24955
+        ],
+        [
+          -3.77112,
+          57.24978
+        ],
+        [
+          -3.77436,
+          57.25
+        ],
+        [
+          -3.77672,
+          57.25013
+        ],
+        [
+          -3.77921,
+          57.25028
+        ],
+        [
+          -3.78174,
+          57.25043
+        ],
+        [
+          -3.78374,
+          57.25054
+        ],
+        [
+          -3.78443,
+          57.25057
+        ],
+        [
+          -3.78515,
+          57.25077
+        ],
+        [
+          -3.78583,
+          57.25069
+        ],
+        [
+          -3.78669,
+          57.25044
+        ]
+      ],
+      "sampling": "101 equally spaced source stations; sampled diagnostic, not continuous bound",
+      "source_to_gpx_max_sampled_m": 7.359704897003639,
+      "source_to_gpx_min_sampled_m": 0.0018787457245213563,
+      "target_midpoint_distance_m": {
+        "open-edge:05c1d452330c4a6141cd385dc9669e58f09a1354501e30189e5f22103f570738": 14.339031381201146,
+        "open-edge:0d2910217f5d22c9822e8591605cffa47aecb3ea6f54458a69937ff21f8436bb": 17.54498970791214,
+        "open-edge:0fb313c42b87b69f2ec83ae561b723c3bd420d04f786d8aa57da9ae33734556b": 15.81710740401932,
+        "open-edge:1143b2918b67912b03e2e7ddf0a3fb4338b04d008626656c0f79198a874d751c": 17.513870034854634,
+        "open-edge:1a8d3f70d0b99ddbc72c8bcadced170cd622efd5a4884285e84fb5b4edce800c": 11.934401887576676,
+        "open-edge:2614f6d3b8c7586bbbb8ac3ef8ce396bbc6f58e0774d08da255aa55ae3bd63a4": 13.21585637597017,
+        "open-edge:26a3b29848d4beaab9317fbe52627a2fabe70a9652c98ca6d85ade30c6cf1009": 17.342218088933617,
+        "open-edge:2dc56dc1a2f0ee7e6ec0443f930835c220dd7568658e5d946015de52afe29457": 16.759125969607464,
+        "open-edge:2e98aa0186f9287ae9e6ee1ff653d5924d63a48b9c899af86740429833c02974": 14.66146417654697,
+        "open-edge:2eacca0bb4acd659ec344cbd7e098bb3ce5757c8437d3f1b69d04653bb5e143f": 14.49183387839969,
+        "open-edge:2f0dc48dec1969d2a7f852a4f623eb5ed84c9219cf676502b83d14b8225594c4": 21.42151893711856,
+        "open-edge:347bc67425c15de70b405071e194e6b6c05e5bc7d15ea30da680a2d4103de347": 14.426556680604397,
+        "open-edge:34e7b247e39c71a10a4c2a0b44990405916c125a6de4bcf8b469667ff85b51d0": 18.72604326094761,
+        "open-edge:3e09ec66b19aaa80e0432da7fb0e01c065bb164fafec8dc51f404ff7e9521d40": 17.895107725636624,
+        "open-edge:4266bc4dd014ae545429ecc9b385b94fb9f91040bb5f9bf5f4380d4d8b3ebc41": 17.244836463912154,
+        "open-edge:43c1d7a1f1d2ef8f65ded0a85019acb7fe89cb3b05b7235e269a84b5c1a8f280": 21.995804143661115,
+        "open-edge:505449a0ba1255d26f92620542f720f51dda20f8c12ffcec4e1b6faa5c914ff8": 3.708373561321621,
+        "open-edge:506e3218266a5eb9b4124adb6faa5ba0a3a5398036dd228c3e8c3435aa175355": 14.267824361429925,
+        "open-edge:520ae618aa42dc3d5a013ec4bf34e57d0821b89b4c9a3fb83fd80a462496422b": 16.50896161268067,
+        "open-edge:5790b5ff8cfa19190c9b9aadc3e566b93ecf81e724aaea24154a70184586ed67": 11.748250719980533,
+        "open-edge:5b45d01e763e4e3be5a0ed6e98da35e825c05439aad8e0b5c383bf372ec7ecd0": 14.859952721583314,
+        "open-edge:60cff05f7665764356e820e19127a6cd23b3a23c681e9d1316e44cc71805868a": 15.63980159857804,
+        "open-edge:64caa95b500831f2f5e7c4f617440f383880eee5ee7091285764a03cd1d4ede8": 19.727305475413672,
+        "open-edge:6796b7c914438932f03cc9fd87c4b026efe7bcca1b7e55a3ba517e111c8714d4": 14.678230094108189,
+        "open-edge:6bf387516704eab1dcc41f2b68a1ea20fa18a5e2cdd38cb55db7cef3a963cf6f": 14.422273087203207,
+        "open-edge:75349b1f99caf09a8b5bfb9a4690ed4097deaad59faa311bbc7cf12f70cb6251": 16.472698804943114,
+        "open-edge:756dba31968510af19420e00befec2cdabe0e8207ced31b2f66ceb210229b88e": 13.519747982142395,
+        "open-edge:83c03a0ec400d870a308ab5942bd0edc571a3e36a97fa33f78a4edc255e8a135": 17.943693168359612,
+        "open-edge:8c40ef8319d2e4bb7ff4be13068916173e86a3243daa1e853be4a92fffb2792c": 11.062143201336587,
+        "open-edge:90ba57245af1d3d22851ae3da9b68a314b694860e5928165e6aeb233a7aeddfb": 20.904788203047485,
+        "open-edge:a4645e33497c70ee6dcf8d1b2c8833e98ddee55df9f806252012dede99a709b3": 16.55813919298804,
+        "open-edge:a48eb3498b6fdfa7fda0422906f5731fd40c02e55c3805f8184e0fdec1ef35c7": 12.143135681121038,
+        "open-edge:a9c5b4e8eac3679f88870497de7688c756044209f0274cb838159602eb9f0aa6": 17.07918149938532,
+        "open-edge:df8faadff1e5b10ddfeea38e2e3d29dc537eb6faeade59c46e666113207ed395": 18.39485811620262,
+        "open-edge:e3506268c5144a5f32f011bdb3220d5bbe4ca3ce9a6acb8189671a3f17ca1200": 10.507269155753331,
+        "open-edge:e659f73770db4e7098fd20f6b9abbdbfc13aa12521b5ab026c8cfe7813160c9f": 17.90050285895475,
+        "open-edge:e7653f7fccaa4ae9a2d5a1bf2b4b83e5cb3433cc138df2cd46e15fe261e42574": 20.56124034664016,
+        "open-edge:f971caa6ad2b89cc429946d909c3189a98359f57cf3f2f96708251bf6c4fe38a": 10.474438161048203,
+        "open-edge:ffb4e5ffda2b8569162621e2a66bd3991b307c3889b10188c858ce89c186ccc1": 12.905163370729959
+      },
+      "way": "463641622"
+    },
+    {
+      "file": "NCN_7.gpx",
+      "nearby_gpx_points": [
+        [
+          -2.92428,
+          54.65233
+        ],
+        [
+          -2.92422,
+          54.65194
+        ],
+        [
+          -2.92415,
+          54.65091
+        ],
+        [
+          -2.9241,
+          54.65013
+        ],
+        [
+          -2.92343,
+          54.64625
+        ],
+        [
+          -2.92317,
+          54.64352
+        ],
+        [
+          -2.92311,
+          54.64301
+        ]
+      ],
+      "sampling": "101 equally spaced source stations; sampled diagnostic, not continuous bound",
+      "source_to_gpx_max_sampled_m": 7.055857089430328,
+      "source_to_gpx_min_sampled_m": 0.01655885147833301,
+      "target_midpoint_distance_m": {},
+      "way": "23385711"
+    },
+    {
+      "file": "NCN_6_London_Lake_District.gpx",
+      "nearby_gpx_points": [
+        [
+          -2.9231,
+          54.64301
+        ],
+        [
+          -2.92316,
+          54.64352
+        ],
+        [
+          -2.92343,
+          54.64625
+        ],
+        [
+          -2.9241,
+          54.65013
+        ],
+        [
+          -2.92415,
+          54.65091
+        ],
+        [
+          -2.92422,
+          54.65194
+        ],
+        [
+          -2.92428,
+          54.65233
+        ]
+      ],
+      "sampling": "101 equally spaced source stations; sampled diagnostic, not continuous bound",
+      "source_to_gpx_max_sampled_m": 7.055857089430328,
+      "source_to_gpx_min_sampled_m": 0.01655885147833309,
+      "target_midpoint_distance_m": {},
+      "way": "23385711"
+    }
+  ],
+  "designation_limitation": "cycle.travel GPX has no authoritative designation date or exact source identity; overlap alone cannot change revision-4 membership. NCN7 publisher line turns east at the north end of disputed 23385711, while NCN6 follows it south.",
+  "exact_shared_geodesic_m": 14261.85819990934,
+  "exact_shared_segment_bounds_lon_lat": [
+    -3.06097,
+    54.61466,
+    -2.84624,
+    54.68819
+  ],
+  "exact_shared_segment_count": 142,
+  "files": [
+    {
+      "bytes": 572578,
+      "creator": "cycle.travel",
+      "name": "NCN_7.gpx",
+      "point_count": 12440,
+      "segments": 1,
+      "sha256": "7c4db6f889feb3f7b4d1544d6a3f3237a0d32b87aaac1d4212da73e7efdeb0f6"
+    },
+    {
+      "bytes": 152150,
+      "creator": "cycle.travel",
+      "name": "NCN_66_Central_Pennines.gpx",
+      "point_count": 3300,
+      "segments": 1,
+      "sha256": "70596733ace9fe59be4fa92631f12c4b9c5fcabef105086854bb125478b0a990"
+    },
+    {
+      "bytes": 1407650,
+      "creator": "cycle.travel",
+      "name": "NCN_1_North_Sea_Cycle_Route.gpx",
+      "point_count": 30804,
+      "segments": 1,
+      "sha256": "b3989ea3f688f0cde57abe4679f9e6706372e90a95182305246e889437b74c08"
+    },
+    {
+      "bytes": 535701,
+      "creator": "cycle.travel",
+      "name": "NCN_6_London_Lake_District.gpx",
+      "point_count": 11638,
+      "segments": 1,
+      "sha256": "740c4ed059be5fb1b11122f5cd28f1000e4bf849c219cc224362ff0e52483ad9"
+    }
+  ],
+  "method": "Exact equal rounded GPX endpoint pairs, direction independent, each segment counted once. Geodesic length. This is file overlap, not designated or assessable coverage."
+}

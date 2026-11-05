@@ -4,10 +4,12 @@
 · [PR #274](https://github.com/adamdbird-gfc/uk-road-tracker/pull/274)
 · base `92ab97489c8c228c3cdaaf35ac9c3a14ddad700d`.
 
-**Delivered:** all twelve owner decisions, a superseding access/journey policy,
+**Latest delivery audit:** [twelve-case matrix, bounded correction and remaining dependencies](delivery/DELIVERY.md). PR #274 is merged; its investigation-only state below is historical. The Chapel Lane candidate is implemented separately and remains unpublished.
+
+**Prior PR #274 deliverables:** all twelve owner decisions, a superseding access/journey policy,
 five bounded source/target investigations, four Stage 2 dispositions, reproducible
 measurements and focused regression evidence. **No new correction or completion
-gain approved; no production implementation.** PR remains unmerged for owner review.
+gain approved; no production implementation.** PR #274 merged as `42ae16d14be18211dc30182f83d0b9673b177d69` on 5 November.
 
 | Deliverable | Preserved result |
 | --- | --- |

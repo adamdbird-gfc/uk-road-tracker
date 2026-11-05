@@ -1,0 +1,36 @@
+{
+  "affected_network_edges": [
+    1549,
+    1550,
+    1551
+  ],
+  "affected_target_route_identities": 3,
+  "all_row_diff_counts": {
+    "meta": 0,
+    "network": 0,
+    "nodes": 0,
+    "overview": 0,
+    "paths": 1,
+    "routes": 0,
+    "targets": 0
+  },
+  "new_binding": {
+    "end": 258.7990182846317,
+    "high": 40.55143977293073,
+    "low": 31.66876172979717,
+    "modes": [
+      "on_foot",
+      "cycling"
+    ],
+    "start": 251.09577163400854,
+    "target": "open-edge:96aac48b8463b443ba916d6dbb020a5118f70a5abc29a814e5e1c00a680a9bf1"
+  },
+  "published": false,
+  "reference_revision": 4,
+  "route_local_added_m": 8.882678043133552,
+  "route_local_after_m": 83.00648606277875,
+  "route_local_before_m": 74.1238080196452,
+  "unique_network_added_m": 9.155569770460744,
+  "unique_network_after_m": 85.87399647955093,
+  "unique_network_before_m": 76.71842670909018
+}

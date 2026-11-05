@@ -1,5 +1,7 @@
 # Regression test receipt — 5 November 2026
 
+Historical PR #274 receipt. See the [final delivery audit](delivery/DELIVERY.md) for subsequent exact revision-4 inspection, recovered GPX evidence and the unpublished Chapel Lane candidate.
+
 **134 local tests passed, zero failures/errors/skips.** Python 3.12, Shapely 2.2.0,
 pyproj 3.8.0. No APK, device, full Android suite or production acceptance claimed.
 Exact local output is preserved in [receipts](receipts/).
