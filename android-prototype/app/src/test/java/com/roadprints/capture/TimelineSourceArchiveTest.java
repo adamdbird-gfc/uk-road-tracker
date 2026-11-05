@@ -64,6 +64,7 @@ public class TimelineSourceArchiveTest {
     @Test public void repeatedImportAndCompletedCorrectionAreNotRewritten() throws Exception {
         JSONObject input=semantic("RUNNING"); read(input); JSONObject j=stored();
         String id=j.getString("journey_id");
+        assertEquals("timeline-abe39bcfb6bb2f62499b2caf",id);
         j.remove("timeline_source_evidence"); // An already completed pre-change archive.
         j.put("mode","train").put("title","My correction").put("processing_status","complete")
                 .put("journey_corrections",new JSONObject().put("removed_road_ids",new JSONArray("[1]")))
@@ -90,5 +91,44 @@ public class TimelineSourceArchiveTest {
                 +"\"waypointPath\":{\"waypoints\":[{\"latE7\":514000000,\"lngE7\":-9990000}]},\"distance\":150}}]}"));
         JSONObject j=stored(); assertEquals(0,j.getJSONObject("capture_quality").getInt("source_route_points"));
         assertFalse(j.getJSONObject("timeline_source_evidence").has("route_point_times_ms"));
+    }
+    @Test public void missingPathTimesPreserveOnlyAnchorsWithoutPretendingToRecoverObservations() throws Exception {
+        JSONObject root=semantic("WALKING");
+        JSONArray path=root.getJSONArray("semanticSegments").getJSONObject(0).getJSONArray("timelinePath");
+        for(int i=0;i<path.length();i++)path.getJSONObject(i).remove("time");
+        read(root); JSONObject j=stored(),e=j.getJSONObject("timeline_source_evidence");
+        assertEquals(0,e.getInt("source_route_points")); assertEquals(2,e.getInt("route_points"));
+        assertEquals("activity_endpoints_and_sorted_timelinePath",e.getString("route_time_basis"));
+        assertEquals(MilepostProximity.Outcome.INSUFFICIENT_GEOMETRY,MilepostJourneyEvidence.nativeArchive(j).problem());
+    }
+    @Test public void deduplicatedTimeIsLatestAndOriginalIntervalRemainsSeparate() throws Exception {
+        JSONObject root=semantic("WALKING");
+        JSONObject segment=root.getJSONArray("semanticSegments").getJSONObject(0);
+        segment.getJSONArray("timelinePath").getJSONObject(0).put("time","2020-01-01T00:00:30Z");
+        read(root); JSONObject e=stored().getJSONObject("timeline_source_evidence");
+        assertEquals(java.time.Instant.parse("2020-01-01T00:00:30Z").toEpochMilli(),e.getJSONArray("route_point_times_ms").getLong(0));
+        assertEquals("2020-01-01T00:00:00Z",e.getString("source_started_at"));
+        assertEquals("consecutive_1e-7_degrees_latest_time",e.getString("coordinate_deduplication"));
+    }
+    @Test public void separateActivitiesKeepDistinctIdentitiesAndSourceIntervals() throws Exception {
+        JSONObject root=semantic("WALKING");
+        JSONObject second=new JSONObject(root.getJSONArray("semanticSegments").getJSONObject(0).toString());
+        second.put("startTime","2020-01-01T00:10:00Z").put("endTime","2020-01-01T00:13:00Z");
+        second.remove("timelinePath");
+        root.getJSONArray("semanticSegments").put(second); read(root);
+        assertEquals(2,JourneyStore.count(activity));
+        java.util.Set<String> intervals=new java.util.HashSet<>(),ids=new java.util.HashSet<>();
+        for(JSONObject summary:JourneyStore.allSummaries(activity)) {
+            JSONObject j=JourneyStore.get(activity,summary.getString("journey_id"));
+            ids.add(j.getString("journey_id"));
+            intervals.add(j.getJSONObject("timeline_source_evidence").getString("source_started_at"));
+        }
+        assertEquals(2,ids.size()); assertEquals(2,intervals.size());
+        assertTrue(intervals.contains("2020-01-01T00:10:00Z"));
+    }
+    @Test public void incompleteActivityCannotCreateAnArchiveOrEvidenceRecord() throws Exception {
+        JSONObject root=semantic("WALKING");
+        root.getJSONArray("semanticSegments").getJSONObject(0).remove("startTime");
+        read(root); assertEquals(0,JourneyStore.count(activity));
     }
 }
