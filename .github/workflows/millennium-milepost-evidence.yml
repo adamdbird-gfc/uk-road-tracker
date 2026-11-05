@@ -1,0 +1,132 @@
+name: Milepost discovery evidence (no APK or deployment)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'android-prototype/app/src/**/com/roadprints/capture/Milepost*.java'
+      - 'android-prototype/app/build.gradle.kts'
+      - '.github/workflows/millennium-milepost-evidence.yml'
+      - 'reference-data/millennium-mileposts/**'
+permissions:
+  contents: read
+concurrency:
+  group: milepost-evidence-${{ github.head_ref }}
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      ANDROID_SDK_DISABLE_USAGE_TRACKING: '1'
+      NCN_TEST_DATABASE: ${{ github.workspace }}/.cache/ncn/catalogue.db
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Restore the same exact reference cache as Android builds
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            .cache/ncn/catalogue.db
+            android-prototype/app/src/main/assets/historic-counties/boundaries.bin
+          key: reference-pins-v2-${{ runner.os }}-${{ hashFiles('android-prototype/app/src/main/assets/ncn-national/manifest.json', 'android-prototype/app/src/main/assets/historic-counties/catalogue.json') }}
+          fail-on-cache-miss: true
+      - name: Verify restored reference bytes against packaged source pins
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,pathlib
+          county=json.loads(pathlib.Path('android-prototype/app/src/main/assets/historic-counties/catalogue.json').read_text())
+          ncn=json.loads(pathlib.Path('android-prototype/app/src/main/assets/ncn-national/manifest.json').read_text())
+          for file,digest,size in (
+              ('android-prototype/app/src/main/assets/historic-counties/boundaries.bin',county['data_sha256'],None),
+              ('.cache/ncn/catalogue.db',ncn['sha256'],ncn['database_bytes']),
+          ):
+              path=pathlib.Path(file)
+              assert path.is_file(),f'Missing pinned reference: {file}'
+              if size is not None: assert path.stat().st_size==size,f'Invalid size: {file}'
+              assert hashlib.file_digest(path.open('rb'),'sha256').hexdigest()==digest,f'Invalid SHA-256: {file}'
+              print('Verified pinned reference:',file)
+          PY
+      - name: Require existing runner SDK and Java 17
+        run: |
+          test -n "$JAVA_HOME_17_X64" || { echo '::error::Runner Java 17 missing; no installation attempted.'; exit 1; }
+          test -f "$ANDROID_HOME/platforms/android-35/android.jar" || { echo '::error::Runner Android SDK 35 missing; no SDK download allowed.'; exit 1; }
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+      - name: Restore Gradle tooling and dependency cache
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.10'
+          cache-read-only: true
+      # Approval for this run must include ordinary Gradle/Maven dependency resolution.
+      # Reference data remains cache-only; Android Test workers reject reference HTTP.
+      - name: Compile and lint with SDK downloads disabled
+        run: |
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:compileDebugJavaWithJavac :app:lintDebug :app:compileDebugUnitTestJavaWithJavac
+      - name: Resolve the three required Robolectric test fixtures before isolation
+        run: |
+          mkdir -p "$RUNNER_TEMP/robolectric-offline"
+          cat > "$RUNNER_TEMP/robolectric-fixtures.init.gradle" <<'GRADLE'
+          gradle.projectsEvaluated {
+              def app = gradle.rootProject.project(':app')
+              // Resolve each SDK separately; one configuration would select only the newest version.
+              def sdks = [
+                  'org.robolectric:android-all-instrumented:9-robolectric-4913185-2-i7',
+                  'org.robolectric:android-all-instrumented:13-robolectric-9030017-i7',
+                  'org.robolectric:android-all-instrumented:15-robolectric-12650502-i7'
+              ].collect { coordinate ->
+                  def files = app.configurations.detachedConfiguration(app.dependencies.create(coordinate))
+                  files.transitive = false
+                  files
+              }
+              app.tasks.register('prepareRobolectricOffline', Copy) {
+                  from(sdks)
+                  into(new File(System.getenv('RUNNER_TEMP'), 'robolectric-offline'))
+              }
+          }
+          GRADLE
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false --init-script "$RUNNER_TEMP/robolectric-fixtures.init.gradle" :app:prepareRobolectricOffline
+      - name: Run focused regression tests without external network access
+        run: |
+          gradle_path="$(command -v gradle)"
+          sudo --preserve-env=JAVA_HOME,ANDROID_HOME,ANDROID_SDK_ROOT,GRADLE_USER_HOME,RUNNER_TEMP,NCN_TEST_DATABASE unshare --net bash -c '
+            set -e
+            ip link set lo up
+            exec sudo -u runner --preserve-env=JAVA_HOME,ANDROID_HOME,ANDROID_SDK_ROOT,GRADLE_USER_HOME,RUNNER_TEMP,NCN_TEST_DATABASE "$1" --offline --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false -Drobolectric.offline=true -Drobolectric.dependency.dir="$RUNNER_TEMP/robolectric-offline" :app:testDebugUnitTest --tests "*Milepost*Test" --tests "*WalkingCaptureEvidenceTest" --tests "*CaptureQualityValidatorTest" --tests "*TimelineImportEvidenceTest" --tests "*AchievementArchiveVolumeTest"
+          ' _ "$gradle_path"
+      - name: Measure streaming evaluator with a 64MiB JVM
+        run: |
+          cat > "$RUNNER_TEMP/milepost-memory.init.gradle" <<'GRADLE'
+          gradle.projectsEvaluated {
+              def app = gradle.rootProject.project(':app')
+              app.tasks.register('milepostMemoryProbe', JavaExec) {
+                  dependsOn app.tasks.named('compileDebugUnitTestJavaWithJavac')
+                  classpath = app.tasks.named('testDebugUnitTest').get().classpath
+                  mainClass = 'com.roadprints.capture.MilepostEvidenceVolumeTest'
+                  maxHeapSize = '64m'
+              }
+          }
+          GRADLE
+          gradle --offline --no-daemon -p android-prototype -Pandroid.builder.sdkDownload=false --init-script "$RUNNER_TEMP/milepost-memory.init.gradle" :app:milepostMemoryProbe
+      - name: Validate Stage 1 catalogue and test counts
+        run: |
+          python3 -m unittest scripts.test_milepost_catalogue -q
+          python3 - <<'PY'
+          import pathlib,xml.etree.ElementTree as E
+          roots=[E.parse(p).getroot() for p in pathlib.Path('android-prototype/app/build/test-results').rglob('TEST-*.xml')]
+          assert roots
+          totals={k:sum(int(r.attrib.get(k,0)) for r in roots) for k in ('tests','failures','errors','skipped')}
+          print(totals)
+          assert totals['tests']>=40 and totals['failures']==totals['errors']==totals['skipped']==0
+          PY
+      - name: Retain reports without APKs or credentials
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: milepost-stage2-validation
+          path: |
+            android-prototype/app/build/reports/
+            android-prototype/app/build/test-results/
+          if-no-files-found: warn
+          retention-days: 14
