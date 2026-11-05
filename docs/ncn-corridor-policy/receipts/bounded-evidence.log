@@ -1,0 +1,25 @@
+/workspace/scratch/331754312900/uk-road-tracker/docs/ncn-corridor-policy/analyse.py:35: DeprecationWarning: The 'shapely.ops.transform()' function is deprecated. Use 'shapely.transform()' or 'shapely.transform_coordseq()' instead. See https://shapely.readthedocs.io/en/latest/manual.html#shapely.ops.transform for more details.
+  line = transform(fw.transform, LineString(source['coordinates']))
+/workspace/scratch/331754312900/uk-road-tracker/docs/ncn-corridor-policy/analyse.py:40: DeprecationWarning: The 'shapely.ops.transform()' function is deprecated. Use 'shapely.transform()' or 'shapely.transform_coordseq()' instead. See https://shapely.readthedocs.io/en/latest/manual.html#shapely.ops.transform for more details.
+  target = transform(fw.transform, LineString(record['coordinates']))
+/workspace/scratch/331754312900/uk-road-tracker/docs/ncn-corridor-policy/analyse.py:43: DeprecationWarning: The 'shapely.ops.transform()' function is deprecated. Use 'shapely.transform()' or 'shapely.transform_coordseq()' instead. See https://shapely.readthedocs.io/en/latest/manual.html#shapely.ops.transform for more details.
+  edge = transform(fw.transform, LineString(r['source_coordinates']))
+/workspace/scratch/331754312900/uk-road-tracker/docs/ncn-corridor-policy/analyse.py:79: DeprecationWarning: The 'shapely.ops.transform()' function is deprecated. Use 'shapely.transform()' or 'shapely.transform_coordseq()' instead. See https://shapely.readthedocs.io/en/latest/manual.html#shapely.ops.transform for more details.
+  targetline = transform(fw.transform,LineString(target['coordinates']))
+test_bradford_does_not_bypass_three_way_junction_or_angle_gate (test_policy_evidence.CorridorEvidenceTests.test_bradford_does_not_bypass_three_way_junction_or_angle_gate) ... ok
+test_chapel_lane_does_not_silently_extrapolate (test_policy_evidence.CorridorEvidenceTests.test_chapel_lane_does_not_silently_extrapolate) ... ok
+test_chapel_source_junction_is_connected_but_not_an_approved_anchor (test_policy_evidence.CorridorEvidenceTests.test_chapel_source_junction_is_connected_but_not_an_approved_anchor) ... ok
+test_derry_full_way_does_not_extend_finite_admission (test_policy_evidence.CorridorEvidenceTests.test_derry_full_way_does_not_extend_finite_admission) ... ok
+test_exact_original_target_keys_and_topology (test_policy_evidence.CorridorEvidenceTests.test_exact_original_target_keys_and_topology) ... ok
+test_ground_measurement_agrees_with_independent_geodesic (test_policy_evidence.CorridorEvidenceTests.test_ground_measurement_agrees_with_independent_geodesic) ... ok
+test_highland_queue_is_outside_admitted_end_span (test_policy_evidence.CorridorEvidenceTests.test_highland_queue_is_outside_admitted_end_span) ... ok
+test_national_policy_and_new_gain_remain_unchanged (test_policy_evidence.CorridorEvidenceTests.test_national_policy_and_new_gain_remain_unchanged) ... ok
+test_reproduces_without_mutating_evidence (test_policy_evidence.CorridorEvidenceTests.test_reproduces_without_mutating_evidence) ... ok
+test_selected_edges_are_exact_source_occurrences (test_policy_evidence.CorridorEvidenceTests.test_selected_edges_are_exact_source_occurrences) ... ok
+test_shared_routes_and_repeated_alternatives_union_one_network_interval (test_policy_evidence.CorridorEvidenceTests.test_shared_routes_and_repeated_alternatives_union_one_network_interval) ... ok
+test_sussex_nearest_is_a_crossing_not_a_correspondence (test_policy_evidence.CorridorEvidenceTests.test_sussex_nearest_is_a_crossing_not_a_correspondence) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.043s
+
+OK
