@@ -1,0 +1,89 @@
+{
+  "authoritative_main": "a87d60d4d5b2c4651c571e7f4316e514154734eb",
+  "checkpoints": {
+    "implementation": "5246e847db37f417ea74ec4d38ddd14c71a3a61c",
+    "independently_read_back": true,
+    "scope": "f90ac1d5ace510d71f13f1410055c2a8795335f4"
+  },
+  "date": "2026-10-30",
+  "deliverables_sha256_excluding_this_receipt": {
+    "docs/data-trials/ncn-consistent-geometry-results-20261030.json": "564067fe704a99c6dcfcbaaf269f49ef7cd9936d10409088b31b6fb6b6afee37",
+    "docs/ncn-consistent-diagnostics-scope-20261030.md": "9b214019ba2f33d27523690b76d638d1ce8ba495c1cddcbbe10693b38b70580f",
+    "docs/ncn-consistent-geometry-diagnostics-20261030.md": "36b253b3855e4512b0e1f3e99426f7f7c1c15f4e6689594059f1d08bcf695432",
+    "docs/ncn-development-decision-20261030.md": "4a19535fba73a7b241be2d8034e5497f34da2678a4a63959ec43e421ebe19235",
+    "scripts/ncn_geometry_diagnostics.py": "855f5a04a98d1683d608d8590b0846edfc4e6ca76f9700925913e6ff158bfcd8",
+    "scripts/test_ncn_geometry_diagnostics.py": "0b8e0813c10ae39dce1e527f73f6fdca4e797746362e99ab717eee49842b6d8d"
+  },
+  "environment": {
+    "geos": "3.14.1",
+    "packages": {
+      "numpy": "2.3.5",
+      "osmium": "4.3.1",
+      "psycopg": "3.2.10",
+      "psycopg-binary": "3.2.10",
+      "shapely": "2.2.0"
+    },
+    "python": "3.12.14"
+  },
+  "inputs_sha256": {
+    "docs/data-trials/ncn-projection-cases-20261030.json": "26a8b2aded983c65e7ba1c7fba1c3b04674604db64f8463908f9a19dfa5f0963",
+    "docs/data-trials/ncn1-deal-fixture-20261030.json": "bb7fa4420151218c053cda1e93b6a592323e2c85a724965985b211d9386c779c",
+    "tests/fixtures/ncn-binding-attainability/source-sections.json": "5e42cc0058ed71a4bead0ac9636e757e289f3aa1bc8e57b18be95bd31c57a91b",
+    "tests/fixtures/ncn-gap-seams/diagnostic-witnesses.json": "9b741fa37ef7f74e29269ed77de2d9d0068ed54744b18775b1a994b49a06612b",
+    "tests/fixtures/ncn-source-compatibility/controls.json": "113bf75bbe0d89f1fa64b65d732eee4e94e43dbb533b619c86d29c27a445244e"
+  },
+  "integration_247": {
+    "complete_tree_equals_verified_head": true,
+    "files": 7,
+    "head": "efca603f73f6877fb64d3c8bf37796ee31f2635e",
+    "merge": "a87d60d4d5b2c4651c571e7f4316e514154734eb",
+    "original_branch_retained": true,
+    "rulesets_reviews_threads_checks_statuses_empty": true,
+    "unprotected_main_no_required_checks": true
+  },
+  "limitations": [
+    "Bradford/Cumbria native origins unavailable; native values remain null",
+    "Newry/Mid-Wales/NCN81 origins inferred, not original metadata",
+    "Rounded/reconstructed target endpoints retained; no full admission replay",
+    "No national prevalence or new eligible interval demonstrated",
+    "No fresh CI/Android/device validation; installed APK/live backend/Firebase pins unknown",
+    "Byte reproducibility demonstrated in recorded environment; numeric comparison may be necessary on other GEOS builds"
+  ],
+  "main_tree": "c7e0ba326b82b72c2e4f05cff1d2f2991e5d94c3",
+  "operational_records_sha256": "0c36fbe2af88980dd65c96681d630b1b11f93a53b4e5c89cbbbaecc8888f5443",
+  "recommendation": "B: separately authorised publication-readiness review of the validated 45.834 km seam candidate",
+  "scope": {
+    "apk_build_distribution": false,
+    "deployment": false,
+    "issues_closed": 0,
+    "journey_changes": false,
+    "national_assessment": false,
+    "new_assessable_m": 0,
+    "new_candidate": false,
+    "new_credit_m": 0,
+    "operational_changes": false,
+    "publication": false
+  },
+  "validation": {
+    "errors": 0,
+    "existing_tracked_file_mismatches": [],
+    "existing_tracked_files_verified_against_main": 4775,
+    "failures": 0,
+    "geometric_invariants": 158,
+    "new_report_repeated_byte_identical": true,
+    "new_tests": 15,
+    "pinned_upstream_and_audit_deliverables_verified": 10,
+    "previous_focused_tests": 95,
+    "previous_path_evidence_tests": 15,
+    "prior_outputs_reproduced_byte_identical": [
+      "projection full results",
+      "projection cases",
+      "projection Deal-only results",
+      "original Deal results",
+      "compatibility controls",
+      "compatibility results"
+    ],
+    "skips": 0,
+    "total_tests_passed": 125
+  }
+}
