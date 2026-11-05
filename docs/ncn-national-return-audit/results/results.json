@@ -1,0 +1,240 @@
+{
+  "schema_version": 1,
+  "baseline": "24278f5256bf367039b9a3adf986d619754ccb15",
+  "numerical_tolerance_m": 0.0001,
+  "input_sha256": {
+    "database": "be0c803d508ff548db8458a57a2fba18b4f75249f2f9b37401be3526b3cddb2f",
+    "historical_inventory": "1ebb14d7489e5add77dac77dcb25c5beda2ce53c7c3994eccc22696944955dcb",
+    "screen": "9be024c03383cfea419a5017257a5ff2c32d02d0fc4d941ec9b1d0fdb27aa947",
+    "review": "e76571514408eaa7b20a7e9cd88acce42cdcd188822cde09948161faee18c9ab",
+    "chapel": "f356c3d4b25410d3e913e07446362e380f76bcd7f5f8205d39f3f652b34c7359"
+  },
+  "denominator_m": 17435132.494005967,
+  "published_gap_m": 1288762.517376248,
+  "candidate_gap_m": 1286633.9012256518,
+  "candidate_added_m": 2128.616150596179,
+  "published_assessability_percent": 92.60824362637157,
+  "candidate_assessability_percent": 92.62045240167812,
+  "historical_regions": [
+    {
+      "historical_labels": "no_admitted_source_correspondence",
+      "unique_m": 617160.0186195503,
+      "deficit_percent": 47.96702605392579,
+      "partition_pieces": 22488,
+      "routes": 202,
+      "median_piece_m": 13.268538220275296
+    },
+    {
+      "historical_labels": "direction_gate",
+      "unique_m": 426307.70798531343,
+      "deficit_percent": 33.133567177051006,
+      "partition_pieces": 92745,
+      "routes": 217,
+      "median_piece_m": 3.340595654318159
+    },
+    {
+      "historical_labels": "unadmitted_span_of_known_way",
+      "unique_m": 100438.28334390312,
+      "deficit_percent": 7.806282987586855,
+      "partition_pieces": 5025,
+      "routes": 175,
+      "median_piece_m": 11.475834739605393
+    },
+    {
+      "historical_labels": "finite_endpoint_or_alignment",
+      "unique_m": 69755.50494180714,
+      "deficit_percent": 5.421550362955446,
+      "partition_pieces": 39717,
+      "routes": 218,
+      "median_piece_m": 6.978008685802347e-06
+    },
+    {
+      "historical_labels": "ambiguous_target_correspondence",
+      "unique_m": 63668.797495128856,
+      "deficit_percent": 4.948478151747575,
+      "partition_pieces": 116283,
+      "routes": 217,
+      "median_piece_m": 0.03591202002017785
+    },
+    {
+      "historical_labels": "deferred_binding_withheld",
+      "unique_m": 9303.583383647636,
+      "deficit_percent": 0.7230948426576519,
+      "partition_pieces": 463,
+      "routes": 49,
+      "median_piece_m": 8.288775735224826
+    },
+    {
+      "historical_labels": "unclassified_projection_residue",
+      "unique_m": 0.0054038506514915,
+      "deficit_percent": 4.199990880345818e-07,
+      "partition_pieces": 137278,
+      "routes": 217,
+      "median_piece_m": 3.552713678800501e-15
+    },
+    {
+      "historical_labels": "ambiguous_target_correspondence + direction_gate",
+      "unique_m": 2.7758102802562877e-05,
+      "deficit_percent": 2.1574204422967882e-09,
+      "partition_pieces": 5,
+      "routes": 4,
+      "median_piece_m": 6.575328105052876e-06
+    },
+    {
+      "historical_labels": "ambiguous_target_correspondence + finite_endpoint_or_alignment",
+      "unique_m": 2.4692650620186948e-05,
+      "deficit_percent": 1.9191667961387187e-09,
+      "partition_pieces": 3,
+      "routes": 3,
+      "median_piece_m": 6.942479948848874e-06
+    },
+    {
+      "historical_labels": "direction_gate + finite_endpoint_or_alignment",
+      "unique_m": 5.434559902482667e-14,
+      "deficit_percent": 4.2238587816671756e-18,
+      "partition_pieces": 7,
+      "routes": 5,
+      "median_piece_m": 7.203851739039004e-15
+    }
+  ],
+  "semantic_current_root_cause_unknown_m": 1286633.9012256518,
+  "canonical_intervals": {
+    "count": 225706,
+    "total_m": 1286633.9012174536,
+    "median_m": 0.5425598372700686,
+    "mean_m": 5.700486035893833,
+    "p90_m": 12.614561100285282,
+    "p99_m": 77.09028663699323,
+    "below": {
+      "10": {
+        "count": 194338,
+        "metres": 343888.39848289866
+      },
+      "50": {
+        "count": 221432,
+        "metres": 848380.3770844665
+      },
+      "100": {
+        "count": 224305,
+        "metres": 1047907.4188529876
+      },
+      "500": {
+        "count": 225685,
+        "metres": 1272624.86621709
+      },
+      "1000": {
+        "count": 225704,
+        "metres": 1284559.730715765
+      }
+    },
+    "above": {
+      "1000": {
+        "count": 2,
+        "metres": 2074.170501688697
+      },
+      "5000": {
+        "count": 0,
+        "metres": 0.0
+      }
+    },
+    "largest": {
+      "10": {
+        "metres": 8021.285328479896,
+        "percent": 0.6234318340974773
+      },
+      "20": {
+        "metres": 13502.933112247276,
+        "percent": 1.0494774853569748
+      },
+      "50": {
+        "metres": 26527.970673840933,
+        "percent": 2.0618118836087973
+      },
+      "100": {
+        "metres": 43227.41612716796,
+        "percent": 3.3597292972200417
+      }
+    }
+  },
+  "positive_fragment_numerical_omission_m": 8.198199793696404e-06,
+  "connected_components": {
+    "count": 128636,
+    "total_m": 1286633.9012174536,
+    "median_m": 1.1744450060531633,
+    "mean_m": 10.002129273433981,
+    "p90_m": 13.214835871781013,
+    "p99_m": 132.76555592606496,
+    "below": {
+      "10": {
+        "count": 109964,
+        "metres": 221623.79876469192
+      },
+      "50": {
+        "count": 125443,
+        "metres": 500524.629783129
+      },
+      "100": {
+        "count": 126877,
+        "metres": 601921.6457640089
+      },
+      "500": {
+        "count": 128393,
+        "metres": 903946.7778580192
+      },
+      "1000": {
+        "count": 128523,
+        "metres": 991681.8802491548
+      }
+    },
+    "above": {
+      "1000": {
+        "count": 113,
+        "metres": 294952.02096829895
+      },
+      "5000": {
+        "count": 12,
+        "metres": 105457.29671663644
+      }
+    },
+    "largest": {
+      "10": {
+        "metres": 94291.66735763571,
+        "percent": 7.328554553740109
+      },
+      "20": {
+        "metres": 137951.6761741754,
+        "percent": 10.721905900632741
+      },
+      "50": {
+        "metres": 211130.52948285462,
+        "percent": 16.409526383773677
+      },
+      "100": {
+        "metres": 281435.2212892823,
+        "percent": 21.87376075066726
+      }
+    }
+  },
+  "screen_residual_unique_m": {
+    "all_screened": 611456.9589746962,
+    "admitted_edge": 396235.2220049528,
+    "historical_direction_gate": 283516.02002293913,
+    "historical_no_admitted_source_correspondence": 145754.51629800105,
+    "admitted_max_separation_2m": 34879.75627170583,
+    "historical_finite_endpoint_or_alignment": 32042.19200375661,
+    "historical_deferred_binding_withheld": 7583.361205838369,
+    "unadmitted_edge": 215221.73696974345,
+    "historical_unadmitted_span_of_known_way": 97260.8810464948,
+    "historical_ambiguous_target_correspondence": 45299.988397666246,
+    "strict_geometry_single_option_admitted": 1716.8281503877176
+  },
+  "route_allocation": "Equal allocation across all route owners of each canonical edge; associated column overlaps, allocated column additive.",
+  "component_method": "Coincident projected edge endpoints rounded to 8 WGS84 decimals, 1e-7m endpoint numerical tolerance; connected geometry is not common cause.",
+  "limitations": [
+    "Historical mechanism envelopes are not newly established underlying causes.",
+    "Screen labels overlap; proximity/heading are not entitlement.",
+    "Fragments <=1e-7m excluded from size/graph statistics, retained in exact reconciliation.",
+    "Eight-decimal endpoint joins may underjoin displaced junctions; branches may connect unrelated problems.",
+    "No active source graph, current access inventory or original import metadata inferred."
+  ]
+}
