@@ -720,6 +720,10 @@ public class TimelineImportActivity extends Activity {
                             .put("distance_meters", distance)
                             .put("status", points.size() >= 2
                                     ? "usable" : "insufficient_gps_data"));
+            // Preserve source interpretation separately; never route this unvalidated
+            // envelope into matchers or feature-specific evidence adapters.
+            journey.put("timeline_source_evidence", TimelineSourceEvidence.preserve(
+                    segment, mode, pointTimes, points.size(), sourceRoutePoints, endAppended));
             if (semantic && roadMode(mode) && pointTimes.length() == points.size()) {
                 JSONObject evidence = new JSONObject().put("version", 1)
                         .put("point_times_ms", pointTimes).put("end_appended", endAppended)

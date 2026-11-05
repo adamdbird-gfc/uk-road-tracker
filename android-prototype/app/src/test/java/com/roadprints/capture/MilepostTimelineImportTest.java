@@ -30,6 +30,12 @@ public class MilepostTimelineImportTest {
                         .put("topCandidate",new JSONObject().put("type",mode).put("probability",.99)).put("distanceMeters",150));
                 JSONObject journey=(JSONObject)method.invoke(activity,segment,"test-only-file",points);
                 assertNotNull(journey);assertFalse(journey.has("timeline_match_evidence"));
+                JSONObject preserved=journey.getJSONObject("timeline_source_evidence");
+                assertEquals(mode,preserved.getString("original_activity_type"));
+                assertEquals("RUNNING".equals(mode)?"walking":mode.toLowerCase(java.util.Locale.UK),journey.getString("mode"));
+                assertEquals("unvalidated",preserved.getString("validation_status"));
+                assertEquals(journey.getJSONObject("route_geometry").getJSONArray("coordinates").length(),
+                        preserved.getJSONArray("route_point_times_ms").length());
                 assertFalse(journey.has("capture_route_samples"));
                 assertEquals("timeline_import",journey.getJSONObject("source").getString("type"));
                 journey.put("processing_status","complete");
