@@ -47,6 +47,7 @@ public class MilepostDiscoveryLedgerTest {
         for(double d:new double[]{0,25,50,75,99,100,101,125,200})markers.add(marker("p"+(int)d,d,true));
         ledger.install(1,HASH,markers);MilepostProximity.Evidence e=evidence("j");register(e,1);drain(e);
         assertEquals(6,discoveries().size());assertEquals(6,ledger.proofCount("u"));
+        assertEquals(MilepostDiscoveryLedger.State.ASSESSED_NO_DISCOVERY,ledger.assessmentState("u","j","p101"));
         try(SQLiteDatabase db=SQLiteDatabase.openDatabase(context.getDatabasePath(name).getPath(),null,SQLiteDatabase.OPEN_READONLY);
             android.database.Cursor c=db.rawQuery("SELECT token,validator,source,mode,precision,section,source_end,method,post_lon FROM assessment WHERE state='DISCOVERED' LIMIT 1",null)) {
             assertTrue(c.moveToFirst());assertEquals(e.token(),c.getString(0));assertEquals(e.validationRevision(),c.getString(1));
@@ -65,7 +66,7 @@ public class MilepostDiscoveryLedgerTest {
         ledger.install(1,HASH,Arrays.asList(marker("p",50,true)));
         MilepostProximity.Evidence a=evidence("a"),b=evidence("b");register(a,1);drain(a);register(b,1);drain(b);
         ledger.sourceChanged("u","a",2,"deletion",true);assertEquals("b",discoveries().get(0).journey);
-        ledger.sourceChanged("u","b",2,"correction",false);assertTrue(discoveries().isEmpty());
+        ledger.sourceChanged("u","b",2,"correction",false);assertTrue(discoveries().isEmpty());assertTrue(ledger.previouslyRecognised("u","p"));assertNotNull(ledger.withdrawalReason("u","p"));
         MilepostProximity.Evidence bad=MilepostJourneyEvidence.nativeArchive(MilepostJourneyEvidenceTest.journey("walking").put("journey_id","b").put("processing_status","failed"));
         ledger.sourceChanged("u","b",3,bad.token(),false);drain(bad);
         assertEquals(MilepostDiscoveryLedger.State.PENDING_EVIDENCE,ledger.state("u","b"));assertTrue(discoveries().isEmpty());
@@ -103,6 +104,15 @@ public class MilepostDiscoveryLedgerTest {
         assertThrows(android.database.sqlite.SQLiteConstraintException.class,()->ledger.install(4,HASH,Arrays.asList(marker("p",1,true),marker("p",2,true))));
         assertEquals(MilepostDiscoveryLedger.State.PENDING_CATALOGUE,ledger.state("u","j"));
     });}
+    @Test public void retiredIdentityAndAliasesCannotBeReassigned()throws Exception {worker(()->{
+        ledger.install(1,HASH,Arrays.asList(marker("p",50,true)));
+        MilepostDiscoveryLedger.Marker other=marker("q",50,true);
+        assertThrows(IllegalArgumentException.class,()->ledger.install(2,HASH,Arrays.asList(new MilepostDiscoveryLedger.Marker(other.id,other.lon,other.lat,true,0,4102444800000L,Arrays.asList("osm:node:p")))));
+        assertEquals("p",ledger.canonical("osm:node:p"));
+        ledger.install(2,HASH,Collections.emptyList());
+        assertThrows(IllegalArgumentException.class,()->ledger.install(3,HASH,Arrays.asList(marker("p",50,true))));
+        assertEquals("p",ledger.canonical("osm:node:p"));
+    });}
     @Test public void datedLocationsRequireTheWholeJourneyInterval()throws Exception {worker(()->{
         MilepostProximity.Evidence e=evidence("j");MilepostDiscoveryLedger.Marker m=marker("p",50,true);
         ledger.install(1,HASH,Arrays.asList(new MilepostDiscoveryLedger.Marker(m.id,m.lon,m.lat,true,0,java.time.Instant.parse("2026-11-05T00:01:00Z").toEpochMilli(),m.aliases)));
@@ -118,7 +128,7 @@ public class MilepostDiscoveryLedgerTest {
     @Test public void restartResumesPagesWithoutDuplicateRecognition()throws Exception {worker(()->{
         List<MilepostDiscoveryLedger.Marker> markers=new ArrayList<>();for(int i=0;i<35;i++)markers.add(marker(String.format(Locale.ROOT,"p%03d",i),50,true));
         ledger.install(1,HASH,markers);MilepostProximity.Evidence e=evidence("j");register(e,1);
-        assertTrue(ledger.processNext("u",(u,id)->e,()->false,1000));assertEquals(16,ledger.proofCount("u"));
+        assertTrue(ledger.processNext("u",(u,id)->e,()->false,1000));assertEquals(16,ledger.proofCount("u"));assertTrue(discoveries().isEmpty());
         assertEquals(MilepostDiscoveryLedger.State.QUEUED,ledger.state("u","j"));ledger.close();ledger=new MilepostDiscoveryLedger(context,name);
         assertTrue(ledger.processNext("u",(u,id)->e,()->false,2000));assertEquals(32,ledger.proofCount("u"));drain(e);
         assertEquals(35,ledger.proofCount("u"));assertFalse(ledger.processNext("u",(u,id)->e,()->false,2000));

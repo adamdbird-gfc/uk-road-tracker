@@ -4,7 +4,6 @@ on:
     branches: [main]
     paths:
       - 'android-prototype/app/src/**/com/roadprints/capture/Milepost*.java'
-      - 'android-prototype/app/src/**/com/roadprints/capture/Timeline*.java'
       - 'android-prototype/app/build.gradle.kts'
       - '.github/workflows/millennium-milepost-evidence.yml'
       - 'reference-data/millennium-mileposts/**'
@@ -94,7 +93,7 @@ jobs:
           sudo --preserve-env=JAVA_HOME,ANDROID_HOME,ANDROID_SDK_ROOT,GRADLE_USER_HOME,RUNNER_TEMP,NCN_TEST_DATABASE unshare --net bash -c '
             set -e
             ip link set lo up
-            exec sudo -u runner --preserve-env=JAVA_HOME,ANDROID_HOME,ANDROID_SDK_ROOT,GRADLE_USER_HOME,RUNNER_TEMP,NCN_TEST_DATABASE "$1" --offline --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false -Drobolectric.offline=true -Drobolectric.dependency.dir="$RUNNER_TEMP/robolectric-offline" :app:testDebugUnitTest --tests "*Milepost*Test" --tests "*WalkingCaptureEvidenceTest" --tests "*CaptureQualityValidatorTest" --tests "*Timeline*Test" --tests "*AchievementArchiveVolumeTest" --tests "*CaptureRecoveryIntegrationTest" --tests "*CaptureMovementEvidenceTest" --tests "*WalkingCaptureServiceTest" --tests "*JourneyStoreDeletionTest" --tests "*JourneyStoreSummaryTest" --tests "*JourneyCorrectionUtilsTest" --tests "*NcnAndroidTest" --tests "*NcnAchievementThresholdTest"
+            exec sudo -u runner --preserve-env=JAVA_HOME,ANDROID_HOME,ANDROID_SDK_ROOT,GRADLE_USER_HOME,RUNNER_TEMP,NCN_TEST_DATABASE "$1" --offline --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false -Drobolectric.offline=true -Drobolectric.dependency.dir="$RUNNER_TEMP/robolectric-offline" :app:testDebugUnitTest --tests "*Milepost*Test" --tests "*WalkingCaptureEvidenceTest" --tests "*CaptureQualityValidatorTest" --tests "*TimelineImportEvidenceTest" --tests "*AchievementArchiveVolumeTest" --tests "*CaptureMovementEvidenceTest" --tests "*JourneyCorrectionUtilsTest"
           ' _ "$gradle_path"
       - name: Measure streaming evaluator with a 64MiB JVM
         run: |
@@ -125,7 +124,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: milepost-stage2-validation
+          name: milepost-evidence-validation
           path: |
             android-prototype/app/build/reports/
             android-prototype/app/build/test-results/

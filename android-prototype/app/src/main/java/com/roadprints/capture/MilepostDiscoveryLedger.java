@@ -56,6 +56,7 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
         try {
             String prior=scalar(d,"SELECT evaluator FROM runtime WHERE singleton=1");
             if(!EVALUATOR.equals(prior)) {
+                d.execSQL("UPDATE recognition SET invalidation='EVALUATOR_CHANGED'");
                 d.delete("assessment",null,null);
                 d.execSQL("UPDATE journey SET cursor='',state='QUEUED' WHERE deleted=0");
                 d.insertWithOnConflict("runtime",null,values("singleton",1,"evaluator",EVALUATOR),SQLiteDatabase.CONFLICT_REPLACE);
@@ -104,11 +105,22 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
                 if(!fingerprint.equals(scalar(d,"SELECT fingerprint FROM catalogue WHERE singleton=1")))
                     throw new IllegalArgumentException("Catalogue content changed under pin");
             } else {
-                d.delete("alias",null,null); d.delete("marker",null,null);
+                for(Marker m:markers) {
+                    if(number(d,"SELECT COUNT(*) FROM identity_registry WHERE id=? AND retired=1",m.id)>0)
+                        throw new IllegalArgumentException("Retired physical identity requires reviewed migration");
+                    d.insertWithOnConflict("identity_registry",null,values("id",m.id,"retired",0),SQLiteDatabase.CONFLICT_IGNORE);
+                }
+                d.delete("marker",null,null);
                 for(Marker m:markers) {
                     d.insertOrThrow("marker",null,values("id",m.id,"lon",m.lon,"lat",m.lat,"eligible",m.eligible?1:0,"valid_from",m.from,"valid_until",m.until));
-                    for(String alias:m.aliases)d.insertOrThrow("alias",null,values("alias",alias,"marker",m.id));
+                    for(String alias:m.aliases) {
+                        String owner=scalar(d,"SELECT marker FROM alias WHERE alias=?",alias);
+                        if(owner!=null&&!m.id.equals(owner))throw new IllegalArgumentException("Alias cannot change physical identity");
+                        d.insertWithOnConflict("alias",null,values("alias",alias,"marker",m.id),SQLiteDatabase.CONFLICT_IGNORE);
+                    }
                 }
+                d.execSQL("UPDATE identity_registry SET retired=1 WHERE id NOT IN (SELECT id FROM marker)");
+                d.execSQL("UPDATE recognition SET invalidation='CATALOGUE_CHANGED'");
                 d.insertWithOnConflict("catalogue",null,values("singleton",1,"revision",revision,"sha",sha256,"fingerprint",fingerprint),SQLiteDatabase.CONFLICT_REPLACE);
                 // Invalidate all prior facts immediately, before any bounded rescan.
                 d.execSQL("UPDATE journey SET cursor='', state='QUEUED' WHERE deleted=0");
@@ -144,6 +156,7 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
                     }
                 }
             }
+            d.execSQL("UPDATE recognition SET invalidation='SOURCE_CHANGED_OR_DELETED' WHERE user=? AND marker IN (SELECT marker FROM assessment WHERE user=? AND journey=?)",new Object[]{user,user,journey});
             d.delete("assessment","user=? AND journey=?",new String[]{user,journey});
             d.insertWithOnConflict("journey",null,values("user",user,"id",journey,"version",version,"token",token,
                     "deleted",deleted?1:0,"cursor","","state",deleted?State.DELETED.name():State.QUEUED.name()),SQLiteDatabase.CONFLICT_REPLACE);
@@ -155,6 +168,7 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
     void reassess(String user,String journey) {
         SQLiteDatabase d=db(); d.beginTransaction();
         try {
+            d.execSQL("UPDATE recognition SET invalidation='SOURCE_CHANGED_OR_DELETED' WHERE user=? AND marker IN (SELECT marker FROM assessment WHERE user=? AND journey=?)",new Object[]{user,user,journey});
             d.delete("assessment","user=? AND journey=?",new String[]{user,journey});
             d.execSQL("UPDATE journey SET cursor='',state='QUEUED' WHERE user=? AND id=? AND deleted=0",new Object[]{user,journey});
             d.setTransactionSuccessful();
@@ -173,6 +187,8 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
         revision=(int)number(d,"SELECT revision FROM catalogue WHERE singleton=1");
         MilepostProximity.Evidence e=loader.load(user,journey);
         if(e==null || !journey.equals(e.journeyId()) || !token.equals(e.token()))throw new ConcurrentModificationException("Source evidence changed");
+        for(String field:new String[]{e.source(),e.validationRevision(),e.mode()})
+            if(field!=null&&field.length()>512)throw new IllegalArgumentException("Oversized evidence metadata");
         List<Marker> page=new ArrayList<>();
         try(Cursor c=d.rawQuery("SELECT id,lon,lat,eligible,valid_from,valid_until FROM marker WHERE id>? ORDER BY id LIMIT "+PAGE,new String[]{after})) {
             while(c.moveToNext())page.add(new Marker(c.getString(0),c.getDouble(1),c.getDouble(2),c.getInt(3)==1,c.getLong(4),c.getLong(5),java.util.Collections.emptyList()));
@@ -186,7 +202,7 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
             if(cancelled.getAsBoolean() || Thread.currentThread().isInterrupted())throw new CancellationException();
             boolean validDate=dated&&event>=m.from&&end<=m.until;
             MilepostProximity.Marker target=new MilepostProximity.Marker(m.id,new MilepostProximity.Point(m.lon,m.lat),m.eligible&&validDate,Integer.toString(revision));
-            results.add(MilepostProximity.assess(target,e,MilepostProximity.Policy.V1,cancelled));
+            results.add(MilepostProximity.assess(target,bounded(e),MilepostProximity.Policy.V1,cancelled));
         }
         d.beginTransaction();
         try {
@@ -209,7 +225,7 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
                 if(state==State.DISCOVERED) {
                     // Recognition order never changes when earlier history is backfilled.
                     long ordinal=number(d,"SELECT COALESCE(MAX(ordinal),0)+1 FROM recognition WHERE user=?",user);
-                    d.insertWithOnConflict("recognition",null,values("user",user,"marker",m.id,"ordinal",ordinal,"first_recognised",recognisedAt),SQLiteDatabase.CONFLICT_IGNORE);
+                    d.insertWithOnConflict("recognition",null,values("user",user,"marker",m.id,"ordinal",ordinal,"first_recognised",recognisedAt,"first_journey",journey,"first_token",token,"first_event",e.journeyDate(),"first_catalogue",revision,"invalidation",null),SQLiteDatabase.CONFLICT_IGNORE);
                 }
             }
             String cursor=page.isEmpty()?after:page.get(page.size()-1).id;
@@ -227,6 +243,23 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
         } finally {d.endTransaction();}
         return true;
     }
+    private static MilepostProximity.Evidence bounded(MilepostProximity.Evidence e) {
+        return new MilepostProximity.Evidence() {
+            public String journeyId(){return e.journeyId();} public String journeyDate(){return e.journeyDate();}
+            public String journeyEndDate(){return e.journeyEndDate();} public String mode(){return e.mode();}
+            public String source(){return e.source();} public String token(){return e.token();}
+            public String validationRevision(){return e.validationRevision();} public MilepostProximity.Outcome problem(){return e.problem();}
+            public Iterable<MilepostProximity.Segment> segments(){return ()->new java.util.Iterator<MilepostProximity.Segment>() {
+                final java.util.Iterator<MilepostProximity.Segment> delegate=e.segments().iterator(); int count;
+                public boolean hasNext(){return delegate.hasNext();}
+                public MilepostProximity.Segment next(){if(++count>MilepostJourneyEvidence.MAX_POINTS)throw new IllegalArgumentException("Unbounded evidence");return delegate.next();}
+            };}
+        };
+    }
+    State assessmentState(String user,String journey,String marker) {
+        String s=scalar(db(),"SELECT state FROM assessment WHERE user=? AND journey=? AND marker=?",user,journey,marker);
+        return s==null?null:State.valueOf(s);
+    }
     State state(String user,String journey) {
         String s=scalar(db(),"SELECT state FROM journey WHERE user=? AND id=?",user,journey);
         return s==null?null:State.valueOf(s);
@@ -236,10 +269,17 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
     List<Discovery> discoveries(String user,String after,int limit) {
         if(limit<1 || limit>PAGE)throw new IllegalArgumentException("Invalid page size");
         List<Discovery> out=new ArrayList<>();
-        try(Cursor c=db().rawQuery("SELECT a.marker,a.journey,a.event_date,r.ordinal,r.first_recognised FROM assessment a JOIN recognition r ON r.user=a.user AND r.marker=a.marker WHERE a.user=? AND a.marker>? AND a.state='DISCOVERED' AND NOT EXISTS (SELECT 1 FROM assessment b WHERE b.user=a.user AND b.marker=a.marker AND b.state='DISCOVERED' AND (b.event_ms<a.event_ms OR (b.event_ms=a.event_ms AND b.journey<a.journey))) ORDER BY a.marker LIMIT "+limit,new String[]{user,after})) {
+        try(Cursor c=db().rawQuery("SELECT a.marker,a.journey,a.event_date,r.ordinal,r.first_recognised FROM assessment a JOIN recognition r ON r.user=a.user AND r.marker=a.marker WHERE a.user=? AND a.marker>? AND a.state='DISCOVERED' AND NOT EXISTS (SELECT 1 FROM journey j WHERE j.user=a.user AND j.id=a.journey AND j.state='QUEUED') AND NOT EXISTS (SELECT 1 FROM assessment b WHERE b.user=a.user AND b.marker=a.marker AND b.state='DISCOVERED' AND NOT EXISTS (SELECT 1 FROM journey j WHERE j.user=b.user AND j.id=b.journey AND j.state='QUEUED') AND (b.event_ms<a.event_ms OR (b.event_ms=a.event_ms AND b.journey<a.journey))) ORDER BY a.marker LIMIT "+limit,new String[]{user,after})) {
             while(c.moveToNext())out.add(new Discovery(c));
         }
         return out;
+    }
+    /** Durable first-recognition history remains after withdrawal; no entitlement state. */
+    boolean previouslyRecognised(String user,String marker) {
+        return number(db(),"SELECT COUNT(*) FROM recognition WHERE user=? AND marker=?",user,marker)>0;
+    }
+    String withdrawalReason(String user,String marker) {
+        return scalar(db(),"SELECT invalidation FROM recognition WHERE user=? AND marker=? AND NOT EXISTS (SELECT 1 FROM assessment WHERE user=? AND marker=? AND state='DISCOVERED')",user,marker,user,marker);
     }
     String canonical(String alias) {return scalar(db(),"SELECT marker FROM alias WHERE alias=?",alias);}
     long proofCount(String user) {return number(db(),"SELECT COUNT(*) FROM assessment WHERE user=? AND state='DISCOVERED'",user);}
@@ -252,12 +292,13 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
             d.execSQL("CREATE TABLE runtime(singleton INTEGER PRIMARY KEY,evaluator TEXT NOT NULL)");
             d.execSQL("CREATE TABLE catalogue(singleton INTEGER PRIMARY KEY CHECK(singleton=1),revision INTEGER NOT NULL,sha TEXT NOT NULL,fingerprint TEXT NOT NULL)");
             d.execSQL("CREATE TABLE marker(id TEXT PRIMARY KEY,lon REAL NOT NULL,lat REAL NOT NULL,eligible INTEGER NOT NULL,valid_from INTEGER NOT NULL,valid_until INTEGER NOT NULL)");
-            d.execSQL("CREATE TABLE alias(alias TEXT PRIMARY KEY,marker TEXT NOT NULL REFERENCES marker(id))");
+            d.execSQL("CREATE TABLE identity_registry(id TEXT PRIMARY KEY,retired INTEGER NOT NULL)");
+            d.execSQL("CREATE TABLE alias(alias TEXT PRIMARY KEY,marker TEXT NOT NULL REFERENCES identity_registry(id))");
             d.execSQL("CREATE TABLE journey(user TEXT NOT NULL,id TEXT NOT NULL,version INTEGER NOT NULL,token TEXT NOT NULL,deleted INTEGER NOT NULL,cursor TEXT NOT NULL,state TEXT NOT NULL,PRIMARY KEY(user,id))");
             d.execSQL("CREATE INDEX journey_queue ON journey(user,state,id)");
             d.execSQL("CREATE TABLE assessment(user TEXT NOT NULL,journey TEXT NOT NULL,marker TEXT NOT NULL,state TEXT NOT NULL,reason TEXT NOT NULL,token TEXT NOT NULL,source_version INTEGER NOT NULL,catalogue INTEGER NOT NULL,evaluator TEXT NOT NULL,validator TEXT,source TEXT,mode TEXT,event_date TEXT,event_ms INTEGER,precision TEXT NOT NULL,recognised INTEGER NOT NULL,distance REAL,nearest_lon REAL,nearest_lat REAL,post_lon REAL,post_lat REAL,section INTEGER,source_start INTEGER,source_end INTEGER,method TEXT,PRIMARY KEY(user,journey,marker),FOREIGN KEY(user,journey) REFERENCES journey(user,id))");
             d.execSQL("CREATE INDEX assessment_discovery ON assessment(user,marker,state,event_ms,journey)");
-            d.execSQL("CREATE TABLE recognition(user TEXT NOT NULL,marker TEXT NOT NULL,ordinal INTEGER NOT NULL,first_recognised INTEGER NOT NULL,PRIMARY KEY(user,marker),UNIQUE(user,ordinal))");
+            d.execSQL("CREATE TABLE recognition(user TEXT NOT NULL,marker TEXT NOT NULL,ordinal INTEGER NOT NULL,first_recognised INTEGER NOT NULL,first_journey TEXT NOT NULL,first_token TEXT NOT NULL,first_event TEXT NOT NULL,first_catalogue INTEGER NOT NULL,invalidation TEXT,PRIMARY KEY(user,marker),UNIQUE(user,ordinal))");
         }
         @Override public void onUpgrade(SQLiteDatabase d,int oldVersion,int newVersion) {throw new IllegalStateException("Unsupported milepost schema; preserve database");}
         @Override public void onDowngrade(SQLiteDatabase d,int oldVersion,int newVersion) {throw new IllegalStateException("Future milepost schema; preserve database");}
