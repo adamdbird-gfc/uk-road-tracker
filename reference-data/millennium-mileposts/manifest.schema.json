@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Roadprints milepost manifest schema 1",
+  "description": "Cross-field filename/hash/count and provenance checks also run in the executable validator.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "attribution",
+    "bytes",
+    "design_counts",
+    "eligible_count",
+    "filename",
+    "generated_at",
+    "record_count",
+    "revision",
+    "schema_version",
+    "scope",
+    "sha256",
+    "source",
+    "supported_reader_versions",
+    "validated_physical_count"
+  ],
+  "properties": {
+    "attribution": {
+      "type": "string"
+    },
+    "bytes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 16777216
+    },
+    "design_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mills": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "rowe": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "mccoll": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "dudgeon": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "unknown": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "eligible_count": {
+      "const": 0
+    },
+    "filename": {
+      "type": "string",
+      "pattern": "^collections/published/millennium-mileposts/[a-f0-9]{64}/catalogue[.]jsonl$"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "record_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10000
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "scope": {
+      "const": "candidate-inventory-only"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "archive_entry",
+        "archive_sha256",
+        "bytes",
+        "extracted_at",
+        "licence",
+        "query",
+        "sha256",
+        "snapshot_at",
+        "url"
+      ],
+      "properties": {
+        "archive_entry": {
+          "type": "string"
+        },
+        "archive_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8388608
+        },
+        "extracted_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "licence": {
+          "type": "string"
+        },
+        "query": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "snapshot_at": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      }
+    },
+    "supported_reader_versions": {
+      "const": [
+        1
+      ]
+    },
+    "validated_physical_count": {
+      "const": 0
+    }
+  }
+}
