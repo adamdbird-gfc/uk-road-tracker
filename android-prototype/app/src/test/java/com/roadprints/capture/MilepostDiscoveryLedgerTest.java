@@ -93,6 +93,31 @@ public class MilepostDiscoveryLedgerTest {
         ledger.install(1,HASH,Arrays.asList(marker("p",50,false)));drain(e);
         assertEquals(MilepostDiscoveryLedger.State.PENDING_EVIDENCE,ledger.state("u","j"));assertTrue(discoveries().isEmpty());
     });}
+    @Test public void syntheticValidatedBackfillCanUpgradePendingWithoutNewJourneyIdentity()throws Exception {worker(()->{
+        ledger.install(1,HASH,Arrays.asList(marker("p",50,true)));
+        JSONObject row=MilepostJourneyEvidenceTest.journey("walking").put("journey_id","same");
+        row.getJSONObject("source").put("type","timeline_import");
+        MilepostProximity.Evidence pending=MilepostJourneyEvidence.nativeArchive(row);register(pending,1);drain(pending);
+        assertEquals(MilepostDiscoveryLedger.State.PENDING_EVIDENCE,ledger.state("u","same"));
+        MilepostProximity.Evidence base=MilepostProximityTest.pass("walking");
+        MilepostProximity.Evidence validated=new MilepostProximity.Evidence() {
+            public String journeyId(){return "same";}public String journeyDate(){return base.journeyDate();}
+            public String journeyEndDate(){return "2026-11-05T00:02:00Z";}public String mode(){return base.mode();}
+            public String source(){return "synthetic-independent-validator";}public String token(){return "validated-backfill-token";}
+            public String validationRevision(){return "synthetic-validator-2";}public MilepostProximity.Outcome problem(){return null;}
+            public Iterable<MilepostProximity.Segment> segments(){return base.segments();}
+        };
+        register(validated,2);drain(validated);assertEquals("same",discoveries().get(0).journey);
+        assertEquals(1,ledger.proofCount("u"));register(validated,2);drain(validated);assertEquals(1,discoveries().size());
+    });}
+    @Test public void catalogueChangeDuringEvaluationDiscardsThePage()throws Exception {worker(()->{
+        ledger.install(1,HASH,Arrays.asList(marker("p",50,true)));MilepostProximity.Evidence e=evidence("j");register(e,1);
+        assertThrows(ConcurrentModificationException.class,()->ledger.processNext("u",(u,id)->{
+            ledger.install(2,HASH,Arrays.asList(marker("p",200,true)));return e;
+        },()->false,1000));
+        assertEquals(0,ledger.proofCount("u"));drain(e);
+        assertEquals(MilepostDiscoveryLedger.State.ASSESSED_NO_DISCOVERY,ledger.state("u","j"));
+    });}
     @Test public void catalogueChangeRemovalRelocationAndPinConflictsFailClosed()throws Exception {worker(()->{
         MilepostProximity.Evidence e=evidence("j");ledger.install(1,HASH,Arrays.asList(marker("p",50,true)));register(e,1);drain(e);
         assertThrows(IllegalArgumentException.class,()->ledger.install(1,HASH,Arrays.asList(marker("p",60,true))));

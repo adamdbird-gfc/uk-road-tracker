@@ -118,6 +118,10 @@ jobs:
           assert roots
           totals={k:sum(int(r.attrib.get(k,0)) for r in roots) for k in ('tests','failures','errors','skipped')}
           print(totals)
+          for root in roots:
+              for out in root.iter('system-out'):
+                  for line in (out.text or '').splitlines():
+                      if 'MILEPOST_LEDGER_PROBE' in line: print(line)
           assert totals['tests']>=40 and totals['failures']==totals['errors']==totals['skipped']==0
           PY
       - name: Retain reports without APKs or credentials

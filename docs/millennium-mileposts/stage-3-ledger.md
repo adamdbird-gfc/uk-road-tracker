@@ -3,7 +3,9 @@
 Date: 5 November 2026. Tracking: #284. Related deferred work: #283.
 Starting main: `1ac9938807a53f9bd55ccc302708c52b91baaaca`, verified against
 GitHub main and merged #282. Stage 1 #280 and Stage 2 #281 are incorporated.
-Status: implemented; validation in progress; unmerged. No activation is included.
+Status: implemented; unmerged. Exact head, final CI results and acceptance status
+are recorded in [PR #285](https://github.com/adamdbird-gfc/uk-road-tracker/pull/285).
+No activation is included.
 
 ## Architecture and reuse
 
@@ -125,7 +127,8 @@ this is not a claim of a completed privacy/deletion integration.
 
 ## Validation and delivery evidence
 
-Pending CI receipt. Tests cover native and synthetic Stage 2 evidence, all nine
+The final-head CI receipt is maintained in PR #285 rather than embedding a
+self-referential commit hash in this file. Tests cover native and synthetic Stage 2 evidence, all nine
 0–200m boundaries, unapproved markers, historical pending evidence, vehicles,
 gaps, invalid timing, duplicate/reimport proofs, user isolation, correction,
 delete/re-add and stale writers, fallback, recognition stability, earlier history,
