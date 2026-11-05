@@ -1,0 +1,20 @@
+{
+  ".github/workflows/ncn-corridor-policy-validation.yml": "3df8912291b3f72ade2abd365d5a38cfef41f80c9fbbd36d451a860bd181270b",
+  "docs/ncn-corridor-policy/DECISIONS.md": "587a06b8cf3d65499abac0c5d0d68afec6f3e6b146d8606443ae99eea2dd1deb",
+  "docs/ncn-corridor-policy/IMPACT.md": "f9829b1f1c6cbc02afa530cfaa5b12ed87c48f154fa7180c3d38b06ae838c179",
+  "docs/ncn-corridor-policy/README.md": "6c47119a81f8fb7aad4759f2ee8658a7ae1bc11bc8338c67f23e53687d3356dd",
+  "docs/ncn-corridor-policy/STAGE1.md": "c74826153f937b43ce805efd2876d84e13efa09aaece7083084964cf78e676a9",
+  "docs/ncn-corridor-policy/STAGE2.md": "d71352e12e31f4d1d735b6f1d5587d4af8efcd2aa5fc45a1e65b684378874dfe",
+  "docs/ncn-corridor-policy/VALIDATION.md": "55950aac74181a19dd44c1ad016d346ebd60583e7ef790a96e8156234697763b",
+  "docs/ncn-corridor-policy/analyse.py": "468d57ef776e70f589fbb1524878210e3c955beb0074ee6899810341bd7d832d",
+  "docs/ncn-corridor-policy/baseline.json": "c9a6d8a0e80c82fb68f41c0c05effea847f5f00a954deed832221abb03b2aaf3",
+  "docs/ncn-corridor-policy/evidence.json": "7b09f6045c389c6794e9fc05bef4b4c0c6172eada16ff6de9cd7579d30234b0e",
+  "docs/ncn-corridor-policy/export_evidence.py": "5b30afba77e4233bbf9f323fef7e3903dd68767c9fb2374dde2030644fa7560d",
+  "docs/ncn-corridor-policy/findings.json": "acffe0d19213895973e522938ba2b753f7411cfcb4001f60655c842fadd6aea8",
+  "docs/ncn-corridor-policy/receipts/accounting.log": "6cccfc71f573dfe16d063b5ff9500f8261569ebfa60c87d98cc7caa66d8ddcde",
+  "docs/ncn-corridor-policy/receipts/bounded-evidence.log": "ea1c7cda03507ed17e19be12bfa2995e1fc4ca553c511bd4b66589f7bc5d201e",
+  "docs/ncn-corridor-policy/receipts/discovery.log": "7bb985aceecb422b05f70a7970889dcb84a3b2d83a3622d6f67ae57dc8109a54",
+  "docs/ncn-corridor-policy/receipts/existing-controls.log": "7db54c307aac00c71f09fc63edd7ccbbca64009ee5852820e2b68305e20c76b9",
+  "docs/ncn-corridor-policy/receipts/live-manifest.json": "f709361dfd5d8f87c0a8eda15ccb971e70f947e4ba7538c80b1922a500fc5d9d",
+  "docs/ncn-corridor-policy/test_policy_evidence.py": "701006aa2d930aec43d6c5e5509678004bcb3f340403145d990350ade4713deb"
+}

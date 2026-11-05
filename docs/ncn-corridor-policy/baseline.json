@@ -1,0 +1,57 @@
+{
+  "checked_at": "2026-11-05T07:49:00.668Z",
+  "main": "92ab97489c8c228c3cdaaf35ac9c3a14ddad700d",
+  "issue": 265,
+  "issue_state": "open",
+  "publication_issue": 194,
+  "publication_issue_state": "closed",
+  "open_prs_at_start": [
+    {
+      "number": 252,
+      "title": "Prepare private signed 0.25.221 capture update from merged #250",
+      "head": "c5cafa9c5ea9f9200a04d45aead0839b6b5c6625"
+    },
+    {
+      "number": 251,
+      "title": "Provide mobile HTTPS access to the public NCN diagnostic viewer",
+      "head": "7fa7dae887e03bf73d32c8da0fd76ad70cfc7420"
+    },
+    {
+      "number": 249,
+      "title": "Add offline NCN visual diagnostic viewer with pinned Deal evidence",
+      "head": "e274261bf4b60219ba473f4d8f0c78ef4ffb4154"
+    },
+    {
+      "number": 248,
+      "title": "Separate NCN operational decisions from geometry diagnostics",
+      "head": "4eb331b4d3547755d0f3d83e826888fc833fd8c7"
+    },
+    {
+      "number": 241,
+      "title": "Explain shared NCN matching, quantify evidence limits and scope next correction",
+      "head": "24428cb4ad35e563113d7a86f7edc13652dc2844"
+    },
+    {
+      "number": 240,
+      "title": "Classify remaining NCN binding gaps and scope a bounded seam correction",
+      "head": "21ab3fb2951c2d6539c37a0387a7c2887e7e6fe7"
+    },
+    {
+      "number": 238,
+      "title": "Consolidate NCN owner decisions and focused Stage 1 completion plan",
+      "head": "767d81c07c610ea248172825bee784f01550828f"
+    }
+  ],
+  "overlap": "Historical diagnostics #248/#249/#251 and #238/#240/#241 remain unmerged; none implements the 5 November policy or bounded Stage 1 corrections. #252 is an older Android packaging PR, outside scope.",
+  "published_revision": 4,
+  "live_manifest_bytes": 1079,
+  "live_manifest_sha256": "f709361dfd5d8f87c0a8eda15ccb971e70f947e4ba7538c80b1922a500fc5d9d",
+  "fresh_manifest_read": true,
+  "full_catalogue_downloaded": false,
+  "publication_reopened": false,
+  "installed_apk": "not inspected; offline policy/diagnostics task",
+  "live_backend": "not inspected; no backend changes",
+  "physical_device_acceptance": "not performed",
+  "source_android_baseline": "0.25.223 (269)",
+  "prior_final_head_validation": "PR #273 run 41911677561 succeeded on ef9cf138375798e09eda3ceea3dacdb6f75e2a03; recorded issue #265 integration receipt"
+}

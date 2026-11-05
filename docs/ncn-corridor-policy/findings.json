@@ -1,0 +1,1676 @@
+{
+  "already_published_deal_m": 561.888736534,
+  "assessability_after_percent": 92.608243626372,
+  "assessability_before_percent": 92.608243626372,
+  "assessability_delta_percentage_points": 0.0,
+  "baseline_revision": 4,
+  "cases": [
+    {
+      "admitted_piece_count": 1,
+      "admitted_screen_route_local_m": 8.88267804313356,
+      "candidate_piece_count": 1,
+      "confirmed_new_route_local_m": 0.0,
+      "confirmed_new_unique_network_m": 0.0,
+      "gross_route_local_screen_m": 8.88267804313356,
+      "historical_awards_changed": false,
+      "original_projection_origin": [
+        -1.3437774293553804,
+        54.4699892643778
+      ],
+      "original_source_binding_count": 27,
+      "pieces": [
+        {
+          "admitted": true,
+          "candidate_edge_ground_length_m": 7.794463599321571,
+          "id": "PC-91099e032677",
+          "local_angle_degrees": 17.180366239019634,
+          "local_mean_gap_to_candidate_edge_m": 0.9304755567347135,
+          "local_sampled_max_gap_to_candidate_edge_m": 1.9436530390550375,
+          "new_binding_approved": false,
+          "original_cause_region": "direction_gate",
+          "route_local_screen_m": 8.88267804313356,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 24,
+          "target_end_unclipped_station_on_candidate_edge_m": 9.03679073462789,
+          "target_endpoint_distances_to_full_source_m": [
+            1.5620070768999303,
+            1.9436530390550375
+          ],
+          "target_endpoint_source_stations_m": [
+            228.9004601559848,
+            269.3014707869092
+          ],
+          "target_interval_m": [
+            31.66876172979717,
+            40.55143977293073
+          ],
+          "target_key": "open-edge:96aac48b8463b443ba916d6dbb020a5118f70a5abc29a814e5e1c00a680a9bf1"
+        }
+      ],
+      "potential_unique_network_m": null,
+      "route": "NCN:1",
+      "route_attainability_changed": false,
+      "routes_improved": 0,
+      "source_length_geodesic_m": 269.30147078600584,
+      "source_length_ground_m": 269.3014707869092,
+      "source_section_keys": [
+        "4471919"
+      ],
+      "unadmitted_piece_count": 0,
+      "unadmitted_screen_route_local_m": 0.0,
+      "way": "4471919"
+    },
+    {
+      "admitted_piece_count": 2,
+      "admitted_screen_route_local_m": 62.114800383885736,
+      "candidate_piece_count": 2,
+      "confirmed_new_route_local_m": 0.0,
+      "confirmed_new_unique_network_m": 0.0,
+      "gross_route_local_screen_m": 62.114800383885736,
+      "historical_awards_changed": false,
+      "original_projection_origin": [
+        -1.238694665665012,
+        53.734628280093446
+      ],
+      "original_source_binding_count": 3,
+      "pieces": [
+        {
+          "admitted": true,
+          "candidate_edge_ground_length_m": 8.48867355779912,
+          "id": "PC-9053d0488bc5",
+          "local_angle_degrees": 18.730686118437326,
+          "local_mean_gap_to_candidate_edge_m": 4.096507102932361,
+          "local_sampled_max_gap_to_candidate_edge_m": 5.356847571653504,
+          "new_binding_approved": false,
+          "original_cause_region": "direction_gate",
+          "route_local_screen_m": 8.029936331661986,
+          "selected_target_endpoint_degrees": [
+            2,
+            3
+          ],
+          "source_edge": 5,
+          "target_end_unclipped_station_on_candidate_edge_m": -4.226789294974594,
+          "target_endpoint_distances_to_full_source_m": [
+            2.75982441006355,
+            1.461291071812036
+          ],
+          "target_endpoint_source_stations_m": [
+            92.39995421412665,
+            61.17999014835181
+          ],
+          "target_interval_m": [
+            16.71518299677999,
+            24.745119328441977
+          ],
+          "target_key": "open-edge:c7286ee85171a3104f46b4c8373aa0fab7488704d770e93519338abead31a691"
+        },
+        {
+          "admitted": true,
+          "candidate_edge_ground_length_m": 41.16898500155812,
+          "id": "PC-fd18f79dd345",
+          "local_angle_degrees": 16.636657364432494,
+          "local_mean_gap_to_candidate_edge_m": 5.812762875204035,
+          "local_sampled_max_gap_to_candidate_edge_m": 13.558853874231955,
+          "new_binding_approved": false,
+          "original_cause_region": "direction_gate",
+          "route_local_screen_m": 54.08486405222375,
+          "selected_target_endpoint_degrees": [
+            3,
+            2
+          ],
+          "source_edge": 1,
+          "target_end_unclipped_station_on_candidate_edge_m": -0.2068043522846735,
+          "target_endpoint_distances_to_full_source_m": [
+            1.461291071812036,
+            6.9269981532931055
+          ],
+          "target_endpoint_source_stations_m": [
+            61.17999014835181,
+            6.328296090293829
+          ],
+          "target_interval_m": [
+            0.0,
+            54.08486405222375
+          ],
+          "target_key": "open-edge:217a655a165d169e07ab9a7689b0e47e6827b3fd0c6dc1de1155f518dc1c2c0a"
+        }
+      ],
+      "potential_unique_network_m": null,
+      "route": "NCN:66",
+      "route_attainability_changed": false,
+      "routes_improved": 0,
+      "source_length_geodesic_m": 93.92390781454316,
+      "source_length_ground_m": 93.92390781136355,
+      "source_section_keys": [
+        "159311690"
+      ],
+      "unadmitted_piece_count": 0,
+      "unadmitted_screen_route_local_m": 0.0,
+      "way": "159311690"
+    },
+    {
+      "admitted_piece_count": 0,
+      "admitted_screen_route_local_m": 0.0,
+      "candidate_piece_count": 0,
+      "confirmed_new_route_local_m": 0.0,
+      "confirmed_new_unique_network_m": 0.0,
+      "gross_route_local_screen_m": 0.0,
+      "historical_awards_changed": false,
+      "nearest_original_target": {
+        "angle_to_admitted_source_edge_degrees": 89.85874924230154,
+        "key": "open-edge:2cfdbf92bffad636c803823f496b481fd44ce98802fd7d9b3d1d75dba560290d",
+        "local_distance_m": 1.218165560901362,
+        "note": "Nearest is not corresponding: no target binding is inferred.",
+        "target_coordinates": [
+          [
+            0.08070045044704521,
+            50.8539991204313
+          ],
+          [
+            0.0810154658120481,
+            50.8539890971556
+          ]
+        ]
+      },
+      "original_projection_origin": [
+        -1.412814772702716,
+        52.49513027523595
+      ],
+      "original_source_binding_count": 0,
+      "pieces": [],
+      "potential_unique_network_m": null,
+      "route": "RCN:90",
+      "route_attainability_changed": false,
+      "routes_improved": 0,
+      "source_length_geodesic_m": 12.967153281054575,
+      "source_length_ground_m": 12.967153281686146,
+      "source_section_keys": [
+        "1289002662:0:1"
+      ],
+      "unadmitted_piece_count": 0,
+      "unadmitted_screen_route_local_m": 0.0,
+      "way": "1289002662"
+    },
+    {
+      "admitted_piece_count": 3,
+      "admitted_screen_route_local_m": 28.442654851136275,
+      "candidate_piece_count": 12,
+      "confirmed_new_route_local_m": 0.0,
+      "confirmed_new_unique_network_m": 0.0,
+      "gross_route_local_screen_m": 2054.4454132719093,
+      "historical_awards_changed": false,
+      "original_projection_origin": [
+        -7.36845621432992,
+        54.8305472491527
+      ],
+      "original_source_binding_count": 30,
+      "pieces": [
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 85.21948342375492,
+          "id": "PC-086969628f87",
+          "local_angle_degrees": 0.0029732679185650746,
+          "local_mean_gap_to_candidate_edge_m": 10.459242732309876,
+          "local_sampled_max_gap_to_candidate_edge_m": 10.491712700975823,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 85.04640496364044,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 21,
+          "target_end_unclipped_station_on_candidate_edge_m": 86.10959435737026,
+          "target_endpoint_distances_to_full_source_m": [
+            10.449468628554818,
+            10.482855208608802
+          ],
+          "target_endpoint_source_stations_m": [
+            2748.9706764793295,
+            2833.640689429245
+          ],
+          "target_interval_m": [
+            0.0,
+            85.04640496364044
+          ],
+          "target_key": "open-edge:b30c49c694381249a15db4e0d044d078ae5eccf20389519f8356f7498360b2d4"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 15.458433671782029,
+          "id": "PC-12b806c49339",
+          "local_angle_degrees": 0.5320909860989799,
+          "local_mean_gap_to_candidate_edge_m": 5.445657051711248,
+          "local_sampled_max_gap_to_candidate_edge_m": 5.475111508084708,
+          "new_binding_approved": false,
+          "original_cause_region": "unadmitted_span_of_known_way",
+          "route_local_screen_m": 6.3385784598125285,
+          "selected_target_endpoint_degrees": [
+            1,
+            2
+          ],
+          "source_edge": 0,
+          "target_end_unclipped_station_on_candidate_edge_m": 16.202539909597142,
+          "target_endpoint_distances_to_full_source_m": [
+            5.416202595337787,
+            5.482674380770283
+          ],
+          "target_endpoint_source_stations_m": [
+            9.059720133314718,
+            16.20153444334848
+          ],
+          "target_interval_m": [
+            0.0,
+            6.3385784598125285
+          ],
+          "target_key": "open-edge:1a4b3f1b626da938f4c20e0c08b762625083d04caa7d814f2e3c0a48c537839b"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 613.2633474027792,
+          "id": "PC-167a1a8e7de0",
+          "local_angle_degrees": 0.0009941492994505585,
+          "local_mean_gap_to_candidate_edge_m": 10.113802877359204,
+          "local_sampled_max_gap_to_candidate_edge_m": 10.241485683810158,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 611.5881582879955,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 11,
+          "target_end_unclipped_station_on_candidate_edge_m": 616.1159445123706,
+          "target_endpoint_distances_to_full_source_m": [
+            10.077899297643784,
+            9.942578580723772
+          ],
+          "target_endpoint_source_stations_m": [
+            970.9766154657873,
+            1584.6590094316348
+          ],
+          "target_interval_m": [
+            0.0,
+            611.5881582879955
+          ],
+          "target_key": "open-edge:632fb70ec4d58ba7ed3b5cec923d7f34368f6b37d4ad9968431fc756dc50060a"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 100.25467340780894,
+          "id": "PC-33f0ff9dfe7a",
+          "local_angle_degrees": 1.9565783872845564,
+          "local_mean_gap_to_candidate_edge_m": 8.54776178953541,
+          "local_sampled_max_gap_to_candidate_edge_m": 9.99413937027485,
+          "new_binding_approved": false,
+          "original_cause_region": "unadmitted_span_of_known_way",
+          "route_local_screen_m": 84.68877196798324,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 24,
+          "target_end_unclipped_station_on_candidate_edge_m": 387.2585547248045,
+          "target_endpoint_distances_to_full_source_m": [
+            10.509182268706896,
+            282.3470726521924
+          ],
+          "target_endpoint_source_stations_m": [
+            3547.173658118898,
+            3651.407059525184
+          ],
+          "target_interval_m": [
+            15.070304908127365,
+            99.75907687611061
+          ],
+          "target_key": "open-edge:591a4b7ef7d463df516739aeba17c87f33593c0de686f67fc4215f5dff3dcb90"
+        },
+        {
+          "admitted": true,
+          "candidate_edge_ground_length_m": 14.961354909029287,
+          "id": "PC-3e4d48e6853c",
+          "local_angle_degrees": 0.0427181355471735,
+          "local_mean_gap_to_candidate_edge_m": 5.371955571119055,
+          "local_sampled_max_gap_to_candidate_edge_m": 10.496887632897913,
+          "new_binding_approved": false,
+          "original_cause_region": "direction_gate",
+          "route_local_screen_m": 10.478469546557644,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 6,
+          "target_end_unclipped_station_on_candidate_edge_m": 25.444039096700998,
+          "target_endpoint_distances_to_full_source_m": [
+            0.5347151206436688,
+            4.958751680258258
+          ],
+          "target_endpoint_source_stations_m": [
+            523.4272366925837,
+            537.1678356731635
+          ],
+          "target_interval_m": [
+            4.486054694785486,
+            14.964524241343131
+          ],
+          "target_key": "open-edge:0432b304be14c2b912f63a95b043959946dc2195f99ac8418a31ffc332da9bf8"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 100.25467340780894,
+          "id": "PC-76ebec33f305",
+          "local_angle_degrees": 1.9565783872845564,
+          "local_mean_gap_to_candidate_edge_m": 10.251660819490866,
+          "local_sampled_max_gap_to_candidate_edge_m": 10.509182268706896,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 15.070304908127365,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 24,
+          "target_end_unclipped_station_on_candidate_edge_m": 387.2585547248045,
+          "target_endpoint_distances_to_full_source_m": [
+            10.509182268706896,
+            282.3470726521924
+          ],
+          "target_endpoint_source_stations_m": [
+            3547.173658118898,
+            3651.407059525184
+          ],
+          "target_interval_m": [
+            0.0,
+            15.070304908127365
+          ],
+          "target_key": "open-edge:591a4b7ef7d463df516739aeba17c87f33593c0de686f67fc4215f5dff3dcb90"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 561.0293858059321,
+          "id": "PC-9b84cda2e009",
+          "local_angle_degrees": 0.0009469465966811374,
+          "local_mean_gap_to_candidate_edge_m": 10.52534368689495,
+          "local_sampled_max_gap_to_candidate_edge_m": 10.531860623992529,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 560.4376330267596,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 23,
+          "target_end_unclipped_station_on_candidate_edge_m": 561.2519166016907,
+          "target_endpoint_distances_to_full_source_m": [
+            10.52023748295486,
+            10.509182268706896
+          ],
+          "target_endpoint_source_stations_m": [
+            2985.700286217132,
+            3547.173658118898
+          ],
+          "target_interval_m": [
+            0.0,
+            560.4376330267596
+          ],
+          "target_key": "open-edge:2a25772a1db373d9bdc057bcbbd7f963fa09701c3ce0cca132b4103ffdf084b6"
+        },
+        {
+          "admitted": true,
+          "candidate_edge_ground_length_m": 21.97639650518842,
+          "id": "PC-a4681eeca4f5",
+          "local_angle_degrees": 0.07894709486902841,
+          "local_mean_gap_to_candidate_edge_m": 7.713152598112906,
+          "local_sampled_max_gap_to_candidate_edge_m": 10.48617792280569,
+          "new_binding_approved": false,
+          "original_cause_region": "direction_gate",
+          "route_local_screen_m": 8.715372710879805,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 5,
+          "target_end_unclipped_station_on_candidate_edge_m": 30.702730366889657,
+          "target_endpoint_distances_to_full_source_m": [
+            5.844982619534248,
+            0.5347151206436688
+          ],
+          "target_endpoint_source_stations_m": [
+            499.7214810792685,
+            523.4272366925837
+          ],
+          "target_interval_m": [
+            13.225694233553813,
+            21.94106694443362
+          ],
+          "target_key": "open-edge:bec7f03da8129ff135ed4ab7c39ec0353346b83900273ac288a1003cf213c5a3"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 282.7959815535093,
+          "id": "PC-eb3621aeccc9",
+          "local_angle_degrees": 0.004197138133622623,
+          "local_mean_gap_to_candidate_edge_m": 10.243896344500108,
+          "local_sampled_max_gap_to_candidate_edge_m": 10.488726035917985,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 282.6039275837832,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 10,
+          "target_end_unclipped_station_on_candidate_edge_m": 285.3630412260482,
+          "target_endpoint_distances_to_full_source_m": [
+            10.190459253225406,
+            10.077899297643784
+          ],
+          "target_endpoint_source_stations_m": [
+            687.7729221553917,
+            970.9766154657873
+          ],
+          "target_interval_m": [
+            0.0,
+            282.6039275837832
+          ],
+          "target_key": "open-edge:9afbb6f620cde29ead14d3a666c5569062dcbe37718bb6bf7abc6d90349e0522"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 231.61197426449723,
+          "id": "PC-ef75e02dc3b3",
+          "local_angle_degrees": 0.00417874136427767,
+          "local_mean_gap_to_candidate_edge_m": 9.93425412056933,
+          "local_sampled_max_gap_to_candidate_edge_m": 9.942578580723772,
+          "new_binding_approved": false,
+          "original_cause_region": "unadmitted_span_of_known_way",
+          "route_local_screen_m": 228.0945249878821,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 12,
+          "target_end_unclipped_station_on_candidate_edge_m": 234.93615641687117,
+          "target_endpoint_distances_to_full_source_m": [
+            9.942578580723772,
+            8.632850220495888
+          ],
+          "target_endpoint_source_stations_m": [
+            1584.6590094316348,
+            1818.8649072059154
+          ],
+          "target_interval_m": [
+            0.0,
+            228.0945249878821
+          ],
+          "target_key": "open-edge:c57b60b7f500b45fef198113e3ee381a7c4c7b26bb1e7f331c6e88285df66ef4"
+        },
+        {
+          "admitted": true,
+          "candidate_edge_ground_length_m": 17.218276311659878,
+          "id": "PC-f1982959cadc",
+          "local_angle_degrees": 0.17286194766030807,
+          "local_mean_gap_to_candidate_edge_m": 7.264702731762052,
+          "local_sampled_max_gap_to_candidate_edge_m": 10.507661617960085,
+          "new_binding_approved": false,
+          "original_cause_region": "direction_gate",
+          "route_local_screen_m": 9.248812593698828,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 7,
+          "target_end_unclipped_station_on_candidate_edge_m": 26.45431002516406,
+          "target_endpoint_distances_to_full_source_m": [
+            4.958751680258258,
+            8.702102812743302
+          ],
+          "target_endpoint_source_stations_m": [
+            537.1678356731635,
+            551.0236749206797
+          ],
+          "target_interval_m": [
+            7.946955741091264,
+            17.195768334790092
+          ],
+          "target_key": "open-edge:74224ad5d46940bb5258583d1ca5fa16ec0115821de27a631fec89e9f7d8b797"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 152.24382788379205,
+          "id": "PC-ff2f94e230a5",
+          "local_angle_degrees": 0.011128270048278948,
+          "local_mean_gap_to_candidate_edge_m": 10.499783926635871,
+          "local_sampled_max_gap_to_candidate_edge_m": 10.523131836892876,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 152.13445423478913,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 22,
+          "target_end_unclipped_station_on_candidate_edge_m": 152.71822458053424,
+          "target_endpoint_distances_to_full_source_m": [
+            10.482855208608802,
+            10.52023748295486
+          ],
+          "target_endpoint_source_stations_m": [
+            2833.640689429245,
+            2985.700286217132
+          ],
+          "target_interval_m": [
+            0.0,
+            152.13445423478913
+          ],
+          "target_key": "open-edge:c9ed1b04def1e856b9aaa26488715843f357f05ba55b2a405d48164df3ca823c"
+        }
+      ],
+      "potential_unique_network_m": null,
+      "route": "NCN:92",
+      "route_attainability_changed": false,
+      "routes_improved": 0,
+      "source_length_geodesic_m": 3651.4070517069654,
+      "source_length_ground_m": 3651.407059525184,
+      "source_section_keys": [
+        "30268009:1:10",
+        "30268009:13:21",
+        "30268009:25:26"
+      ],
+      "unadmitted_piece_count": 9,
+      "unadmitted_screen_route_local_m": 2026.002758420773,
+      "way": "30268009"
+    },
+    {
+      "admitted_piece_count": 0,
+      "admitted_screen_route_local_m": 0.0,
+      "candidate_piece_count": 35,
+      "confirmed_new_route_local_m": 0.0,
+      "confirmed_new_unique_network_m": 0.0,
+      "gross_route_local_screen_m": 820.9411799680848,
+      "historical_awards_changed": false,
+      "original_projection_origin": [
+        -3.04791445486327,
+        55.993874531166696
+      ],
+      "original_source_binding_count": 2,
+      "pieces": [
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 153.6054006481893,
+          "id": "PC-01adf869e486",
+          "local_angle_degrees": 2.2011811975628373,
+          "local_mean_gap_to_candidate_edge_m": 13.030292954848107,
+          "local_sampled_max_gap_to_candidate_edge_m": 13.746989766983162,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 38.4240563677353,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 8,
+          "target_end_unclipped_station_on_candidate_edge_m": 115.85643458501806,
+          "target_endpoint_distances_to_full_source_m": [
+            12.313596142713054,
+            13.746989766983162
+          ],
+          "target_endpoint_source_stations_m": [
+            293.0840579214085,
+            330.3763064409293
+          ],
+          "target_interval_m": [
+            0.0,
+            38.4240563677353
+          ],
+          "target_key": "open-edge:ffb4e5ffda2b8569162621e2a66bd3991b307c3889b10188c858ce89c186ccc1"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 143.15013425000416,
+          "id": "PC-0a9c7a030638",
+          "local_angle_degrees": 1.1862732685814095,
+          "local_mean_gap_to_candidate_edge_m": 17.826832565873502,
+          "local_sampled_max_gap_to_candidate_edge_m": 18.025264096791865,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 16.74218853663396,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 10,
+          "target_end_unclipped_station_on_candidate_edge_m": 144.31496512199263,
+          "target_endpoint_distances_to_full_source_m": [
+            17.651006814096863,
+            17.944901254842495
+          ],
+          "target_endpoint_source_stations_m": [
+            647.8578678384619,
+            664.6474250578715
+          ],
+          "target_interval_m": [
+            0.0,
+            16.74218853663396
+          ],
+          "target_key": "open-edge:26a3b29848d4beaab9317fbe52627a2fabe70a9652c98ca6d85ade30c6cf1009"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 196.9269183620766,
+          "id": "PC-1d08d39f481e",
+          "local_angle_degrees": 2.052855387344563,
+          "local_mean_gap_to_candidate_edge_m": 14.611438199378677,
+          "local_sampled_max_gap_to_candidate_edge_m": 24.48302131203634,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 66.01490284065873,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 11,
+          "target_end_unclipped_station_on_candidate_edge_m": 217.42419518599516,
+          "target_endpoint_distances_to_full_source_m": [
+            11.092356137302556,
+            13.860266528556629
+          ],
+          "target_endpoint_source_stations_m": [
+            816.2836034037744,
+            880.0561038366036
+          ],
+          "target_interval_m": [
+            0.0,
+            66.01490284065873
+          ],
+          "target_key": "open-edge:a48eb3498b6fdfa7fda0422906f5731fd40c02e55c3805f8184e0fdec1ef35c7"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 143.15013425000416,
+          "id": "PC-1db2db6482ef",
+          "local_angle_degrees": 4.94607327936247,
+          "local_mean_gap_to_candidate_edge_m": 14.631726430911096,
+          "local_sampled_max_gap_to_candidate_edge_m": 17.651006814096863,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 72.0830154124165,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 10,
+          "target_end_unclipped_station_on_candidate_edge_m": 128.06077252319113,
+          "target_endpoint_distances_to_full_source_m": [
+            11.612446047725326,
+            17.651006814096863
+          ],
+          "target_endpoint_source_stations_m": [
+            578.0804567063539,
+            647.8578678384619
+          ],
+          "target_interval_m": [
+            0.0,
+            72.0830154124165
+          ],
+          "target_key": "open-edge:05c1d452330c4a6141cd385dc9669e58f09a1354501e30189e5f22103f570738"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 51.01730836467075,
+          "id": "PC-1ee5b9394730",
+          "local_angle_degrees": 2.3200797017573036,
+          "local_mean_gap_to_candidate_edge_m": 18.460270488603875,
+          "local_sampled_max_gap_to_candidate_edge_m": 18.715681516221153,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 12.991296819832822,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 13,
+          "target_end_unclipped_station_on_candidate_edge_m": 13.23698803185113,
+          "target_endpoint_distances_to_full_source_m": [
+            18.204859460986597,
+            18.715681516221153
+          ],
+          "target_endpoint_source_stations_m": [
+            1136.7262412782195,
+            1149.334406994802
+          ],
+          "target_interval_m": [
+            0.0,
+            12.991296819832822
+          ],
+          "target_key": "open-edge:2f0dc48dec1969d2a7f852a4f623eb5ed84c9219cf676502b83d14b8225594c4"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 51.01730836467075,
+          "id": "PC-2594838078ad",
+          "local_angle_degrees": 15.223575941011031,
+          "local_mean_gap_to_candidate_edge_m": 17.55659979101464,
+          "local_sampled_max_gap_to_candidate_edge_m": 18.94717844211092,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 10.903215718628857,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 13,
+          "target_end_unclipped_station_on_candidate_edge_m": 35.219158947493476,
+          "target_endpoint_distances_to_full_source_m": [
+            18.94717844211092,
+            16.16602113991836
+          ],
+          "target_endpoint_source_stations_m": [
+            1161.0968405580918,
+            1171.3165779104445
+          ],
+          "target_interval_m": [
+            0.0,
+            10.903215718628857
+          ],
+          "target_key": "open-edge:90ba57245af1d3d22851ae3da9b68a314b694860e5928165e6aeb233a7aeddfb"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 151.67182281117016,
+          "id": "PC-25d6a4f08105",
+          "local_angle_degrees": 5.065915556582714,
+          "local_mean_gap_to_candidate_edge_m": 17.792304097569726,
+          "local_sampled_max_gap_to_candidate_edge_m": 18.491744478483763,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 15.45005208100752,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 9,
+          "target_end_unclipped_station_on_candidate_edge_m": 13.625608182608248,
+          "target_endpoint_distances_to_full_source_m": [
+            18.43649269677181,
+            17.12085198665508
+          ],
+          "target_endpoint_source_stations_m": [
+            366.6968639843085,
+            381.75088068670874
+          ],
+          "target_interval_m": [
+            0.0,
+            15.45005208100752
+          ],
+          "target_key": "open-edge:0d2910217f5d22c9822e8591605cffa47aecb3ea6f54458a69937ff21f8436bb"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 276.2232710355995,
+          "id": "PC-398e4ff8c35b",
+          "local_angle_degrees": 2.44040869847166,
+          "local_mean_gap_to_candidate_edge_m": 17.084450948042775,
+          "local_sampled_max_gap_to_candidate_edge_m": 17.35517915315393,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 13.09195862124025,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 12,
+          "target_end_unclipped_station_on_candidate_edge_m": 263.4565503061915,
+          "target_endpoint_distances_to_full_source_m": [
+            16.81372274293162,
+            17.35517915315393
+          ],
+          "target_endpoint_source_stations_m": [
+            1110.6261031664458,
+            1123.330698233543
+          ],
+          "target_interval_m": [
+            0.0,
+            13.09195862124025
+          ],
+          "target_key": "open-edge:64caa95b500831f2f5e7c4f617440f383880eee5ee7091285764a03cd1d4ede8"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 276.2232710355995,
+          "id": "PC-39cd31253c84",
+          "local_angle_degrees": 2.326884933255447,
+          "local_mean_gap_to_candidate_edge_m": 13.297160980998758,
+          "local_sampled_max_gap_to_candidate_edge_m": 13.596018235240935,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 15.16494266105626,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 12,
+          "target_end_unclipped_station_on_candidate_edge_m": 106.09100032250218,
+          "target_endpoint_distances_to_full_source_m": [
+            13.596018235240935,
+            12.998303726756578
+          ],
+          "target_endpoint_source_stations_m": [
+            951.2554871386773,
+            965.9651482498537
+          ],
+          "target_interval_m": [
+            0.0,
+            15.16494266105626
+          ],
+          "target_key": "open-edge:506e3218266a5eb9b4124adb6faa5ba0a3a5398036dd228c3e8c3435aa175355"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 276.2232710355995,
+          "id": "PC-4aa76f1659fb",
+          "local_angle_degrees": 0.542408012076125,
+          "local_mean_gap_to_candidate_edge_m": 14.188321656141124,
+          "local_sampled_max_gap_to_candidate_edge_m": 14.253826824236578,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 14.253592137839988,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 12,
+          "target_end_unclipped_station_on_candidate_edge_m": 77.377599527254,
+          "target_endpoint_distances_to_full_source_m": [
+            14.253826824236578,
+            14.122816488045672
+          ],
+          "target_endpoint_source_stations_m": [
+            923.413244100146,
+            937.2517474546055
+          ],
+          "target_interval_m": [
+            0.0,
+            14.253592137839988
+          ],
+          "target_key": "open-edge:5b45d01e763e4e3be5a0ed6e98da35e825c05439aad8e0b5c383bf372ec7ecd0"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 276.2232710355995,
+          "id": "PC-5360f13a0401",
+          "local_angle_degrees": 3.6546675152627937,
+          "local_mean_gap_to_candidate_edge_m": 17.78279480631904,
+          "local_sampled_max_gap_to_candidate_edge_m": 18.215716442085196,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 13.753589038231501,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 12,
+          "target_end_unclipped_station_on_candidate_edge_m": 276.7908060955964,
+          "target_endpoint_distances_to_full_source_m": [
+            17.35517915315393,
+            18.204859460986597
+          ],
+          "target_endpoint_source_stations_m": [
+            1123.330698233543,
+            1136.7262412782195
+          ],
+          "target_interval_m": [
+            0.0,
+            13.753589038231501
+          ],
+          "target_key": "open-edge:e7653f7fccaa4ae9a2d5a1bf2b4b83e5cb3433cc138df2cd46e15fe261e42574"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 276.2232710355995,
+          "id": "PC-554e56e930fb",
+          "local_angle_degrees": 1.6093314932506937,
+          "local_mean_gap_to_candidate_edge_m": 15.526313960857275,
+          "local_sampled_max_gap_to_candidate_edge_m": 15.68449190036663,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 11.598806466275411,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 12,
+          "target_end_unclipped_station_on_candidate_edge_m": 200.6708113476176,
+          "target_endpoint_distances_to_full_source_m": [
+            15.368136021347919,
+            15.68449190036663
+          ],
+          "target_endpoint_source_stations_m": [
+            1049.2849486681646,
+            1060.5449592749692
+          ],
+          "target_interval_m": [
+            0.0,
+            11.598806466275411
+          ],
+          "target_key": "open-edge:1143b2918b67912b03e2e7ddf0a3fb4338b04d008626656c0f79198a874d751c"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 276.2232710355995,
+          "id": "PC-69b722997e0e",
+          "local_angle_degrees": 2.4856475569844587,
+          "local_mean_gap_to_candidate_edge_m": 13.300377828452184,
+          "local_sampled_max_gap_to_candidate_edge_m": 13.602451930147792,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 14.342061949342632,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 12,
+          "target_end_unclipped_station_on_candidate_edge_m": 120.00826847621158,
+          "target_endpoint_distances_to_full_source_m": [
+            12.998303726756578,
+            13.602451930147792
+          ],
+          "target_endpoint_source_stations_m": [
+            965.9651482498537,
+            979.8824164035631
+          ],
+          "target_interval_m": [
+            0.0,
+            14.342061949342632
+          ],
+          "target_key": "open-edge:6bf387516704eab1dcc41f2b68a1ea20fa18a5e2cdd38cb55db7cef3a963cf6f"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 276.2232710355995,
+          "id": "PC-6ae1373f8ea4",
+          "local_angle_degrees": 1.680900605396095,
+          "local_mean_gap_to_candidate_edge_m": 14.68964183492181,
+          "local_sampled_max_gap_to_candidate_edge_m": 14.925710747597865,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 16.573345636231455,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 12,
+          "target_end_unclipped_station_on_candidate_edge_m": 241.10852400819283,
+          "target_endpoint_distances_to_full_source_m": [
+            14.453572922245757,
+            14.925710747597865
+          ],
+          "target_endpoint_source_stations_m": [
+            1084.8938304153328,
+            1100.9826719355444
+          ],
+          "target_interval_m": [
+            0.0,
+            16.573345636231455
+          ],
+          "target_key": "open-edge:a9c5b4e8eac3679f88870497de7688c756044209f0274cb838159602eb9f0aa6"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 153.6054006481893,
+          "id": "PC-797fb15ec72d",
+          "local_angle_degrees": 2.553369304728476,
+          "local_mean_gap_to_candidate_edge_m": 18.134896756620396,
+          "local_sampled_max_gap_to_candidate_edge_m": 18.43649269677181,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 13.939510219137782,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 8,
+          "target_end_unclipped_station_on_candidate_edge_m": 152.17699212839725,
+          "target_endpoint_distances_to_full_source_m": [
+            17.83330081646898,
+            18.43649269677181
+          ],
+          "target_endpoint_source_stations_m": [
+            353.17063149303476,
+            366.6968639843085
+          ],
+          "target_interval_m": [
+            0.0,
+            13.939510219137782
+          ],
+          "target_key": "open-edge:e659f73770db4e7098fd20f6b9abbdbfc13aa12521b5ab026c8cfe7813160c9f"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 276.2232710355995,
+          "id": "PC-81388d656f70",
+          "local_angle_degrees": 5.472147186092375,
+          "local_mean_gap_to_candidate_edge_m": 15.014509338085933,
+          "local_sampled_max_gap_to_candidate_edge_m": 16.846027921176915,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 39.525855241997206,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 12,
+          "target_end_unclipped_station_on_candidate_edge_m": 172.12978202526253,
+          "target_endpoint_distances_to_full_source_m": [
+            13.182990754994949,
+            16.846027921176915
+          ],
+          "target_endpoint_source_stations_m": [
+            993.7670114802828,
+            1032.003929952614
+          ],
+          "target_interval_m": [
+            0.0,
+            39.525855241997206
+          ],
+          "target_key": "open-edge:a4645e33497c70ee6dcf8d1b2c8833e98ddee55df9f806252012dede99a709b3"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 276.2232710355995,
+          "id": "PC-868b985743d2",
+          "local_angle_degrees": 2.1543595772590067,
+          "local_mean_gap_to_candidate_edge_m": 13.859417361643306,
+          "local_sampled_max_gap_to_candidate_edge_m": 14.122816488045672,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 14.435304695494768,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 12,
+          "target_end_unclipped_station_on_candidate_edge_m": 91.38133921132577,
+          "target_endpoint_distances_to_full_source_m": [
+            14.122816488045672,
+            13.596018235240935
+          ],
+          "target_endpoint_source_stations_m": [
+            937.2517474546055,
+            951.2554871386773
+          ],
+          "target_interval_m": [
+            0.0,
+            14.435304695494768
+          ],
+          "target_key": "open-edge:6796b7c914438932f03cc9fd87c4b026efe7bcca1b7e55a3ba517e111c8714d4"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 10.414222906022664,
+          "id": "PC-9279f6a56009",
+          "local_angle_degrees": 8.25905228513286,
+          "local_mean_gap_to_candidate_edge_m": 12.275665198659699,
+          "local_sampled_max_gap_to_candidate_edge_m": 13.248567531000663,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 13.683080884359969,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 1,
+          "target_end_unclipped_station_on_candidate_edge_m": 12.16246979201798,
+          "target_endpoint_distances_to_full_source_m": [
+            13.248567531000663,
+            11.411288106002305
+          ],
+          "target_endpoint_source_stations_m": [
+            9.249865487607808,
+            19.664088393630472
+          ],
+          "target_interval_m": [
+            0.0,
+            13.683080884359969
+          ],
+          "target_key": "open-edge:3e09ec66b19aaa80e0432da7fb0e01c065bb164fafec8dc51f404ff7e9521d40"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 196.9269183620766,
+          "id": "PC-93c362d46093",
+          "local_angle_degrees": 2.938528648961647,
+          "local_mean_gap_to_candidate_edge_m": 16.936448170273557,
+          "local_sampled_max_gap_to_candidate_edge_m": 17.944901254842495,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 40.52556770750831,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 11,
+          "target_end_unclipped_station_on_candidate_edge_m": 40.991584372393426,
+          "target_endpoint_distances_to_full_source_m": [
+            17.944901254842495,
+            15.927995085704618
+          ],
+          "target_endpoint_source_stations_m": [
+            664.6474250578715,
+            703.9388139376682
+          ],
+          "target_interval_m": [
+            0.0,
+            40.52556770750831
+          ],
+          "target_key": "open-edge:75349b1f99caf09a8b5bfb9a4690ed4097deaad59faa311bbc7cf12f70cb6251"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 9.249865487607808,
+          "id": "PC-a0caadb44fc7",
+          "local_angle_degrees": 9.512698561565475,
+          "local_mean_gap_to_candidate_edge_m": 14.356167333332229,
+          "local_sampled_max_gap_to_candidate_edge_m": 14.84416822268367,
+          "new_binding_approved": false,
+          "original_cause_region": "finite_endpoint_or_alignment",
+          "route_local_screen_m": 5.988591087744813,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 0,
+          "target_end_unclipped_station_on_candidate_edge_m": 11.248075908660576,
+          "target_endpoint_distances_to_full_source_m": [
+            15.122885477748923,
+            13.248567531000663
+          ],
+          "target_endpoint_source_stations_m": [
+            0.0,
+            9.249865487607808
+          ],
+          "target_interval_m": [
+            1.6005157624464337,
+            7.589106850191246
+          ],
+          "target_key": "open-edge:e3506268c5144a5f32f011bdb3220d5bbe4ca3ce9a6acb8189671a3f17ca1200"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 276.2232710355995,
+          "id": "PC-a0cdaef1a709",
+          "local_angle_degrees": 1.7304103800642705,
+          "local_mean_gap_to_candidate_edge_m": 13.392721342571367,
+          "local_sampled_max_gap_to_candidate_edge_m": 13.602451930147792,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 14.30843547009607,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 12,
+          "target_end_unclipped_station_on_candidate_edge_m": 133.8928635529313,
+          "target_endpoint_distances_to_full_source_m": [
+            13.602451930147792,
+            13.182990754994949
+          ],
+          "target_endpoint_source_stations_m": [
+            979.8824164035631,
+            993.7670114802828
+          ],
+          "target_interval_m": [
+            0.0,
+            14.30843547009607
+          ],
+          "target_key": "open-edge:2e98aa0186f9287ae9e6ee1ff653d5924d63a48b9c899af86740429833c02974"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 151.67182281117016,
+          "id": "PC-a8e4b8c8d444",
+          "local_angle_degrees": 9.145979315279382,
+          "local_mean_gap_to_candidate_edge_m": 12.088957297114908,
+          "local_sampled_max_gap_to_candidate_edge_m": 12.825783081188446,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 9.550882087138936,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 9,
+          "target_end_unclipped_station_on_candidate_edge_m": 45.87698426879836,
+          "target_endpoint_distances_to_full_source_m": [
+            12.825783081188446,
+            11.352131513041371
+          ],
+          "target_endpoint_source_stations_m": [
+            404.848984170669,
+            414.0022567728989
+          ],
+          "target_interval_m": [
+            0.0,
+            9.550882087138936
+          ],
+          "target_key": "open-edge:1a8d3f70d0b99ddbc72c8bcadced170cd622efd5a4884285e84fb5b4edce800c"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 151.67182281117016,
+          "id": "PC-b91b99379bae",
+          "local_angle_degrees": 9.488828237926825,
+          "local_mean_gap_to_candidate_edge_m": 13.697555136242073,
+          "local_sampled_max_gap_to_candidate_edge_m": 14.569327191295699,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 10.895131831415625,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 9,
+          "target_end_unclipped_station_on_candidate_edge_m": 36.723711666568484,
+          "target_endpoint_distances_to_full_source_m": [
+            14.569327191295699,
+            12.825783081188446
+          ],
+          "target_endpoint_source_stations_m": [
+            394.41748088157897,
+            404.848984170669
+          ],
+          "target_interval_m": [
+            0.0,
+            10.895131831415625
+          ],
+          "target_key": "open-edge:756dba31968510af19420e00befec2cdabe0e8207ced31b2f66ceb210229b88e"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 153.6054006481893,
+          "id": "PC-b9cc1044e81c",
+          "local_angle_degrees": 12.060368844863683,
+          "local_mean_gap_to_candidate_edge_m": 16.71613860084654,
+          "local_sampled_max_gap_to_candidate_edge_m": 17.83330081646898,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 10.98431272085589,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 8,
+          "target_end_unclipped_station_on_candidate_edge_m": 138.65075963712354,
+          "target_endpoint_distances_to_full_source_m": [
+            15.598976385224102,
+            17.83330081646898
+          ],
+          "target_endpoint_source_stations_m": [
+            342.71315302080194,
+            353.17063149303476
+          ],
+          "target_interval_m": [
+            0.0,
+            10.98431272085589
+          ],
+          "target_key": "open-edge:520ae618aa42dc3d5a013ec4bf34e57d0821b89b4c9a3fb83fd80a462496422b"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 9.319371989705056,
+          "id": "PC-c0d37a032b93",
+          "local_angle_degrees": 0.04715516046630812,
+          "local_mean_gap_to_candidate_edge_m": 11.388331527177934,
+          "local_sampled_max_gap_to_candidate_edge_m": 11.422746110580078,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 11.673415403500364,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 2,
+          "target_end_unclipped_station_on_candidate_edge_m": 10.374591228391676,
+          "target_endpoint_distances_to_full_source_m": [
+            11.411288106002305,
+            11.422746110580078
+          ],
+          "target_endpoint_source_stations_m": [
+            19.664088393630472,
+            28.983460383335526
+          ],
+          "target_interval_m": [
+            0.0,
+            11.673415403500364
+          ],
+          "target_key": "open-edge:34e7b247e39c71a10a4c2a0b44990405916c125a6de4bcf8b469667ff85b51d0"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 276.2232710355995,
+          "id": "PC-c4acb27661ec",
+          "local_angle_degrees": 0.5200694626445378,
+          "local_mean_gap_to_candidate_edge_m": 14.0570466763966,
+          "local_sampled_max_gap_to_candidate_edge_m": 14.253826824236578,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 44.65235158558975,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 12,
+          "target_end_unclipped_station_on_candidate_edge_m": 63.5390961727945,
+          "target_endpoint_distances_to_full_source_m": [
+            13.860266528556629,
+            14.253826824236578
+          ],
+          "target_endpoint_source_stations_m": [
+            880.0561038366036,
+            923.413244100146
+          ],
+          "target_interval_m": [
+            0.0,
+            44.65235158558975
+          ],
+          "target_key": "open-edge:347bc67425c15de70b405071e194e6b6c05e5bc7d15ea30da680a2d4103de347"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 51.01730836467075,
+          "id": "PC-cc038d4a0d7a",
+          "local_angle_degrees": 1.127494969684703,
+          "local_mean_gap_to_candidate_edge_m": 18.83142997916604,
+          "local_sampled_max_gap_to_candidate_edge_m": 18.94717844211092,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 12.114345240120423,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 13,
+          "target_end_unclipped_station_on_candidate_edge_m": 24.999421595140877,
+          "target_endpoint_distances_to_full_source_m": [
+            18.715681516221153,
+            18.94717844211092
+          ],
+          "target_endpoint_source_stations_m": [
+            1149.334406994802,
+            1161.0968405580918
+          ],
+          "target_interval_m": [
+            0.0,
+            12.114345240120423
+          ],
+          "target_key": "open-edge:43c1d7a1f1d2ef8f65ded0a85019acb7fe89cb3b05b7235e269a84b5c1a8f280"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 24.226308177824272,
+          "id": "PC-ce7fead53cd4",
+          "local_angle_degrees": 0.03856797630542135,
+          "local_mean_gap_to_candidate_edge_m": 10.941595917793581,
+          "local_sampled_max_gap_to_candidate_edge_m": 13.16038544755382,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 33.51395109961537,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 5,
+          "target_end_unclipped_station_on_candidate_edge_m": 24.435043029801477,
+          "target_endpoint_distances_to_full_source_m": [
+            10.365639760597862,
+            10.394606316569915
+          ],
+          "target_endpoint_source_stations_m": [
+            43.59757334014044,
+            76.1402560999606
+          ],
+          "target_interval_m": [
+            0.0,
+            33.51395109961537
+          ],
+          "target_key": "open-edge:f971caa6ad2b89cc429946d909c3189a98359f57cf3f2f96708251bf6c4fe38a"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 276.2232710355995,
+          "id": "PC-d94d3a246b21",
+          "local_angle_degrees": 11.077376612344528,
+          "local_mean_gap_to_candidate_edge_m": 15.869716745264743,
+          "local_sampled_max_gap_to_candidate_edge_m": 16.81372274293162,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 10.097124039003932,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 12,
+          "target_end_unclipped_station_on_candidate_edge_m": 250.75195523909437,
+          "target_endpoint_distances_to_full_source_m": [
+            14.925710747597865,
+            16.81372274293162
+          ],
+          "target_endpoint_source_stations_m": [
+            1100.9826719355444,
+            1110.6261031664458
+          ],
+          "target_interval_m": [
+            0.0,
+            10.097124039003932
+          ],
+          "target_key": "open-edge:df8faadff1e5b10ddfeea38e2e3d29dc537eb6faeade59c46e666113207ed395"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 151.67182281117016,
+          "id": "PC-dd5502c54a36",
+          "local_angle_degrees": 11.389090290831017,
+          "local_mean_gap_to_candidate_edge_m": 15.845089588975389,
+          "local_sampled_max_gap_to_candidate_edge_m": 17.12085198665508,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 13.308809425877564,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 9,
+          "target_end_unclipped_station_on_candidate_edge_m": 26.292208377478495,
+          "target_endpoint_distances_to_full_source_m": [
+            17.12085198665508,
+            14.569327191295699
+          ],
+          "target_endpoint_source_stations_m": [
+            381.75088068670874,
+            394.41748088157897
+          ],
+          "target_interval_m": [
+            0.0,
+            13.308809425877564
+          ],
+          "target_key": "open-edge:60cff05f7665764356e820e19127a6cd23b3a23c681e9d1316e44cc71805868a"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 276.2232710355995,
+          "id": "PC-e19d0c821db6",
+          "local_angle_degrees": 4.888104835412835,
+          "local_mean_gap_to_candidate_edge_m": 16.107081971262417,
+          "local_sampled_max_gap_to_candidate_edge_m": 16.846027921176915,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 17.868100639263346,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 12,
+          "target_end_unclipped_station_on_candidate_edge_m": 189.41080074081307,
+          "target_endpoint_distances_to_full_source_m": [
+            16.846027921176915,
+            15.368136021347919
+          ],
+          "target_endpoint_source_stations_m": [
+            1032.003929952614,
+            1049.2849486681646
+          ],
+          "target_interval_m": [
+            0.0,
+            17.868100639263346
+          ],
+          "target_key": "open-edge:83c03a0ec400d870a308ab5942bd0edc571a3e36a97fa33f78a4edc255e8a135"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 276.2232710355995,
+          "id": "PC-ee7fe4527e99",
+          "local_angle_degrees": 2.894034537282297,
+          "local_mean_gap_to_candidate_edge_m": 15.069032411306193,
+          "local_sampled_max_gap_to_candidate_edge_m": 15.68449190036663,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 25.114620246536013,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 12,
+          "target_end_unclipped_station_on_candidate_edge_m": 225.01968248798124,
+          "target_endpoint_distances_to_full_source_m": [
+            15.68449190036663,
+            14.453572922245757
+          ],
+          "target_endpoint_source_stations_m": [
+            1060.5449592749692,
+            1084.8938304153328
+          ],
+          "target_interval_m": [
+            0.0,
+            25.114620246536013
+          ],
+          "target_key": "open-edge:4266bc4dd014ae545429ecc9b385b94fb9f91040bb5f9bf5f4380d4d8b3ebc41"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 196.9269183620766,
+          "id": "PC-eff9857a07b7",
+          "local_angle_degrees": 2.464651822838338,
+          "local_mean_gap_to_candidate_edge_m": 13.510175611503584,
+          "local_sampled_max_gap_to_candidate_edge_m": 15.927995085704618,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 115.82363154569296,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 11,
+          "target_end_unclipped_station_on_candidate_edge_m": 153.33637383849958,
+          "target_endpoint_distances_to_full_source_m": [
+            15.927995085704618,
+            11.092356137302556
+          ],
+          "target_endpoint_source_stations_m": [
+            703.9388139376682,
+            816.2836034037744
+          ],
+          "target_interval_m": [
+            0.0,
+            115.82363154569296
+          ],
+          "target_key": "open-edge:2614f6d3b8c7586bbbb8ac3ef8ce396bbc6f58e0774d08da255aa55ae3bd63a4"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 11.523850852494949,
+          "id": "PC-f7c7d96474b1",
+          "local_angle_degrees": 4.653886997675671,
+          "local_mean_gap_to_candidate_edge_m": 10.756089027023425,
+          "local_sampled_max_gap_to_candidate_edge_m": 11.422746110580078,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 18.723759701232378,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 3,
+          "target_end_unclipped_station_on_candidate_edge_m": 16.152956523202384,
+          "target_endpoint_distances_to_full_source_m": [
+            11.422746110580078,
+            10.365639760597862
+          ],
+          "target_endpoint_source_stations_m": [
+            28.983460383335526,
+            43.59757334014044
+          ],
+          "target_interval_m": [
+            0.0,
+            18.723759701232378
+          ],
+          "target_key": "open-edge:0fb313c42b87b69f2ec83ae561b723c3bd420d04f786d8aa57da9ae33734556b"
+        },
+        {
+          "admitted": false,
+          "candidate_edge_ground_length_m": 153.6054006481893,
+          "id": "PC-fede6efbb324",
+          "local_angle_degrees": 8.537395262491287,
+          "local_mean_gap_to_candidate_edge_m": 14.672983076103634,
+          "local_sampled_max_gap_to_candidate_edge_m": 15.598976385224102,
+          "new_binding_approved": false,
+          "original_cause_region": "no_admitted_source_correspondence",
+          "route_local_screen_m": 12.827374808772234,
+          "selected_target_endpoint_degrees": [
+            2,
+            2
+          ],
+          "source_edge": 8,
+          "target_end_unclipped_station_on_candidate_edge_m": 128.1932811648907,
+          "target_endpoint_distances_to_full_source_m": [
+            13.746989766983162,
+            15.598976385224102
+          ],
+          "target_endpoint_source_stations_m": [
+            330.3763064409293,
+            342.71315302080194
+          ],
+          "target_interval_m": [
+            0.0,
+            12.827374808772234
+          ],
+          "target_key": "open-edge:2eacca0bb4acd659ec344cbd7e098bb3ce5757c8437d3f1b69d04653bb5e143f"
+        }
+      ],
+      "potential_unique_network_m": null,
+      "route": "NCN:7",
+      "route_attainability_changed": false,
+      "routes_improved": 0,
+      "source_length_geodesic_m": 1214.2913954759067,
+      "source_length_ground_m": 1214.2913954769144,
+      "source_section_keys": [
+        "463641622:14:16"
+      ],
+      "unadmitted_piece_count": 35,
+      "unadmitted_screen_route_local_m": 820.9411799680848,
+      "way": "463641622"
+    }
+  ],
+  "confirmed_new_route_local_m": 0.0,
+  "confirmed_new_unique_network_m": 0.0,
+  "diagnostic_only": true,
+  "evidence_sha256": "7b09f6045c389c6794e9fc05bef4b4c0c6172eada16ff6de9cd7579d30234b0e",
+  "metric": "WGS84 ellipsoidal local azimuthal equidistant; metres",
+  "newly_fully_attainable_routes": 0,
+  "note": "Ground lengths are diagnostics. Original route-local interval units are retained, never replaced with ground lengths. No proposed correction passed every acceptance gate.",
+  "potential_unique_network_recovery_m": null,
+  "routes_improved": 0,
+  "schema_version": 1
+}
