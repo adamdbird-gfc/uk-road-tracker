@@ -126,7 +126,7 @@ public class MilepostDiscoveryLedgerTest {
         ledger.install(3,HASH,Collections.emptyList());drain(e);assertTrue(discoveries().isEmpty());
         assertThrows(IllegalArgumentException.class,()->ledger.install(1,HASH,Collections.emptyList()));
         assertThrows(IllegalArgumentException.class,()->ledger.install(4,"bad",Collections.emptyList()));
-        assertThrows(android.database.sqlite.SQLiteConstraintException.class,()->ledger.install(4,HASH,Arrays.asList(marker("p",1,true),marker("p",2,true))));
+        assertThrows(android.database.sqlite.SQLiteConstraintException.class,()->ledger.install(4,HASH,Arrays.asList(marker("q",1,true),marker("q",2,true))));
         assertEquals(MilepostDiscoveryLedger.State.PENDING_CATALOGUE,ledger.state("u","j"));
     });}
     @Test public void retiredIdentityAndAliasesCannotBeReassigned()throws Exception {worker(()->{
