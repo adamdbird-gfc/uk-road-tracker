@@ -1,0 +1,89 @@
+{
+  "checked_date": "2026-11-05",
+  "failed_research_attempts": [
+    {
+      "result": "HTTP 403; council page available but no section-level PDF proof recovered",
+      "url": "https://www.bradford.gov.uk/media/4397/bradfordcyclemap.pdf"
+    },
+    {
+      "result": "404 guessed filename; correct linked June 2024 PDF subsequently downloaded and inspected, primary P4 appraisal obtained",
+      "url": "https://www.transport.gov.scot/media/gislmry1/aviemore-to-carrbridge-nmu-exhibition-panels-june-2024.pdf"
+    }
+  ],
+  "gpx_exact_shared_segments": 142,
+  "gpx_files": [
+    {
+      "bytes": 572578,
+      "creator": "cycle.travel",
+      "name": "NCN_7.gpx",
+      "point_count": 12440,
+      "segments": 1,
+      "sha256": "7c4db6f889feb3f7b4d1544d6a3f3237a0d32b87aaac1d4212da73e7efdeb0f6"
+    },
+    {
+      "bytes": 535701,
+      "creator": "cycle.travel",
+      "name": "NCN_6_London_Lake_District.gpx",
+      "point_count": 11638,
+      "segments": 1,
+      "sha256": "740c4ed059be5fb1b11122f5cd28f1000e4bf849c219cc224362ff0e52483ad9"
+    }
+  ],
+  "gpx_not_designation": true,
+  "gpx_shared_geodesic_m": 14261.85819990934,
+  "main": "15ca06d26d045a16583d44038ae6c9fe17778cd7",
+  "references": [
+    {
+      "case": "Bradford",
+      "evidence": "Current publisher has three Open Main NCN66 arms. All reviewed revision-4 endpoints exactly match publisher vertices at stored precision. GPX chooses an itinerary, not exclusive ownership. Current OSM NCN66 relation 17883 v849 includes south/northwest source and neighbours; no grant to the northeast arm.",
+      "url": "https://services5.arcgis.com/1ZHcUS1lwPTg4ms0/arcgis/rest/services/National_Cycle_Network_Public/FeatureServer/0/query?f=json&where=1%3D1&geometry=-1.756%2C53.791%2C-1.751%2C53.795&geometryType=esriGeometryEnvelope&inSR=4326&outSR=4326&outFields=%2A&returnGeometry=true&spatialRel=esriSpatialRelIntersects"
+    },
+    {
+      "case": "Derry",
+      "evidence": "Operator identifies NCN92 on the former railway from Craigavon Bridge to the exit towards Donegal after Carrigans Point. Current Route 92 page specifies Ballougry Road start; exact source southern endpoint joins Ballougry Road. Publisher Open Main TrafficFree SegmentID 40537 matches every reviewed revision-4 target endpoint. Withheld edges are geometric extent holds, not established historical removal.",
+      "publication_date": "2021-06-14",
+      "url": "https://www.walkwheelcycletrust.org.uk/our-blog/personal-stories/walking-along-the-historic-foyle-hazels-story/"
+    },
+    {
+      "case": "Derry",
+      "evidence": "Discontinuous numbered route is reconciled section-specifically: only the Ballougry Road-to-Derry former-railway path, not the reclassified road continuation, is used.",
+      "url": "https://www.walkwheelcycletrust.org.uk/find-a-route-on-the-national-cycle-network/omagh-strabane-derry-route-92-and-derry-city-route-93/"
+    },
+    {
+      "case": "Highland",
+      "evidence": "P3 is on-road within Boat of Garten. P4 is a separate existing path south of Deshar Road, alongside it for about 1.2 km before A95. This resolves the road-versus-path question against automatic equivalence. Current publisher separates TrafficFree SegmentID 4725 from OnRoad 29534 at [-3.76569304123181,57.2494588637334]. Current OSM omits the parallel path along the held road edges and cannot override it.",
+      "sections": [
+        "2.5.18",
+        "2.5.19",
+        "2.5.21",
+        "2.5.22",
+        "2.5.23",
+        "2.5.24"
+      ],
+      "url": "https://www.transport.gov.scot/media/50481/route-options-appraisal-report-aviemore-to-carrbridge-non-motorised-user-route-study.pdf"
+    },
+    {
+      "case": "Highland",
+      "evidence": "The B9153 connection towards Boat of Garten is explicitly off-road. The future crossing proposal is not evidence that the road is the designated cycleway.",
+      "publication_date": "2024-06-05",
+      "url": "https://www.transport.gov.scot/publication/public-and-virtual-exhibitions-junejuly-2024-aviemore-to-carrbridge-non-motorised-user-exhibition-panels/key-area-5-kinveachy-junction/"
+    },
+    {
+      "case": "Cumbria",
+      "evidence": "Open Main SegmentID 20314 is NCN6 south of northern node 244056391. NCN7 SegmentID 20313 turns east and has LinkNo 6; LinkNo is not a second RouteNo. Current relation 11017 v1517 includes the disputed way as NCN7 and no NCN6 membership is returned. No dual designation resolved; exact reference target directions remain conflicting.",
+      "url": "https://services5.arcgis.com/1ZHcUS1lwPTg4ms0/arcgis/rest/services/National_Cycle_Network_Public/FeatureServer/0/query?f=json&where=1%3D1&geometry=-2.928%2C54.641%2C-2.918%2C54.655&geometryType=esriGeometryEnvelope&inSR=4326&outSR=4326&outFields=%2A&returnGeometry=true&spatialRel=esriSpatialRelIntersects"
+    },
+    {
+      "case": "Cumbria",
+      "evidence": "Operator describes Threlkeld to Laithes then north to Carlisle, not exact dual designation of this road. Route 7 description identifies Penrith-to-Carlisle, also insufficient for a shared finite grant.",
+      "url": "https://www.walkwheelcycletrust.org.uk/find-a-route-on-the-national-cycle-network/route-6/"
+    },
+    {
+      "case": "Wellington",
+      "evidence": "The audit distinguishes the unsurfaced private road from the separate adjacent surfaced shared path. Widening into/surfacing the road requires landowner consent. The mapped road north endpoint 913199043 is distinct from cycleway endpoint 978142881; only south node 913199040 is shared. Cecil Road is a landward connection, not a second connector into the cycleway. No two-ended finite physical equivalence established.",
+      "publication_date": "2020-09-21",
+      "section": "Link L2, recommendation L2.5",
+      "url": "https://www.doverdistrictlocalplan.co.uk/uploads/Submission-Documents/TIEB08a-Three-Towns-Route.pdf"
+    }
+  ]
+}
