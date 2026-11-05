@@ -101,7 +101,7 @@ final class MilepostJourneyEvidence {
             JSONArray p=samples.getJSONArray(i),copy=new JSONArray();
             for(int k=0;k<5;k++)copy.put(p.get(k));retained.put(copy);
         }
-        return new Archive(journey.optString("journey_id"),journey.optString("started_at"),mode,type,token,problem,retained,problem==null&&history!=null?new JSONArray(history.toString()):new JSONArray());
+        return new Archive(journey.optString("journey_id"),journey.optString("started_at"),journey.optString("ended_at"),mode,type,token,problem,retained,problem==null&&history!=null?new JSONArray(history.toString()):new JSONArray());
     }
     private static boolean hasMatch(JSONObject j){
         JSONObject r=j.optJSONObject("processing_result"),g=r==null?null:r.optJSONObject("geojson");
@@ -154,13 +154,13 @@ final class MilepostJourneyEvidence {
         }
     }
     private static final class Archive implements MilepostProximity.Evidence {
-        final String id,date,mode,source,token;
+        final String id,date,end,mode,source,token;
         final MilepostProximity.Outcome problem;
         final JSONArray samples,history;
-        Archive(String id,String date,String mode,String source,String token,MilepostProximity.Outcome problem,JSONArray samples,JSONArray history){
-            this.id=id;this.date=date;this.mode=mode;this.source=source;this.token=token;this.problem=problem;this.samples=samples;this.history=history;
+        Archive(String id,String date,String end,String mode,String source,String token,MilepostProximity.Outcome problem,JSONArray samples,JSONArray history){
+            this.id=id;this.date=date;this.end=end;this.mode=mode;this.source=source;this.token=token;this.problem=problem;this.samples=samples;this.history=history;
         }
-        public String journeyId(){return id;}public String journeyDate(){return date;}public String mode(){return mode;}
+        public String journeyId(){return id;}public String journeyDate(){return date;}public String journeyEndDate(){return end;}public String mode(){return mode;}
         public String source(){return source;}public String token(){return token;}public String validationRevision(){return REVISION;}
         public MilepostProximity.Outcome problem(){return problem;}
         private boolean cycleActivitySupports(long start,long end){

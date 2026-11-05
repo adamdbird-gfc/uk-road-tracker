@@ -47,6 +47,8 @@ final class MilepostProximity {
     interface Evidence {
         String journeyId();
         String journeyDate();
+        /** Complete source interval for dated-location ledger checks; missing remains pending. */
+        default String journeyEndDate(){return null;}
         String mode();
         String source();
         String token();
