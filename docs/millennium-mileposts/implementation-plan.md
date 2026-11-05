@@ -1,0 +1,52 @@
+# Phased implementation plan
+
+Proposed small PRs, each from then-current validated main. Estimates are relative engineering complexity, not delivery promises: S roughly 1–2 focused development days, M 3–5, L 5–8, excluding external permission turnaround and device access. Each PR must preserve raw journeys and ship disabled until its integration gates pass. This session authorises documentation only.
+
+| Stage / proposed PR | Dependencies | Scope and acceptance | Complexity | Rollback |
+| --- | --- | --- | --- | --- |
+| 1. Verified inventory contract and offline compiler fixtures | Current spec | Versioned schema, stable physical IDs/aliases, provenance and temporal positions; dedupe/UK/coastal/design validation; reconcile open sources into a separately reviewed candidate. No publication. At least seven eligible posts and verified four-design opportunities for full experience; unknown/conflicts explicit | M engineering; national verification effort unknown | Keep candidate separate; retain source snapshots and old manifests |
+| 2. Pure journey-evidence adapter and distance evaluator | 1 schema; actual native/import schemas inspected | Positive and negative historical/native fixtures; finite <=100m geometry; supported mode, quality, stillness and gaps; reasons for insufficient evidence. No awards or UI; E01–E09 and independent geometric oracle pass | L | Disable evaluator; raw records never mutated |
+| 3. Durable discovery ledger and resumable assessment | 1, 2 | Additive local schema/migration; per-journey tokens; staged transactions; aliases/tombstones; checkpoint/yield; corrections/deletions and proof fallback. E10–E15/R01–R04/V01–V02 pass; no archive-wide retained geometry | L | Feature off, preserve ledger; revert reader/worker without deleting records |
+| 4. Six individuals and collective derivation | 3; existing stable NCN snapshot | Stable IDs; actual design mapping, seven national posts, Grimshaw true route 100%, parent all six; dates distinct. No regional/disc gate. A01–A07 and existing NCN/core tests pass; no public activation | M | Disable new award adapter only; preserve recognised proof/history; no destructive downgrade |
+| 5. Batched summary and presentation state | 3, 4 | One history-import summary across affected pending awards; Later/Skip, persisted replay cursor, active-capture suppression. P04–P08 and existing celebration tests pass; no mandatory queue; earned state independent | M | Revert renderer/keep summary acknowledgement; no replay-driven award writes |
+| 6. Milepost map layer | 1, 3; verified post icons | Existing Canvas/cluster extension with shape/orange/purple and mixed counts, accessible details/list, offline state. M01–M02; other venue pins unchanged | M | Disable layer; leave catalogue/discoveries intact |
+| 7. Harrow art and deterministic reveal | 4, 5; rights-cleared silhouettes/layers | Exact stage/letter table, all prefix compositions; versioned art; static/reduced-motion parity, resume/replay, name/biography on seven. P01–P03/P05–P08 pass; artwork review sheet signed off | M code + M artwork; reference-rights dependency unestimated | Static final/partial state fallback; preserve earned and presentation state separately |
+| 8. Integration validation and release-readiness receipt | 1–7 | No-APK CI, large-history memory/CPU profiling, Pixel/Samsung map/import/capture/accessibility exercise; compatible reference install/update rollback. Record exact source pins and budgets; no publication/APK without separate authority | M | Default off / known-good reference; revert additive UI adapters, never erase user evidence |
+
+Stages 5 and 6 are independent after stage 4/3 respectively; art reference research can start alongside stage 1 without feature code. Review PRs independently; avoid stacked branches and merging incomplete disabled code without the normal owner gate. If disabled integration is used, ensure generic achievement enumeration cannot expose new IDs or accidentally award them.
+
+## Responsibility split
+
+Android owns offline discovery, durable proofs, incremental historical scans, award derivation, map state and presentation. Extend `JourneyStore`'s existing evidence access/token machinery with compact adapters; reuse revision/epoch publication patterns from `NcnProgressStore`. A dedicated store avoids adding another large JSON blob to general achievement preferences. This is a proposed implementation boundary, not a claim these new tables/classes already exist.
+
+Reference tooling owns independent source intake, verification/review, version compilation, provenance/licences, aliases, hashes and compatibility. Use existing reference publication infrastructure only in a later authorised task; do not bundle the small post inventory into a regenerated 247MB NCN database. Do not call the matcher once per nearby post or use national database redownloads for ordinary discovery.
+
+Backend preserves current validated matching/provenance output. No new runtime backend feature or production PostgreSQL migration is currently justified. If the supported import schemas cannot prove movement/mode locally, document the exact missing contract and propose a separate bounded backend evidence PR; do not relax evidence rules to avoid it. Cross-device cloud synchronisation is not currently promised by local achievement storage; eventual reconciliation means local retries after evidence/reference updates and connectivity returns.
+
+## Incremental and offline processing
+
+Install compatible reference bytes atomically with content hash and retained predecessor. Discovery works offline with the last verified catalogue. New catalogue unavailable: explain updating/unavailable state, retain prior results, never make every candidate eligible. Late match/evidence/catalogue arrival schedules affected re-evaluation and one summary batch when stable. Unsupported schema leaves old app on compatible old revision.
+
+Scan archive files incrementally, retaining only one decoded journey or bounded section chunk and a compact post spatial index. Query finite segment envelopes expanded 100m; exact metric test resolves candidates. Persist per-journey positive proofs and reasons, then discard geometry. Indexing should be O(posts + journey sections + nearby candidates), not posts×full archive. Chunk oversized records with continuity tokens; no sampling/simplification that changes award truth. Check cancellation/capture priority inside long records, not only between journeys.
+
+Cache key: `(evaluator_version, catalogue_content_hash, journey_id, evidence_token)` plus corrections/effective-mode revision if not already included in the token. Compute changed/removed records; on catalogue changes rescan affected spatial tiles where safe, otherwise checkpointed full scan. Unchanged scans must not decode all journeys. Publish only after archive/reference/activation checks; write summary batch ID from committed state so process restart does not duplicate it.
+
+A transaction journal survives interruption; migration reads old data without rewriting journey archives, checks disk failure and preserves last-good snapshot. Old application versions ignore additive files. New presentation versions map persisted stage to a static supported state. Disable stops work/displays without deleting data. Re-enable reconciles before announcing results. Corrupt local store must be recoverable from journeys/reference where available, with presentation history backed up separately if existing platform backups cover it; do not claim uninstall or device-transfer recovery without testing.
+
+## Performance and regression gates
+
+Use [matrix budgets and fixtures](acceptance-tests.md). Profile full app, not only isolated evaluator heap. Existing 47MB probe is a reference regression, not an available memory allowance. Include photo-free/offline details and lazy-decoded art; never decode all six full-resolution layers for every achievement row. Render cached rows first, publish lightweight UI updates and avoid repeated full achievement recalculation on animation frames.
+
+Capture remains higher priority. Verify no foreground service restart, no changed activity-recognition thresholds or new journey splitting. Test stationary drift, running continuity, driving transition, phantom train and Dover terminal/ferry controls alongside NCN interval union and strict route-completion thresholds. Do not use feature development as an opportunity to redesign capture or fix unrelated matching failures.
+
+## Readiness gates and decisions
+
+Ready now: reviewed requirements, exact source entrypoints, historical fact register, evaluator contract, test plan and PR boundaries. Not ready now: eligible national catalogue, historical adapter validation, portrait references/rights, finished art or measured feature budgets. The old 889-row inventory does not satisfy those gates.
+
+No settled product choice needs reopening. Engineering can proceed through the above plan after separate production-development authority. Source permission outreach, documentation merge, publication, deployment and APK/distribution remain separately scoped actions; this plan does not request them as routine intermediate approvals. Evidence that a fixed rule is technically unattainable should be brought back with a concrete failing fixture or source conflict, not a hypothetical policy questionnaire.
+
+## Documentation-session validation
+
+Read-only checks verified the recovered ZIP and candidate hashes, all 889 unique typed OSM IDs and design-tag counts, JSON parsing, 10 Markdown tables, eight relative links and whitespace. The proposed cipher position table covers all 13 positions exactly once and its deterministic substitution never shows an unresolved letter as resolved. These are specification consistency checks, not feature-runtime tests.
+
+GitHub main and remote clone agreed at the recorded baseline. #276 is merged; its final head has three successful relevant workflows (42028448814, 42028448752, 42028448593); unrelated Android/capture jobs were skipped. The merge SHA has no separate workflow run returned. Prior validated results are reused without claiming a fresh Android/backend test run. Production tests were not rerun for these Markdown/receipt-only additions. Current live manifest was read once (small response only); no large reference payload was transferred. No connected-device, installed APK or backend deployment inspection occurred.
