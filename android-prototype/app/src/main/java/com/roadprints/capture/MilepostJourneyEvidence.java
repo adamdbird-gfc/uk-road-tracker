@@ -138,7 +138,8 @@ final class MilepostJourneyEvidence {
     private static void hashValue(MessageDigest md,Object value,int depth)throws Exception{
         if(depth>32)throw new IllegalArgumentException("Evidence nesting exceeds supported archive schema");
         if(value instanceof JSONObject){
-            md.update((byte)'{');java.util.List<String> keys=new java.util.ArrayList<>(((JSONObject)value).keySet());
+            md.update((byte)'{');java.util.List<String> keys=new java.util.ArrayList<>();
+            Iterator<String> names=((JSONObject)value).keys();while(names.hasNext())keys.add(names.next());
             java.util.Collections.sort(keys);
             for(String key:keys){hashValue(md,key,depth+1);hashValue(md,((JSONObject)value).get(key),depth+1);}
             md.update((byte)'}');
@@ -146,7 +147,8 @@ final class MilepostJourneyEvidence {
             md.update((byte)'[');JSONArray a=(JSONArray)value;
             for(int i=0;i<a.length();i++)hashValue(md,a.get(i),depth+1);md.update((byte)']');
         }else{
-            String scalar=JSONObject.valueToString(value);
+            String scalar=value instanceof String?JSONObject.quote((String)value)
+                    :value instanceof Number?JSONObject.numberToString((Number)value):String.valueOf(value);
             if(scalar.length()>65536)throw new IllegalArgumentException("Oversized evidence scalar");
             md.update(scalar.getBytes(StandardCharsets.UTF_8));md.update((byte)0);
         }

@@ -100,7 +100,7 @@ public class MilepostJourneyEvidenceTest {
     }
     @Test public void tokensStableAcrossJsonKeyOrderAndInputMutationCannotChangeProof()throws Exception{
         JSONObject j=journey("walking");MilepostProximity.Evidence a=MilepostJourneyEvidence.nativeArchive(j);
-        JSONObject reordered=new JSONObject();java.util.List<String> keys=new java.util.ArrayList<>(j.keySet());java.util.Collections.reverse(keys);
+        JSONObject reordered=new JSONObject();java.util.List<String> keys=new java.util.ArrayList<>();java.util.Iterator<String> names=j.keys();while(names.hasNext())keys.add(names.next());java.util.Collections.reverse(keys);
         for(String key:keys)reordered.put(key,j.get(key));
         assertEquals(a.token(),MilepostJourneyEvidence.nativeArchive(reordered).token());
         j.getJSONArray("capture_route_samples").getJSONArray(2).put(0,0);
