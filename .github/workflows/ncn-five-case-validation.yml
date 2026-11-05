@@ -1,0 +1,98 @@
+name: NCN five-case finite candidate audit (no publication)
+on:
+  pull_request:
+    paths:
+      - 'scripts/ncn_five_case_correspondence.py'
+      - 'scripts/test_ncn_five_case_correspondence.py'
+      - 'docs/ncn-corridor-policy/resolution/**'
+      - 'android-prototype/app/src/test/java/com/roadprints/capture/NcnFiveCaseCandidateTest.java'
+      - '.github/workflows/ncn-five-case-validation.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  finite-candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install -r requirements-ncn-deal.txt
+      - run: python -m unittest scripts.test_ncn_five_case_correspondence scripts.test_ncn_chapel_correspondence -v
+      - name: Restore original exact revision-4 artifact, never Firebase
+        uses: actions/download-artifact@v4
+        with:
+          artifact-ids: '13357563539'
+          run-id: '41900022422'
+          github-token: ${{ github.token }}
+          path: .cache/chapel
+          merge-multiple: true
+      - name: Validate original bytes and construct one disposable candidate
+        run: |
+          python - <<'PY'
+          import gzip,hashlib,json
+          from pathlib import Path
+          p=Path('.cache/chapel/candidate/catalogue.db.gz')
+          assert hashlib.sha256(p.read_bytes()).hexdigest()=='c40117278069777b38c13a099f319855e99878d24b95128f140f8d2f34a6020d'
+          Path('.cache/chapel/base.db').write_bytes(gzip.decompress(p.read_bytes()))
+          PY
+          PYTHONPATH=. python docs/ncn-corridor-policy/delivery/export_catalogue.py --database .cache/chapel/base.db --output .cache/chapel/catalogue.json
+          cmp .cache/chapel/catalogue.json docs/ncn-corridor-policy/delivery/catalogue.json
+          python -m scripts.ncn_five_case_correspondence --database .cache/chapel/base.db --output .cache/chapel/candidate.db
+          PYTHONPATH=. python docs/ncn-corridor-policy/resolution/verify_candidate.py --before .cache/chapel/base.db --after .cache/chapel/candidate.db --output .cache/chapel/five-impact.json
+      - name: Select candidate only inside disposable test checkout
+        run: |
+          python - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          p=Path('.cache/chapel/candidate.db');h=hashlib.sha256(p.read_bytes()).hexdigest()
+          m=json.loads(Path('.cache/chapel/candidate/manifest.json').read_text())
+          m.update(sha256=h,database_bytes=p.stat().st_size,filename='collections/published/ncn/'+h+'/catalogue.db.gz')
+          report=json.loads(Path('docs/data-trials/ncn-ordinary-seam-validation-2026-10-30.json').read_text())
+          report.update(candidate_manifest=m,candidate_sha256=h)
+          deal=json.loads(Path('docs/data-trials/ncn-deal-resolution-20261031.json').read_text())['distance_effect']
+          impact=json.loads(Path('.cache/chapel/five-impact.json').read_text())
+          delta=json.loads(Path('docs/ncn-corridor-policy/delivery/chapel-impact.json').read_text())
+          for row in report['routes']:
+              if row['route_key']=='NCN:1':
+                  for mode in ('on_foot','cycling','combined'):row['after'][mode+'_m']+=deal['route_local_added_m']+delta['route_local_added_m']
+              elif row['route_key'] in ('NCN:66','NCN:92'):
+                  for mode in ('on_foot','cycling','combined'):row['after'][mode+'_m']+=impact['routes'][row['route_key']]['added_m']
+          Path('.cache/chapel/report.json').write_text(json.dumps(report))
+          Path('android-prototype/app/src/main/assets/ncn-national/manifest.json').write_text(json.dumps(m))
+          PY
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.10'}
+      - name: Existing Android consumers, source controls, union accounting and Chapel
+        env:
+          NCN_TEST_DATABASE: ${{ github.workspace }}/.cache/chapel/candidate.db
+          NCN_FIVE_CASE_REVIEW: ${{ github.workspace }}/docs/ncn-corridor-policy/resolution/review.json
+          NCN_CHAPEL_REVIEW: ${{ github.workspace }}/docs/ncn-corridor-policy/delivery/chapel-review.json
+          NCN_DEAL_REVIEW: ${{ github.workspace }}/tests/fixtures/ncn-deal-resolution/review.json
+          NCN_ATTAINABILITY_REPORT: ${{ github.workspace }}/.cache/chapel/report.json
+        run: |
+          gradle --no-daemon -p android-prototype -Pandroid.builder.sdkDownload=false :app:testDebugUnitTest --tests 'com.roadprints.capture.Ncn*' --tests 'com.roadprints.capture.AchievementCelebrationsTest'
+          python - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as E
+          suites=[E.parse(p).getroot() for p in Path('android-prototype/app/build/test-results/testDebugUnitTest').glob('TEST-*.xml')]
+          totals={k:sum(int(s.get(k,0)) for s in suites) for k in ('tests','failures','errors','skipped')}
+          assert totals['tests']>=49 and totals['failures']==totals['errors']==totals['skipped']==0,totals
+          print(totals)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: five-case-candidate-test-receipts
+          path: android-prototype/app/build/test-results/
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        with:
+          name: five-case-candidate-and-audit
+          path: |
+            .cache/chapel/candidate.db
+            .cache/chapel/five-impact.json
+          retention-days: 14

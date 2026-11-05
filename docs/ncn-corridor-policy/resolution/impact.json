@@ -1,0 +1,61 @@
+{
+  "affected_canonical_edges": 14,
+  "all_row_diff_counts": {
+    "meta": 0,
+    "network": 0,
+    "nodes": 0,
+    "overview": 0,
+    "paths": 3,
+    "routes": 0,
+    "targets": 0
+  },
+  "before_sha256": "be0c803d508ff548db8458a57a2fba18b4f75249f2f9b37401be3526b3cddb2f",
+  "candidate_sha256": "7853f02bd376f95d5e12652971c818e5b4efe948c74f607c75c7afd5b25612a0",
+  "changed_rows": [
+    [
+      "NCN:1",
+      "4471919"
+    ],
+    [
+      "NCN:66",
+      "159311690"
+    ],
+    [
+      "NCN:92",
+      "30268009"
+    ]
+  ],
+  "live_change_m": 0,
+  "national_assessability_after_percent": 92.62045240167814,
+  "national_assessability_before_percent": 92.60824362637157,
+  "national_assessable_after_m": 16148498.592780316,
+  "national_assessable_before_m": 16146369.97662972,
+  "national_denominator_m": 17435132.494005967,
+  "newly_fully_attainable_routes": 0,
+  "routes": {
+    "NCN:1": {
+      "added_m": 8.882678043097258,
+      "after_m": 1805835.080358141,
+      "before_m": 1805826.197680098,
+      "remaining_m": 138137.33844584785,
+      "target_m": 1943972.418803989
+    },
+    "NCN:66": {
+      "added_m": 62.114800383889815,
+      "after_m": 197268.79454145717,
+      "before_m": 197206.67974107328,
+      "remaining_m": 18370.094475313992,
+      "target_m": 215638.88901677117
+    },
+    "NCN:92": {
+      "added_m": 2058.8637198854776,
+      "after_m": 15486.961180375174,
+      "before_m": 13428.097460489696,
+      "remaining_m": 12198.042866524838,
+      "target_m": 27685.004046900012
+    }
+  },
+  "unique_network_added_m": 2128.6161505962186,
+  "unique_network_after_affected_m": 2207.9280256059624,
+  "unique_network_before_affected_m": 79.31187500974396
+}

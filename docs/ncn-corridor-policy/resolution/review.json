@@ -1,0 +1,1579 @@
+{
+  "base_sha256": "be0c803d508ff548db8458a57a2fba18b4f75249f2f9b37401be3526b3cddb2f",
+  "cases": [
+    {
+      "anchors": [
+        {
+          "continuous_max_offset_m": 6.939285360707718,
+          "end": 6.522344238919152,
+          "high": 53.35389944626745,
+          "low": 54.08486405222375,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "reason": "Open south arm; retain both existing boundary bindings",
+          "start": 5.751157516486935,
+          "target": "open-edge:217a655a165d169e07ab9a7689b0e47e6827b3fd0c6dc1de1155f518dc1c2c0a"
+        },
+        {
+          "continuous_max_offset_m": 6.724874673409018,
+          "end": 47.63496694211435,
+          "high": 14.385552118798437,
+          "low": 53.35389944626745,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "reason": "Open south arm; retain both existing boundary bindings",
+          "start": 6.522344238919152,
+          "target": "open-edge:217a655a165d169e07ab9a7689b0e47e6827b3fd0c6dc1de1155f518dc1c2c0a"
+        },
+        {
+          "continuous_max_offset_m": 5.528341278146067,
+          "end": 54.27249098573134,
+          "high": 8.09421565521663,
+          "low": 14.385552118798437,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "reason": "Open south arm; retain both existing boundary bindings",
+          "start": 47.63496694211435,
+          "target": "open-edge:217a655a165d169e07ab9a7689b0e47e6827b3fd0c6dc1de1155f518dc1c2c0a"
+        },
+        {
+          "continuous_max_offset_m": 2.4506132619549943,
+          "end": 62.60581404642965,
+          "high": 0.19552649189888172,
+          "low": 8.09421565521663,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "reason": "Open south arm; retain both existing boundary bindings",
+          "start": 54.27249098573134,
+          "target": "open-edge:217a655a165d169e07ab9a7689b0e47e6827b3fd0c6dc1de1155f518dc1c2c0a"
+        },
+        {
+          "continuous_max_offset_m": 2.160577285231736,
+          "end": 62.81209959460458,
+          "high": 0.0,
+          "low": 0.19552649189888172,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "reason": "Open south arm; retain both existing boundary bindings",
+          "start": 62.60581404642965,
+          "target": "open-edge:217a655a165d169e07ab9a7689b0e47e6827b3fd0c6dc1de1155f518dc1c2c0a"
+        },
+        {
+          "continuous_max_offset_m": 2.9245794813255257,
+          "end": 66.36952488511533,
+          "high": 24.745119328441962,
+          "low": 24.745119328441977,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "reason": "Open northwest arm only; northeast arm has separate physical ownership",
+          "start": 66.36952488511531,
+          "target": "open-edge:c7286ee85171a3104f46b4c8373aa0fab7488704d770e93519338abead31a691"
+        },
+        {
+          "continuous_max_offset_m": 5.64664451234464,
+          "end": 74.8482935767978,
+          "high": 16.71518299677999,
+          "low": 24.745119328441962,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "reason": "Open northwest arm only; northeast arm has separate physical ownership",
+          "start": 66.36952488511533,
+          "target": "open-edge:c7286ee85171a3104f46b4c8373aa0fab7488704d770e93519338abead31a691"
+        }
+      ],
+      "bindings": [
+        {
+          "end": 6.522344238919152,
+          "high": 53.35389944626745,
+          "low": 54.08486405222375,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 5.751157516486935,
+          "target": "open-edge:217a655a165d169e07ab9a7689b0e47e6827b3fd0c6dc1de1155f518dc1c2c0a"
+        },
+        {
+          "end": 47.63496694211435,
+          "high": 14.385552118798437,
+          "low": 53.35389944626745,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 6.522344238919152,
+          "target": "open-edge:217a655a165d169e07ab9a7689b0e47e6827b3fd0c6dc1de1155f518dc1c2c0a"
+        },
+        {
+          "end": 54.27249098573134,
+          "high": 8.09421565521663,
+          "low": 14.385552118798437,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 47.63496694211435,
+          "target": "open-edge:217a655a165d169e07ab9a7689b0e47e6827b3fd0c6dc1de1155f518dc1c2c0a"
+        },
+        {
+          "end": 62.60581404642965,
+          "high": 0.19552649189888172,
+          "low": 8.09421565521663,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 54.27249098573134,
+          "target": "open-edge:217a655a165d169e07ab9a7689b0e47e6827b3fd0c6dc1de1155f518dc1c2c0a"
+        },
+        {
+          "end": 62.81209959460458,
+          "high": 0.0,
+          "low": 0.19552649189888172,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 62.60581404642965,
+          "target": "open-edge:217a655a165d169e07ab9a7689b0e47e6827b3fd0c6dc1de1155f518dc1c2c0a"
+        },
+        {
+          "end": 66.36952488511533,
+          "high": 24.745119328441962,
+          "low": 24.745119328441977,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 66.36952488511531,
+          "target": "open-edge:c7286ee85171a3104f46b4c8373aa0fab7488704d770e93519338abead31a691"
+        },
+        {
+          "end": 74.8482935767978,
+          "high": 16.71518299677999,
+          "low": 24.745119328441962,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 66.36952488511533,
+          "target": "open-edge:c7286ee85171a3104f46b4c8373aa0fab7488704d770e93519338abead31a691"
+        }
+      ],
+      "path": {
+        "bindings": [
+          {
+            "end": 5.751157516486935,
+            "high": 0.0,
+            "low": 5.732282529631358,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 0.0,
+            "target": "open-edge:b76c5f24827c2003e9a5e471368a5069aec93c2c9c69f86cc26896101c1e8e69"
+          },
+          {
+            "end": 66.36952488511531,
+            "high": 24.745119328441977,
+            "low": 28.212961103371057,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 62.81209959460458,
+            "target": "open-edge:c7286ee85171a3104f46b4c8373aa0fab7488704d770e93519338abead31a691"
+          },
+          {
+            "end": 91.80478283059736,
+            "high": 0.0,
+            "low": 16.71518299677999,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 74.8482935767978,
+            "target": "open-edge:c7286ee85171a3104f46b4c8373aa0fab7488704d770e93519338abead31a691"
+          }
+        ],
+        "coordinates": [
+          [
+            -1.7535763,
+            53.7920704
+          ],
+          [
+            -1.7536411,
+            53.7921148
+          ],
+          [
+            -1.7540493,
+            53.7923948
+          ],
+          [
+            -1.7540412,
+            53.7924543
+          ],
+          [
+            -1.754031,
+            53.792529
+          ],
+          [
+            -1.7540629,
+            53.7925571
+          ],
+          [
+            -1.7541235,
+            53.7926244
+          ],
+          [
+            -1.7543636,
+            53.7927186
+          ]
+        ],
+        "modes": [
+          "on_foot",
+          "cycling"
+        ],
+        "nodes": [
+          1711398757,
+          9749366767,
+          1714147807,
+          5324349854,
+          5324349855,
+          1860824502,
+          6927371803,
+          6841163437
+        ],
+        "origin": [
+          -1.238694665665012,
+          53.734628280093446
+        ],
+        "positions": [
+          0.0,
+          6.522344238919152,
+          47.63496694211435,
+          54.27249098573134,
+          62.60581404642965,
+          66.36952488511533,
+          74.84829357679781,
+          93.79877076336541
+        ],
+        "route": "NCN:66",
+        "source_geometry_sha256": "cb4f97a8ea3f0bb3676f2eeb28edb6f918f312bb2f0d54e726d368a08f07354c",
+        "way": "159311690"
+      },
+      "route": "NCN:66",
+      "targets": [
+        {
+          "contributing_source_ways": [],
+          "coords": [
+            [
+              -1.7540549428,
+              53.7925165755
+            ],
+            [
+              -1.7537186154,
+              53.7920727269
+            ]
+          ],
+          "current_route_coverage": [],
+          "key": "open-edge:217a655a165d169e07ab9a7689b0e47e6827b3fd0c6dc1de1155f518dc1c2c0a",
+          "length": 54.08486405222375,
+          "network": [
+            [
+              245748,
+              0.0,
+              54.08486405222375,
+              54.07240437938682
+            ]
+          ],
+          "route": "NCN:66"
+        },
+        {
+          "contributing_source_ways": [
+            "159311690"
+          ],
+          "coords": [
+            [
+              -1.754367455,
+              53.7926903669
+            ],
+            [
+              -1.7540549428,
+              53.7925165755
+            ]
+          ],
+          "current_route_coverage": [
+            [
+              0.0,
+              16.71518299677999
+            ],
+            [
+              24.745119328441977,
+              28.212961103371057
+            ]
+          ],
+          "key": "open-edge:c7286ee85171a3104f46b4c8373aa0fab7488704d770e93519338abead31a691",
+          "length": 28.212961103371057,
+          "network": [
+            [
+              243901,
+              0.0,
+              28.212961103371057,
+              28.192274769957876
+            ]
+          ],
+          "route": "NCN:66"
+        }
+      ],
+      "way": "159311690"
+    },
+    {
+      "anchors": [
+        {
+          "continuous_max_offset_m": 10.551447371617208,
+          "end": 15.446493762005737,
+          "high": 6.3385784598125285,
+          "low": 0.0,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "reason": "Ballougry Road exit to first preserved binding",
+          "start": 0.0,
+          "target": "open-edge:1a4b3f1b626da938f4c20e0c08b762625083d04caa7d814f2e3c0a48c537839b"
+        },
+        {
+          "continuous_max_offset_m": 5.822809637753063,
+          "end": 522.984099381717,
+          "high": 21.94106694443362,
+          "low": 13.225694233553813,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "reason": "Admitted source bend: finite unowned continuation",
+          "start": 512.5157752244522,
+          "target": "open-edge:bec7f03da8129ff135ed4ab7c39ec0353346b83900273ac288a1003cf213c5a3"
+        },
+        {
+          "continuous_max_offset_m": 4.953213115539581,
+          "end": 536.7345907500512,
+          "high": 14.964524241343131,
+          "low": 4.486054694785485,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "reason": "Admitted source bend: finite unowned continuation",
+          "start": 527.4701553136766,
+          "target": "open-edge:0432b304be14c2b912f63a95b043959946dc2195f99ac8418a31ffc332da9bf8"
+        },
+        {
+          "continuous_max_offset_m": 8.694686255163207,
+          "end": 550.5657338751315,
+          "high": 17.195768334790092,
+          "low": 7.946955741091264,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "reason": "Admitted source bend: finite unowned continuation",
+          "start": 544.6815826573845,
+          "target": "open-edge:74224ad5d46940bb5258583d1ca5fa16ec0115821de27a631fec89e9f7d8b797"
+        },
+        {
+          "continuous_max_offset_m": 10.487959788056928,
+          "end": 967.2532094874288,
+          "high": 282.6039275837832,
+          "low": 0.0,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "reason": "Dated NCN92 railway corridor; exact successive finite bends",
+          "start": 684.7171510350653,
+          "target": "open-edge:9afbb6f620cde29ead14d3a666c5569062dcbe37718bb6bf7abc6d90349e0522"
+        },
+        {
+          "continuous_max_offset_m": 10.484816028317132,
+          "end": 1579.983807826724,
+          "high": 612.6763502044902,
+          "low": 0.0,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "reason": "Dated NCN92 railway corridor; exact successive finite bends",
+          "start": 967.2532094874288,
+          "target": "open-edge:632fb70ec4d58ba7ed3b5cec923d7f34368f6b37d4ad9968431fc756dc50060a"
+        },
+        {
+          "continuous_max_offset_m": 10.48122787711816,
+          "end": 1811.410153994711,
+          "high": 225.64731482307658,
+          "low": 0.0,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "reason": "Dated NCN92 railway corridor; exact successive finite bends",
+          "start": 1579.983807826724,
+          "target": "open-edge:c57b60b7f500b45fef198113e3ee381a7c4c7b26bb1e7f331c6e88285df66ef4"
+        },
+        {
+          "continuous_max_offset_m": 10.218477501461741,
+          "end": 1817.3354413594677,
+          "high": 231.42463968496565,
+          "low": 225.64731482307658,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "reason": "Dated NCN92 railway corridor; exact successive finite bends",
+          "start": 1811.410153994711,
+          "target": "open-edge:c57b60b7f500b45fef198113e3ee381a7c4c7b26bb1e7f331c6e88285df66ef4"
+        },
+        {
+          "continuous_max_offset_m": 10.494101482010983,
+          "end": 2831.140985332017,
+          "high": 85.04640496364044,
+          "low": 0.0,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "reason": "Dated NCN92 railway corridor; exact successive finite bends",
+          "start": 2746.0042788665373,
+          "target": "open-edge:b30c49c694381249a15db4e0d044d078ae5eccf20389519f8356f7498360b2d4"
+        },
+        {
+          "continuous_max_offset_m": 10.522297783751686,
+          "end": 2983.232098144744,
+          "high": 152.13445423478913,
+          "low": 0.0,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "reason": "Dated NCN92 railway corridor; exact successive finite bends",
+          "start": 2831.140985332017,
+          "target": "open-edge:c9ed1b04def1e856b9aaa26488715843f357f05ba55b2a405d48164df3ca823c"
+        },
+        {
+          "continuous_max_offset_m": 10.53212971244153,
+          "end": 3543.6940039286533,
+          "high": 560.4376330267596,
+          "low": 0.0,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "reason": "Dated NCN92 railway corridor; exact successive finite bends",
+          "start": 2983.232098144744,
+          "target": "open-edge:2a25772a1db373d9bdc057bcbbd7f963fa09701c3ce0cca132b4103ffdf084b6"
+        },
+        {
+          "continuous_max_offset_m": 10.53212971244153,
+          "end": 3643.8518732445955,
+          "high": 99.75907687611061,
+          "low": 0.0,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "reason": "Dated NCN92 railway corridor; exact successive finite bends",
+          "start": 3543.6940039286533,
+          "target": "open-edge:591a4b7ef7d463df516739aeba17c87f33593c0de686f67fc4215f5dff3dcb90"
+        }
+      ],
+      "bindings": [
+        {
+          "end": 15.446493762005737,
+          "high": 6.3385784598125285,
+          "low": 0.0,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 0.0,
+          "target": "open-edge:1a4b3f1b626da938f4c20e0c08b762625083d04caa7d814f2e3c0a48c537839b"
+        },
+        {
+          "end": 522.984099381717,
+          "high": 21.94106694443362,
+          "low": 13.225694233553813,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 512.5157752244522,
+          "target": "open-edge:bec7f03da8129ff135ed4ab7c39ec0353346b83900273ac288a1003cf213c5a3"
+        },
+        {
+          "end": 536.7345907500512,
+          "high": 14.964524241343131,
+          "low": 4.486054694785485,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 527.4701553136766,
+          "target": "open-edge:0432b304be14c2b912f63a95b043959946dc2195f99ac8418a31ffc332da9bf8"
+        },
+        {
+          "end": 550.5657338751315,
+          "high": 17.195768334790092,
+          "low": 7.946955741091264,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 544.6815826573845,
+          "target": "open-edge:74224ad5d46940bb5258583d1ca5fa16ec0115821de27a631fec89e9f7d8b797"
+        },
+        {
+          "end": 967.2532094874288,
+          "high": 282.6039275837832,
+          "low": 0.0,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 684.7171510350653,
+          "target": "open-edge:9afbb6f620cde29ead14d3a666c5569062dcbe37718bb6bf7abc6d90349e0522"
+        },
+        {
+          "end": 1579.983807826724,
+          "high": 612.6763502044902,
+          "low": 0.0,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 967.2532094874288,
+          "target": "open-edge:632fb70ec4d58ba7ed3b5cec923d7f34368f6b37d4ad9968431fc756dc50060a"
+        },
+        {
+          "end": 1811.410153994711,
+          "high": 225.64731482307658,
+          "low": 0.0,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 1579.983807826724,
+          "target": "open-edge:c57b60b7f500b45fef198113e3ee381a7c4c7b26bb1e7f331c6e88285df66ef4"
+        },
+        {
+          "end": 1817.3354413594677,
+          "high": 231.42463968496565,
+          "low": 225.64731482307658,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 1811.410153994711,
+          "target": "open-edge:c57b60b7f500b45fef198113e3ee381a7c4c7b26bb1e7f331c6e88285df66ef4"
+        },
+        {
+          "end": 2831.140985332017,
+          "high": 85.04640496364044,
+          "low": 0.0,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 2746.0042788665373,
+          "target": "open-edge:b30c49c694381249a15db4e0d044d078ae5eccf20389519f8356f7498360b2d4"
+        },
+        {
+          "end": 2983.232098144744,
+          "high": 152.13445423478913,
+          "low": 0.0,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 2831.140985332017,
+          "target": "open-edge:c9ed1b04def1e856b9aaa26488715843f357f05ba55b2a405d48164df3ca823c"
+        },
+        {
+          "end": 3543.6940039286533,
+          "high": 560.4376330267596,
+          "low": 0.0,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 2983.232098144744,
+          "target": "open-edge:2a25772a1db373d9bdc057bcbbd7f963fa09701c3ce0cca132b4103ffdf084b6"
+        },
+        {
+          "end": 3643.8518732445955,
+          "high": 99.75907687611061,
+          "low": 0.0,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 3543.6940039286533,
+          "target": "open-edge:591a4b7ef7d463df516739aeba17c87f33593c0de686f67fc4215f5dff3dcb90"
+        }
+      ],
+      "path": {
+        "bindings": [
+          {
+            "end": 16.155253453570495,
+            "high": 7.0473061855482,
+            "low": 6.3385784598125285,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 15.446493762005737,
+            "target": "open-edge:1a4b3f1b626da938f4c20e0c08b762625083d04caa7d814f2e3c0a48c537839b"
+          },
+          {
+            "end": 16.193579331121068,
+            "high": 7.137667455434755,
+            "low": 7.0473061855482,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 16.155253453570495,
+            "target": "open-edge:1a4b3f1b626da938f4c20e0c08b762625083d04caa7d814f2e3c0a48c537839b"
+          },
+          {
+            "end": 16.24561879903192,
+            "high": 0.0903631348070857,
+            "low": 0.0,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 16.193579331121068,
+            "target": "open-edge:0496c44b9ff299c846e3b8d49fbd7c4a6977799104bdb2458e064d6dbddfd2be"
+          },
+          {
+            "end": 24.80200413318708,
+            "high": 8.646539149667595,
+            "low": 0.0903631348070857,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 16.24561879903192,
+            "target": "open-edge:0496c44b9ff299c846e3b8d49fbd7c4a6977799104bdb2458e064d6dbddfd2be"
+          },
+          {
+            "end": 242.79409250605005,
+            "high": 217.95234820558375,
+            "low": 0.0,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 24.841731938973517,
+            "target": "open-edge:a35138f361d0181dec9ed6a1ec1450c509eba062d4e8bd98778e62305c1b7781"
+          },
+          {
+            "end": 251.55705584800924,
+            "high": 226.70935895694043,
+            "low": 217.95234820558375,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 242.79409250605008,
+            "target": "open-edge:a35138f361d0181dec9ed6a1ec1450c509eba062d4e8bd98778e62305c1b7781"
+          },
+          {
+            "end": 251.56366780923753,
+            "high": 226.9304181470068,
+            "low": 226.70935895694043,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 251.55705584800924,
+            "target": "open-edge:a35138f361d0181dec9ed6a1ec1450c509eba062d4e8bd98778e62305c1b7781"
+          },
+          {
+            "end": 251.77826530337674,
+            "high": 0.22120931257272755,
+            "low": 0.0,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 251.56366780923753,
+            "target": "open-edge:a0879975822a37d17ef9e6a9d05f0ef37190aa4116942f329b478a85587e7b33"
+          },
+          {
+            "end": 320.35385109309925,
+            "high": 68.79675083549594,
+            "low": 0.22120931257272755,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 251.77826530337674,
+            "target": "open-edge:a0879975822a37d17ef9e6a9d05f0ef37190aa4116942f329b478a85587e7b33"
+          },
+          {
+            "end": 328.05265182816385,
+            "high": 76.3851032945395,
+            "low": 68.79675083549594,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 320.35385109309925,
+            "target": "open-edge:a0879975822a37d17ef9e6a9d05f0ef37190aa4116942f329b478a85587e7b33"
+          },
+          {
+            "end": 375.2816296162804,
+            "high": 47.22896494535385,
+            "low": 1.2176959682391,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 329.2703481275256,
+            "target": "open-edge:cae8e652cc6c58e13de7f767cdaf65c72155c0f3d003ed698fd50252140555da"
+          },
+          {
+            "end": 382.59015309006645,
+            "high": 54.52700448869926,
+            "low": 47.22896494535385,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 375.2816296162804,
+            "target": "open-edge:cae8e652cc6c58e13de7f767cdaf65c72155c0f3d003ed698fd50252140555da"
+          },
+          {
+            "end": 490.55787142306326,
+            "high": 107.96771570628148,
+            "low": 0.40471216921813125,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 382.9948652691307,
+            "target": "open-edge:c3c1109f4428d1ba2c2baf1ffeee4d93e1b876bdd803d2f5094bf59ea454a6da"
+          },
+          {
+            "end": 497.9961307428598,
+            "high": 115.22779696892053,
+            "low": 107.96771570628148,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 490.55787142306326,
+            "target": "open-edge:c3c1109f4428d1ba2c2baf1ffeee4d93e1b876bdd803d2f5094bf59ea454a6da"
+          },
+          {
+            "end": 512.5157752244523,
+            "high": 13.225694233553813,
+            "low": 0.0,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 499.2900683845917,
+            "target": "open-edge:bec7f03da8129ff135ed4ab7c39ec0353346b83900273ac288a1003cf213c5a3"
+          },
+          {
+            "end": 527.4701553136766,
+            "high": 4.486054694785485,
+            "low": 0.0,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 522.984099381717,
+            "target": "open-edge:0432b304be14c2b912f63a95b043959946dc2195f99ac8418a31ffc332da9bf8"
+          },
+          {
+            "end": 544.6815826573845,
+            "high": 7.946955741091264,
+            "low": 0.0,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 536.7345907500512,
+            "target": "open-edge:74224ad5d46940bb5258583d1ca5fa16ec0115821de27a631fec89e9f7d8b797"
+          },
+          {
+            "end": 569.1190671614486,
+            "high": 18.553325761029743,
+            "low": 0.0,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 550.5657338751315,
+            "target": "open-edge:9b5b961c8f2122650521a7f990cef220ac157d0bb2b55d2f8f4aaaf39b369164"
+          },
+          {
+            "end": 573.914998742481,
+            "high": 23.310322772640014,
+            "low": 18.55332576102974,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 569.1190671614486,
+            "target": "open-edge:9b5b961c8f2122650521a7f990cef220ac157d0bb2b55d2f8f4aaaf39b369164"
+          },
+          {
+            "end": 684.7171510350653,
+            "high": 110.80215219706429,
+            "low": 1.2000935266872148,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 575.1150922702028,
+            "target": "open-edge:54d6a239583e9b806b38102f2e51eb0446ceb981759879d3c39b75f49e650219"
+          },
+          {
+            "end": 2059.844875542213,
+            "high": 242.50943417755542,
+            "low": 0.0,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 1817.3354413594677,
+            "target": "open-edge:08e85697b4ec08e4f456a288610d237f01926f29b5a9ca584d637b9e2095625b"
+          },
+          {
+            "end": 2065.873883829655,
+            "high": 248.44242927275099,
+            "low": 242.50943417755542,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 2059.844875542213,
+            "target": "open-edge:08e85697b4ec08e4f456a288610d237f01926f29b5a9ca584d637b9e2095625b"
+          },
+          {
+            "end": 2252.1185782264693,
+            "high": 184.8991969179616,
+            "low": 0.0,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 2067.21936681315,
+            "target": "open-edge:5e59dabca42833b14ae52f6c3c4e20e3399e2cf34f3d659b009297e6fb8e4991"
+          },
+          {
+            "end": 2298.8470471516175,
+            "high": 231.6276636409258,
+            "low": 184.8991969179616,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 2252.1185782264693,
+            "target": "open-edge:5e59dabca42833b14ae52f6c3c4e20e3399e2cf34f3d659b009297e6fb8e4991"
+          },
+          {
+            "end": 2305.2860648426113,
+            "high": 238.02551216905434,
+            "low": 231.6276636409258,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 2298.8470471516175,
+            "target": "open-edge:5e59dabca42833b14ae52f6c3c4e20e3399e2cf34f3d659b009297e6fb8e4991"
+          },
+          {
+            "end": 2305.288215337222,
+            "high": 238.96475959977954,
+            "low": 238.02551216905434,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 2305.2860648426113,
+            "target": "open-edge:5e59dabca42833b14ae52f6c3c4e20e3399e2cf34f3d659b009297e6fb8e4991"
+          },
+          {
+            "end": 2306.23135618486,
+            "high": 0.9452913105224312,
+            "low": 0.0,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 2305.288215337222,
+            "target": "open-edge:4972eca8078c490515c21fb0ddd41cf3bedd39c4006986bc855cddb60566c59c"
+          },
+          {
+            "end": 2445.2011477170395,
+            "high": 139.91507817850214,
+            "low": 0.9452913105224312,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 2306.23135618486,
+            "target": "open-edge:4972eca8078c490515c21fb0ddd41cf3bedd39c4006986bc855cddb60566c59c"
+          },
+          {
+            "end": 2450.7139286268402,
+            "high": 145.39372459608876,
+            "low": 139.91507817850214,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 2445.2011477170395,
+            "target": "open-edge:4972eca8078c490515c21fb0ddd41cf3bedd39c4006986bc855cddb60566c59c"
+          },
+          {
+            "end": 2450.7141642874103,
+            "high": 146.38638524966257,
+            "low": 145.39372459608876,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 2450.7139286268402,
+            "target": "open-edge:4972eca8078c490515c21fb0ddd41cf3bedd39c4006986bc855cddb60566c59c"
+          },
+          {
+            "end": 2451.7127740137894,
+            "high": 0.9988453866014777,
+            "low": 0.0,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 2450.7141642874103,
+            "target": "open-edge:98e1e6ab05aa3b5e1614124b4c5fddf16f7aaf763892070673ba9ee85487621d"
+          },
+          {
+            "end": 2506.5251141130984,
+            "high": 55.811185466832896,
+            "low": 0.9988453866014777,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 2451.7127740137894,
+            "target": "open-edge:98e1e6ab05aa3b5e1614124b4c5fddf16f7aaf763892070673ba9ee85487621d"
+          },
+          {
+            "end": 2511.4865585215935,
+            "high": 60.76468041519974,
+            "low": 55.811185466832896,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 2506.5251141130984,
+            "target": "open-edge:98e1e6ab05aa3b5e1614124b4c5fddf16f7aaf763892070673ba9ee85487621d"
+          },
+          {
+            "end": 2635.600244899236,
+            "high": 124.11368481691655,
+            "low": 0.5214276751802743,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 2512.007986203331,
+            "target": "open-edge:2be16004b3ba23242d538b283cb381362e580496e43889287ec284d6dd164169"
+          },
+          {
+            "end": 2638.9121720887356,
+            "high": 127.37394571696528,
+            "low": 124.11368481691655,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 2635.600244899236,
+            "target": "open-edge:2be16004b3ba23242d538b283cb381362e580496e43889287ec284d6dd164169"
+          },
+          {
+            "end": 2638.9170884984737,
+            "high": 129.13558846641317,
+            "low": 127.37394571696528,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 2638.9121720887356,
+            "target": "open-edge:2be16004b3ba23242d538b283cb381362e580496e43889287ec284d6dd164169"
+          },
+          {
+            "end": 2639.8880207701886,
+            "high": 0.9758485631600987,
+            "low": 0.0,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 2638.9170884984737,
+            "target": "open-edge:4e07e412ac9ab472f97a2a4a11c8bcbfad6f1402de8de592bbbd61e8d0a49e43"
+          },
+          {
+            "end": 2644.6743966182053,
+            "high": 5.762223830970489,
+            "low": 0.9758485631600987,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 2639.8880207701886,
+            "target": "open-edge:4e07e412ac9ab472f97a2a4a11c8bcbfad6f1402de8de592bbbd61e8d0a49e43"
+          },
+          {
+            "end": 2746.004278866538,
+            "high": 107.0921023876614,
+            "low": 5.76222383097049,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 2644.6743966182053,
+            "target": "open-edge:4e07e412ac9ab472f97a2a4a11c8bcbfad6f1402de8de592bbbd61e8d0a49e43"
+          },
+          {
+            "end": 3648.5168240669523,
+            "high": 104.42297561981489,
+            "low": 99.75907687611061,
+            "modes": [
+              "on_foot",
+              "cycling"
+            ],
+            "start": 3643.8518732445955,
+            "target": "open-edge:591a4b7ef7d463df516739aeba17c87f33593c0de686f67fc4215f5dff3dcb90"
+          }
+        ],
+        "coordinates": [
+          [
+            -7.3939022,
+            54.9549365
+          ],
+          [
+            -7.3937437,
+            54.9548318
+          ],
+          [
+            -7.3914114,
+            54.9532905
+          ],
+          [
+            -7.3906496,
+            54.9527483
+          ],
+          [
+            -7.3902312,
+            54.9523171
+          ],
+          [
+            -7.3894373,
+            54.9513867
+          ],
+          [
+            -7.3892227,
+            54.9512327
+          ],
+          [
+            -7.389004,
+            54.9511856
+          ],
+          [
+            -7.3887399,
+            54.9512142
+          ],
+          [
+            -7.3884395,
+            54.9513497
+          ],
+          [
+            -7.3871727,
+            54.9520902
+          ],
+          [
+            -7.384856,
+            54.9542525
+          ],
+          [
+            -7.3795607,
+            54.9588418
+          ],
+          [
+            -7.3774205,
+            54.9605187
+          ],
+          [
+            -7.3743536,
+            54.9618866
+          ],
+          [
+            -7.3716911,
+            54.9626854
+          ],
+          [
+            -7.371044,
+            54.9628795
+          ],
+          [
+            -7.369149,
+            54.963615
+          ],
+          [
+            -7.3684195,
+            54.9639722
+          ],
+          [
+            -7.3669604,
+            54.9647729
+          ],
+          [
+            -7.3668766,
+            54.9648387
+          ],
+          [
+            -7.3659411,
+            54.9655736
+          ],
+          [
+            -7.3654177,
+            54.9662774
+          ],
+          [
+            -7.3645793,
+            54.9675571
+          ],
+          [
+            -7.3616674,
+            54.9723102
+          ],
+          [
+            -7.3610818,
+            54.9731454
+          ],
+          [
+            -7.3610554,
+            54.9731845
+          ]
+        ],
+        "modes": [
+          "on_foot",
+          "cycling"
+        ],
+        "nodes": [
+          851476033,
+          8989741488,
+          913511515,
+          913511516,
+          913511519,
+          913511523,
+          913511528,
+          851476063,
+          913511533,
+          913511536,
+          851476098,
+          851476131,
+          851476054,
+          851476068,
+          851476100,
+          4965938234,
+          851476024,
+          851476057,
+          913511542,
+          851476092,
+          9520366954,
+          913511551,
+          851476119,
+          851476043,
+          851476087,
+          10768393496,
+          4965938235
+        ],
+        "origin": [
+          -7.36845621432992,
+          54.8305472491527
+        ],
+        "positions": [
+          0.0,
+          15.446493762005737,
+          242.79409250605005,
+          320.35385109309925,
+          375.2816296162804,
+          490.55787142306326,
+          512.5157752244522,
+          527.4701553136766,
+          544.6815826573845,
+          569.1190671614486,
+          684.7171510350653,
+          967.2532094874288,
+          1579.983807826724,
+          1811.410153994711,
+          2059.844875542213,
+          2252.1185782264693,
+          2298.847047151617,
+          2445.2011477170395,
+          2506.5251141130984,
+          2635.600244899236,
+          2644.6743966182053,
+          2746.0042788665373,
+          2831.140985332017,
+          2983.232098144744,
+          3543.6940039286533,
+          3643.8518732445955,
+          3648.5168240669523
+        ],
+        "route": "NCN:92",
+        "source_geometry_sha256": "ae3bb6057561dfec464b1f30ab4e2001ceb991c9075198ca81fba8a4f8208d8a",
+        "way": "30268009"
+      },
+      "route": "NCN:92",
+      "targets": [
+        {
+          "contributing_source_ways": [
+            "30268009"
+          ],
+          "coords": [
+            [
+              -7.3890666912,
+              54.95120423
+            ],
+            [
+              -7.3888477822,
+              54.9511571917
+            ]
+          ],
+          "current_route_coverage": [
+            [
+              0.0,
+              4.486054694785485
+            ]
+          ],
+          "key": "open-edge:0432b304be14c2b912f63a95b043959946dc2195f99ac8418a31ffc332da9bf8",
+          "length": 14.964524241343131,
+          "network": [
+            [
+              330072,
+              0.0,
+              14.964524241343131,
+              14.925238073516878
+            ]
+          ],
+          "route": "NCN:92"
+        },
+        {
+          "contributing_source_ways": [
+            "30268009"
+          ],
+          "coords": [
+            [
+              -7.3937455648,
+              54.9549070981
+            ],
+            [
+              -7.3936715467,
+              54.9548591112
+            ]
+          ],
+          "current_route_coverage": [
+            [
+              6.3385784598125285,
+              7.137667455434755
+            ]
+          ],
+          "key": "open-edge:1a4b3f1b626da938f4c20e0c08b762625083d04caa7d814f2e3c0a48c537839b",
+          "length": 7.137667455434755,
+          "network": [
+            [
+              330065,
+              0.0,
+              7.137667455434755,
+              7.127965260664255
+            ]
+          ],
+          "route": "NCN:92"
+        },
+        {
+          "contributing_source_ways": [],
+          "coords": [
+            [
+              -7.3644230968,
+              54.9675277806
+            ],
+            [
+              -7.3615111699,
+              54.9722806436
+            ]
+          ],
+          "current_route_coverage": [],
+          "key": "open-edge:2a25772a1db373d9bdc057bcbbd7f963fa09701c3ce0cca132b4103ffdf084b6",
+          "length": 560.4376330267596,
+          "network": [
+            [
+              330087,
+              0.0,
+              560.4376330267596,
+              560.2271860332189
+            ]
+          ],
+          "route": "NCN:92"
+        },
+        {
+          "contributing_source_ways": [
+            "30268009"
+          ],
+          "coords": [
+            [
+              -7.3615111699,
+              54.9722806436
+            ],
+            [
+              -7.3594442976,
+              54.9755454129
+            ]
+          ],
+          "current_route_coverage": [
+            [
+              99.75907687611061,
+              104.42297561981489
+            ]
+          ],
+          "key": "open-edge:591a4b7ef7d463df516739aeba17c87f33593c0de686f67fc4215f5dff3dcb90",
+          "length": 386.4094729396002,
+          "network": [
+            [
+              330088,
+              0.0,
+              386.4094729396002,
+              386.25037182215965
+            ]
+          ],
+          "route": "NCN:92"
+        },
+        {
+          "contributing_source_ways": [],
+          "coords": [
+            [
+              -7.3846998561,
+              54.9542241788
+            ],
+            [
+              -7.3794048715,
+              54.9588130137
+            ]
+          ],
+          "current_route_coverage": [],
+          "key": "open-edge:632fb70ec4d58ba7ed3b5cec923d7f34368f6b37d4ad9968431fc756dc50060a",
+          "length": 612.6763502044902,
+          "network": [
+            [
+              330077,
+              0.0,
+              612.6763502044902,
+              612.1014547290399
+            ]
+          ],
+          "route": "NCN:92"
+        },
+        {
+          "contributing_source_ways": [
+            "30268009"
+          ],
+          "coords": [
+            [
+              -7.3888477822,
+              54.9511571917
+            ],
+            [
+              -7.388583774,
+              54.951185307
+            ]
+          ],
+          "current_route_coverage": [
+            [
+              0.0,
+              7.946955741091264
+            ]
+          ],
+          "key": "open-edge:74224ad5d46940bb5258583d1ca5fa16ec0115821de27a631fec89e9f7d8b797",
+          "length": 17.195768334790092,
+          "network": [
+            [
+              330073,
+              0.0,
+              17.195768334790092,
+              17.14606065362972
+            ]
+          ],
+          "route": "NCN:92"
+        },
+        {
+          "contributing_source_ways": [],
+          "coords": [
+            [
+              -7.3870168446,
+              54.9520612641
+            ],
+            [
+              -7.3846998561,
+              54.9542241788
+            ]
+          ],
+          "current_route_coverage": [],
+          "key": "open-edge:9afbb6f620cde29ead14d3a666c5569062dcbe37718bb6bf7abc6d90349e0522",
+          "length": 282.6039275837832,
+          "network": [
+            [
+              330076,
+              0.0,
+              282.6039275837832,
+              282.36946608668524
+            ]
+          ],
+          "route": "NCN:92"
+        },
+        {
+          "contributing_source_ways": [],
+          "coords": [
+            [
+              -7.3657850828,
+              54.9655447735
+            ],
+            [
+              -7.3652621722,
+              54.9662478108
+            ]
+          ],
+          "current_route_coverage": [],
+          "key": "open-edge:b30c49c694381249a15db4e0d044d078ae5eccf20389519f8356f7498360b2d4",
+          "length": 85.04640496364044,
+          "network": [
+            [
+              330085,
+              0.0,
+              85.04640496364044,
+              85.0023311727432
+            ]
+          ],
+          "route": "NCN:92"
+        },
+        {
+          "contributing_source_ways": [
+            "30268009"
+          ],
+          "coords": [
+            [
+              -7.3892807576,
+              54.9513582823
+            ],
+            [
+              -7.3890666912,
+              54.95120423
+            ]
+          ],
+          "current_route_coverage": [
+            [
+              0.0,
+              13.225694233553813
+            ]
+          ],
+          "key": "open-edge:bec7f03da8129ff135ed4ab7c39ec0353346b83900273ac288a1003cf213c5a3",
+          "length": 21.94106694443362,
+          "network": [
+            [
+              330071,
+              0.0,
+              21.94106694443362,
+              21.91543414028084
+            ]
+          ],
+          "route": "NCN:92"
+        },
+        {
+          "contributing_source_ways": [],
+          "coords": [
+            [
+              -7.3794048715,
+              54.9588130137
+            ],
+            [
+              -7.3772648942,
+              54.960489989
+            ]
+          ],
+          "current_route_coverage": [],
+          "key": "open-edge:c57b60b7f500b45fef198113e3ee381a7c4c7b26bb1e7f331c6e88285df66ef4",
+          "length": 231.42463968496565,
+          "network": [
+            [
+              330078,
+              0.0,
+              231.42463968496565,
+              231.16680878714695
+            ]
+          ],
+          "route": "NCN:92"
+        },
+        {
+          "contributing_source_ways": [],
+          "coords": [
+            [
+              -7.3652621722,
+              54.9662478108
+            ],
+            [
+              -7.3644230968,
+              54.9675277806
+            ]
+          ],
+          "current_route_coverage": [],
+          "key": "open-edge:c9ed1b04def1e856b9aaa26488715843f357f05ba55b2a405d48164df3ca823c",
+          "length": 152.13445423478913,
+          "network": [
+            [
+              330086,
+              0.0,
+              152.13445423478913,
+              152.07068812023655
+            ]
+          ],
+          "route": "NCN:92"
+        }
+      ],
+      "way": "30268009"
+    }
+  ],
+  "policy": "two_exact_reviewed_correspondences_only",
+  "schema_version": 1
+}

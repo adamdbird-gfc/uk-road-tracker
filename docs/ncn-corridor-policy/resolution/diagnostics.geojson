@@ -1,0 +1,5033 @@
+{
+  "features": [
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -1.7535763,
+            53.7920704
+          ],
+          [
+            -1.7536411,
+            53.7921148
+          ],
+          [
+            -1.7540493,
+            53.7923948
+          ],
+          [
+            -1.7540412,
+            53.7924543
+          ],
+          [
+            -1.754031,
+            53.792529
+          ],
+          [
+            -1.7540629,
+            53.7925571
+          ],
+          [
+            -1.7541235,
+            53.7926244
+          ],
+          [
+            -1.7543636,
+            53.7927186
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "bradford",
+        "layer": "source",
+        "nodes": [
+          1711398757,
+          9749366767,
+          1714147807,
+          5324349854,
+          5324349855,
+          1860824502,
+          6927371803,
+          6841163437
+        ],
+        "tags": {
+          "bicycle": "designated",
+          "foot": "designated",
+          "highway": "path",
+          "segregated": "no"
+        },
+        "way": "159311690"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -1.7531109,
+            53.7917388
+          ],
+          [
+            -1.7532538,
+            53.7918392
+          ],
+          [
+            -1.7533675,
+            53.7919408
+          ],
+          [
+            -1.7535763,
+            53.7920704
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "bradford",
+        "layer": "neighbour",
+        "nodes": [
+          1714418946,
+          1711398812,
+          1860824474,
+          1711398757
+        ],
+        "tags": {
+          "highway": "living_street",
+          "name": "Channing Way"
+        },
+        "way": "160017281"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -1.7540629,
+            53.7925571
+          ],
+          [
+            -1.7539591,
+            53.7926046
+          ],
+          [
+            -1.7538815,
+            53.79264
+          ],
+          [
+            -1.753817,
+            53.7926695
+          ],
+          [
+            -1.7536474,
+            53.792747
+          ],
+          [
+            -1.7532245,
+            53.7930704
+          ],
+          [
+            -1.7531584,
+            53.7931209
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "bradford",
+        "layer": "neighbour",
+        "nodes": [
+          1860824502,
+          8583500020,
+          8583500019,
+          8583500018,
+          1860824510,
+          8583500017,
+          249592957
+        ],
+        "tags": {
+          "bicycle": "yes",
+          "highway": "pedestrian"
+        },
+        "way": "200365698"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -1.7543636,
+            53.7927186
+          ],
+          [
+            -1.754573,
+            53.7927268
+          ],
+          [
+            -1.7546684,
+            53.7927139
+          ],
+          [
+            -1.7548111,
+            53.7926947
+          ],
+          [
+            -1.7550659,
+            53.7926282
+          ],
+          [
+            -1.7552456,
+            53.7925363
+          ],
+          [
+            -1.7552869,
+            53.7925031
+          ],
+          [
+            -1.7553932,
+            53.7924174
+          ],
+          [
+            -1.7555594,
+            53.7923255
+          ],
+          [
+            -1.7557177,
+            53.7922463
+          ],
+          [
+            -1.7558304,
+            53.792175
+          ],
+          [
+            -1.755884,
+            53.7921275
+          ],
+          [
+            -1.7559028,
+            53.7920806
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "bradford",
+        "layer": "neighbour",
+        "nodes": [
+          6841163437,
+          6927371802,
+          6927371804,
+          6317095993,
+          6317095994,
+          6317095995,
+          6841163495,
+          6317095996,
+          6317095997,
+          6317095998,
+          6317095999,
+          6317096000,
+          1714419011
+        ],
+        "tags": {
+          "bicycle": "designated",
+          "foot": "designated",
+          "highway": "path",
+          "segregated": "no"
+        },
+        "way": "674543498"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -1.7540549428,
+            53.7925165755
+          ],
+          [
+            -1.7537186154,
+            53.7920727269
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "bradford",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            245748,
+            0.0,
+            54.08486405222375,
+            54.07240437938682
+          ]
+        ],
+        "route": "NCN:66",
+        "target": "open-edge:217a655a165d169e07ab9a7689b0e47e6827b3fd0c6dc1de1155f518dc1c2c0a"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -1.7540549428,
+            53.7925165755
+          ],
+          [
+            -1.753572117,
+            53.7929838164
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "bradford",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            243887,
+            0.0,
+            60.89224478151685,
+            60.86944133755241
+          ]
+        ],
+        "route": "NCN:66",
+        "target": "open-edge:2a8582fbfaffb2b8d160197c5f2632381695d536779a31f8a2f7ea9d6c1d7276"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -1.754931634,
+            53.7927172131
+          ],
+          [
+            -1.754367455,
+            53.7926903669
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "bradford",
+        "existing_coverage": [
+          [
+            23.427639240081575,
+            37.22862785844308
+          ]
+        ],
+        "layer": "revision4",
+        "network": [
+          [
+            243902,
+            0.0,
+            37.22862785844308,
+            37.17748921870527
+          ]
+        ],
+        "route": "NCN:66",
+        "target": "open-edge:9745adf866eb787d316e8c5b43cca4c693d8cb8032805a4c2ab132b103864ea9"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -1.7537186154,
+            53.7920727269
+          ],
+          [
+            -1.7531282841,
+            53.7915949296
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "bradford",
+        "existing_coverage": [
+          [
+            0.0,
+            39.004684084931014
+          ]
+        ],
+        "layer": "revision4",
+        "network": [
+          [
+            245747,
+            0.0,
+            65.80534761920809,
+            65.7740417858406
+          ]
+        ],
+        "route": "NCN:66",
+        "target": "open-edge:b76c5f24827c2003e9a5e471368a5069aec93c2c9c69f86cc26896101c1e8e69"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -1.754367455,
+            53.7926903669
+          ],
+          [
+            -1.7540549428,
+            53.7925165755
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "bradford",
+        "existing_coverage": [
+          [
+            0.0,
+            16.71518299677999
+          ],
+          [
+            24.745119328441977,
+            28.212961103371057
+          ]
+        ],
+        "layer": "revision4",
+        "network": [
+          [
+            243901,
+            0.0,
+            28.212961103371057,
+            28.192274769957876
+          ]
+        ],
+        "route": "NCN:66",
+        "target": "open-edge:c7286ee85171a3104f46b4c8373aa0fab7488704d770e93519338abead31a691"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -1.753633438199613,
+            53.792109550247886
+          ],
+          [
+            -1.7536411,
+            53.7921148
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 6.522344238919152,
+          "high": 53.35389944626745,
+          "low": 54.08486405222375,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 5.751157516486935,
+          "target": "open-edge:217a655a165d169e07ab9a7689b0e47e6827b3fd0c6dc1de1155f518dc1c2c0a"
+        },
+        "case": "bradford",
+        "layer": "new_source"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -1.7537186154,
+            53.7920727269
+          ],
+          [
+            -1.7537231609047406,
+            53.792078725566526
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 6.522344238919152,
+          "high": 53.35389944626745,
+          "low": 54.08486405222375,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 5.751157516486935,
+          "target": "open-edge:217a655a165d169e07ab9a7689b0e47e6827b3fd0c6dc1de1155f518dc1c2c0a"
+        },
+        "case": "bradford",
+        "layer": "new_target"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -1.7536411,
+            53.7921148
+          ],
+          [
+            -1.7540493,
+            53.7923948
+          ],
+          [
+            -1.7540493,
+            53.7923948
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 47.63496694211435,
+          "high": 14.385552118798437,
+          "low": 53.35389944626745,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 6.522344238919152,
+          "target": "open-edge:217a655a165d169e07ab9a7689b0e47e6827b3fd0c6dc1de1155f518dc1c2c0a"
+        },
+        "case": "bradford",
+        "layer": "new_source"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -1.7537231609047406,
+            53.792078725566526
+          ],
+          [
+            -1.7539654860630818,
+            53.7923985201544
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 47.63496694211435,
+          "high": 14.385552118798437,
+          "low": 53.35389944626745,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 6.522344238919152,
+          "target": "open-edge:217a655a165d169e07ab9a7689b0e47e6827b3fd0c6dc1de1155f518dc1c2c0a"
+        },
+        "case": "bradford",
+        "layer": "new_target"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -1.7540493,
+            53.7923948
+          ],
+          [
+            -1.7540412,
+            53.7924543
+          ],
+          [
+            -1.7540412,
+            53.7924543
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 54.27249098573134,
+          "high": 8.09421565521663,
+          "low": 14.385552118798437,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 47.63496694211435,
+          "target": "open-edge:217a655a165d169e07ab9a7689b0e47e6827b3fd0c6dc1de1155f518dc1c2c0a"
+        },
+        "case": "bradford",
+        "layer": "new_source"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -1.7539654860630818,
+            53.7923985201544
+          ],
+          [
+            -1.754004608818068,
+            53.7924501501436
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 54.27249098573134,
+          "high": 8.09421565521663,
+          "low": 14.385552118798437,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 47.63496694211435,
+          "target": "open-edge:217a655a165d169e07ab9a7689b0e47e6827b3fd0c6dc1de1155f518dc1c2c0a"
+        },
+        "case": "bradford",
+        "layer": "new_target"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -1.7540412,
+            53.7924543
+          ],
+          [
+            -1.754031,
+            53.792529
+          ],
+          [
+            -1.754031,
+            53.792529
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 62.60581404642965,
+          "high": 0.19552649189888172,
+          "low": 8.09421565521663,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 54.27249098573134,
+          "target": "open-edge:217a655a165d169e07ab9a7689b0e47e6827b3fd0c6dc1de1155f518dc1c2c0a"
+        },
+        "case": "bradford",
+        "layer": "new_source"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -1.754004608818068,
+            53.7924501501436
+          ],
+          [
+            -1.7540537269160492,
+            53.792514970907604
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 62.60581404642965,
+          "high": 0.19552649189888172,
+          "low": 8.09421565521663,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 54.27249098573134,
+          "target": "open-edge:217a655a165d169e07ab9a7689b0e47e6827b3fd0c6dc1de1155f518dc1c2c0a"
+        },
+        "case": "bradford",
+        "layer": "new_target"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -1.754031,
+            53.792529
+          ],
+          [
+            -1.754032748409819,
+            53.792530540135296
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 62.81209959460458,
+          "high": 0.0,
+          "low": 0.19552649189888172,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 62.60581404642965,
+          "target": "open-edge:217a655a165d169e07ab9a7689b0e47e6827b3fd0c6dc1de1155f518dc1c2c0a"
+        },
+        "case": "bradford",
+        "layer": "new_source"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -1.7540537269160492,
+            53.792514970907604
+          ],
+          [
+            -1.7540549428,
+            53.7925165755
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 62.81209959460458,
+          "high": 0.0,
+          "low": 0.19552649189888172,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 62.60581404642965,
+          "target": "open-edge:217a655a165d169e07ab9a7689b0e47e6827b3fd0c6dc1de1155f518dc1c2c0a"
+        },
+        "case": "bradford",
+        "layer": "new_target"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -1.7540629,
+            53.7925571
+          ],
+          [
+            -1.7540629,
+            53.7925571
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 66.36952488511533,
+          "high": 24.745119328441962,
+          "low": 24.745119328441977,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 66.36952488511531,
+          "target": "open-edge:c7286ee85171a3104f46b4c8373aa0fab7488704d770e93519338abead31a691"
+        },
+        "case": "bradford",
+        "layer": "new_source"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -1.7540933557549878,
+            53.792537937357956
+          ],
+          [
+            -1.7540933557549878,
+            53.792537937357956
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 66.36952488511533,
+          "high": 24.745119328441962,
+          "low": 24.745119328441977,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 66.36952488511531,
+          "target": "open-edge:c7286ee85171a3104f46b4c8373aa0fab7488704d770e93519338abead31a691"
+        },
+        "case": "bradford",
+        "layer": "new_target"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -1.7540629,
+            53.7925571
+          ],
+          [
+            -1.7541235,
+            53.7926244
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 74.8482935767978,
+          "high": 16.71518299677999,
+          "low": 24.745119328441962,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 66.36952488511533,
+          "target": "open-edge:c7286ee85171a3104f46b4c8373aa0fab7488704d770e93519338abead31a691"
+        },
+        "case": "bradford",
+        "layer": "new_source"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -1.7540933557549878,
+            53.792537937357956
+          ],
+          [
+            -1.7541823025673586,
+            53.79258740163822
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 74.8482935767978,
+          "high": 16.71518299677999,
+          "low": 24.745119328441962,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 66.36952488511533,
+          "target": "open-edge:c7286ee85171a3104f46b4c8373aa0fab7488704d770e93519338abead31a691"
+        },
+        "case": "bradford",
+        "layer": "new_target"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.8034041,
+            57.2472956
+          ],
+          [
+            -3.8032819,
+            57.2472834
+          ],
+          [
+            -3.8031297,
+            57.2472737
+          ],
+          [
+            -3.802985,
+            57.2473026
+          ],
+          [
+            -3.8010311,
+            57.2480865
+          ],
+          [
+            -3.8009525,
+            57.2481002
+          ],
+          [
+            -3.8008522,
+            57.2480493
+          ],
+          [
+            -3.8007647,
+            57.2480013
+          ],
+          [
+            -3.7999654,
+            57.2483212
+          ],
+          [
+            -3.7994807,
+            57.2484928
+          ],
+          [
+            -3.7991534,
+            57.2485724
+          ],
+          [
+            -3.7987854,
+            57.2486315
+          ],
+          [
+            -3.7979049,
+            57.2487015
+          ],
+          [
+            -3.7972792,
+            57.2487326
+          ],
+          [
+            -3.7961236,
+            57.2489211
+          ],
+          [
+            -3.7955298,
+            57.2490309
+          ],
+          [
+            -3.7949258,
+            57.2491202
+          ],
+          [
+            -3.7922995,
+            57.2495196
+          ],
+          [
+            -3.7889271,
+            57.2500687
+          ],
+          [
+            -3.7878233,
+            57.2502239
+          ],
+          [
+            -3.7866916,
+            57.2504435
+          ],
+          [
+            -3.7858288,
+            57.250692
+          ],
+          [
+            -3.7856766,
+            57.2507139
+          ],
+          [
+            -3.7855077,
+            57.2507197
+          ],
+          [
+            -3.7853742,
+            57.2507286
+          ],
+          [
+            -3.7852436,
+            57.2507427
+          ],
+          [
+            -3.7851511,
+            57.2507674
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "layer": "neighbour",
+        "nodes": [
+          4588972777,
+          4588972778,
+          4588972779,
+          4588972780,
+          4588972781,
+          4588972782,
+          4588972783,
+          4588972784,
+          4588972785,
+          4588972786,
+          4588972787,
+          4588972788,
+          4588974989,
+          4588974990,
+          4588974991,
+          4588974992,
+          4588974993,
+          4588974994,
+          4588974995,
+          4588974996,
+          4588974997,
+          4588974998,
+          4588974999,
+          4588975000,
+          4588975026,
+          4448828289,
+          455566791
+        ],
+        "tags": {
+          "foot": "yes",
+          "highway": "cycleway",
+          "lit": "no",
+          "segregated": "no",
+          "smoothness": "good",
+          "surface": "asphalt"
+        },
+        "way": "463641619"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7851511,
+            57.2507674
+          ],
+          [
+            -3.7850639,
+            57.2506991
+          ],
+          [
+            -3.7849354,
+            57.2506367
+          ],
+          [
+            -3.7847989,
+            57.2505976
+          ],
+          [
+            -3.7846126,
+            57.250575
+          ],
+          [
+            -3.7844275,
+            57.2505682
+          ],
+          [
+            -3.7840271,
+            57.2505533
+          ],
+          [
+            -3.7837392,
+            57.2505426
+          ],
+          [
+            -3.7817428,
+            57.2504293
+          ],
+          [
+            -3.7792126,
+            57.2502824
+          ],
+          [
+            -3.776716,
+            57.2501288
+          ],
+          [
+            -3.7743557,
+            57.2500043
+          ],
+          [
+            -3.7711196,
+            57.2497806
+          ],
+          [
+            -3.7665683,
+            57.2495237
+          ],
+          [
+            -3.765728,
+            57.2494747
+          ],
+          [
+            -3.765623,
+            57.2494674
+          ],
+          [
+            -3.7652805,
+            57.2494481
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "layer": "source",
+        "nodes": [
+          455566791,
+          8145753809,
+          8145753808,
+          296569872,
+          296570721,
+          8145818525,
+          8145753815,
+          455566785,
+          455566784,
+          455566774,
+          455566775,
+          296569874,
+          3762729067,
+          7711322836,
+          3762729068,
+          8039759592,
+          296570284
+        ],
+        "tags": {
+          "highway": "tertiary",
+          "highway_authority_ref": "C1128",
+          "lanes": "2",
+          "maxspeed": "60 mph",
+          "maxspeed:type": "GB:nsl_single",
+          "ref": "C1128",
+          "surface": "asphalt"
+        },
+        "way": "463641622"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7851511,
+            57.2507674
+          ],
+          [
+            -3.7849632,
+            57.2508214
+          ],
+          [
+            -3.7848853,
+            57.2508524
+          ],
+          [
+            -3.7848652,
+            57.2508959
+          ],
+          [
+            -3.7848835,
+            57.2509539
+          ],
+          [
+            -3.7849549,
+            57.2510354
+          ],
+          [
+            -3.784996,
+            57.2510706
+          ],
+          [
+            -3.7850578,
+            57.2510776
+          ],
+          [
+            -3.785226,
+            57.2510441
+          ],
+          [
+            -3.7858083,
+            57.2509044
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "layer": "neighbour",
+        "nodes": [
+          455566791,
+          4448828312,
+          4588975028,
+          4448828295,
+          4588975027,
+          4588975029,
+          4588975030,
+          4588975031,
+          4588975032,
+          4588975033
+        ],
+        "tags": {
+          "foot": "yes",
+          "highway": "cycleway",
+          "lit": "no",
+          "smoothness": "good",
+          "surface": "asphalt"
+        },
+        "way": "463641626"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7757736373,
+            57.2499743312
+          ],
+          [
+            -3.7746328222,
+            57.2498596731
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260928,
+            0.0,
+            72.0830154124165,
+            69.79857974455264
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:05c1d452330c4a6141cd385dc9669e58f09a1354501e30189e5f22103f570738"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7792686627,
+            57.2501191571
+          ],
+          [
+            -3.7790202976,
+            57.2501158465
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260933,
+            0.0,
+            15.45005208100752,
+            14.944565929492382
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:0d2910217f5d22c9822e8591605cffa47aecb3ea6f54458a69937ff21f8436bb"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7848714831,
+            57.2505028743
+          ],
+          [
+            -3.7845731345,
+            57.250480258
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260940,
+            0.0,
+            18.723759701232378,
+            18.121869808228148
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:0fb313c42b87b69f2ec83ae561b723c3bd420d04f786d8aa57da9ae33734556b"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7680250642,
+            57.2494672009
+          ],
+          [
+            -3.7678400784,
+            57.2494539018
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260915,
+            0.0,
+            11.598806466275411,
+            11.225571525912617
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:1143b2918b67912b03e2e7ddf0a3fb4338b04d008626656c0f79198a874d751c"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7786320669,
+            57.2501307791
+          ],
+          [
+            -3.7784786462,
+            57.2501346584
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260930,
+            0.0,
+            9.550882087138936,
+            9.238865462266602
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:1a8d3f70d0b99ddbc72c8bcadced170cd622efd5a4884285e84fb5b4edce800c"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7737154585,
+            57.2498158651
+          ],
+          [
+            -3.7718591685,
+            57.2497313202
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260925,
+            0.0,
+            115.82363154569296,
+            112.05830651151638
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:2614f6d3b8c7586bbbb8ac3ef8ce396bbc6f58e0774d08da255aa55ae3bd63a4"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7746328222,
+            57.2498596731
+          ],
+          [
+            -3.7743653605,
+            57.2498425262
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260927,
+            0.0,
+            16.74218853663396,
+            16.20145431083395
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:26a3b29848d4beaab9317fbe52627a2fabe70a9652c98ca6d85ade30c6cf1009"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7660168543,
+            57.2493455435
+          ],
+          [
+            -3.7657605432,
+            57.249384178
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260906,
+            0.0,
+            16.50858344810121,
+            16.005635665128604
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:2dc56dc1a2f0ee7e6ec0443f930835c220dd7568658e5d946015de52afe29457"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7691655674,
+            57.2495475204
+          ],
+          [
+            -3.7689360734,
+            57.2495383537
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260918,
+            0.0,
+            14.30843547009607,
+            13.842660992685978
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:2e98aa0186f9287ae9e6ee1ff653d5924d63a48b9c899af86740429833c02974"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7798586587,
+            57.2501957665
+          ],
+          [
+            -3.7796587143,
+            57.2501674316
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260936,
+            0.0,
+            12.827374808772234,
+            12.433166257052823
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:2eacca0bb4acd659ec344cbd7e098bb3ce5757c8437d3f1b69d04653bb5e143f"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7665901981,
+            57.2493605626
+          ],
+          [
+            -3.7663834363,
+            57.2493438929
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260909,
+            0.0,
+            12.991296819832822,
+            12.575064515271785
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:2f0dc48dec1969d2a7f852a4f623eb5ed84c9219cf676502b83d14b8225594c4"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.770810837,
+            57.2496380457
+          ],
+          [
+            -3.7700971203,
+            57.2495942158
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260923,
+            0.0,
+            44.65235158558975,
+            43.20886012878834
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:347bc67425c15de70b405071e194e6b6c05e5bc7d15ea30da680a2d4103de347"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7850384836,
+            57.2505508063
+          ],
+          [
+            -3.7848714831,
+            57.2505028743
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260941,
+            0.0,
+            11.673415403500364,
+            11.371887534491057
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:34e7b247e39c71a10a4c2a0b44990405916c125a6de4bcf8b469667ff85b51d0"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7852234781,
+            57.2506174221
+          ],
+          [
+            -3.7850384836,
+            57.2505508063
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260942,
+            0.0,
+            13.683080884359969,
+            13.367848114844561
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:3e09ec66b19aaa80e0432da7fb0e01c065bb164fafec8dc51f404ff7e9521d40"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7678400784,
+            57.2494539018
+          ],
+          [
+            -3.7674367754,
+            57.249442246
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260914,
+            0.0,
+            25.114620246536013,
+            24.295122230476814
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:4266bc4dd014ae545429ecc9b385b94fb9f91040bb5f9bf5f4380d4d8b3ebc41"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7663834363,
+            57.2493438929
+          ],
+          [
+            -3.7661901096,
+            57.249330529
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260908,
+            0.0,
+            12.114345240120423,
+            11.724078129689227
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:43c1d7a1f1d2ef8f65ded0a85019acb7fe89cb3b05b7235e269a84b5c1a8f280"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7855319879,
+            57.2507061004
+          ],
+          [
+            -3.7853637986,
+            57.2506956429
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [
+          [
+            0.0,
+            9.476209606018749
+          ]
+        ],
+        "layer": "revision4",
+        "network": [
+          [
+            260944,
+            0.0,
+            10.52401903174092,
+            10.183621408614563
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:505449a0ba1255d26f92620542f720f51dda20f8c12ffcec4e1b6faa5c914ff8"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7696372384,
+            57.2495742
+          ],
+          [
+            -3.7693938437,
+            57.249565859
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260920,
+            0.0,
+            15.16494266105626,
+            14.67060787430748
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:506e3218266a5eb9b4124adb6faa5ba0a3a5398036dd228c3e8c3435aa175355"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7796587143,
+            57.2501674316
+          ],
+          [
+            -3.7794904017,
+            57.2501374804
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260935,
+            0.0,
+            10.98431272085589,
+            10.658276133343826
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:520ae618aa42dc3d5a013ec4bf34e57d0821b89b4c9a3fb83fd80a462496422b"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7840354451,
+            57.2504600523
+          ],
+          [
+            -3.7804704078,
+            57.2502442303
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260938,
+            0.0,
+            223.00242129039438,
+            215.78612909271297
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:5790b5ff8cfa19190c9b9aadc3e566b93ecf81e724aaea24154a70184586ed67"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7700971203,
+            57.2495942158
+          ],
+          [
+            -3.76986888,
+            57.2495825175
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260922,
+            0.0,
+            14.253592137839988,
+            13.791132763683855
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:5b45d01e763e4e3be5a0ed6e98da35e825c05439aad8e0b5c383bf372ec7ecd0"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7790202976,
+            57.2501158465
+          ],
+          [
+            -3.7788070321,
+            57.2501257858
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260932,
+            0.0,
+            13.308809425877564,
+            12.876187557805915
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:60cff05f7665764356e820e19127a6cd23b3a23c681e9d1316e44cc71805868a"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7670168417,
+            57.2493972294
+          ],
+          [
+            -3.7668084409,
+            57.2493805744
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260911,
+            0.0,
+            13.09195862124025,
+            12.672338183492416
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:64caa95b500831f2f5e7c4f617440f383880eee5ee7091285764a03cd1d4ede8"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.76986888,
+            57.2495825175
+          ],
+          [
+            -3.7696372384,
+            57.2495742
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260921,
+            0.0,
+            14.435304695494768,
+            13.964916626403541
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:6796b7c914438932f03cc9fd87c4b026efe7bcca1b7e55a3ba517e111c8714d4"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7693938437,
+            57.249565859
+          ],
+          [
+            -3.7691655674,
+            57.2495475204
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260919,
+            0.0,
+            14.342061949342632,
+            13.88240688859876
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:6bf387516704eab1dcc41f2b68a1ea20fa18a5e2cdd38cb55db7cef3a963cf6f"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7743653605,
+            57.2498425262
+          ],
+          [
+            -3.7737154585,
+            57.2498158651
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260926,
+            0.0,
+            40.52556770750831,
+            39.20642057682912
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:75349b1f99caf09a8b5bfb9a4690ed4097deaad59faa311bbc7cf12f70cb6251"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7788070321,
+            57.2501257858
+          ],
+          [
+            -3.7786320669,
+            57.2501307791
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260931,
+            0.0,
+            10.895131831415625,
+            10.539403500073176
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:756dba31968510af19420e00befec2cdabe0e8207ced31b2f66ceb210229b88e"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.768312336,
+            57.2494700751
+          ],
+          [
+            -3.7680250642,
+            57.2494672009
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260916,
+            0.0,
+            17.868100639263346,
+            17.283665208387216
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:83c03a0ec400d870a308ab5942bd0edc571a3e36a97fa33f78a4edc255e8a135"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7784786462,
+            57.2501346584
+          ],
+          [
+            -3.7757736373,
+            57.2499743312
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260929,
+            0.0,
+            169.16477135087456,
+            163.6894063774382
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:8c40ef8319d2e4bb7ff4be13068916173e86a3243daa1e853be4a92fffb2792c"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7661901096,
+            57.249330529
+          ],
+          [
+            -3.7660168543,
+            57.2493455435
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260907,
+            0.0,
+            10.903215718628857,
+            10.555012579128514
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:90ba57245af1d3d22851ae3da9b68a314b694860e5928165e6aeb233a7aeddfb"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7689360734,
+            57.2495383537
+          ],
+          [
+            -3.768312336,
+            57.2494700751
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260917,
+            0.0,
+            39.525855241997206,
+            38.28101708568414
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:a4645e33497c70ee6dcf8d1b2c8833e98ddee55df9f806252012dede99a709b3"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7718591685,
+            57.2497313202
+          ],
+          [
+            -3.770810837,
+            57.2496380457
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260924,
+            0.0,
+            66.01490284065873,
+            63.90869625052367
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:a48eb3498b6fdfa7fda0422906f5731fd40c02e55c3805f8184e0fdec1ef35c7"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7674367754,
+            57.249442246
+          ],
+          [
+            -3.7671724938,
+            57.2494230626
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260913,
+            0.0,
+            16.573345636231455,
+            16.04022380124496
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:a9c5b4e8eac3679f88870497de7688c756044209f0274cb838159602eb9f0aa6"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7671724938,
+            57.2494230626
+          ],
+          [
+            -3.7670168417,
+            57.2493972294
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260912,
+            0.0,
+            10.097124039003932,
+            9.793918658977457
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:df8faadff1e5b10ddfeea38e2e3d29dc537eb6faeade59c46e666113207ed395"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7853637986,
+            57.2506956429
+          ],
+          [
+            -3.7852234781,
+            57.2506174221
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260943,
+            0.0,
+            12.320793626511708,
+            12.120046972503516
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:e3506268c5144a5f32f011bdb3220d5bbe4ca3ce9a6acb8189671a3f17ca1200"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7794904017,
+            57.2501374804
+          ],
+          [
+            -3.7792686627,
+            57.2501191571
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260934,
+            0.0,
+            13.939510219137782,
+            13.493087120866594
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:e659f73770db4e7098fd20f6b9abbdbfc13aa12521b5ab026c8cfe7813160c9f"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7668084409,
+            57.2493805744
+          ],
+          [
+            -3.7665901981,
+            57.2493605626
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260910,
+            0.0,
+            13.753589038231501,
+            13.315580748019727
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:e7653f7fccaa4ae9a2d5a1bf2b4b83e5cb3433cc138df2cd46e15fe261e42574"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7845731345,
+            57.250480258
+          ],
+          [
+            -3.7840354451,
+            57.2504600523
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260939,
+            0.0,
+            33.51395109961537,
+            32.421528361368175
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:f971caa6ad2b89cc429946d909c3189a98359f57cf3f2f96708251bf6c4fe38a"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -3.7804704078,
+            57.2502442303
+          ],
+          [
+            -3.7798586587,
+            57.2501957665
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "highland",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            260937,
+            0.0,
+            38.4240563677353,
+            37.19122210239398
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:ffb4e5ffda2b8569162621e2a66bd3991b307c3889b10188c858ce89c186ccc1"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3939022,
+            54.9549365
+          ],
+          [
+            -7.3937437,
+            54.9548318
+          ],
+          [
+            -7.3914114,
+            54.9532905
+          ],
+          [
+            -7.3906496,
+            54.9527483
+          ],
+          [
+            -7.3902312,
+            54.9523171
+          ],
+          [
+            -7.3894373,
+            54.9513867
+          ],
+          [
+            -7.3892227,
+            54.9512327
+          ],
+          [
+            -7.389004,
+            54.9511856
+          ],
+          [
+            -7.3887399,
+            54.9512142
+          ],
+          [
+            -7.3884395,
+            54.9513497
+          ],
+          [
+            -7.3871727,
+            54.9520902
+          ],
+          [
+            -7.384856,
+            54.9542525
+          ],
+          [
+            -7.3795607,
+            54.9588418
+          ],
+          [
+            -7.3774205,
+            54.9605187
+          ],
+          [
+            -7.3743536,
+            54.9618866
+          ],
+          [
+            -7.3716911,
+            54.9626854
+          ],
+          [
+            -7.371044,
+            54.9628795
+          ],
+          [
+            -7.369149,
+            54.963615
+          ],
+          [
+            -7.3684195,
+            54.9639722
+          ],
+          [
+            -7.3669604,
+            54.9647729
+          ],
+          [
+            -7.3668766,
+            54.9648387
+          ],
+          [
+            -7.3659411,
+            54.9655736
+          ],
+          [
+            -7.3654177,
+            54.9662774
+          ],
+          [
+            -7.3645793,
+            54.9675571
+          ],
+          [
+            -7.3616674,
+            54.9723102
+          ],
+          [
+            -7.3610818,
+            54.9731454
+          ],
+          [
+            -7.3610554,
+            54.9731845
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "derry",
+        "layer": "source",
+        "nodes": [
+          851476033,
+          8989741488,
+          913511515,
+          913511516,
+          913511519,
+          913511523,
+          913511528,
+          851476063,
+          913511533,
+          913511536,
+          851476098,
+          851476131,
+          851476054,
+          851476068,
+          851476100,
+          4965938234,
+          851476024,
+          851476057,
+          913511542,
+          851476092,
+          9520366954,
+          913511551,
+          851476119,
+          851476043,
+          851476087,
+          10768393496,
+          4965938235
+        ],
+        "tags": {
+          "bicycle": "designated",
+          "foot": "designated",
+          "highway": "cycleway",
+          "oneway": "no",
+          "segregated": "no",
+          "surface": "asphalt"
+        },
+        "way": "30268009"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3610554,
+            54.9731845
+          ],
+          [
+            -7.3596001,
+            54.9755749
+          ],
+          [
+            -7.358506,
+            54.9769047
+          ],
+          [
+            -7.3574761,
+            54.9780253
+          ],
+          [
+            -7.356019,
+            54.9792464
+          ],
+          [
+            -7.3528743,
+            54.9818791
+          ],
+          [
+            -7.3505994,
+            54.9834098
+          ],
+          [
+            -7.3500683,
+            54.9837376
+          ],
+          [
+            -7.3489375,
+            54.9843137
+          ],
+          [
+            -7.3465245,
+            54.9853078
+          ],
+          [
+            -7.3445626,
+            54.9859198
+          ],
+          [
+            -7.3439711,
+            54.986086
+          ],
+          [
+            -7.3433811,
+            54.9862476
+          ],
+          [
+            -7.3432334,
+            54.9862763
+          ],
+          [
+            -7.3431236,
+            54.9862976
+          ],
+          [
+            -7.3427253,
+            54.9863438
+          ],
+          [
+            -7.3422304,
+            54.9863507
+          ],
+          [
+            -7.3418254,
+            54.9863138
+          ],
+          [
+            -7.341018,
+            54.9862259
+          ],
+          [
+            -7.3405768,
+            54.986203
+          ],
+          [
+            -7.3405685,
+            54.9862305
+          ],
+          [
+            -7.3405755,
+            54.9862545
+          ],
+          [
+            -7.3401396,
+            54.9862799
+          ],
+          [
+            -7.3360954,
+            54.9868172
+          ],
+          [
+            -7.3347798,
+            54.9869873
+          ],
+          [
+            -7.3334467,
+            54.9871958
+          ],
+          [
+            -7.3326264,
+            54.987393
+          ],
+          [
+            -7.3321244,
+            54.9875136
+          ],
+          [
+            -7.332111,
+            54.987599
+          ],
+          [
+            -7.3310341,
+            54.9876621
+          ],
+          [
+            -7.3308181,
+            54.9876859
+          ],
+          [
+            -7.3296299,
+            54.9879114
+          ],
+          [
+            -7.3295868,
+            54.9878407
+          ],
+          [
+            -7.3295736,
+            54.9878144
+          ],
+          [
+            -7.3285514,
+            54.9880554
+          ],
+          [
+            -7.3281559,
+            54.9881486
+          ],
+          [
+            -7.3272228,
+            54.98838
+          ],
+          [
+            -7.3266195,
+            54.9885296
+          ],
+          [
+            -7.3254079,
+            54.988884
+          ],
+          [
+            -7.32393,
+            54.9893163
+          ],
+          [
+            -7.323811,
+            54.9893603
+          ],
+          [
+            -7.3232771,
+            54.9895577
+          ],
+          [
+            -7.3224871,
+            54.9898498
+          ],
+          [
+            -7.3224419,
+            54.9898692
+          ],
+          [
+            -7.3214683,
+            54.9902881
+          ],
+          [
+            -7.3210054,
+            54.9904984
+          ],
+          [
+            -7.3205475,
+            54.9907274
+          ],
+          [
+            -7.3202848,
+            54.9908937
+          ],
+          [
+            -7.3197909,
+            54.991199
+          ],
+          [
+            -7.3197855,
+            54.9912269
+          ],
+          [
+            -7.3197859,
+            54.9912607
+          ],
+          [
+            -7.3198463,
+            54.9913185
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "derry",
+        "layer": "neighbour",
+        "nodes": [
+          4965938235,
+          851476113,
+          851476038,
+          913511556,
+          851476071,
+          851476103,
+          3993460974,
+          851476030,
+          851476061,
+          851476095,
+          3993460970,
+          3993460971,
+          851476124,
+          12815239120,
+          3993460972,
+          913515133,
+          913515134,
+          913515136,
+          913515138,
+          851476045,
+          3993460964,
+          3993460963,
+          3993460962,
+          3993460978,
+          851476088,
+          3993460979,
+          8119537468,
+          3993460980,
+          851476115,
+          3993460981,
+          3993460982,
+          913515139,
+          913515141,
+          851476040,
+          12815239157,
+          3379973850,
+          12815239158,
+          913515143,
+          12815239134,
+          913515145,
+          12815239143,
+          12815239163,
+          851476074,
+          12815239168,
+          3379973853,
+          3379973854,
+          851476106,
+          3379973855,
+          3379973856,
+          4512748467,
+          9641818062,
+          4512748466
+        ],
+        "tags": {
+          "bicycle": "designated",
+          "foot": "designated",
+          "highway": "cycleway",
+          "oneway": "no",
+          "segregated": "no",
+          "surface": "asphalt"
+        },
+        "way": "1157895911"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3890666912,
+            54.95120423
+          ],
+          [
+            -7.3888477822,
+            54.9511571917
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "derry",
+        "existing_coverage": [
+          [
+            0.0,
+            4.486054694785485
+          ]
+        ],
+        "layer": "revision4",
+        "network": [
+          [
+            330072,
+            0.0,
+            14.964524241343131,
+            14.925238073516878
+          ]
+        ],
+        "route": "NCN:92",
+        "target": "open-edge:0432b304be14c2b912f63a95b043959946dc2195f99ac8418a31ffc332da9bf8"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3936715467,
+            54.9548591112
+          ],
+          [
+            -7.3935835581,
+            54.9548001361
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "derry",
+        "existing_coverage": [
+          [
+            0.0,
+            8.646539149667595
+          ]
+        ],
+        "layer": "revision4",
+        "network": [
+          [
+            330066,
+            0.0,
+            8.646539149667595,
+            8.63523679300511
+          ]
+        ],
+        "route": "NCN:92",
+        "target": "open-edge:0496c44b9ff299c846e3b8d49fbd7c4a6977799104bdb2458e064d6dbddfd2be"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3772648942,
+            54.960489989
+          ],
+          [
+            -7.3741979146,
+            54.961857943
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "derry",
+        "existing_coverage": [
+          [
+            0.0,
+            248.44242927275099
+          ]
+        ],
+        "layer": "revision4",
+        "network": [
+          [
+            330079,
+            0.0,
+            248.44242927275099,
+            247.94243750615897
+          ]
+        ],
+        "route": "NCN:92",
+        "target": "open-edge:08e85697b4ec08e4f456a288610d237f01926f29b5a9ca584d637b9e2095625b"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3937455648,
+            54.9549070981
+          ],
+          [
+            -7.3936715467,
+            54.9548591112
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "derry",
+        "existing_coverage": [
+          [
+            6.3385784598125285,
+            7.137667455434755
+          ]
+        ],
+        "layer": "revision4",
+        "network": [
+          [
+            330065,
+            0.0,
+            7.137667455434755,
+            7.127965260664255
+          ]
+        ],
+        "route": "NCN:92",
+        "target": "open-edge:1a4b3f1b626da938f4c20e0c08b762625083d04caa7d814f2e3c0a48c537839b"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3644230968,
+            54.9675277806
+          ],
+          [
+            -7.3615111699,
+            54.9722806436
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "derry",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            330087,
+            0.0,
+            560.4376330267596,
+            560.2271860332189
+          ]
+        ],
+        "route": "NCN:92",
+        "target": "open-edge:2a25772a1db373d9bdc057bcbbd7f963fa09701c3ce0cca132b4103ffdf084b6"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.366804066,
+            54.9647438384
+          ],
+          [
+            -7.3657850828,
+            54.9655447735
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "derry",
+        "existing_coverage": [
+          [
+            0.0,
+            107.0921023876614
+          ]
+        ],
+        "layer": "revision4",
+        "network": [
+          [
+            330084,
+            0.0,
+            110.41312616723931,
+            110.28492663096789
+          ]
+        ],
+        "route": "NCN:92",
+        "target": "open-edge:4e07e412ac9ab472f97a2a4a11c8bcbfad6f1402de8de592bbbd61e8d0a49e43"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3882828098,
+            54.9513213136
+          ],
+          [
+            -7.3870168446,
+            54.9520612641
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "derry",
+        "existing_coverage": [
+          [
+            1.2000935266872148,
+            110.80215219706429
+          ]
+        ],
+        "layer": "revision4",
+        "network": [
+          [
+            330075,
+            0.0,
+            115.51703552638664,
+            115.3467813947039
+          ]
+        ],
+        "route": "NCN:92",
+        "target": "open-edge:54d6a239583e9b806b38102f2e51eb0446ceb981759879d3c39b75f49e650219"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3615111699,
+            54.9722806436
+          ],
+          [
+            -7.3594442976,
+            54.9755454129
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "derry",
+        "existing_coverage": [
+          [
+            99.75907687611061,
+            104.42297561981489
+          ]
+        ],
+        "layer": "revision4",
+        "network": [
+          [
+            330088,
+            0.0,
+            386.4094729396002,
+            386.25037182215965
+          ]
+        ],
+        "route": "NCN:92",
+        "target": "open-edge:591a4b7ef7d463df516739aeba17c87f33593c0de686f67fc4215f5dff3dcb90"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3846998561,
+            54.9542241788
+          ],
+          [
+            -7.3794048715,
+            54.9588130137
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "derry",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            330077,
+            0.0,
+            612.6763502044902,
+            612.1014547290399
+          ]
+        ],
+        "route": "NCN:92",
+        "target": "open-edge:632fb70ec4d58ba7ed3b5cec923d7f34368f6b37d4ad9968431fc756dc50060a"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3888477822,
+            54.9511571917
+          ],
+          [
+            -7.388583774,
+            54.951185307
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "derry",
+        "existing_coverage": [
+          [
+            0.0,
+            7.946955741091264
+          ]
+        ],
+        "layer": "revision4",
+        "network": [
+          [
+            330073,
+            0.0,
+            17.195768334790092,
+            17.14606065362972
+          ]
+        ],
+        "route": "NCN:92",
+        "target": "open-edge:74224ad5d46940bb5258583d1ca5fa16ec0115821de27a631fec89e9f7d8b797"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3870168446,
+            54.9520612641
+          ],
+          [
+            -7.3846998561,
+            54.9542241788
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "derry",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            330076,
+            0.0,
+            282.6039275837832,
+            282.36946608668524
+          ]
+        ],
+        "route": "NCN:92",
+        "target": "open-edge:9afbb6f620cde29ead14d3a666c5569062dcbe37718bb6bf7abc6d90349e0522"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.388583774,
+            54.951185307
+          ],
+          [
+            -7.3882828098,
+            54.9513213136
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "derry",
+        "existing_coverage": [
+          [
+            0.0,
+            23.310322772640014
+          ]
+        ],
+        "layer": "revision4",
+        "network": [
+          [
+            330074,
+            0.0,
+            24.500673641614764,
+            24.45535065512034
+          ]
+        ],
+        "route": "NCN:92",
+        "target": "open-edge:9b5b961c8f2122650521a7f990cef220ac157d0bb2b55d2f8f4aaaf39b369164"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3657850828,
+            54.9655447735
+          ],
+          [
+            -7.3652621722,
+            54.9662478108
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "derry",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            330085,
+            0.0,
+            85.04640496364044,
+            85.0023311727432
+          ]
+        ],
+        "route": "NCN:92",
+        "target": "open-edge:b30c49c694381249a15db4e0d044d078ae5eccf20389519f8356f7498360b2d4"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3892807576,
+            54.9513582823
+          ],
+          [
+            -7.3890666912,
+            54.95120423
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "derry",
+        "existing_coverage": [
+          [
+            0.0,
+            13.225694233553813
+          ]
+        ],
+        "layer": "revision4",
+        "network": [
+          [
+            330071,
+            0.0,
+            21.94106694443362,
+            21.91543414028084
+          ]
+        ],
+        "route": "NCN:92",
+        "target": "open-edge:bec7f03da8129ff135ed4ab7c39ec0353346b83900273ac288a1003cf213c5a3"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3900746801,
+            54.9522881905
+          ],
+          [
+            -7.3892807576,
+            54.9513582823
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "derry",
+        "existing_coverage": [
+          [
+            0.40471216921813125,
+            115.22779696892053
+          ]
+        ],
+        "layer": "revision4",
+        "network": [
+          [
+            330070,
+            0.0,
+            115.22779696892053,
+            115.16016832937822
+          ]
+        ],
+        "route": "NCN:92",
+        "target": "open-edge:c3c1109f4428d1ba2c2baf1ffeee4d93e1b876bdd803d2f5094bf59ea454a6da"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3794048715,
+            54.9588130137
+          ],
+          [
+            -7.3772648942,
+            54.960489989
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "derry",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            330078,
+            0.0,
+            231.42463968496565,
+            231.16680878714695
+          ]
+        ],
+        "route": "NCN:92",
+        "target": "open-edge:c57b60b7f500b45fef198113e3ee381a7c4c7b26bb1e7f331c6e88285df66ef4"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3652621722,
+            54.9662478108
+          ],
+          [
+            -7.3644230968,
+            54.9675277806
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "derry",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            330086,
+            0.0,
+            152.13445423478913,
+            152.07068812023655
+          ]
+        ],
+        "route": "NCN:92",
+        "target": "open-edge:c9ed1b04def1e856b9aaa26488715843f357f05ba55b2a405d48164df3ca823c"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3594442976,
+            54.9755454129
+          ],
+          [
+            -7.3583501788,
+            54.9768754673
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "derry",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            330089,
+            0.0,
+            163.65739586852487,
+            163.54968453831046
+          ]
+        ],
+        "route": "NCN:92",
+        "target": "open-edge:cd3562cbfc61dc052f81bd7b040de49f0a70decf50953f60b73f055e8bb2b512"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3939022,
+            54.9549365
+          ],
+          [
+            -7.3937437,
+            54.9548318
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 15.446493762005737,
+          "high": 6.3385784598125285,
+          "low": 0.0,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 0.0,
+          "target": "open-edge:1a4b3f1b626da938f4c20e0c08b762625083d04caa7d814f2e3c0a48c537839b"
+        },
+        "case": "derry",
+        "layer": "new_source"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3937455648,
+            54.9549070981
+          ],
+          [
+            -7.393679833270053,
+            54.95486448349149
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 15.446493762005737,
+          "high": 6.3385784598125285,
+          "low": 0.0,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 0.0,
+          "target": "open-edge:1a4b3f1b626da938f4c20e0c08b762625083d04caa7d814f2e3c0a48c537839b"
+        },
+        "case": "derry",
+        "layer": "new_target"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3892227,
+            54.9512327
+          ],
+          [
+            -7.389069606225498,
+            54.95119972918711
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 522.984099381717,
+          "high": 21.94106694443362,
+          "low": 13.225694233553813,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 512.5157752244522,
+          "target": "open-edge:bec7f03da8129ff135ed4ab7c39ec0353346b83900273ac288a1003cf213c5a3"
+        },
+        "case": "derry",
+        "layer": "new_source"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.389151722092462,
+            54.951265422249485
+          ],
+          [
+            -7.38906669120325,
+            54.95120423000234
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 522.984099381717,
+          "high": 21.94106694443362,
+          "low": 13.225694233553813,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 512.5157752244522,
+          "target": "open-edge:bec7f03da8129ff135ed4ab7c39ec0353346b83900273ac288a1003cf213c5a3"
+        },
+        "case": "derry",
+        "layer": "new_target"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.389004,
+            54.9511856
+          ],
+          [
+            -7.388861842272469,
+            54.9512009945892
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 536.7345907500512,
+          "high": 14.964524241343131,
+          "low": 4.486054694785485,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 527.4701553136766,
+          "target": "open-edge:0432b304be14c2b912f63a95b043959946dc2195f99ac8418a31ffc332da9bf8"
+        },
+        "case": "derry",
+        "layer": "new_source"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.389001066792096,
+            54.951190128886815
+          ],
+          [
+            -7.3888477822,
+            54.9511571917
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 536.7345907500512,
+          "high": 14.964524241343131,
+          "low": 4.486054694785485,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 527.4701553136766,
+          "target": "open-edge:0432b304be14c2b912f63a95b043959946dc2195f99ac8418a31ffc332da9bf8"
+        },
+        "case": "derry",
+        "layer": "new_target"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3887399,
+            54.9512142
+          ],
+          [
+            -7.388667568536198,
+            54.95124682620954
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 550.5657338751315,
+          "high": 17.195768334790092,
+          "low": 7.946955741091264,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 544.6815826573845,
+          "target": "open-edge:74224ad5d46940bb5258583d1ca5fa16ec0115821de27a631fec89e9f7d8b797"
+        },
+        "case": "derry",
+        "layer": "new_source"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.388725771866516,
+            54.95117018507342
+          ],
+          [
+            -7.388583774006499,
+            54.951185306999314
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 550.5657338751315,
+          "high": 17.195768334790092,
+          "low": 7.946955741091264,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 544.6815826573845,
+          "target": "open-edge:74224ad5d46940bb5258583d1ca5fa16ec0115821de27a631fec89e9f7d8b797"
+        },
+        "case": "derry",
+        "layer": "new_target"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3871727,
+            54.9520902
+          ],
+          [
+            -7.384856,
+            54.9542525
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 967.2532094874288,
+          "high": 282.6039275837832,
+          "low": 0.0,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 684.7171510350653,
+          "target": "open-edge:9afbb6f620cde29ead14d3a666c5569062dcbe37718bb6bf7abc6d90349e0522"
+        },
+        "case": "derry",
+        "layer": "new_source"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3870168446,
+            54.9520612641
+          ],
+          [
+            -7.384699856121298,
+            54.954224178780116
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 967.2532094874288,
+          "high": 282.6039275837832,
+          "low": 0.0,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 684.7171510350653,
+          "target": "open-edge:9afbb6f620cde29ead14d3a666c5569062dcbe37718bb6bf7abc6d90349e0522"
+        },
+        "case": "derry",
+        "layer": "new_target"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.384856,
+            54.9542525
+          ],
+          [
+            -7.384856,
+            54.9542525
+          ],
+          [
+            -7.3795607,
+            54.9588418
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 1579.983807826724,
+          "high": 612.6763502044902,
+          "low": 0.0,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 967.2532094874288,
+          "target": "open-edge:632fb70ec4d58ba7ed3b5cec923d7f34368f6b37d4ad9968431fc756dc50060a"
+        },
+        "case": "derry",
+        "layer": "new_source"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3846998561,
+            54.9542241788
+          ],
+          [
+            -7.3794048715,
+            54.9588130137
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 1579.983807826724,
+          "high": 612.6763502044902,
+          "low": 0.0,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 967.2532094874288,
+          "target": "open-edge:632fb70ec4d58ba7ed3b5cec923d7f34368f6b37d4ad9968431fc756dc50060a"
+        },
+        "case": "derry",
+        "layer": "new_target"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3795607,
+            54.9588418
+          ],
+          [
+            -7.3795607,
+            54.9588418
+          ],
+          [
+            -7.3774205,
+            54.9605187
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 1811.410153994711,
+          "high": 225.64731482307658,
+          "low": 0.0,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 1579.983807826724,
+          "target": "open-edge:c57b60b7f500b45fef198113e3ee381a7c4c7b26bb1e7f331c6e88285df66ef4"
+        },
+        "case": "derry",
+        "layer": "new_source"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3794048715,
+            54.9588130137
+          ],
+          [
+            -7.37731831700902,
+            54.960448124662854
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 1811.410153994711,
+          "high": 225.64731482307658,
+          "low": 0.0,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 1579.983807826724,
+          "target": "open-edge:c57b60b7f500b45fef198113e3ee381a7c4c7b26bb1e7f331c6e88285df66ef4"
+        },
+        "case": "derry",
+        "layer": "new_target"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3774205,
+            54.9605187
+          ],
+          [
+            -7.3774205,
+            54.9605187
+          ],
+          [
+            -7.3773473529628,
+            54.960551325071634
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 1817.3354413594677,
+          "high": 231.42463968496565,
+          "low": 225.64731482307658,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 1811.410153994711,
+          "target": "open-edge:c57b60b7f500b45fef198113e3ee381a7c4c7b26bb1e7f331c6e88285df66ef4"
+        },
+        "case": "derry",
+        "layer": "new_source"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.37731831700902,
+            54.960448124662854
+          ],
+          [
+            -7.37726489424551,
+            54.96048998896434
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 1817.3354413594677,
+          "high": 231.42463968496565,
+          "low": 225.64731482307658,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 1811.410153994711,
+          "target": "open-edge:c57b60b7f500b45fef198113e3ee381a7c4c7b26bb1e7f331c6e88285df66ef4"
+        },
+        "case": "derry",
+        "layer": "new_target"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3659411,
+            54.9655736
+          ],
+          [
+            -7.3654177,
+            54.9662774
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 2831.140985332017,
+          "high": 85.04640496364044,
+          "low": 0.0,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 2746.0042788665373,
+          "target": "open-edge:b30c49c694381249a15db4e0d044d078ae5eccf20389519f8356f7498360b2d4"
+        },
+        "case": "derry",
+        "layer": "new_source"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3657850828,
+            54.9655447735
+          ],
+          [
+            -7.3652621722126295,
+            54.96624781078302
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 2831.140985332017,
+          "high": 85.04640496364044,
+          "low": 0.0,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 2746.0042788665373,
+          "target": "open-edge:b30c49c694381249a15db4e0d044d078ae5eccf20389519f8356f7498360b2d4"
+        },
+        "case": "derry",
+        "layer": "new_target"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3654177,
+            54.9662774
+          ],
+          [
+            -7.3645793,
+            54.9675571
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 2983.232098144744,
+          "high": 152.13445423478913,
+          "low": 0.0,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 2831.140985332017,
+          "target": "open-edge:c9ed1b04def1e856b9aaa26488715843f357f05ba55b2a405d48164df3ca823c"
+        },
+        "case": "derry",
+        "layer": "new_source"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3652621722,
+            54.9662478108
+          ],
+          [
+            -7.3644230968150275,
+            54.96752778057708
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 2983.232098144744,
+          "high": 152.13445423478913,
+          "low": 0.0,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 2831.140985332017,
+          "target": "open-edge:c9ed1b04def1e856b9aaa26488715843f357f05ba55b2a405d48164df3ca823c"
+        },
+        "case": "derry",
+        "layer": "new_target"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3645793,
+            54.9675571
+          ],
+          [
+            -7.3616674,
+            54.9723102
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 3543.6940039286533,
+          "high": 560.4376330267596,
+          "low": 0.0,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 2983.232098144744,
+          "target": "open-edge:2a25772a1db373d9bdc057bcbbd7f963fa09701c3ce0cca132b4103ffdf084b6"
+        },
+        "case": "derry",
+        "layer": "new_source"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3644230968,
+            54.9675277806
+          ],
+          [
+            -7.3615111699,
+            54.9722806436
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 3543.6940039286533,
+          "high": 560.4376330267596,
+          "low": 0.0,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 2983.232098144744,
+          "target": "open-edge:2a25772a1db373d9bdc057bcbbd7f963fa09701c3ce0cca132b4103ffdf084b6"
+        },
+        "case": "derry",
+        "layer": "new_target"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3616674,
+            54.9723102
+          ],
+          [
+            -7.3610818,
+            54.9731454
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 3643.8518732445955,
+          "high": 99.75907687611061,
+          "low": 0.0,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 3543.6940039286533,
+          "target": "open-edge:591a4b7ef7d463df516739aeba17c87f33593c0de686f67fc4215f5dff3dcb90"
+        },
+        "case": "derry",
+        "layer": "new_source"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -7.3615111699,
+            54.9722806436
+          ],
+          [
+            -7.360977566858157,
+            54.97312350691062
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "binding": {
+          "end": 3643.8518732445955,
+          "high": 99.75907687611061,
+          "low": 0.0,
+          "modes": [
+            "on_foot",
+            "cycling"
+          ],
+          "start": 3543.6940039286533,
+          "target": "open-edge:591a4b7ef7d463df516739aeba17c87f33593c0de686f67fc4215f5dff3dcb90"
+        },
+        "case": "derry",
+        "layer": "new_target"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -2.9242844,
+            54.652334
+          ],
+          [
+            -2.9187228,
+            54.6521347
+          ],
+          [
+            -2.9183568,
+            54.6521216
+          ],
+          [
+            -2.9174039,
+            54.6520874
+          ],
+          [
+            -2.910293,
+            54.6518325
+          ],
+          [
+            -2.9067684,
+            54.6516829
+          ],
+          [
+            -2.905148,
+            54.6516272
+          ],
+          [
+            -2.9038976,
+            54.6516673
+          ],
+          [
+            -2.9016912,
+            54.6520667
+          ],
+          [
+            -2.9005073,
+            54.6522827
+          ],
+          [
+            -2.8997109,
+            54.6525635
+          ],
+          [
+            -2.8956768,
+            54.6546986
+          ],
+          [
+            -2.8919429,
+            54.6561242
+          ],
+          [
+            -2.891498,
+            54.6562843
+          ],
+          [
+            -2.8911773,
+            54.6564081
+          ],
+          [
+            -2.8909971,
+            54.6565134
+          ],
+          [
+            -2.8883875,
+            54.6582026
+          ],
+          [
+            -2.8865105,
+            54.6593265
+          ],
+          [
+            -2.8857883,
+            54.6597588
+          ],
+          [
+            -2.8834743,
+            54.6612309
+          ],
+          [
+            -2.8813143,
+            54.6627636
+          ],
+          [
+            -2.8805239,
+            54.6633131
+          ],
+          [
+            -2.8777293,
+            54.6649499
+          ],
+          [
+            -2.8775063,
+            54.6651236
+          ],
+          [
+            -2.877439,
+            54.6652379
+          ],
+          [
+            -2.8772852,
+            54.6657992
+          ],
+          [
+            -2.8772407,
+            54.6659618
+          ],
+          [
+            -2.877147,
+            54.6662169
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "cumbria",
+        "layer": "neighbour",
+        "nodes": [
+          244056391,
+          11812200273,
+          1940084322,
+          5119566235,
+          5137226339,
+          1363077065,
+          244056469,
+          244056470,
+          428836317,
+          1363077056,
+          244056471,
+          244056472,
+          1363077023,
+          244056473,
+          5137226348,
+          1363077024,
+          1363077016,
+          5127996614,
+          244056474,
+          5127996513,
+          5127996512,
+          244056475,
+          244056476,
+          5127996604,
+          5127996603,
+          5127996605,
+          1363070115,
+          244056477
+        ],
+        "tags": {
+          "cycleway:both": "no",
+          "highway": "unclassified",
+          "lanes": "1",
+          "lit": "no",
+          "maxspeed": "60 mph",
+          "maxspeed:type": "GB:nsl_single",
+          "ncn_name": "C2C",
+          "shoulder": "no",
+          "surface": "asphalt"
+        },
+        "way": "22747003"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -2.9242844,
+            54.652334
+          ],
+          [
+            -2.9242236,
+            54.6519376
+          ],
+          [
+            -2.9241516,
+            54.6509145
+          ],
+          [
+            -2.9240962,
+            54.6501275
+          ],
+          [
+            -2.9235402,
+            54.6462477
+          ],
+          [
+            -2.9232326,
+            54.6437967
+          ],
+          [
+            -2.9231974,
+            54.6435165
+          ],
+          [
+            -2.9231089,
+            54.6430398
+          ],
+          [
+            -2.9231053,
+            54.6430093
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "cumbria",
+        "layer": "source",
+        "nodes": [
+          244056391,
+          11812200271,
+          2996076233,
+          11807541981,
+          243355629,
+          11812444963,
+          243355628,
+          6121813815,
+          244056344
+        ],
+        "tags": {
+          "cycleway:both": "no",
+          "highway": "tertiary",
+          "lane_markings": "no",
+          "lit": "no",
+          "maxspeed": "60 mph",
+          "maxspeed:type": "GB:nsl_single",
+          "ncn_name": "C2C",
+          "surface": "asphalt"
+        },
+        "way": "23385711"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -2.9267677,
+            54.6541542
+          ],
+          [
+            -2.9264612,
+            54.6538353
+          ],
+          [
+            -2.9263347,
+            54.653735
+          ],
+          [
+            -2.9263197,
+            54.6537232
+          ],
+          [
+            -2.9261501,
+            54.6536164
+          ],
+          [
+            -2.9253509,
+            54.6532
+          ],
+          [
+            -2.9247005,
+            54.652586
+          ],
+          [
+            -2.9244924,
+            54.65246
+          ],
+          [
+            -2.9242844,
+            54.652334
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "cumbria",
+        "layer": "neighbour",
+        "nodes": [
+          243355632,
+          5119566287,
+          5119566289,
+          5119566288,
+          920054671,
+          920054672,
+          920054673,
+          5830494366,
+          244056391
+        ],
+        "tags": {
+          "highway": "tertiary",
+          "lanes": "1",
+          "lit": "no",
+          "maxspeed": "60 mph",
+          "maxspeed:type": "GB:nsl_single"
+        },
+        "way": "78390776"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -2.9252068537,
+            54.6424738849
+          ],
+          [
+            -2.9231262017,
+            54.6430029324
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "cumbria",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            220114,
+            0.0,
+            150.52011900577767,
+            146.23600267629007
+          ]
+        ],
+        "route": "NCN:6",
+        "target": "open-edge:07ffd61163183142fe777f0012d56612e79bd993ff3dd062751c73267efe931f"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -2.9307421248,
+            54.6410037625
+          ],
+          [
+            -2.925746237,
+            54.6423439419
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "cumbria",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            220117,
+            0.0,
+            364.5231306393183,
+            354.3372188615332
+          ]
+        ],
+        "route": "NCN:6",
+        "target": "open-edge:75bea3595df04d1c5ba95dbf4a55c4c48e9a19f789784ebf2521128ee94e8415"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -2.9254367923,
+            54.6423642823
+          ],
+          [
+            -2.9252068537,
+            54.6424738849
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "cumbria",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            220115,
+            0.0,
+            19.569553047578975,
+            19.168761652493163
+          ]
+        ],
+        "route": "NCN:6",
+        "target": "open-edge:9728ccfaa66d40c673742d210a78d3db73b97a7964151c1acf3a9299b390b0b0"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -2.925746237,
+            54.6423439419
+          ],
+          [
+            -2.9254367923,
+            54.6423642823
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "cumbria",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            220116,
+            0.0,
+            20.729332312064567,
+            20.03963893381994
+          ]
+        ],
+        "route": "NCN:6",
+        "target": "open-edge:e68dbe9efc163149cb221ecf33ac6d63d2d7082c4be97562284519b7b6670d51"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -2.9243489714,
+            54.6523350266
+          ],
+          [
+            -2.9231262017,
+            54.6430029324
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "cumbria",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            220113,
+            0.0,
+            1040.8725334057726,
+            1040.660139813262
+          ]
+        ],
+        "route": "NCN:6",
+        "target": "open-edge:f4db91e04be47d51d111ae8c547b42073e5ac4bb448b903aede00030c9b63ec0"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -2.9253846883,
+            54.653209914
+          ],
+          [
+            -2.9243489714,
+            54.6523350266
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "cumbria",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            265075,
+            0.0,
+            116.6736301058218,
+            117.9115183477227
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:104c9d994bae946147ff3a820a6406ed5c3a75e51dd0ffe4858c5b08a2b67199"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -2.9261631854,
+            54.6536096368
+          ],
+          [
+            -2.9253846883,
+            54.653209914
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "cumbria",
+        "existing_coverage": [],
+        "layer": "revision4",
+        "network": [
+          [
+            265074,
+            0.0,
+            65.72284356075936,
+            66.95899128176819
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:1eff33e7dcd950224474c876e688e837b07f6dadf5ec5ccddf3f11730db34574"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            -2.9243489714,
+            54.6523350266
+          ],
+          [
+            -2.9183690847,
+            54.6521082291
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "cumbria",
+        "existing_coverage": [
+          [
+            4.014175856352163,
+            372.73939776601367
+          ]
+        ],
+        "layer": "revision4",
+        "network": [
+          [
+            273175,
+            0.0,
+            372.73939776601367,
+            385.5142358321141
+          ]
+        ],
+        "route": "NCN:7",
+        "target": "open-edge:85dc866ac786c711570b70abeb70276050643df01f45ab884589ee784c505033"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            1.4035412,
+            51.1968459
+          ],
+          [
+            1.4035602,
+            51.1957307
+          ],
+          [
+            1.4035878,
+            51.1955793
+          ],
+          [
+            1.4036038,
+            51.1953883
+          ],
+          [
+            1.4036199,
+            51.195108
+          ],
+          [
+            1.4036166,
+            51.19487
+          ],
+          [
+            1.403661,
+            51.194388
+          ],
+          [
+            1.4037361,
+            51.1936567
+          ],
+          [
+            1.4038375,
+            51.192914
+          ],
+          [
+            1.4040362,
+            51.1915019
+          ],
+          [
+            1.4041498,
+            51.1907045
+          ],
+          [
+            1.4043674,
+            51.1893544
+          ],
+          [
+            1.4043681,
+            51.1893201
+          ],
+          [
+            1.4043375,
+            51.1893056
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "wellington",
+        "layer": "neighbour",
+        "nodes": [
+          978142881,
+          978142882,
+          1181940231,
+          978142883,
+          1181941130,
+          978142884,
+          978142885,
+          978142886,
+          978142887,
+          978142888,
+          978142889,
+          978142890,
+          27411872,
+          913199040
+        ],
+        "tags": {
+          "bicycle": "designated",
+          "foot": "designated",
+          "highway": "cycleway",
+          "lit": "no",
+          "segregated": "no",
+          "smoothness": "good",
+          "surface": "asphalt"
+        },
+        "way": "4471747"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            1.4035031,
+            51.1968475
+          ],
+          [
+            1.4035106,
+            51.1957298
+          ],
+          [
+            1.40354,
+            51.1953761
+          ],
+          [
+            1.4035688,
+            51.1948438
+          ],
+          [
+            1.4036157,
+            51.1943884
+          ],
+          [
+            1.4037018,
+            51.1936519
+          ],
+          [
+            1.4037922,
+            51.1929293
+          ],
+          [
+            1.404002,
+            51.1915102
+          ],
+          [
+            1.4041083,
+            51.1906894
+          ],
+          [
+            1.4043375,
+            51.1893056
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "wellington",
+        "layer": "source",
+        "nodes": [
+          913199043,
+          913199039,
+          913199035,
+          913199037,
+          913199036,
+          913199038,
+          913199041,
+          913199042,
+          913199034,
+          913199040
+        ],
+        "tags": {
+          "access": "private",
+          "highway": "residential",
+          "lanes": "1",
+          "maxspeed": "20 mph",
+          "name": "Wellington Parade",
+          "surface": "gravel"
+        },
+        "way": "77611523"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            1.4035688,
+            51.1948438
+          ],
+          [
+            1.4028294,
+            51.194833
+          ],
+          [
+            1.4024504,
+            51.194826
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "wellington",
+        "layer": "neighbour",
+        "nodes": [
+          913199037,
+          8606553563,
+          913195772
+        ],
+        "tags": {
+          "highway": "residential",
+          "lit": "no",
+          "maxspeed": "10 mph",
+          "name": "Cecil Road",
+          "surface": "gravel"
+        },
+        "way": "84079709"
+      },
+      "type": "Feature"
+    },
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            1.4033944,
+            51.1986582
+          ],
+          [
+            1.4033941,
+            51.198592
+          ],
+          [
+            1.4034873,
+            51.1968836
+          ],
+          [
+            1.4035031,
+            51.1968475
+          ],
+          [
+            1.4035412,
+            51.1968459
+          ]
+        ],
+        "type": "LineString"
+      },
+      "properties": {
+        "case": "wellington",
+        "layer": "neighbour",
+        "nodes": [
+          1181940092,
+          9711497998,
+          978138996,
+          913199043,
+          978142881
+        ],
+        "tags": {
+          "bicycle": "yes",
+          "highway": "footway",
+          "surface": "asphalt"
+        },
+        "way": "1056889615"
+      },
+      "type": "Feature"
+    }
+  ],
+  "type": "FeatureCollection"
+}
