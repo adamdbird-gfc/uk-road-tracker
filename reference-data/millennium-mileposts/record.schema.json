@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Roadprints milepost candidate record schema 1",
+  "description": "One JSONL row. Cross-field provenance, tag consistency, deterministic order and integrity are additionally enforced by scripts/milepost_catalogue.py. Schema 1 cannot represent an approved marker.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "boundary_exception",
+    "boundary_status",
+    "design",
+    "designer",
+    "designer_status",
+    "eligibility_reason",
+    "eligible",
+    "identity_status",
+    "latitude",
+    "location_status",
+    "longitude",
+    "osm_id",
+    "osm_version",
+    "physical_marker_id",
+    "position_valid_from",
+    "position_valid_to",
+    "revision",
+    "source_design_tag",
+    "source_sha256",
+    "source_snapshot_at",
+    "source_tags",
+    "sustrans_ref",
+    "validation_status"
+  ],
+  "properties": {
+    "boundary_exception": {
+      "const": null
+    },
+    "boundary_status": {
+      "const": "unreviewed"
+    },
+    "design": {
+      "enum": [
+        "mills",
+        "rowe",
+        "mccoll",
+        "dudgeon",
+        "unknown"
+      ]
+    },
+    "designer": {
+      "enum": [
+        "mills",
+        "rowe",
+        "mccoll",
+        "dudgeon",
+        null
+      ]
+    },
+    "designer_status": {
+      "enum": [
+        "provisional_osm_design_tag",
+        "unsupported"
+      ]
+    },
+    "eligibility_reason": {
+      "const": "physical_identity_location_uk_scope_not_verified"
+    },
+    "eligible": {
+      "const": false
+    },
+    "identity_status": {
+      "const": "unverified"
+    },
+    "latitude": {
+      "type": "number",
+      "minimum": -90,
+      "maximum": 90
+    },
+    "location_status": {
+      "const": "unverified"
+    },
+    "longitude": {
+      "type": "number",
+      "minimum": -180,
+      "maximum": 180
+    },
+    "osm_id": {
+      "type": "string",
+      "pattern": "^osm:(node|way|relation):[1-9][0-9]*$"
+    },
+    "osm_version": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1
+    },
+    "physical_marker_id": {
+      "const": null
+    },
+    "position_valid_from": {
+      "const": null
+    },
+    "position_valid_to": {
+      "const": null
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "source_design_tag": {
+      "type": "string"
+    },
+    "source_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "source_snapshot_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source_tags": {
+      "type": "object",
+      "required": [
+        "ncn_milepost"
+      ],
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "sustrans_ref": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "validation_status": {
+      "const": "source_candidate"
+    }
+  }
+}

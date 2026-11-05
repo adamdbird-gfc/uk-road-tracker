@@ -1,0 +1,131 @@
+{
+  "status": "candidates_not_verified_unlock_catalogue",
+  "source": "https://overpass-api.de/api/interpreter",
+  "query": "area[ISO3166-1=GB][admin_level=2]; nwr[ncn_milepost](area); out center tags;",
+  "osm_timestamp": "2026-10-15T17:21:06Z",
+  "count": 889,
+  "with_disc_and_series": 2,
+  "with_recorded_check_date": 4,
+  "geojson_bytes": 287516,
+  "gzip_bytes": 26724,
+  "sha256": "2378a20f1422d6c61888d100a34d085d830622ebe7bf718b808ce1a298bd070e",
+  "licence": "ODbL 1.0; attribution and applicable database sharing obligations",
+  "official_milepost_reuse": "Express permission required; do not fill candidates from official audit records without permission",
+  "examples": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          0.4099823,
+          51.4398542
+        ]
+      },
+      "properties": {
+        "source": "OpenStreetMap",
+        "osm_type": "node",
+        "osm_id": 33130857,
+        "sustrans_ref": "MP 241",
+        "name": "Millennium Milepost Milton Rifle Range",
+        "design": "mills",
+        "disc_series": null,
+        "disc_number": null,
+        "check_date": null,
+        "condition": null,
+        "state": null
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          0.3768903,
+          51.4442527
+        ]
+      },
+      "properties": {
+        "source": "OpenStreetMap",
+        "osm_type": "node",
+        "osm_id": 33190372,
+        "sustrans_ref": "MP 385",
+        "name": "Millennium Milepost Gravesend",
+        "design": "rowe",
+        "disc_series": null,
+        "disc_number": null,
+        "check_date": null,
+        "condition": null,
+        "state": null
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          0.2932289,
+          51.4438262
+        ]
+      },
+      "properties": {
+        "source": "OpenStreetMap",
+        "osm_type": "node",
+        "osm_id": 35181782,
+        "sustrans_ref": "MP 444",
+        "name": "Millennium Milepost Swanscombe",
+        "design": "mccoll",
+        "disc_series": null,
+        "disc_number": null,
+        "check_date": null,
+        "condition": null,
+        "state": null
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.491206,
+          54.4006915
+        ]
+      },
+      "properties": {
+        "source": "OpenStreetMap",
+        "osm_type": "node",
+        "osm_id": 6421727196,
+        "sustrans_ref": "MP 898 & MP 1118",
+        "name": "Millennium Milepost Ravenscar",
+        "design": "rowe",
+        "disc_series": "T5",
+        "disc_number": "7",
+        "check_date": null,
+        "condition": null,
+        "state": null
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -1.7356415,
+          53.0151658
+        ]
+      },
+      "properties": {
+        "source": "OpenStreetMap",
+        "osm_type": "node",
+        "osm_id": 7026960015,
+        "sustrans_ref": "MP683",
+        "name": null,
+        "design": "rowe",
+        "disc_series": "5",
+        "disc_number": "5",
+        "check_date": null,
+        "condition": null,
+        "state": null
+      }
+    }
+  ]
+}
