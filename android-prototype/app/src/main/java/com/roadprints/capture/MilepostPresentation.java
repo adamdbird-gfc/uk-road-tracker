@@ -4,7 +4,7 @@ import java.util.*;
 
 /** Immutable presentation contract. Eligibility belongs exclusively to Stage 5. */
 final class MilepostPresentation {
-    static final int ARTWORK_VERSION=1, CIPHER_VERSION=1;
+    static final int ARTWORK_VERSION=2, CIPHER_VERSION=1;
     private static final String TARGET="CHARLIEHARROW";
     private static final int[][] POSITIONS={{},{0,7},{1,8},{2,9},{3,10},{4,11},{5,12},{6}};
     static final String[] THEMES={"Hidden","Seasons","Continents","Ages of Man","Zodiac","Centuries","Final Mystery","Revealed"};
@@ -29,6 +29,18 @@ final class MilepostPresentation {
             if(p==7)out.append(' ');
             char target=TARGET.charAt(p);
             out.append(resolved(stage,p)?target:(char)('A'+(target-'A'+7)%26));
+        }
+        return out.toString();
+    }
+    /** During motion only unresolved positions scramble; settled state is versioned and deterministic. */
+    static String animatedCipher(int previous,int target,float fraction){
+        if(target<=0)return "";
+        if(fraction>=0.78f)return cipher(target);
+        StringBuilder out=new StringBuilder();int frame=Math.min(15,(int)(fraction*20));
+        for(int p=0;p<13;p++){
+            if(p==7)out.append(' ');
+            char letter=TARGET.charAt(p);
+            out.append(resolved(previous,p)?letter:(char)('A'+(letter-'A'+7+frame)%26));
         }
         return out.toString();
     }
@@ -63,7 +75,7 @@ final class MilepostPresentation {
         Card card(int index){
             Award a=awards.get(index);boolean visible=a.earned;
             return new Card(visible?NAMES[index]:introduced()?"Mystery personality":"?",
-                visible&&index<6?BIOS[index]:"",visible?"Revealed":a.ordinal>0?"Previously recognised; current qualification withdrawn":introduced()?"Anonymous silhouette":"Hidden mystery",
+                visible&&index<6?BIOS[index]:"",visible?"Revealed":a.ordinal>0?"Previously recognised; current qualification withdrawn":introduced()?"Hidden mystery":"Hidden mystery",
                 visible,index==5&&introduced()?target():0);
         }
         String dates(){return from==null?"Historical dates unavailable":

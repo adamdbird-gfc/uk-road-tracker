@@ -19,9 +19,7 @@ final class MilepostAcceptanceChecks {
         c.getSharedPreferences("roadprints_capture_state",0).edit().clear().commit();
     }
     static void productionIsolated(Context c)throws Exception {
-        require(!MilepostIntegration.PRODUCTION.enabled,"Production gate changed");
-        require(!MilepostIntegration.PRODUCTION.enterPresentation(),"Production presentation activated");
-        require(!MilepostIntegration.PRODUCTION.enterProcessing(),"Production worker activated");
+        require(!MilepostIntegration.PRODUCTION.allowed(c),"Sandbox can enter production");
         require(MilepostReconciliationJob.schedule(c)==android.app.job.JobScheduler.RESULT_FAILURE,"Production job scheduled");
         require(!c.getDatabasePath(MilepostReconciliationJob.DATABASE).exists(),"Production ledger created");
         for(AchievementStore.Definition d:AchievementStore.definitions())

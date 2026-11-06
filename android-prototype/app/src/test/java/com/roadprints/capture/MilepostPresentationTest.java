@@ -15,7 +15,7 @@ import static org.junit.Assert.*;
 @RunWith(RobolectricTestRunner.class) @Config(sdk=28,manifest=Config.NONE)
 public class MilepostPresentationTest {
     Context context;String user;MilepostPresentationStore store;
-    @Before public void setup(){context=RuntimeEnvironment.getApplication();user=UUID.randomUUID().toString();store=new MilepostPresentationStore(context,user);
+    @Before public void setup(){context=RuntimeEnvironment.getApplication();user=UUID.randomUUID().toString();store=new MilepostPresentationStore(context,user);MilepostPresentationStore.State initial=store.read();initial.staticMode=true;store.save(initial);
         context.getSharedPreferences("roadprints_capture_state",0).edit().clear().commit();}
     static MilepostPresentation.Snapshot snapshot(int count,int earned,String receipt){
         List<MilepostPresentation.Award> awards=new ArrayList<>();for(int i=0;i<7;i++)awards.add(new MilepostPresentation.Award(i<earned,i<earned?i+1:0,i==4||i==6?null:"2026-11-01T00:00:00Z",i==4||i==6?"unknown":"journey"));
