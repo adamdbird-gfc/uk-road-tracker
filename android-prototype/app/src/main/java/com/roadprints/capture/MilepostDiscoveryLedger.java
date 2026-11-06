@@ -13,11 +13,11 @@ import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.function.BooleanSupplier;
 
-/** Inactive derived evidence store. No caller in app lifecycle, awards or JourneyStore.
+/** Inactive derived evidence store. Explicit reconciliation job only; no app lifecycle, awards or JourneyStore caller.
  * All entrypoints must run on a worker. Source revisions belong to the caller's durable
  * change feed, not wall-clock time. This ledger never edits source journeys. */
 final class MilepostDiscoveryLedger implements AutoCloseable {
-    static final int SCHEMA = 1, PAGE = 16, MAX_CATALOGUE = 4096;
+    static final int SCHEMA = 2, PAGE = 16, MAX_CATALOGUE = 4096;
     static final String EVALUATOR = MilepostJourneyEvidence.REVISION + "/" + MilepostProximity.Policy.V1.revision;
     enum State { DISCOVERED, ASSESSED_NO_DISCOVERY, PENDING_EVIDENCE, PENDING_CATALOGUE, QUEUED, DELETED }
 
@@ -41,6 +41,59 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
     interface EvidenceLoader {
         /** Load one bounded source row through its trusted validator; never an entire archive. */
         MilepostProximity.Evidence load(String user, String journey) throws Exception;
+    }
+    interface CommitFence {
+        /** Validate committed archive identity under its short replacement lock, then commit. */
+        void commit(String journey, Runnable transaction);
+    }
+    static final class ArchiveSource {
+        final String id,stamp;
+        ArchiveSource(Cursor c){id=c.getString(0);stamp=c.getString(1);}
+    }
+    String scanCursor(String user,String phase) {
+        String value=scalar(db(),"SELECT cursor FROM archive_cursor WHERE user=? AND phase=?",user,phase);
+        return value==null?"":value;
+    }
+    void scanCursor(String user,String phase,String cursor) {
+        db().insertWithOnConflict("archive_cursor",null,values("user",user,"phase",phase,"cursor",cursor),SQLiteDatabase.CONFLICT_REPLACE);
+    }
+    String archiveStamp(String user,String id) {
+        return scalar(db(),"SELECT stamp FROM archive_source WHERE user=? AND id=?",user,id);
+    }
+    List<ArchiveSource> archivePage(String user,String after,int limit) {
+        if(limit<1||limit>32)throw new IllegalArgumentException("Archive page limit");
+        List<ArchiveSource> out=new ArrayList<>();
+        try(Cursor c=db().rawQuery("SELECT id,stamp FROM archive_source WHERE user=? AND id>? ORDER BY id LIMIT "+limit,new String[]{user,after})) {
+            while(c.moveToNext())out.add(new ArchiveSource(c));
+        }
+        return out;
+    }
+    /** Feed and source revision advance in the same transaction, so crashes cannot
+     * acknowledge a change without retracting stale proofs. Versions never use time. */
+    void archiveChanged(String user,String id,String stamp,String evidenceToken,boolean deleted) {
+        archiveChanged(user,id,stamp,evidenceToken,deleted,(journey,transaction)->transaction.run());
+    }
+    void archiveChanged(String user,String id,String stamp,String evidenceToken,boolean deleted,CommitFence fence) {
+        SQLiteDatabase d=db();
+        fencedTransaction(d,id,fence,()->{
+            if(!stamp.equals(archiveStamp(user,id))) {
+                long version=number(d,"SELECT version FROM journey WHERE user=? AND id=?",user,id)+1;
+                sourceChanged(user,id,version,evidenceToken,deleted);
+                d.insertWithOnConflict("archive_source",null,values("user",user,"id",id,"stamp",stamp),SQLiteDatabase.CONFLICT_REPLACE);
+            }
+        });
+    }
+    /** Acquire the SQLite writer BEFORE the archive monitor. A concurrent catalogue
+     * install must never make capture wait for SQLite while we hold JourneyStore.
+     * The final commit still occurs inside the short archive fence. */
+    private static void fencedTransaction(SQLiteDatabase d,String id,CommitFence fence,Runnable body) {
+        d.beginTransaction();boolean[] ended={false};
+        try {
+            fence.commit(id,()->{
+                try {body.run();d.setTransactionSuccessful();}
+                finally {ended[0]=true;d.endTransaction();}
+            });
+        }finally {if(!ended[0])d.endTransaction();}
     }
     static final class Discovery {
         final String marker, journey, eventDate;
@@ -178,6 +231,10 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
      * commit atomically. A crash/cancel/stale source rolls back this page; retries are safe.
      * Returns false when no queued work remains, not when all history was assessable. */
     boolean processNext(String user,EvidenceLoader loader,BooleanSupplier cancelled,long recognisedAt) throws Exception {
+        return processNext(user,loader,cancelled,recognisedAt,false,(id,transaction)->transaction.run());
+    }
+    boolean processNext(String user,EvidenceLoader loader,BooleanSupplier cancelled,long recognisedAt,
+                        boolean spatial,CommitFence fence) throws Exception {
         require(user); if(recognisedAt<0)throw new IllegalArgumentException("Invalid recognition time");
         SQLiteDatabase d=db(); String journey,token,after; long version; int revision;
         try(Cursor c=d.rawQuery("SELECT id,token,version,cursor FROM journey WHERE user=? AND state='QUEUED' AND deleted=0 ORDER BY id LIMIT 1",new String[]{user})) {
@@ -189,8 +246,12 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
         if(e==null || !journey.equals(e.journeyId()) || !token.equals(e.token()))throw new ConcurrentModificationException("Source evidence changed");
         for(String field:new String[]{e.source(),e.validationRevision(),e.mode()})
             if(field!=null&&field.length()>512)throw new IllegalArgumentException("Oversized evidence metadata");
+        MilepostArchiveReader.check(cancelled);
+        MilepostCandidateBounds bounds=spatial?MilepostCandidateBounds.of(bounded(e),cancelled):null;
+        String selection=bounds==null?"1=1":bounds.sql();
+        String markerTable=spatial?"marker INDEXED BY marker_bounds":"marker";
         List<Marker> page=new ArrayList<>();
-        try(Cursor c=d.rawQuery("SELECT id,lon,lat,eligible,valid_from,valid_until FROM marker WHERE id>? ORDER BY id LIMIT "+PAGE,new String[]{after})) {
+        try(Cursor c=d.rawQuery("SELECT id,lon,lat,eligible,valid_from,valid_until FROM "+markerTable+" WHERE id>? AND ("+selection+") ORDER BY id LIMIT "+PAGE,new String[]{after})) {
             while(c.moveToNext())page.add(new Marker(c.getString(0),c.getDouble(1),c.getDouble(2),c.getInt(3)==1,c.getLong(4),c.getLong(5),java.util.Collections.emptyList()));
         }
         List<MilepostProximity.Result> results=new ArrayList<>();
@@ -204,8 +265,9 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
             MilepostProximity.Marker target=new MilepostProximity.Marker(m.id,new MilepostProximity.Point(m.lon,m.lat),m.eligible&&validDate,Integer.toString(revision));
             results.add(MilepostProximity.assess(target,bounded(e),MilepostProximity.Policy.V1,cancelled));
         }
-        d.beginTransaction();
-        try {
+        final boolean sourceDated=dated;
+        final long sourceEvent=event,sourceEnd=end;
+        fencedTransaction(d,journey,fence,()->{
             // Fence both simultaneous workers and source/catalogue changes during evaluation.
             if(number(d,"SELECT COUNT(*) FROM journey WHERE user=? AND id=? AND version=? AND token=? AND cursor=? AND state='QUEUED' AND deleted=0",user,journey,Long.toString(version),token,after)!=1
                     || revision!=number(d,"SELECT revision FROM catalogue WHERE singleton=1"))throw new ConcurrentModificationException("Ledger inputs changed");
@@ -214,11 +276,11 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
                 if(r.outcome==MilepostProximity.Outcome.CANCELLED || cancelled.getAsBoolean())throw new CancellationException();
                 State state=r.outcome==MilepostProximity.Outcome.QUALIFIED?State.DISCOVERED:
                         r.outcome==MilepostProximity.Outcome.OUTSIDE_RADIUS?State.ASSESSED_NO_DISCOVERY:State.PENDING_EVIDENCE;
-                if(!m.eligible || !dated || event<m.from || end>m.until)state=State.PENDING_CATALOGUE;
+                if(!m.eligible || !sourceDated || sourceEvent<m.from || sourceEnd>m.until)state=State.PENDING_CATALOGUE;
                 d.insertWithOnConflict("assessment",null,values("user",user,"journey",journey,"marker",m.id,"state",state.name(),
                         "reason",r.outcome.name(),"token",token,"source_version",version,"catalogue",revision,"evaluator",EVALUATOR,
-                        "validator",e.validationRevision(),"source",e.source(),"mode",e.mode(),"event_date",dated?e.journeyDate():null,
-                        "event_ms",dated?event:null,"precision","journey","recognised",recognisedAt,
+                        "validator",e.validationRevision(),"source",e.source(),"mode",e.mode(),"event_date",sourceDated?e.journeyDate():null,
+                        "event_ms",sourceDated?sourceEvent:null,"precision","journey","recognised",recognisedAt,
                         "distance",Double.isFinite(r.closestMetres)?r.closestMetres:null,"nearest_lon",r.closestPoint==null?null:r.closestPoint.lon,
                         "nearest_lat",r.closestPoint==null?null:r.closestPoint.lat,"post_lon",m.lon,"post_lat",m.lat,
                         "section",r.section,"source_start",r.sourceStart,"source_end",r.sourceEnd,"method",r.method),SQLiteDatabase.CONFLICT_REPLACE);
@@ -229,18 +291,19 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
                 }
             }
             String cursor=page.isEmpty()?after:page.get(page.size()-1).id;
-            boolean more=number(d,"SELECT COUNT(*) FROM marker WHERE id>?",cursor)>0;
+            boolean more=number(d,"SELECT COUNT(*) FROM "+markerTable+" WHERE id>? AND ("+selection+")",cursor)>0;
             String state=State.QUEUED.name();
             if(!more) {
-                if(number(d,"SELECT COUNT(*) FROM assessment WHERE user=? AND journey=? AND state='DISCOVERED'",user,journey)>0)state=State.DISCOVERED.name();
+                if(spatial&&(e.problem()!=null||(!bounds.any&&!bounds.global)))state=State.PENDING_EVIDENCE.name();
+                else if(spatial&&!sourceDated)state=State.PENDING_CATALOGUE.name();
+                else if(number(d,"SELECT COUNT(*) FROM assessment WHERE user=? AND journey=? AND state='DISCOVERED'",user,journey)>0)state=State.DISCOVERED.name();
                 else if(number(d,"SELECT COUNT(*) FROM assessment WHERE user=? AND journey=? AND state IN ('PENDING_EVIDENCE','PENDING_CATALOGUE')",user,journey)>0)
                     state=State.PENDING_EVIDENCE.name();
                 else state=number(d,"SELECT COUNT(*) FROM marker WHERE eligible=1")>0?State.ASSESSED_NO_DISCOVERY.name():State.PENDING_CATALOGUE.name();
             }
             if(cancelled.getAsBoolean() || Thread.currentThread().isInterrupted())throw new CancellationException();
             d.update("journey",values("cursor",cursor,"state",state),"user=? AND id=?",new String[]{user,journey});
-            d.setTransactionSuccessful();
-        } finally {d.endTransaction();}
+        });
         return true;
     }
     private static MilepostProximity.Evidence bounded(MilepostProximity.Evidence e) {
@@ -292,6 +355,7 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
             d.execSQL("CREATE TABLE runtime(singleton INTEGER PRIMARY KEY,evaluator TEXT NOT NULL)");
             d.execSQL("CREATE TABLE catalogue(singleton INTEGER PRIMARY KEY CHECK(singleton=1),revision INTEGER NOT NULL,sha TEXT NOT NULL,fingerprint TEXT NOT NULL)");
             d.execSQL("CREATE TABLE marker(id TEXT PRIMARY KEY,lon REAL NOT NULL,lat REAL NOT NULL,eligible INTEGER NOT NULL,valid_from INTEGER NOT NULL,valid_until INTEGER NOT NULL)");
+            archiveTables(d);
             d.execSQL("CREATE TABLE identity_registry(id TEXT PRIMARY KEY,retired INTEGER NOT NULL)");
             d.execSQL("CREATE TABLE alias(alias TEXT PRIMARY KEY,marker TEXT NOT NULL REFERENCES identity_registry(id))");
             d.execSQL("CREATE TABLE journey(user TEXT NOT NULL,id TEXT NOT NULL,version INTEGER NOT NULL,token TEXT NOT NULL,deleted INTEGER NOT NULL,cursor TEXT NOT NULL,state TEXT NOT NULL,PRIMARY KEY(user,id))");
@@ -300,7 +364,15 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
             d.execSQL("CREATE INDEX assessment_discovery ON assessment(user,marker,state,event_ms,journey)");
             d.execSQL("CREATE TABLE recognition(user TEXT NOT NULL,marker TEXT NOT NULL,ordinal INTEGER NOT NULL,first_recognised INTEGER NOT NULL,first_journey TEXT NOT NULL,first_token TEXT NOT NULL,first_event TEXT NOT NULL,first_catalogue INTEGER NOT NULL,invalidation TEXT,PRIMARY KEY(user,marker),UNIQUE(user,ordinal))");
         }
-        @Override public void onUpgrade(SQLiteDatabase d,int oldVersion,int newVersion) {throw new IllegalStateException("Unsupported milepost schema; preserve database");}
+        private static void archiveTables(SQLiteDatabase d) {
+            d.execSQL("CREATE INDEX IF NOT EXISTS marker_bounds ON marker(lat,lon,id)");
+            d.execSQL("CREATE TABLE archive_source(user TEXT NOT NULL,id TEXT NOT NULL,stamp TEXT NOT NULL,PRIMARY KEY(user,id))");
+            d.execSQL("CREATE TABLE archive_cursor(user TEXT NOT NULL,phase TEXT NOT NULL,cursor TEXT NOT NULL,PRIMARY KEY(user,phase))");
+        }
+        @Override public void onUpgrade(SQLiteDatabase d,int oldVersion,int newVersion) {
+            if(oldVersion==1&&newVersion==2){archiveTables(d);return;}
+            throw new IllegalStateException("Unsupported milepost schema; preserve database");
+        }
         @Override public void onDowngrade(SQLiteDatabase d,int oldVersion,int newVersion) {throw new IllegalStateException("Future milepost schema; preserve database");}
     }
 }
