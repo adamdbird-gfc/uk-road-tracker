@@ -51,21 +51,10 @@ final class MilepostAchievements {
         Fact[] designers=new Fact[4];PriorityQueue<Fact> seven=new PriorityQueue<>(7,ORDER.reversed());
         // Canonical physical identity, one earliest supported fact per marker. The query
         // keeps alternate proofs in SQLite and never loads source geometry or all proofs.
-        String valid=" FROM assessment a JOIN journey j ON j.user=a.user AND j.id=a.journey JOIN marker m ON m.id=a.marker"
-                +" WHERE a.user=? AND a.state='DISCOVERED' AND j.state!='QUEUED' AND j.deleted=0"
-                +" AND a.token=j.token AND a.source_version=j.version AND a.catalogue=(SELECT revision FROM catalogue WHERE singleton=1)"
-                +" AND a.evaluator=? AND m.eligible=1 AND a.reason='QUALIFIED' AND a.event_ms IS NOT NULL"
-                +" AND a.source IS NOT NULL AND a.validator IS NOT NULL AND a.mode IN ('walking','running','cycling')";
         String after="";
         for(;;) {
             MilepostArchiveReader.check(cancelled);int read=0;
-            try(Cursor c=d.rawQuery("SELECT a.marker,a.journey,a.token,a.event_date,a.event_ms,a.section,m.designer,m.designer_verified"+valid
-                    +" AND a.marker>? AND NOT EXISTS (SELECT 1 FROM assessment b JOIN journey k ON k.user=b.user AND k.id=b.journey"
-                    +" WHERE b.user=a.user AND b.marker=a.marker AND b.state='DISCOVERED' AND k.state!='QUEUED' AND k.deleted=0"
-                    +" AND b.token=k.token AND b.source_version=k.version AND b.catalogue=a.catalogue AND b.evaluator=a.evaluator"
-                    +" AND b.reason='QUALIFIED' AND b.event_ms IS NOT NULL AND b.source IS NOT NULL AND b.validator IS NOT NULL"
-                    +" AND b.mode IN ('walking','running','cycling') AND (b.event_ms<a.event_ms OR (b.event_ms=a.event_ms AND b.journey<a.journey)))"
-                    +" ORDER BY a.marker LIMIT 16",new String[]{user,MilepostDiscoveryLedger.EVALUATOR,after})) {
+            try(Cursor c=factPage(d,user,after)) {
                 while(c.moveToNext()) {
                     MilepostArchiveReader.check(cancelled);Fact f=new Fact(c);after=f.marker;read++;result.count++;
                     int designer=DESIGNERS.indexOf(f.designer);
@@ -93,6 +82,23 @@ final class MilepostAchievements {
         MilepostArchiveReader.check(cancelled);
         if(generation!=generation(d))throw new ConcurrentModificationException("Ledger changed during derivation");
         return result;
+    }
+    /** Shared bounded, qualified physical-fact reader; presentation never relaxes Stage 5 trust. */
+    static Cursor factPage(SQLiteDatabase d,String user,String after) {return factPage(d,user,after,false);}
+    static Cursor factPage(SQLiteDatabase d,String user,String after,boolean recognition) {
+        String valid=" FROM assessment a JOIN journey j ON j.user=a.user AND j.id=a.journey JOIN marker m ON m.id=a.marker"
+                +" WHERE a.user=? AND a.state='DISCOVERED' AND j.state!='QUEUED' AND j.deleted=0"
+                +" AND a.token=j.token AND a.source_version=j.version AND a.catalogue=(SELECT revision FROM catalogue WHERE singleton=1)"
+                +" AND a.evaluator=? AND m.eligible=1 AND a.reason='QUALIFIED' AND a.event_ms IS NOT NULL"
+                +" AND a.source IS NOT NULL AND a.validator IS NOT NULL AND a.mode IN ('walking','running','cycling')";
+        return d.rawQuery("SELECT a.marker,a.journey,a.token,a.event_date,a.event_ms,a.section,m.designer,m.designer_verified"
+                    +(recognition?",(SELECT ordinal FROM recognition r WHERE r.user=a.user AND r.marker=a.marker)":"")+valid
+                    +" AND a.marker>? AND NOT EXISTS (SELECT 1 FROM assessment b JOIN journey k ON k.user=b.user AND k.id=b.journey"
+                    +" WHERE b.user=a.user AND b.marker=a.marker AND b.state='DISCOVERED' AND k.state!='QUEUED' AND k.deleted=0"
+                    +" AND b.token=k.token AND b.source_version=k.version AND b.catalogue=a.catalogue AND b.evaluator=a.evaluator"
+                    +" AND b.reason='QUALIFIED' AND b.event_ms IS NOT NULL AND b.source IS NOT NULL AND b.validator IS NOT NULL"
+                    +" AND b.mode IN ('walking','running','cycling') AND (b.event_ms<a.event_ms OR (b.event_ms=a.event_ms AND b.journey<a.journey)))"
+                    +" ORDER BY a.marker LIMIT 16",new String[]{user,MilepostDiscoveryLedger.EVALUATOR,after});
     }
     /** Caller holds SQLite writer + NCN + archive fences, including endTransaction. */
     static void publish(SQLiteDatabase d,String user,Prepared prepared,long archive,String ncnToken,long now,BooleanSupplier cancelled)throws Exception {
