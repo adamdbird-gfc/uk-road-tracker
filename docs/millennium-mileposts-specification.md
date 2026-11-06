@@ -1,6 +1,6 @@
 # Millennium Mileposts: authoritative feature specification
 
-Date: 5 November 2026. Priority P2. Status: **specified; implementation gated by evidence and separately authorised development**.
+Date: 5 November 2026. Priority P2. Status: **Stage 10 implemented in PR #297; source review and Stage 11 device/release acceptance remain separate**.
 Source baseline: `24278f5256bf367039b9a3adf986d619754ccb15` (main, merged PR #276).
 This document is the single product/behaviour authority for this feature. Companion files supply verification, tests, artwork and delivery detail:
 
