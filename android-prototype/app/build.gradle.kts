@@ -13,7 +13,7 @@ android {
     buildFeatures { buildConfig = true }
     // Private synthetic acceptance sandbox. Never changes debug/release identity or gate.
     buildTypes.create("acceptance") {
-        initWith(getByName("debug"))
+        initWith(buildTypes.getByName("debug"))
         applicationIdSuffix = ".milepostacceptance"
         versionNameSuffix = "-synthetic-acceptance"
         matchingFallbacks += listOf("debug")
