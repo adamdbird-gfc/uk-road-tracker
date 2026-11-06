@@ -25,7 +25,7 @@ final class MilepostJourneyEvidence {
     }
     /** Only the streaming archive reader supplies the independently parsed match witness. */
     static MilepostProximity.Evidence projectedArchive(JSONObject journey,boolean matchPresent)throws Exception {
-        return nativeArchive(journey,matchPresent);
+        return nativeArchive(journey.put("_milepost_match_present",matchPresent),matchPresent);
     }
     private static MilepostProximity.Evidence nativeArchive(JSONObject journey,Boolean matchPresent) throws Exception {
         String mode=canonical(journey.optString("mode"));

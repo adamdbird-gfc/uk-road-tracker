@@ -28,16 +28,10 @@ public final class MilepostReconciliationJob extends JobService {
         Run run=new Run();current=run;
         run.task=run.executor.submit(()->{
             Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-            SharedPreferences state=getSharedPreferences("roadprints_capture_state",MODE_PRIVATE);
-            SharedPreferences.OnSharedPreferenceChangeListener listener=(p,key)->{
-                if(p.getBoolean("active",false))run.cancelled.set(true);
-            };
-            state.registerOnSharedPreferenceChangeListener(listener);
+            CaptureGuard guard=new CaptureGuard(this,run.cancelled,android.os.SystemClock.elapsedRealtime()+2000);
             boolean retry=true;
             try {
-                long deadline=android.os.SystemClock.elapsedRealtime()+2000;
-                java.util.function.BooleanSupplier yield=()->run.cancelled.get()||state.getBoolean("active",false)
-                        ||android.os.SystemClock.elapsedRealtime()>=deadline;
+                java.util.function.BooleanSupplier yield=guard;
                 MilepostArchiveReader.check(yield);
                 try(MilepostDiscoveryLedger ledger=new MilepostDiscoveryLedger(this,DATABASE)) {
                     retry=new MilepostReconciler(this,ledger,USER).runSlice(yield,System.currentTimeMillis());
@@ -46,12 +40,28 @@ public final class MilepostReconciliationJob extends JobService {
                 // Retain checkpoints and request an OS retry under idle/charging constraints.
             }catch(Exception error){android.util.Log.w("Roadprints","Inactive milepost reconciliation needs retry",error);}
             finally {
-                state.unregisterOnSharedPreferenceChangeListener(listener);
+                guard.close();
                 if(!run.stopped.get())jobFinished(parameters,retry);
                 run.executor.shutdown();
             }
         });
         return true;
+    }
+    /** Latches capture starts even if capture finishes before the next evaluation poll. */
+    static final class CaptureGuard implements java.util.function.BooleanSupplier,AutoCloseable {
+        final SharedPreferences state;
+        final AtomicBoolean cancelled;
+        final long deadline;
+        final SharedPreferences.OnSharedPreferenceChangeListener listener;
+        CaptureGuard(Context context,AtomicBoolean cancelled,long deadline) {
+            this.cancelled=cancelled;this.deadline=deadline;
+            state=context.getSharedPreferences("roadprints_capture_state",MODE_PRIVATE);
+            listener=(p,key)->{if(p.getBoolean("active",false))cancelled.set(true);};
+            state.registerOnSharedPreferenceChangeListener(listener);
+        }
+        public boolean getAsBoolean(){return cancelled.get()||state.getBoolean("active",false)
+                ||android.os.SystemClock.elapsedRealtime()>=deadline;}
+        public void close(){state.unregisterOnSharedPreferenceChangeListener(listener);}
     }
     @Override public boolean onStopJob(JobParameters parameters) {
         Run run=current;

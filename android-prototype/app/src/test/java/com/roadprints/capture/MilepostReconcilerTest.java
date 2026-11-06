@@ -38,9 +38,9 @@ public class MilepostReconcilerTest {
     List<MilepostDiscoveryLedger.Discovery> found(){return ledger.discoveries("u","",16);}
     @Test public void realSaveCorrectionDeletionRestoreAndUnchangedRetry()throws Exception {work(()->{
         catalogue();JSONObject a=row("a"),b=row("b");save(a);save(b);long revision=JourneyStore.dataRevision(c),ncn=JourneyStore.ncnDataRevision(c);
-        String original=Files.readString(MilepostArchiveReader.file(c,"a").toPath());drain();assertEquals(1,found().size());assertEquals(2,ledger.proofCount("u"));
+        String original=new String(Files.readAllBytes(MilepostArchiveReader.file(c,"a").toPath()),StandardCharsets.UTF_8);drain();assertEquals(1,found().size());assertEquals(2,ledger.proofCount("u"));
         int reads=worker.readSources;drain();assertEquals(reads,worker.readSources);assertEquals(2,ledger.proofCount("u"));
-        assertEquals(original,Files.readString(MilepostArchiveReader.file(c,"a").toPath()));
+        assertEquals(original,new String(Files.readAllBytes(MilepostArchiveReader.file(c,"a").toPath()),StandardCharsets.UTF_8));
         assertEquals(revision,JourneyStore.dataRevision(c));assertEquals(ncn,JourneyStore.ncnDataRevision(c));
         JourneyStore.delete(c,"a");drain();assertEquals("b",found().get(0).journey);
         b.put("journey_corrections",new JSONObject().put("removed_matched_segments",new JSONArray().put(0)));save(b);drain();assertTrue(found().isEmpty());
@@ -69,8 +69,8 @@ public class MilepostReconcilerTest {
     });}
     @Test public void oversizedAndMalformedSourcesStayPendingWithoutBlockingLaterJourney()throws Exception {work(()->{
         catalogue();JSONObject big=row("a");big.put("capture_route_samples",new JSONArray(Collections.nCopies(10001,new JSONArray().put(1))));
-        Files.writeString(MilepostArchiveReader.file(c,"a").toPath(),big.toString());
-        Files.writeString(MilepostArchiveReader.file(c,"b").toPath(),"{broken");save(row("z"));drain();
+        Files.write(MilepostArchiveReader.file(c,"a").toPath(),big.toString().getBytes(StandardCharsets.UTF_8));
+        Files.write(MilepostArchiveReader.file(c,"b").toPath(),"{broken".getBytes(StandardCharsets.UTF_8));save(row("z"));drain();
         assertEquals(MilepostDiscoveryLedger.State.PENDING_EVIDENCE,ledger.state("u","a"));
         assertEquals(MilepostDiscoveryLedger.State.PENDING_EVIDENCE,ledger.state("u","b"));assertEquals("z",found().get(0).journey);
     });}
@@ -109,6 +109,14 @@ public class MilepostReconcilerTest {
         try{worker.runSlice(()->++polls[0]>50,1000);}catch(CancellationException expected){}
         drain();assertEquals(1,ledger.proofCount("u"));assertEquals(1,found().get(0).ordinal);
     });}
+    @Test public void additiveStageThreeSchemaUpgradePreservesRecognition()throws Exception {work(()->{
+        catalogue();save(row("a"));drain();ledger.close();
+        try(SQLiteDatabase db=SQLiteDatabase.openDatabase(c.getDatabasePath(name).getPath(),null,SQLiteDatabase.OPEN_READWRITE)) {
+            db.execSQL("DROP TABLE archive_source");db.execSQL("DROP TABLE archive_cursor");db.execSQL("DROP INDEX marker_bounds");db.setVersion(1);
+        }
+        ledger=new MilepostDiscoveryLedger(c,name);worker=new MilepostReconciler(c,ledger,"u");
+        assertEquals(1,found().get(0).ordinal);drain();assertEquals(1,found().get(0).ordinal);assertEquals(1,ledger.proofCount("u"));
+    });}
     @Test public void stageOneCandidatePositionsRemainIneligibleAndFullVolumeProbe()throws Exception {work(()->{
         String path=System.getenv("MILEPOST_CANDIDATE_CATALOGUE");assertNotNull("CI must supply pinned full inventory",path);
         List<String> lines=Files.readAllLines(Paths.get(path));assertEquals(889,lines.size());
@@ -129,14 +137,16 @@ public class MilepostReconcilerTest {
                 j.getJSONArray("capture_route_samples").getJSONArray(point).put(0,position.lon2).put(1,position.lat2);
                 j.getJSONObject("route_geometry").getJSONArray("coordinates").getJSONArray(point).put(0,position.lon2).put(1,position.lat2);
             }
-            Files.writeString(MilepostArchiveReader.file(c,j.getString("journey_id")).toPath(),j.toString(),StandardCharsets.UTF_8);
+            Files.write(MilepostArchiveReader.file(c,j.getString("journey_id")).toPath(),j.toString().getBytes(StandardCharsets.UTF_8));
         }
-        for(java.lang.management.MemoryPoolMXBean pool:java.lang.management.ManagementFactory.getMemoryPoolMXBeans())pool.resetPeakUsage();
-        long start=System.nanoTime();drain();long elapsed=System.nanoTime()-start;
+        Runtime rt=Runtime.getRuntime();System.gc();long beforeHeap=rt.totalMemory()-rt.freeMemory();
+        java.util.concurrent.atomic.AtomicBoolean sampling=new java.util.concurrent.atomic.AtomicBoolean(true);
+        java.util.concurrent.atomic.AtomicLong peak=new java.util.concurrent.atomic.AtomicLong(beforeHeap);
+        Thread sampler=new Thread(()->{while(sampling.get()){peak.accumulateAndGet(rt.totalMemory()-rt.freeMemory(),Math::max);
+            try{Thread.sleep(2);}catch(InterruptedException stop){return;}}});sampler.start();
+        long start=System.nanoTime();try{drain();}finally{sampling.set(false);sampler.join();}long elapsed=System.nanoTime()-start;
         int reads=worker.readSources,pages=worker.processedPages;long size=c.getDatabasePath(name).length();
-        long heapPeak=0;for(java.lang.management.MemoryPoolMXBean pool:java.lang.management.ManagementFactory.getMemoryPoolMXBeans())
-            if(pool.getType()==java.lang.management.MemoryType.HEAP)heapPeak+=pool.getPeakUsage().getUsed();
-        Runtime rt=Runtime.getRuntime();System.gc();long retained=rt.totalMemory()-rt.freeMemory();
+        System.gc();long retained=rt.totalMemory()-rt.freeMemory();
         long retry=System.nanoTime();drain();retry=System.nanoTime()-retry;assertEquals(reads,worker.readSources);
         long assessments;
         try(SQLiteDatabase db=SQLiteDatabase.openDatabase(c.getDatabasePath(name).getPath(),null,SQLiteDatabase.OPEN_READONLY);
@@ -144,6 +154,6 @@ public class MilepostReconcilerTest {
         assertTrue("Spatial selection must reduce cross product",assessments<1606L*889/100);
         System.out.println("MILEPOST_RECONCILE_PROBE journeys=1606 markers=889 elapsed_ms="+elapsed/1000000+" source_reads="+reads+" pages="+pages
                 +" assessments="+assessments+" cartesian="+(1606L*889)+" database_bytes="+size+" retained_process_heap="+retained
-                +" peak_pool_sum_heap="+heapPeak+" retry_ms="+retry/1000000+" max_commit_monitor_us="+worker.maxCommitNanos/1000);
+                +" sampled_peak_heap="+peak.get()+" before_heap="+beforeHeap+" retry_ms="+retry/1000000+" max_commit_monitor_us="+worker.maxCommitNanos/1000);
     });}
 }

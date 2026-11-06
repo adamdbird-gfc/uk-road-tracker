@@ -52,7 +52,8 @@ final class MilepostArchiveReader {
                 else r.skipValue(); // Matcher/road trees, raw GPS, diagnostics and Timeline envelopes are never retained.
             }
             r.endObject();
-        } catch(IOException|org.json.JSONException malformed) {
+        } catch(java.util.concurrent.CancellationException cancelledRead) {throw cancelledRead;
+        } catch(IOException|org.json.JSONException|IllegalStateException|IllegalArgumentException malformed) {
             // Bounded, typed pending evidence; never qualify a truncated observation array.
             row=new JSONObject().put("journey_id",id).put("source",new JSONObject().put("type","projection_limit"));
         }
@@ -60,7 +61,7 @@ final class MilepostArchiveReader {
             check(cancelled);
             if(!stamp.equals(token(c,id)))throw new ConcurrentModificationException("Archive replaced during projection");
         }
-        if(!id.equals(row.optString("journey_id")))throw new IOException("Archive identity mismatch");
+        if(!id.equals(row.optString("journey_id")))row=new JSONObject().put("journey_id",id);
         return new Snapshot(stamp,MilepostJourneyEvidence.projectedArchive(row,matchPresent[0]));
     }
     private static JSONObject result(JsonReader r,Budget b,boolean[] matchPresent)throws Exception {

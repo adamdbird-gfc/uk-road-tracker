@@ -283,6 +283,7 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
             String state=State.QUEUED.name();
             if(!more) {
                 if(spatial&&(e.problem()!=null||(!bounds.any&&!bounds.global)))state=State.PENDING_EVIDENCE.name();
+                else if(spatial&&!sourceDated)state=State.PENDING_CATALOGUE.name();
                 else if(number(d,"SELECT COUNT(*) FROM assessment WHERE user=? AND journey=? AND state='DISCOVERED'",user,journey)>0)state=State.DISCOVERED.name();
                 else if(number(d,"SELECT COUNT(*) FROM assessment WHERE user=? AND journey=? AND state IN ('PENDING_EVIDENCE','PENDING_CATALOGUE')",user,journey)>0)
                     state=State.PENDING_EVIDENCE.name();
