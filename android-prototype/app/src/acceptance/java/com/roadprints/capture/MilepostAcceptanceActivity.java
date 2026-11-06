@@ -17,6 +17,7 @@ public final class MilepostAcceptanceActivity extends Activity {
     private final AtomicBoolean stopped=new AtomicBoolean(true);
     private boolean resumed;
     private long entryAt;
+    private int generation;
     @Override public void onCreate(Bundle state){
         super.onCreate(state);
         LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);setContentView(root);
@@ -35,6 +36,7 @@ public final class MilepostAcceptanceActivity extends Activity {
     void seed(int posts){runWork(true,posts);}
     void runWork(boolean seed,int posts){runWork(seed,posts,2);}
     void runWork(boolean seed,int posts,int archiveCount){
+        int token=++generation;
         if(screen!=null)screen.pause();
         status.setText("Processing isolated synthetic fixtures…");
         ScreenDataLoader.execute(()->{
@@ -42,23 +44,23 @@ public final class MilepostAcceptanceActivity extends Activity {
             try{
                 if(fixture==null)fixture=new MilepostAcceptanceFixture(this);
                 if(seed){fixture.prepare(posts);fixture.populateArchive(archiveCount);}else fixture.restore();
-                if(fixture.gate==null){runOnUiThread(()->status.setText("Seed fixtures to begin"));return;}
+                if(fixture.gate==null){runOnUiThread(()->{if(resumed&&token==generation)status.setText("Seed fixtures to begin");});return;}
                 // Same cooperative two-second deadline as the real job; repeat via explicit Resume.
                 boolean retry=fixture.process(stopped,SystemClock.elapsedRealtime()+2000);
                 long ms=SystemClock.elapsedRealtime()-start;
                 PerformanceDiagnostics.timing("synthetic_milepost_slice",ms,"retry="+retry+" archive_setup="+seed);
-                runOnUiThread(()->{if(!resumed)return;if(probe!=null)probe.mark("background_slice_ms",ms);
+                runOnUiThread(()->{if(!resumed||token!=generation)return;if(probe!=null)probe.mark("background_slice_ms",ms);
                     status.setText(retry?"Checkpoint saved; Resume reconciliation":"Synthetic receipt ready");
-                    screen=new MilepostScreenIntegration(this,fixture.gate);screen.mount(section);screen.resume();awaitView();});
-            }catch(Exception e){runOnUiThread(()->{if(resumed)status.setText("Stopped / unavailable: "+e.getClass().getSimpleName());});}
+                    screen=new MilepostScreenIntegration(this,fixture.gate);screen.mount(section);screen.resume();awaitView(token);});
+            }catch(Exception e){runOnUiThread(()->{if(resumed&&token==generation)status.setText("Stopped / unavailable: "+e.getClass().getSimpleName());});}
         });
     }
-    private void awaitView(){
-        if(!resumed||screen==null)return;
+    private void awaitView(int token){
+        if(!resumed||screen==null||token!=generation)return;
         if(section.getChildCount()>0){if(probe!=null)probe.mark("entry_to_view_ms",SystemClock.elapsedRealtime()-entryAt);return;}
-        section.postDelayed(()->{if(resumed){screen.refresh();awaitView();}},100);
+        section.postDelayed(()->{if(resumed&&token==generation){screen.refresh();awaitView(token);}},100);
     }
     @Override protected void onResume(){super.onResume();resumed=true;stopped.set(false);entryAt=SystemClock.elapsedRealtime();probe=new MilepostRuntimeProbe(this);runWork(false,0);}
-    @Override protected void onPause(){resumed=false;stopped.set(true);if(screen!=null)screen.pause();if(probe!=null){probe.close();probe=null;}super.onPause();}
+    @Override protected void onPause(){generation++;resumed=false;stopped.set(true);if(screen!=null)screen.pause();if(probe!=null){probe.close();probe=null;}super.onPause();}
     @Override protected void onDestroy(){ScreenDataLoader.execute(()->{if(fixture!=null){fixture.close();fixture=null;}});super.onDestroy();}
 }
