@@ -26,9 +26,13 @@ def main():
     p.add_argument("--method", choices=("onePhysicalPostAndDesigner", "allAwardsAndDuplicateSummary",
                    "correctionFallbackWithdrawalAndReopen", "interruptedWorkerAndSimulatedCaptureState",
                    "repeatedEntryReplayRecreationAndRuntimeProfile", "replayCapturePauseAccessibilityStructureAndFocus",
-                   "processRestartReceipt"), default="repeatedEntryReplayRecreationAndRuntimeProfile")
+                   "processRestartReceipt", "manualAcceptanceWindow"), default="repeatedEntryReplayRecreationAndRuntimeProfile")
     p.add_argument("--restart-phase", choices=("prepare", "verify"), default="prepare")
+    p.add_argument("--manual-seconds", type=int, default=60)
+    p.add_argument("--keep-fixtures", action="store_true", help="Manual run preserves existing synthetic archive")
     args = p.parse_args()
+    if not 1 <= args.manual_seconds <= 600:
+        p.error("--manual-seconds must be between 1 and 600")
     if not shutil.which("adb"):
         p.error("adb unavailable; Android device evidence remains UNVERIFIED")
     if len(args.source_sha) != 40 or any(c not in "0123456789abcdef" for c in args.source_sha):
@@ -70,9 +74,13 @@ def main():
     sampler.start()
     try:
         result = adb("shell", "am", "instrument", "-w", "-r", "-e", "class", CLASS + "#" + args.method,
-                     "-e", "restartPhase", args.restart_phase, TEST, timeout=300)
+                     "-e", "restartPhase", args.restart_phase, "-e", "manualSeconds", str(args.manual_seconds),
+                     "-e", "manualSeed", "false" if args.keep_fixtures else "true", TEST, timeout=max(300,args.manual_seconds+90))
         (args.output / "instrumentation.txt").write_text(result)
         receipt["instrumentation_pass"] = "OK (1 test)" in result and "FAILURES" not in result and "INSTRUMENTATION_FAILED" not in result
+    except Exception as error:
+        receipt["instrumentation_pass"] = False
+        receipt["instrumentation_error"] = str(error)
     finally:
         stop.set()
         sampler.join(timeout=25)

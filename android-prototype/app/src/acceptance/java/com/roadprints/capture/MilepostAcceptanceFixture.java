@@ -47,6 +47,13 @@ final class MilepostAcceptanceFixture implements AutoCloseable {
         JourneyStore.save(c,journey("walking").put("journey_id","synthetic:b"));
         restore();
     }
+    void populateArchive(int count)throws Exception {
+        for(int i=2;i<count;i++){
+            if(CaptureService.isActive(c))throw new java.util.concurrent.CancellationException("Capture began during synthetic setup");
+            JourneyStore.save(c,journey("walking").put("journey_id",String.format(java.util.Locale.ROOT,"synthetic:bulk:%04d",i)));
+        }
+        restore();
+    }
     void restore()throws Exception {
         setNcn(ncn(100));
         int revision=(int)MilepostAchievements.number(ledger.db(),"SELECT COALESCE(MAX(revision),0) FROM catalogue");

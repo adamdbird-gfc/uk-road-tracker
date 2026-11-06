@@ -28,7 +28,7 @@ final class MilepostRuntimeProbe implements AutoCloseable {
             ActivityManager.MemoryInfo ram=new ActivityManager.MemoryInfo();host.getSystemService(ActivityManager.class).getMemoryInfo(ram);
             write(new JSONObject().put("event","environment").put("model",Build.MODEL).put("manufacturer",Build.MANUFACTURER)
                 .put("android",Build.VERSION.RELEASE).put("sdk",Build.VERSION.SDK_INT).put("ram_bytes",ram.totalMem)
-                .put("package",BuildConfig.APPLICATION_ID).put("variant",BuildConfig.BUILD_TYPE)
+                .put("display_hz",host.getWindowManager().getDefaultDisplay().getRefreshRate()).put("package",BuildConfig.APPLICATION_ID).put("variant",BuildConfig.BUILD_TYPE)
                 .put("workload","synthetic; operator records source SHA, archive size and runtime kind separately")
                 .put("evidence_kind","Android runtime; physical/emulator classification requires operator receipt"));
         }catch(Exception e){throw new IllegalStateException(e);}
@@ -48,7 +48,11 @@ final class MilepostRuntimeProbe implements AutoCloseable {
                 .put("total_pss_bytes",pss).put("runtime_stats",new JSONObject(Debug.getRuntimeStats())));
         }catch(Exception e){android.util.Log.e("MilepostAcceptance","Probe sample failed",e);}
     }
-    void mark(String name,long ms){try{write(new JSONObject().put("event",name).put("value",ms));}catch(Exception e){throw new IllegalStateException(e);}}
+    void mark(String name,long value){
+        if(closed.get())return;
+        try{worker.execute(()->{try{write(new JSONObject().put("event",name).put("value",value));}catch(Exception e){android.util.Log.e("MilepostAcceptance","Probe marker failed",e);}});}
+        catch(RejectedExecutionException stopped){/* Lifecycle ended. */}
+    }
     private synchronized void write(JSONObject row)throws Exception {
         row.put("elapsed_ms",SystemClock.elapsedRealtime());
         try(FileWriter out=new FileWriter(new File(host.getFilesDir(),"milepost-acceptance-runtime.jsonl"),true)){out.write(row.toString());out.write('\n');}

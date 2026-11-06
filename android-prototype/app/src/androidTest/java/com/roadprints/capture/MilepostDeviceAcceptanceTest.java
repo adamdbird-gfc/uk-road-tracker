@@ -56,6 +56,13 @@ public class MilepostDeviceAcceptanceTest {
         if(view instanceof Button)assertTrue("Button minimum 48dp",view.getMinimumHeight()>=Math.round(48*density));
         if(view instanceof ViewGroup){ViewGroup group=(ViewGroup)view;for(int i=0;i<group.getChildCount();i++)inspectTargets(group.getChildAt(i),density);}
     }
+    @Test public void manualAcceptanceWindow()throws Exception {
+        int seconds=Math.max(1,Math.min(600,Integer.parseInt(InstrumentationRegistry.getArguments().getString("manualSeconds","1"))));
+        if(!"false".equals(InstrumentationRegistry.getArguments().getString("manualSeed","true")))seed();
+        try(ActivityScenario<MilepostAcceptanceActivity> scenario=ActivityScenario.launch(MilepostAcceptanceActivity.class)){
+            ready(scenario);Thread.sleep(seconds*1000L); // Bounded tester interaction window, not an acceptance assertion.
+        }
+    }
     // Two separate instrumentation invocations with an intervening force-stop prove process persistence.
     @Test public void processRestartReceipt()throws Exception {
         String phase=InstrumentationRegistry.getArguments().getString("restartPhase","prepare");
