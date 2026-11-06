@@ -137,7 +137,7 @@ jobs:
           PY
       - name: Run complete ordinary Android regression suite
         run: |
-          gradle --offline --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false -Drobolectric.offline=true -Drobolectric.dependency.dir="$RUNNER_TEMP/robolectric-offline" --init-script "$RUNNER_TEMP/milepost-heap.init.gradle" :app:testDebugUnitTest --rerun-tasks
+          gradle --offline --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false -Drobolectric.offline=true -Drobolectric.dependency.dir="$RUNNER_TEMP/robolectric-offline" :app:testDebugUnitTest --rerun-tasks
           python3 -m unittest scripts.test_review_capture_partition -q
           python3 - <<'PYTOTAL'
           import pathlib,xml.etree.ElementTree as E,json

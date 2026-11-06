@@ -41,6 +41,12 @@ public class AchievementArchiveVolumeTest {
                     j.put("journey_corrections",new JSONObject().put("removed_matched_segments",new JSONArray().put(0))
                         .put("removed_road_ids",new JSONArray().put("name:unrelated removed road")));
                 }
+                if(i==1){
+                    LandmarkEvidence e=new LandmarkEvidence(app);
+                    double[][] bridge=FinalTravelAchievementsTest.full(FinalTravelAchievementsTest.reference(e,"humber-bridge-landmark"));
+                    JSONObject crossing=FinalTravelAchievementsTest.journey("driving","2026-11-01T09:00:00Z",bridge);
+                    result.put("geojson",crossing.getJSONObject("processing_result").getJSONObject("geojson"));
+                }
                 byte[] bytes=j.toString().getBytes(StandardCharsets.UTF_8);before.update(bytes);
                 // Test fixture archives bypass observer/matcher work; production calculation reads them normally.
                 Files.write(new File(app.getFilesDir(),"journey_j"+i+".json").toPath(),bytes);
@@ -50,6 +56,7 @@ public class AchievementArchiveVolumeTest {
             AchievementStore.Snapshot first=AchievementStore.calculate(app);
             assertEquals(162300/1609.344,progress(first,"road-total").value,1e-9);
             assertEquals(1623,progress(first,"the-knowledge").value,0);
+            assertEquals(1,progress(first,"humber-bridge-landmark").value,0);
             String history=app.getSharedPreferences("roadprints_achievements_v1",0).getString("level_history","");
             String unlocked=app.getSharedPreferences("roadprints_achievements_v1",0).getString("unlocked","");
             System.gc();long baseline=Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory();

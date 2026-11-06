@@ -137,8 +137,6 @@ public final class JourneyStore {
 
     public static synchronized List<JSONObject> all(Context context) {
         migrateLegacy(context);
-        achievementCancellation.set(cancelled);
-        try {
         List<File> files = archiveFiles(context);
         files.sort((left, right) -> Long.compare(right.lastModified(), left.lastModified()));
         List<JSONObject> journeys = new ArrayList<>();
@@ -530,6 +528,8 @@ public final class JourneyStore {
     static void forEachAchievementEvidence(Context context, java.util.function.BooleanSupplier cancelled,
                                     JourneyVisitor visitor) throws Exception {
         migrateLegacy(context);
+        achievementCancellation.set(cancelled);
+        try {
         List<File> files = archiveFiles(context);
         files.sort((left, right) -> Long.compare(right.lastModified(), left.lastModified()));
         for (File file : files) {
