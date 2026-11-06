@@ -17,7 +17,7 @@ import java.util.function.BooleanSupplier;
  * All entrypoints must run on a worker. Source revisions belong to the caller's durable
  * change feed, not wall-clock time. This ledger never edits source journeys. */
 final class MilepostDiscoveryLedger implements AutoCloseable {
-    static final int SCHEMA = 2, PAGE = 16, MAX_CATALOGUE = 4096;
+    static final int SCHEMA = 3, PAGE = 16, MAX_CATALOGUE = 4096;
     static final String EVALUATOR = MilepostJourneyEvidence.REVISION + "/" + MilepostProximity.Policy.V1.revision;
     enum State { DISCOVERED, ASSESSED_NO_DISCOVERY, PENDING_EVIDENCE, PENDING_CATALOGUE, QUEUED, DELETED }
 
@@ -29,7 +29,16 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
         final boolean eligible;
         final long from, until;
         final List<String> aliases;
+        final String designer;
+        final boolean designerVerified;
         Marker(String id, double lon, double lat, boolean eligible, long from, long until, List<String> aliases) {
+            this(id,lon,lat,eligible,from,until,aliases,"unknown",false);
+        }
+        Marker(String id,double lon,double lat,boolean eligible,long from,long until,List<String> aliases,
+               String designer,boolean designerVerified) {
+            if(!java.util.Arrays.asList("mills","rowe","mccoll","dudgeon","unknown").contains(designer)
+                    || (designerVerified&&"unknown".equals(designer)))throw new IllegalArgumentException("Invalid designer attribution");
+            this.designer=designer;this.designerVerified=designerVerified;
             require(id); if (!new MilepostProximity.Point(lon,lat).valid() || from >= until)
                 throw new IllegalArgumentException("Invalid dated marker");
             this.id=id; this.lon=lon; this.lat=lat; this.eligible=eligible;
@@ -123,7 +132,7 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
     private static void require(String s) {
         if (!MilepostProximity.text(s) || s.length()>512) throw new IllegalArgumentException("Missing/oversized identity");
     }
-    private SQLiteDatabase db() { worker(); return helper.getWritableDatabase(); }
+    SQLiteDatabase db() { worker(); return helper.getWritableDatabase(); }
     private static ContentValues values(Object... pairs) {
         ContentValues v=new ContentValues();
         for(int i=0;i<pairs.length;i+=2) {
@@ -165,7 +174,7 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
                 }
                 d.delete("marker",null,null);
                 for(Marker m:markers) {
-                    d.insertOrThrow("marker",null,values("id",m.id,"lon",m.lon,"lat",m.lat,"eligible",m.eligible?1:0,"valid_from",m.from,"valid_until",m.until));
+                    d.insertOrThrow("marker",null,values("id",m.id,"lon",m.lon,"lat",m.lat,"eligible",m.eligible?1:0,"valid_from",m.from,"valid_until",m.until,"designer",m.designer,"designer_verified",m.designerVerified?1:0));
                     for(String alias:m.aliases) {
                         String owner=scalar(d,"SELECT marker FROM alias WHERE alias=?",alias);
                         if(owner!=null&&!m.id.equals(owner))throw new IllegalArgumentException("Alias cannot change physical identity");
@@ -189,7 +198,7 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
             for(Marker m:sorted) {
                 List<String> aliases=new ArrayList<>(m.aliases); java.util.Collections.sort(aliases);
                 rows.put(new org.json.JSONArray().put(m.id).put(m.lon).put(m.lat).put(m.eligible)
-                        .put(m.from).put(m.until).put(new org.json.JSONArray(aliases)));
+                        .put(m.from).put(m.until).put(new org.json.JSONArray(aliases)).put(m.designer).put(m.designerVerified));
             }
             return MilepostJourneyEvidence.digestJson(new org.json.JSONObject().put("markers",rows));
         } catch(Exception e) {throw new IllegalArgumentException("Catalogue fingerprint",e);}
@@ -354,7 +363,7 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
         @Override public void onCreate(SQLiteDatabase d) {
             d.execSQL("CREATE TABLE runtime(singleton INTEGER PRIMARY KEY,evaluator TEXT NOT NULL)");
             d.execSQL("CREATE TABLE catalogue(singleton INTEGER PRIMARY KEY CHECK(singleton=1),revision INTEGER NOT NULL,sha TEXT NOT NULL,fingerprint TEXT NOT NULL)");
-            d.execSQL("CREATE TABLE marker(id TEXT PRIMARY KEY,lon REAL NOT NULL,lat REAL NOT NULL,eligible INTEGER NOT NULL,valid_from INTEGER NOT NULL,valid_until INTEGER NOT NULL)");
+            d.execSQL("CREATE TABLE marker(id TEXT PRIMARY KEY,lon REAL NOT NULL,lat REAL NOT NULL,eligible INTEGER NOT NULL,valid_from INTEGER NOT NULL,valid_until INTEGER NOT NULL,designer TEXT NOT NULL DEFAULT 'unknown',designer_verified INTEGER NOT NULL DEFAULT 0)");
             archiveTables(d);
             d.execSQL("CREATE TABLE identity_registry(id TEXT PRIMARY KEY,retired INTEGER NOT NULL)");
             d.execSQL("CREATE TABLE alias(alias TEXT PRIMARY KEY,marker TEXT NOT NULL REFERENCES identity_registry(id))");
@@ -363,14 +372,30 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
             d.execSQL("CREATE TABLE assessment(user TEXT NOT NULL,journey TEXT NOT NULL,marker TEXT NOT NULL,state TEXT NOT NULL,reason TEXT NOT NULL,token TEXT NOT NULL,source_version INTEGER NOT NULL,catalogue INTEGER NOT NULL,evaluator TEXT NOT NULL,validator TEXT,source TEXT,mode TEXT,event_date TEXT,event_ms INTEGER,precision TEXT NOT NULL,recognised INTEGER NOT NULL,distance REAL,nearest_lon REAL,nearest_lat REAL,post_lon REAL,post_lat REAL,section INTEGER,source_start INTEGER,source_end INTEGER,method TEXT,PRIMARY KEY(user,journey,marker),FOREIGN KEY(user,journey) REFERENCES journey(user,id))");
             d.execSQL("CREATE INDEX assessment_discovery ON assessment(user,marker,state,event_ms,journey)");
             d.execSQL("CREATE TABLE recognition(user TEXT NOT NULL,marker TEXT NOT NULL,ordinal INTEGER NOT NULL,first_recognised INTEGER NOT NULL,first_journey TEXT NOT NULL,first_token TEXT NOT NULL,first_event TEXT NOT NULL,first_catalogue INTEGER NOT NULL,invalidation TEXT,PRIMARY KEY(user,marker),UNIQUE(user,ordinal))");
+            achievementTables(d);
         }
         private static void archiveTables(SQLiteDatabase d) {
             d.execSQL("CREATE INDEX IF NOT EXISTS marker_bounds ON marker(lat,lon,id)");
             d.execSQL("CREATE TABLE archive_source(user TEXT NOT NULL,id TEXT NOT NULL,stamp TEXT NOT NULL,PRIMARY KEY(user,id))");
             d.execSQL("CREATE TABLE archive_cursor(user TEXT NOT NULL,phase TEXT NOT NULL,cursor TEXT NOT NULL,PRIMARY KEY(user,phase))");
         }
+        private static void achievementTables(SQLiteDatabase d) {
+            d.execSQL("CREATE TABLE derivation_input(singleton INTEGER PRIMARY KEY,generation INTEGER NOT NULL)");
+            d.execSQL("INSERT INTO derivation_input VALUES(1,0)");
+            for(String table:new String[]{"catalogue","marker","journey","assessment","archive_source","runtime"})
+                for(String op:new String[]{"INSERT","UPDATE","DELETE"})
+                    d.execSQL("CREATE TRIGGER derive_"+table+"_"+op+" AFTER "+op+" ON "+table+" BEGIN UPDATE derivation_input SET generation=generation+1 WHERE singleton=1; END");
+            d.execSQL("CREATE TABLE achievement_state(user TEXT NOT NULL,id TEXT NOT NULL,earned INTEGER NOT NULL,first_recognised INTEGER,ordinal INTEGER,first_event TEXT,first_precision TEXT,event_date TEXT,precision TEXT NOT NULL,support TEXT NOT NULL,PRIMARY KEY(user,id),UNIQUE(user,ordinal))");
+            d.execSQL("CREATE TABLE achievement_snapshot(user TEXT PRIMARY KEY,archive_revision INTEGER NOT NULL,ledger_generation INTEGER NOT NULL,catalogue TEXT NOT NULL,evaluator TEXT NOT NULL,ncn_token TEXT NOT NULL,discovery_count INTEGER NOT NULL,assessed_at INTEGER NOT NULL)");
+        }
         @Override public void onUpgrade(SQLiteDatabase d,int oldVersion,int newVersion) {
-            if(oldVersion==1&&newVersion==2){archiveTables(d);return;}
+            if(oldVersion==1){archiveTables(d);oldVersion=2;}
+            if(oldVersion==2&&newVersion==3){
+                d.execSQL("ALTER TABLE marker ADD COLUMN designer TEXT NOT NULL DEFAULT 'unknown'");
+                d.execSQL("ALTER TABLE marker ADD COLUMN designer_verified INTEGER NOT NULL DEFAULT 0");
+                // Old fingerprints did not encode attribution; require a newer reviewed pin.
+                achievementTables(d);return;
+            }
             throw new IllegalStateException("Unsupported milepost schema; preserve database");
         }
         @Override public void onDowngrade(SQLiteDatabase d,int oldVersion,int newVersion) {throw new IllegalStateException("Future milepost schema; preserve database");}

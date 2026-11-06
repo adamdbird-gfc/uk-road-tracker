@@ -152,13 +152,28 @@ public class MilepostReconcilerTest {
         assertTrue("Correction must race actual proximity evaluation",changed.get());assertTrue(found().isEmpty());drain();
         assertEquals(MilepostDiscoveryLedger.State.PENDING_EVIDENCE,ledger.state("u","a"));assertTrue(found().isEmpty());
     });}
-    @Test public void additiveStageThreeSchemaUpgradePreservesRecognition()throws Exception {work(()->{
+    @Test public void additiveStageThreeSchemaUpgradePreservesRecognition()throws Exception {upgradeFixture(1);}
+    @Test public void additiveStageFourSchemaUpgradePreservesRecognition()throws Exception {upgradeFixture(2);}
+    private void upgradeFixture(int version)throws Exception {work(()->{
         catalogue();save(row("a"));drain();ledger.close();
         try(SQLiteDatabase db=SQLiteDatabase.openDatabase(c.getDatabasePath(name).getPath(),null,SQLiteDatabase.OPEN_READWRITE)) {
-            db.execSQL("DROP TABLE archive_source");db.execSQL("DROP TABLE archive_cursor");db.execSQL("DROP INDEX marker_bounds");db.setVersion(1);
+            // Reconstruct the actual older schema, rather than changing only user_version
+            // on a database which already contains Stage 5 columns/tables/triggers.
+            for(String table:new String[]{"catalogue","marker","journey","assessment","archive_source","runtime"})
+                for(String op:new String[]{"INSERT","UPDATE","DELETE"})db.execSQL("DROP TRIGGER derive_"+table+"_"+op);
+            db.execSQL("DROP TABLE achievement_state");db.execSQL("DROP TABLE achievement_snapshot");db.execSQL("DROP TABLE derivation_input");
+            db.execSQL("ALTER TABLE marker RENAME TO stage5_marker");
+            db.execSQL("CREATE TABLE marker(id TEXT PRIMARY KEY,lon REAL NOT NULL,lat REAL NOT NULL,eligible INTEGER NOT NULL,valid_from INTEGER NOT NULL,valid_until INTEGER NOT NULL)");
+            db.execSQL("INSERT INTO marker SELECT id,lon,lat,eligible,valid_from,valid_until FROM stage5_marker");
+            db.execSQL("DROP TABLE stage5_marker");
+            if(version==1){db.execSQL("DROP TABLE archive_source");db.execSQL("DROP TABLE archive_cursor");}
+            else db.execSQL("CREATE INDEX marker_bounds ON marker(lat,lon,id)");
+            db.setVersion(version);
         }
         ledger=new MilepostDiscoveryLedger(c,name);worker=new MilepostReconciler(c,ledger,"u");
-        assertEquals(1,found().get(0).ordinal);drain();assertEquals(1,found().get(0).ordinal);assertEquals(1,ledger.proofCount("u"));
+        assertEquals(3,ledger.db().getVersion());assertEquals(1,found().get(0).ordinal);drain();assertEquals(1,found().get(0).ordinal);assertEquals(1,ledger.proofCount("u"));
+        assertEquals("unknown",MilepostAchievements.scalar(ledger.db(),"SELECT designer FROM marker LIMIT 1"));
+        assertEquals(0,MilepostAchievements.number(ledger.db(),"SELECT COUNT(*) FROM achievement_state"));
     });}
     @Test public void stageOneCandidatePositionsRemainIneligibleAndFullVolumeProbe()throws Exception {work(()->{
         String path=System.getenv("MILEPOST_CANDIDATE_CATALOGUE");assertNotNull("CI must supply pinned full inventory",path);

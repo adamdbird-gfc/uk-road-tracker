@@ -27,6 +27,21 @@ final class NcnAchievements {
         }
         return new JSONObject().put("catalogue",snapshot.catalogue.version).put("archive_revision",snapshot.archiveRevision).put("rows",rows).put("history",history);
     }
+    /** Compact Stage 5 proof from the same combined route calculation as existing levels.
+     * Snapshot has no trustworthy historical completion date: do not invent one. */
+    static JSONObject firstCompletedRoute(NcnProgressStore.Snapshot snapshot) throws Exception {
+        String selected=null;
+        for(Map.Entry<String,JSONObject> route:snapshot.catalogue.routes.entrySet()) {
+            String key=route.getKey();JSONObject data=route.getValue();double total=data.optDouble("length_m",0);
+            if(!key.startsWith("NCN:")||!data.optBoolean("measurable",true)||!Double.isFinite(total)||total<=0)continue;
+            if(percent(snapshot.ledger.metres(key,"combined"),total)>=100&&(selected==null||key.compareTo(selected)<0))selected=key;
+        }
+        if(selected==null)return null;
+        return new JSONObject().put("route",selected).put("catalogue",snapshot.catalogue.version)
+                .put("archive_revision",snapshot.archiveRevision).put("evidence_revision",snapshot.evidenceRevision)
+                .put("done",snapshot.ledger.metres(selected,"combined")).put("total",snapshot.catalogue.routes.get(selected).getDouble("length_m"))
+                .put("precision","unknown");
+    }
     static double percent(double done,double total){
         if(!Double.isFinite(done)||!Double.isFinite(total)||done<=0||total<=0)return 0;
         // Only absorb floating-point arithmetic noise, never a rounded display percentage.
