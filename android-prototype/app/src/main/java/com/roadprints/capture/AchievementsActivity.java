@@ -453,8 +453,10 @@ public class AchievementsActivity extends Activity {
         }
         content.addView(text("Totals include imported and recorded travel. Coverage uses matched sections; road-name challenges update as town lookups complete.",
                 12,MUTED,false));
-        LinearLayout milepostSection=new LinearLayout(this);milepostSection.setOrientation(LinearLayout.VERTICAL);
-        if(MilepostIntegration.PRODUCTION.enabled){content.addView(milepostSection);mileposts.mount(milepostSection);mileposts.refresh();}
+        if(MilepostIntegration.PRODUCTION.enabled){
+            LinearLayout milepostSection=new LinearLayout(this);milepostSection.setOrientation(LinearLayout.VERTICAL);
+            content.addView(milepostSection);mileposts.mount(milepostSection);mileposts.refresh();
+        }
         rebuildJumpMenu();
         scroll.post(() -> {scroll.scrollTo(0,savedScroll);updateActiveJump();});
     }

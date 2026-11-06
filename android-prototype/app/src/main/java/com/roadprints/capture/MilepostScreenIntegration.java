@@ -15,7 +15,7 @@ final class MilepostScreenIntegration {
     private LinearLayout container;
     private MilepostPresentationView view;
     private boolean leased,loading;
-    private int request;
+    private int request,lifecycle;
     private long archive,ncn,ncnEvidence;
     private String receipt="";
     MilepostScreenIntegration(Activity host,MilepostIntegration gate){this.host=host;this.gate=gate;}
@@ -45,7 +45,7 @@ final class MilepostScreenIntegration {
                     if(view==null){
                         view=new MilepostPresentationView(host,new MilepostPresentationStore(host,gate.user),ready,(after,complete)->loadPage(after,complete));
                         view.freshness=this::fresh;container.addView(view);view.onHostResume();
-                    }else if(!receipt.equals(ready.receipt))view.update(ready);
+                    }else if(!receipt.equals(ready.receipt)){lifecycle++;view.update(ready);}
                     receipt=ready.receipt;
                 }catch(Exception unavailable){clearView();android.util.Log.w("Roadprints","Milepost presentation state unavailable",unavailable);}
             });
@@ -53,7 +53,7 @@ final class MilepostScreenIntegration {
     }
     private boolean fresh(){return gate.enabled&&!stopped.get()&&archive==JourneyStore.dataRevision(host)&&ncn==NcnProgressStore.revision(host)&&ncnEvidence==JourneyStore.ncnDataRevision(host)&&NcnProgressStore.enabled(host);}
     private void loadPage(long after,java.util.function.Consumer<MilepostPresentationReader.Page> complete){
-        int token=request;
+        int token=lifecycle;
         ScreenDataLoader.execute(()->{
             MilepostPresentationReader.Page page=new MilepostPresentationReader.Page(java.util.Collections.emptyList(),false,false);
             try(MilepostDiscoveryLedger ledger=new MilepostDiscoveryLedger(host,gate.database);
@@ -61,7 +61,7 @@ final class MilepostScreenIntegration {
                 if(gate.verified(ledger))page=MilepostPresentationReader.page(host,ledger,gate.user,after,guard);
             }catch(Exception unavailable){android.util.Log.w("Roadprints","Milepost history unavailable",unavailable);}
             MilepostPresentationReader.Page delivered=page;
-            main.post(()->{if(token==request&&fresh()&&!CaptureService.isActive(host))complete.accept(delivered);});
+            main.post(()->{if(token==lifecycle&&fresh()&&!CaptureService.isActive(host))complete.accept(delivered);});
         });
     }
     void pause(){
@@ -70,5 +70,5 @@ final class MilepostScreenIntegration {
         // The serial screen worker releases the lease after any cancelled read/page has exited.
         if(leased){leased=false;ScreenDataLoader.execute(gate::leavePresentation);}
     }
-    private void clearView(){if(view!=null){view.onHostPause();if(view.getParent() instanceof android.view.ViewGroup)((android.view.ViewGroup)view.getParent()).removeView(view);view=null;}receipt="";}
+    private void clearView(){lifecycle++;if(view!=null){view.onHostPause();if(view.getParent() instanceof android.view.ViewGroup)((android.view.ViewGroup)view.getParent()).removeView(view);view=null;}receipt="";}
 }

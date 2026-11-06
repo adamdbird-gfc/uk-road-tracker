@@ -18,9 +18,10 @@ public class MilepostIntegrationTest {
     @Before public void setup()throws Exception{f.setup();f.c.getSharedPreferences("roadprints_capture_state",0).edit().clear().commit();}
     @After public void cleanup()throws Exception{f.cleanup();}
     // No injectable global, production setter, Intent extra or preference. Constructor access is test-only reflection.
-    MilepostIntegration isolated(String fingerprint)throws Exception{
+    MilepostIntegration isolated(String fingerprint)throws Exception{return isolated(fingerprint,MilepostDiscoveryLedger.EVALUATOR);}
+    MilepostIntegration isolated(String fingerprint,String evaluator)throws Exception{
         java.lang.reflect.Constructor<MilepostIntegration> ctor=MilepostIntegration.class.getDeclaredConstructor(boolean.class,String.class,String.class,int.class,String.class,String.class,String.class);
-        ctor.setAccessible(true);return ctor.newInstance(true,f.name,MilepostAchievementsTest.USER,1,MilepostDiscoveryLedgerTest.HASH,fingerprint,MilepostDiscoveryLedger.EVALUATOR);
+        ctor.setAccessible(true);return ctor.newInstance(true,f.name,MilepostAchievementsTest.USER,1,MilepostDiscoveryLedgerTest.HASH,fingerprint,evaluator);
     }
     void prepare(int posts,double ncn)throws Exception{f.work(()->{
         f.posts(posts);f.save("historical-a");MilepostAchievementsTest.setNcn(f.ncn(ncn));
@@ -59,7 +60,9 @@ public class MilepostIntegrationTest {
     }
     @Test public void missingUnverifiedAndIncompatibleCatalogueFailClosed()throws Exception{
         gate=isolated("0".repeat(64));assertNull(read(0));process();
-        prepare(7,100);gate=isolated("0".repeat(64));process();assertNull(read(0));
+        prepare(7,100);String pin[]=new String[1];f.work(()->pin[0]=MilepostAchievements.scalar(f.ledger.db(),"SELECT fingerprint FROM catalogue"));
+        gate=isolated(pin[0],"unsupported-evaluator");process();assertNull(read(0));
+        gate=isolated("0".repeat(64));process();assertNull(read(0));
         f.work(()->assertEquals(0,MilepostAchievements.number(f.ledger.db(),"SELECT COUNT(*) FROM achievement_snapshot")));
     }
     @Test public void unapprovedPostsAndIncompleteEvidenceCannotBecomeDiscoveries()throws Exception{
@@ -82,6 +85,15 @@ public class MilepostIntegrationTest {
         f.work(()->assertThrows(java.util.concurrent.CancellationException.class,()->gate.process(f.c,new AtomicBoolean(true),Long.MAX_VALUE)));
         assertTrue(gate.enterPresentation());gate.leavePresentation();process();assertNotNull(read(0));
     }
+    @Test public void withdrawnReferenceAtCommitRollsBackAllAchievementRows()throws Exception{
+        prepare(7,100);f.work(()->{
+            try(MilepostAchievementDeriver worker=new MilepostAchievementDeriver(f.c,f.ledger,gate.user,()->false)){
+                assertThrows(java.util.ConcurrentModificationException.class,()->{while(worker.runSlice(()->false,1000)){};});
+            }
+            assertEquals(0,MilepostAchievements.number(f.ledger.db(),"SELECT COUNT(*) FROM achievement_snapshot"));
+            assertEquals(0,MilepostAchievements.number(f.ledger.db(),"SELECT COUNT(*) FROM achievement_state"));
+        });process();assertNotNull(read(0));
+    }
     @Test public void captureStartAndFreshnessChangeBlockPresentationTransitions()throws Exception{
         prepare(7,100);process();MilepostPresentation.Snapshot s=read(0);Activity a=Robolectric.buildActivity(Activity.class).setup().get();
         MilepostPresentationStore store=new MilepostPresentationStore(a,gate.user);MilepostPresentationView view=new MilepostPresentationView(a,store,s,(after,done)->{});a.setContentView(view);view.onHostResume();view.replay(true);view.next();
@@ -94,6 +106,9 @@ public class MilepostIntegrationTest {
         prepare(7,100);process();Activity a=Robolectric.buildActivity(Activity.class).setup().get();LinearLayout section=new LinearLayout(a);a.setContentView(section);
         MilepostScreenIntegration screen=new MilepostScreenIntegration(a,gate);screen.mount(section);screen.resume();drain();
         assertEquals(1,section.getChildCount());assertTrue(section.getChildAt(0) instanceof MilepostPresentationView);assertFalse(gate.enterProcessing());
+        // A normal periodic compact refresh must not discard an in-flight history page callback.
+        section.getChildAt(0).findViewWithTag("milepost_view_discoveries").performClick();screen.refresh();drain();
+        assertEquals(7,new MilepostPresentationStore(a,gate.user).read().acknowledgedPosts);
         screen.pause();drain();assertEquals(0,section.getChildCount());assertTrue(gate.enterProcessing());gate.leaveProcessing();screen.resume();drain();assertEquals(1,section.getChildCount());screen.pause();drain();
     }
     @Test public void integratedRepeatedEntryDismissalAndReplayMeasureHeap()throws Exception{

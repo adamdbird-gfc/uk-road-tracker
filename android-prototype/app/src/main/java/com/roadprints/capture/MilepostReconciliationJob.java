@@ -6,7 +6,7 @@ import android.os.Process;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/** Explicitly scheduled only: no lifecycle caller, boot receiver or live entitlement reader.
+/** Gated idle/charging work requested by the achievements host. No boot receiver or live entitlement writer.
  * OS retries a requested run. No foreground/permanent background service. */
 public final class MilepostReconciliationJob extends JobService {
     static final int JOB_ID=74104;
@@ -29,7 +29,6 @@ public final class MilepostReconciliationJob extends JobService {
         Run run=new Run();current=run;
         run.task=ScreenDataLoader.submit(()->{
             Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-            CaptureGuard guard=new CaptureGuard(this,run.cancelled,android.os.SystemClock.elapsedRealtime()+2000);
             boolean retry=true;
             try {
                 retry=MilepostIntegration.PRODUCTION.process(this,run.cancelled,android.os.SystemClock.elapsedRealtime()+2000);
@@ -37,7 +36,6 @@ public final class MilepostReconciliationJob extends JobService {
                 // Retain checkpoints and request an OS retry under idle/charging constraints.
             }catch(Exception error){android.util.Log.w("Roadprints","Inactive milepost reconciliation needs retry",error);}
             finally {
-                guard.close();
                 if(!run.stopped.get())jobFinished(parameters,retry);
             }
         });

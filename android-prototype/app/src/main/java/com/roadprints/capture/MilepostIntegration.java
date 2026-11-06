@@ -35,9 +35,11 @@ final class MilepostIntegration {
         try(MilepostDiscoveryLedger ledger=new MilepostDiscoveryLedger(context,database);
             MilepostReconciliationJob.CaptureGuard guard=new MilepostReconciliationJob.CaptureGuard(context,stopped,deadline)){
             if(!verified(ledger))return false;
-            try(MilepostAchievementDeriver worker=new MilepostAchievementDeriver(context,ledger,user)){
-                BooleanSupplier yield=()->guard.getAsBoolean()||!enabled||!verified(ledger);
-                while(worker.runSlice(yield,System.currentTimeMillis()))MilepostArchiveReader.check(yield);
+            try(MilepostAchievementDeriver worker=new MilepostAchievementDeriver(context,ledger,user,()->verified(ledger))){
+                BooleanSupplier yield=()->guard.getAsBoolean()||!enabled;
+                while(worker.runSlice(yield,System.currentTimeMillis())){
+                    MilepostArchiveReader.check(yield);if(!verified(ledger))return false;
+                }
                 return !MilepostAchievementDeriver.state(context,ledger,user).getBoolean("current");
             }
         }finally{leaveProcessing();}
