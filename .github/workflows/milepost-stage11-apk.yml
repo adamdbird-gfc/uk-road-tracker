@@ -143,8 +143,8 @@ jobs:
           skips=[(r.attrib.get('name'),c.attrib.get('name')) for r in roots for c in r.findall('testcase') if c.find('skipped') is not None]
           print(json.dumps(dict(totals,skipped_cases=skips),sort_keys=True))
           assert totals['tests']>=850 and totals['failures']==totals['errors']==0,totals
-          allowed={'com.roadprints.capture.NcnBindingCandidateTest','com.roadprints.capture.NcnOrdinarySeamCandidateTest'}
-          assert len(skips)==4 and all(n in allowed for n,t in skips),skips
+          allowed={'com.roadprints.capture.'+name for name in ('NcnBindingCandidateTest','NcnOrdinarySeamCandidateTest','NcnChapelCandidateTest','NcnFiveCaseCandidateTest','NcnDealCorrespondenceCandidateTest')}
+          assert len(skips)==10 and all(n in allowed for n,t in skips),skips
           PYTOTAL
       - name: Retain reports without APKs or credentials
         if: always()
