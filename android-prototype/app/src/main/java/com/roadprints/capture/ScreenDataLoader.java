@@ -35,6 +35,8 @@ final class ScreenDataLoader {
     static void summaries(Runnable task){SUMMARIES.execute(task);}
     private ScreenDataLoader() {}
 
+    static java.util.concurrent.Future<?> submit(Runnable task) { return WORKER.submit(task); }
+
     static void execute(Runnable task) {
         WORKER.execute(task);
     }

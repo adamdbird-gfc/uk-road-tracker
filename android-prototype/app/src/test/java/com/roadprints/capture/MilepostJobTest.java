@@ -12,13 +12,11 @@ import static org.junit.Assert.*;
 
 @RunWith(RobolectricTestRunner.class) @Config(sdk=28,manifest=Config.NONE)
 public class MilepostJobTest {
-    @Test public void explicitScheduleHasIdleChargingConstraintsAndNoPeriodicService() {
+    @Test public void productionGatePreventsScheduling() {
         Context c=RuntimeEnvironment.getApplication();JobScheduler scheduler=c.getSystemService(JobScheduler.class);scheduler.cancelAll();
         assertNull(scheduler.getPendingJob(MilepostReconciliationJob.JOB_ID));
-        assertEquals(JobScheduler.RESULT_SUCCESS,MilepostReconciliationJob.schedule(c));
-        JobInfo job=scheduler.getPendingJob(MilepostReconciliationJob.JOB_ID);
-        assertTrue(job.isRequireCharging());assertTrue(job.isRequireDeviceIdle());assertFalse(job.isPeriodic());
-        assertFalse(job.isPersisted());scheduler.cancelAll();
+        assertEquals(JobScheduler.RESULT_FAILURE,MilepostReconciliationJob.schedule(c));
+        assertNull(scheduler.getPendingJob(MilepostReconciliationJob.JOB_ID));
     }
     @Test public void liveCaptureYieldsAndStartIsLatchedAcrossStop() {
         Context c=RuntimeEnvironment.getApplication();

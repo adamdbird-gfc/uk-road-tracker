@@ -62,7 +62,9 @@ final class MilepostPresentationView extends ScrollView {
     void onHostResume(){resumed=true;if(recording())pauseReplay();render();}
     void onHostPause(){resumed=false;request++;loadingDiscoveries=false;pauseReplay();}
     private boolean recording(){return capture.getBoolean("active",false);}
-    private boolean canReveal(){return resumed&&!recording()&&snapshot.current&&snapshot.introduced()&&!host.isFinishing()&&!host.isDestroyed();}
+    java.util.function.BooleanSupplier freshness=()->true;
+    private boolean current(){return snapshot.current&&freshness.getAsBoolean();}
+    private boolean canReveal(){return resumed&&!recording()&&current()&&snapshot.introduced()&&!host.isFinishing()&&!host.isDestroyed();}
     void update(MilepostPresentation.Snapshot next){
         snapshot=next;buildCards();request++;discoveries=null;viewingDiscoveries=false;loadingDiscoveries=false;
         if(!canReveal())pauseReplay();
@@ -104,10 +106,10 @@ final class MilepostPresentationView extends ScrollView {
         if(recording()){
             text(body,"Reveal paused while recording. Your journey has priority.",16);
             // No summary actions or reveal art while capture is active.
-        }else if(store.pending(state,snapshot)&&(!state.dismissed||!snapshot.receipt.equals(state.dismissedReceipt)))summary();
+        }else if(current()&&store.pending(state,snapshot)&&(!state.dismissed||!snapshot.receipt.equals(state.dismissedReceipt)))summary();
         body.addView(cards,new LinearLayout.LayoutParams(-1,-2));
         if(cardProgress!=null)cardProgress.setVisibility(recording()?View.GONE:View.VISIBLE);
-        if(!recording()&&snapshot.current&&(snapshot.count>0||snapshot.incomplete>0))
+        if(!recording()&&current()&&(snapshot.count>0||snapshot.incomplete>0))
             button(body,"View discoveries","milepost_browse_discoveries",()->loadDiscoveries(0),true);
         if(snapshot.introduced()){
             heading(body,"In Honour of Time");
@@ -133,7 +135,7 @@ final class MilepostPresentationView extends ScrollView {
         button(panel,"Replay reveal","milepost_summary_replay",()->replay(true),canReveal());
         button(panel,"Later","milepost_later",this::later,true);
         button(panel,"Skip celebrations","milepost_skip_summary",()->{
-            if(!snapshot.current||recording())return;
+            if(!current()||recording())return;
             state.cursor=snapshot.target();state.completedStage=Math.max(state.completedStage,state.cursor);
             state.replaying=false;state.paused=true;state.dismissed=true;state.dismissedReceipt=snapshot.receipt;
             store.acknowledge(state,snapshot);render();
@@ -146,7 +148,7 @@ final class MilepostPresentationView extends ScrollView {
             if(token!=request||!receipt.equals(snapshot.receipt)||!resumed||recording())return;
             loadingDiscoveries=false;discoveries=page;
             // Inspection acknowledges this complete summary only after usable details are delivered.
-            if(page.current)store.acknowledge(state,snapshot);
+            if(page.current&&current())store.acknowledge(state,snapshot);
             render();View heading=findViewWithTag("milepost_discovery_heading");
             if(heading!=null){heading.setFocusableInTouchMode(true);heading.requestFocus();
                 heading.sendAccessibilityEvent(android.view.accessibility.AccessibilityEvent.TYPE_VIEW_FOCUSED);}

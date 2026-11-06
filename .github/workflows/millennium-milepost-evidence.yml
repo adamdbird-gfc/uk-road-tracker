@@ -6,6 +6,8 @@ on:
       - 'android-prototype/app/src/**/com/roadprints/capture/Milepost*.java'
       - 'android-prototype/app/src/**/com/roadprints/capture/Timeline*.java'
       - 'android-prototype/app/src/**/com/roadprints/capture/NcnAchievements.java'
+      - 'android-prototype/app/src/**/com/roadprints/capture/AchievementsActivity.java'
+      - 'android-prototype/app/src/**/com/roadprints/capture/ScreenDataLoader.java'
       - 'android-prototype/app/build.gradle.kts'
       - 'android-prototype/app/src/main/AndroidManifest.xml'
       - '.github/workflows/millennium-milepost-evidence.yml'
