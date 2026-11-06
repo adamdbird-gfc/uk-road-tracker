@@ -17,6 +17,27 @@ Starting main: `d3d4188ae66549b046d93ef76c2be9a740a41a03`, independently verifie
 
 CI status and exact counts must be read with the final-head receipt. Earlier failed configuration attempts do not count as validation. Three unrelated historical branch-gated workflows skip intentionally; that is separate from test skips.
 
+## Interrupted-session recovery — 6 November continuation
+
+Recovered all 13 Stage 8 files and existing PR #295 without recreating the branch or harness. The last published implementation was `76972f03213e6bed67d3d5c9755073ff76252e20`; every local Stage 8 source matched that remote head, including files appearing untracked against the older local commit. No implementation was lost or left only locally. Recovered commits: `8216ce5a` (harness), `f087a806` (collector/build fix), `5d4463b1` (profiling/protocol), `d9181cf2` (worker-thread tests), `76a9976d` (six-post anonymity), `76972f03` (lifecycle callback fencing).
+
+Run 42210400631 had passed compilation/lint and 305 ordinary Android JVM tests. Its acceptance suite passed five of six checks: the remaining assertion incorrectly compared entitlement preferences from before the explicit synthetic archive reset. Existing `JourneyStore.deleteAll` intentionally clears sandbox travel unlocks. The continuation takes a preference-map snapshot **after fixture setup and before feature processing**, and checks that processing leaves it unchanged. Production files/data and feature code are unchanged by this correction. Previously successful unchanged Python checks (27 catalogue tests plus one source-isolation test) are reused; final-head CI reruns Android validation because the shared assertion changed. Final counts/results belong to the PR receipt.
+
+| Recovery category | Recovered classification / remaining work |
+| --- | --- |
+| Synthetic acceptance harness | Complete implementation |
+| Fixture and data isolation | Complete implementation |
+| Device instrumentation | Complete implementation; runtime execution outstanding |
+| Memory and ART/PSS profiling | Complete collector/probe; actual runtime measurements outstanding |
+| Capture continuity | Partial acceptance: simulated checks and physical protocol; real GPS run outstanding |
+| Accessibility acceptance | Partial acceptance: structural checks and protocol; manual runtime checks outstanding |
+| Lifecycle and restart recovery | Complete runnable checks/protocol; actual process-death run outstanding |
+| Release-gate isolation | Complete implementation; final compiled isolation validation required |
+| Regression validation | Partial: historical 305 JVM passes; corrected acceptance check/final-head CI required |
+| Documentation and PR | Existing report and PR recovered; final receipt/status to update |
+
+The continuation does not repeat Stage 1–7 research, introduce artwork, package/distribute an APK or probe repeatedly for unavailable devices. It preserves all six original Stage 8 commits and finishes the existing PR.
+
 ## Harness and isolation
 
 The `acceptance` build type inherits debug compilation but uses application ID **`com.roadprints.capture.milepostacceptance`**, a different Android UID/data directory from `com.roadprints.capture`. Its version name has `-synthetic-acceptance`; backups stay disabled. Firebase automatic initialisation and acceptance-only Google Services/Crashlytics build tasks are disabled. Normal debug/release tasks are unchanged. No APK is built or distributed by the validation workflow.

@@ -42,15 +42,17 @@ final class MilepostAcceptanceChecks {
         }
     }
     static void allAwardsAndDuplicates(Context c)throws Exception {
-        reset(c);String before=c.getSharedPreferences("roadprints_achievements_v1",0).getAll().toString();
+        reset(c);
         try(MilepostAcceptanceFixture f=new MilepostAcceptanceFixture(c)){
-            f.prepare(7);converge(f);MilepostPresentation.Snapshot first=f.read();
+            f.prepare(7);
+            java.util.Map<String,?> before=c.getSharedPreferences("roadprints_achievements_v1",0).getAll();
+            converge(f);MilepostPresentation.Snapshot first=f.read();
             require(first.count==7&&first.newPosts==7,"Consolidated historical summary");
             require(first.individuals()==6&&first.awards.get(6).earned,"All six plus collective");
             require(first.target()==7,"Seven Harrow stages");
             converge(f);MilepostPresentation.Snapshot again=f.read();
             require(again.count==7&&first.postOrdinal==again.postOrdinal,"Duplicate discovery ordinal");
-            require(before.equals(c.getSharedPreferences("roadprints_achievements_v1",0).getAll().toString()),"Normal entitlement preferences changed");productionIsolated(c);
+            require(before.equals(c.getSharedPreferences("roadprints_achievements_v1",0).getAll()),"Normal entitlement preferences changed");productionIsolated(c);
         }
     }
     static void correctionFallbackAndRestart(Context c)throws Exception {
