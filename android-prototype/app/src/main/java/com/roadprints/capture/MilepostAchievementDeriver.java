@@ -16,7 +16,7 @@ final class MilepostAchievementDeriver implements AutoCloseable {
     final String user;
     final MilepostReconciler reconciler;
     final MilepostReconciliationJob.CaptureGuard capture;
-    private long archive=-1;
+    private long archive=-1, reconciledGeneration=-1;
     private boolean reconciled;
     MilepostAchievementDeriver(Context context,MilepostDiscoveryLedger ledger,String user) {
         this.context=context.getApplicationContext();this.ledger=ledger;this.user=user;
@@ -35,11 +35,12 @@ final class MilepostAchievementDeriver implements AutoCloseable {
         ledger.db();android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
         BooleanSupplier yield=()->capture.getAsBoolean()||cancelled.getAsBoolean();
         MilepostArchiveReader.check(yield);
-        if(archive<0||archive!=JourneyStore.dataRevision(context))start();
+        if(archive<0||archive!=JourneyStore.dataRevision(context)
+                ||(reconciled&&reconciledGeneration!=MilepostAchievements.generation(ledger.db())))start();
         if(!reconciled) {
             if(reconciler.runSlice(yield,recognisedAt))return true;
             if(archive!=JourneyStore.dataRevision(context)){start();return true;}
-            reconciled=true;
+            reconciled=true;reconciledGeneration=MilepostAchievements.generation(ledger.db());
         }
         NcnProgressStore.Snapshot ncn;long ncnRevision;
         synchronized(NcnProgressStore.class) {

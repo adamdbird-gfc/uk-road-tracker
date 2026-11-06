@@ -26,13 +26,16 @@ public class MilepostAchievementsTest {
         finally{e.shutdownNow();}
     }
     @Before public void setup()throws Exception {
-        c=RuntimeEnvironment.getApplication();name="stage5-"+UUID.randomUUID()+".db";JourneyStore.deleteAll(c);
+        c=RuntimeEnvironment.getApplication();
+        java.lang.reflect.Field running=NcnProgressStore.class.getDeclaredField("running");running.setAccessible(true);running.setBoolean(null,true);
+        name="stage5-"+UUID.randomUUID()+".db";JourneyStore.deleteAll(c);
         c.getSharedPreferences("roadprints_ncn_national_v2",0).edit().putBoolean("enabled",true).commit();
         work(()->ledger=new MilepostDiscoveryLedger(c,name));
     }
     @After public void cleanup()throws Exception {
         setNcn(null);c.getSharedPreferences("roadprints_ncn_national_v2",0).edit().clear().commit();
         work(()->ledger.close());c.deleteDatabase(name);JourneyStore.deleteAll(c);
+        java.lang.reflect.Field running=NcnProgressStore.class.getDeclaredField("running");running.setAccessible(true);running.setBoolean(null,false);
     }
     static void setNcn(NcnProgressStore.Snapshot n)throws Exception {
         // Isolated published-snapshot fixture; no production test hook or NCN activation/job.
@@ -83,13 +86,13 @@ public class MilepostAchievementsTest {
     int earned()throws Exception {int n=0;JSONArray rows=state().getJSONArray("rows");for(int i=0;i<rows.length();i++)if(rows.getJSONObject(i).getBoolean("earned"))n++;return n;}
     @Test public void allSevenRulesAtomicAndInactive()throws Exception {work(()->{
         posts(7);save("a");setNcn(ncn(100));String oldNcn=NcnAchievements.state(c).toString();
-        String oldAchievements=c.getSharedPreferences("roadprints_achievements",0).getAll().toString();derive(1000);
+        String oldAchievements=c.getSharedPreferences("roadprints_achievements_v1",0).getAll().toString();derive(1000);
         assertEquals(7,earned());assertTrue(state().getBoolean("current"));
         assertEquals(7,award(5).getJSONArray("support").length());assertEquals(6,award(6).getJSONArray("support").length());
         assertEquals("unknown",award(4).getString("precision"));assertTrue(award(4).isNull("event_date"));
         assertEquals("unknown",award(6).getString("precision"));
         for(int i=0;i<7;i++)assertEquals(1000,award(i).getLong("first_recognised"));
-        assertEquals(oldNcn,NcnAchievements.state(c).toString());assertEquals(oldAchievements,c.getSharedPreferences("roadprints_achievements",0).getAll().toString());
+        assertEquals(oldNcn,NcnAchievements.state(c).toString());assertEquals(oldAchievements,c.getSharedPreferences("roadprints_achievements_v1",0).getAll().toString());
         for(AchievementStore.Definition d:AchievementStore.definitions())assertFalse(Arrays.asList(MilepostAchievements.IDS).contains(d.id));
         String before=state().toString();derive(2000);assertEquals(before,state().toString());
     });}
@@ -184,6 +187,54 @@ public class MilepostAchievementsTest {
     @Test public void duplicateIdsAreNotRegisteredInExistingDefinitions() {
         Set<String> ids=new HashSet<>(Arrays.asList(MilepostAchievements.IDS));assertEquals(7,ids.size());
         for(AchievementStore.Definition d:AchievementStore.definitions())assertFalse(ids.contains(d.id));
+    }
+    static boolean deriving() {
+        for(StackTraceElement e:Thread.currentThread().getStackTrace())
+            if(e.getClassName().equals(MilepostAchievements.class.getName())&&e.getMethodName().equals("prepare"))return true;
+        return false;
+    }
+    void duringDerivation(Work mutation)throws Exception {
+        AtomicBoolean once=new AtomicBoolean();
+        try(MilepostAchievementDeriver w=new MilepostAchievementDeriver(c,ledger,USER)) {
+            java.util.function.BooleanSupplier hook=()->{
+                if(deriving()&&once.compareAndSet(false,true)) {
+                    ExecutorService other=Executors.newSingleThreadExecutor();
+                    try{other.submit(()->{try{mutation.run();}catch(Exception e){throw new RuntimeException(e);}}).get(5,TimeUnit.SECONDS);}
+                    catch(Exception e){throw new RuntimeException(e);}finally{other.shutdownNow();}
+                }
+                return false;
+            };
+            assertThrows(ConcurrentModificationException.class,()->{while(w.runSlice(hook,2000)){};});
+            assertTrue(once.get());
+        }
+    }
+    @Test public void concurrentSaveDuringDerivationCannotPublishFalseAward()throws Exception {work(()->{
+        posts(7);save("a");setNcn(ncn(100));derive(1000);String before=MilepostAchievements.state(ledger,USER).toString();
+        duringDerivation(()->JourneyStore.save(c,journey("a").put("processing_status","failed")));
+        assertEquals(before,MilepostAchievements.state(ledger,USER).toString());assertFalse(state().getBoolean("current"));
+        setNcn(ncn(0));derive(3000);assertEquals(0,earned());
+    });}
+    @Test public void ncnReplacementDuringDerivationRetainsCompleteResult()throws Exception {work(()->{
+        posts(7);save("a");setNcn(ncn(100));derive(1000);String before=MilepostAchievements.state(ledger,USER).toString();
+        NcnProgressStore.Snapshot replacement=ncn(0);
+        duringDerivation(()->{synchronized(NcnProgressStore.class){setNcn(replacement);c.getSharedPreferences("roadprints_ncn_national_v2",0).edit().putLong("revision",12).commit();}});
+        assertEquals(before,MilepostAchievements.state(ledger,USER).toString());
+        derive(3000);assertFalse(award(4).getBoolean("earned"));assertFalse(award(6).getBoolean("earned"));
+    });}
+    @Test public void restartDuringPartialScanWithEarlierInsertedFilenameRequiresFullSweep()throws Exception {work(()->{
+        posts(7);for(int i=0;i<35;i++)save(String.format(Locale.ROOT,"z%03d",i));setNcn(ncn(100));
+        try(MilepostAchievementDeriver w=new MilepostAchievementDeriver(c,ledger,USER)){assertTrue(w.runSlice(()->false,1000));}
+        assertEquals(0,state().getJSONArray("rows").length());
+        save("a-before-cursor");setNcn(ncn(100));ledger.close();ledger=new MilepostDiscoveryLedger(c,name);derive(2000);
+        assertEquals(7,earned());assertEquals(36,MilepostAchievements.number(ledger.db(),"SELECT COUNT(*) FROM journey WHERE user=?",USER));
+        assertEquals("a-before-cursor",award(0).getJSONArray("support").getJSONObject(0).getString("journey"));
+    });}
+    @Test public void real889CandidatesRemainUnapproved()throws Exception {
+        String path=System.getenv("MILEPOST_CANDIDATE_CATALOGUE");assertNotNull("CI must supply pinned candidate fixture",path);
+        int count=0;try(java.io.BufferedReader reader=java.nio.file.Files.newBufferedReader(java.nio.file.Paths.get(path))) {
+            for(String line;(line=reader.readLine())!=null;) {JSONObject row=new JSONObject(line);assertFalse(row.getBoolean("eligible"));assertTrue(row.isNull("physical_marker_id"));count++;}
+        }
+        assertEquals(889,count);
     }
     // Compact synthetic facts for derivation-only tests. They do not claim evaluator approval
     // for any real post or actual archive. Integration tests above use Stage 4 instead.
