@@ -2,6 +2,8 @@
 import argparse
 import pathlib
 import unittest
+import sys
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 APP = ROOT / "android-prototype/app"
@@ -10,7 +12,7 @@ APP = ROOT / "android-prototype/app"
 def verify(compiled=False):
     main = APP / "src/main"
     gate = (main / "java/com/roadprints/capture/MilepostIntegration.java").read_text()
-    assert "PRODUCTION=new MilepostIntegration(false," in gate
+    assert "PRODUCTION=new MilepostIntegration(MilepostCatalogue.READY," in gate
     assert "private MilepostIntegration(" in gate
     for source in main.rglob("*"):
         if source.is_file() and source.suffix in (".java", ".xml"):
@@ -26,7 +28,9 @@ def verify(compiled=False):
     assert 'android:exported="false"' in manifest and 'android:allowBackup="false"' in manifest
     assert 'FirebaseInitProvider" tools:node="remove"' in manifest
     # Real candidate inventory is not packaged by main/acceptance source sets.
-    assert not list((main / "assets").rglob("*milepost*"))
+    assert not list((main / "assets").rglob("catalogue.jsonl"))
+    from scripts.milepost_approval import verify as verify_approval
+    verify_approval()
     if compiled:
         release = APP / "build/intermediates/javac/release/compileReleaseJavaWithJavac/classes"
         acceptance = APP / "build/intermediates/javac/acceptance/compileAcceptanceJavaWithJavac/classes"

@@ -8,8 +8,9 @@ import java.util.function.BooleanSupplier;
  * Enabling production requires a reviewed source change and an independently approved pin.
  * Tests construct a separate instance by reflection; they never replace PRODUCTION. */
 final class MilepostIntegration {
-    static final MilepostIntegration PRODUCTION=new MilepostIntegration(false,
-        MilepostReconciliationJob.DATABASE,MilepostReconciliationJob.USER,0,"","","");
+    static final MilepostIntegration PRODUCTION=new MilepostIntegration(MilepostCatalogue.READY,
+        MilepostReconciliationJob.DATABASE,MilepostReconciliationJob.USER,MilepostCatalogue.REVISION,
+        MilepostCatalogue.SHA,MilepostCatalogue.fingerprint(),MilepostDiscoveryLedger.EVALUATOR);
     final boolean enabled;
     final String database,user;
     private final int revision;
@@ -34,6 +35,8 @@ final class MilepostIntegration {
         if(!enterProcessing())return enabled;
         try(MilepostDiscoveryLedger ledger=new MilepostDiscoveryLedger(context,database);
             MilepostReconciliationJob.CaptureGuard guard=new MilepostReconciliationJob.CaptureGuard(context,stopped,deadline)){
+            MilepostArchiveReader.check(guard);
+            if(this==PRODUCTION)MilepostCatalogue.install(context,ledger);
             if(!verified(ledger))return false;
             try(MilepostAchievementDeriver worker=new MilepostAchievementDeriver(context,ledger,user,()->verified(ledger))){
                 BooleanSupplier yield=()->guard.getAsBoolean()||!enabled;
