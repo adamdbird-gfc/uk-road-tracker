@@ -610,6 +610,7 @@ public final class JourneyStore {
     }
 
     private static Object readEvidenceValue(JsonReader reader) throws Exception {
+        if(Thread.currentThread().isInterrupted())throw new java.util.concurrent.CancellationException();
         switch (reader.peek()) {
             case BEGIN_OBJECT:
                 JSONObject object = new JSONObject();reader.beginObject();
@@ -621,8 +622,11 @@ public final class JourneyStore {
                 reader.endArray();return array;
             case NUMBER:
                 String number=reader.nextString();
+                // Coordinates are normally decimal: do not allocate an exception for every ordinate.
+                if(number.indexOf('.')>=0||number.indexOf('e')>=0||number.indexOf('E')>=0)
+                    return Double.parseDouble(number);
                 try { return Long.parseLong(number); }
-                catch(NumberFormatException decimal) { return Double.parseDouble(number); }
+                catch(NumberFormatException overflow) { return Double.parseDouble(number); }
             case BOOLEAN: return reader.nextBoolean();
             case NULL: reader.nextNull();return JSONObject.NULL;
             default: return reader.nextString();
