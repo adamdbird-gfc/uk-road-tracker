@@ -2,6 +2,8 @@
 import hashlib
 import json
 import math
+from decimal import Decimal
+from datetime import datetime
 import re
 from collections import Counter
 from pathlib import Path
@@ -16,6 +18,11 @@ ATTRIBUTION = '© OpenStreetMap contributors; https://www.openstreetmap.org/copy
 
 def canonical(value):
     return (json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=False) + '\n').encode()
+
+
+def mp_ref(row):
+    value=re.search(r"(?i)MP\s*([0-9]+)",row.get("sustrans_ref") or "")
+    return value.group(1) if value else None
 
 
 def classify(rows):
@@ -40,6 +47,11 @@ def classify(rows):
             reasons.append('explicit_unresolved_location')
         for other in rows:
             if other is r: continue
+            # Same MP reference plus a nearby same-design node is an identity conflict to
+            # review, not proof that either can be merged or counted twice.
+            if mp_ref(r) is not None and mp_ref(r)==mp_ref(other) and r['design']==other['design']:
+                separation=math.hypot((lon-other['longitude'])*math.cos(math.radians(lat))*111320,(lat-other['latitude'])*111320)
+                if separation<100: reasons.append('nearby_reference_identity_conflict')
             # Exact overlapping nodes cannot prove two separate posts. No distance-only merging.
             if (lat,lon)==(other['latitude'],other['longitude']):
                 reasons.append('coincident_source_records'); break
@@ -85,12 +97,40 @@ def build():
 def receipt(payload,decisions):
     rows=[json.loads(x) for x in decisions.splitlines()]; records=json.loads(payload)['records']
     return dict(revision=3,policy=POLICY,sha256=hashlib.sha256(payload).hexdigest(),bytes=len(payload),
-        decisions_sha256=hashlib.sha256(decisions).hexdigest(),input_count=len(rows),
+        decisions_sha256=hashlib.sha256(decisions).hexdigest(),input_count=len(rows),marker_fingerprint=marker_fingerprint(payload),
         counts={s:sum(r['status']==s for r in rows) for s in ('approved','held','rejected')},
         reason_counts=dict(Counter(reason for r in rows for reason in r['reasons'])),
         approved_attributed=sum(r['designer_verified'] for r in records),
         approved_unknown=sum(not r['designer_verified'] for r in records),
         production_ready=bool(records),source=json.loads(payload)['source'])
+
+
+def marker_fingerprint(payload):
+    """Existing Android typed-value digest; includes Java's scientific double spelling."""
+    rows=[]
+    for r in json.loads(payload)['records']:
+        time=lambda x:int(datetime.fromisoformat(x.replace('Z','+00:00')).timestamp()*1000)
+        rows.append([r['physical_marker_id'],r['longitude'],r['latitude'],True,time(r['valid_from']),time(r['valid_until']),sorted(r['aliases']),r['designer'],r['designer_verified']])
+    rows.sort(key=lambda r:r[0]);digest=hashlib.sha256()
+    def hash_value(value):
+        if isinstance(value,dict):
+            digest.update(b'{')
+            for key in sorted(value):hash_value(key);hash_value(value[key])
+            digest.update(b'}')
+        elif isinstance(value,list):
+            digest.update(b'[')
+            for item in value:hash_value(item)
+            digest.update(b']')
+        else:
+            scalar=json.dumps(value,ensure_ascii=False,separators=(',',':'))
+            if isinstance(value,float):
+                if 0<abs(value)<.001:
+                    mantissa,exponent=format(Decimal(str(value)).normalize(),'E').split('E')
+                    scalar=mantissa+('.0' if '.' not in mantissa else '')+'E'+str(int(exponent))
+                elif scalar.endswith('.0'):scalar=scalar[:-2]
+            digest.update(scalar.encode());digest.update(b'\0')
+    hash_value({'markers':rows})
+    return digest.hexdigest()
 
 
 def verify():
@@ -101,6 +141,7 @@ def verify():
     assert json.loads((DATA/'revision-3/manifest.json').read_text())==expected
     java=(ROOT/'android-prototype/app/src/main/java/com/roadprints/capture/MilepostCatalogue.java').read_text()
     assert expected['sha256'] in java
+    assert marker_fingerprint(payload) in java
     assert 'APPROVED_COUNT='+str(expected['counts']['approved']) in java
     print('PASS: revision 3',expected['counts'],expected['sha256'])
 

@@ -83,7 +83,7 @@ final class MilepostCatalogue {
     private static String hex(byte[] bytes){StringBuilder s=new StringBuilder();for(byte b:bytes)s.append(String.format(Locale.ROOT,"%02x",b&255));return s.toString();}
     static String fingerprint() {
         // Reviewed marker envelope and file checksum are both checked by production installation.
-        return "6b02ee06a7fe5f722d9e622bad8f607c0bdfc7375a0ba6f08d59c1e592d1a428";
+        return "022118567034f1c648c7e158b0f44cb3969b3327618d739fad19a47b26ebc535";
     }
     static void install(Context context,MilepostDiscoveryLedger ledger)throws Exception {
         List<MilepostDiscoveryLedger.Marker> markers=load(context);

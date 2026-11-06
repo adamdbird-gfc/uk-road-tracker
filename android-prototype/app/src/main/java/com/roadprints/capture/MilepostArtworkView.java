@@ -17,32 +17,36 @@ final class MilepostArtworkView extends android.widget.FrameLayout {
     static final int[] DESIGNS={R.drawable.milepost_design_mills,R.drawable.milepost_design_rowe,
         R.drawable.milepost_design_mccoll,R.drawable.milepost_design_dudgeon,R.drawable.milepost_design_unknown};
     private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Drawable inner,outer,layer;
+    private Drawable inner,outer,layer;
     private Drawable emblem;
     private int stage,resource,icon;
     private float fraction=1;
-    private boolean transitioning;
+    private boolean transitioning,ringText;
     private android.widget.TextView[] glyphs;
     private String cipher="";
-    MilepostArtworkView(Context context,int stage){
-        super(context);setWillNotDraw(false);inner=drawable(R.drawable.milepost_ring_inner);outer=drawable(R.drawable.milepost_ring_outer);
-        layer=drawable(R.drawable.milepost_card_layer);setStage(stage);
-        setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO); // Native stage text supplies the equivalent.
+    MilepostArtworkView(Context context,int stage){this(context,stage,false);}
+    private MilepostArtworkView(Context context,int value,boolean isIcon){
+        super(context);setWillNotDraw(false);
+        if(isIcon)setIcon(value);else setStage(value);
+        setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
     }
+    static MilepostArtworkView icon(Context context,int resource){return new MilepostArtworkView(context,resource,true);}
+    void enableCipherRing(){ringText=true;setCipher(MilepostPresentation.cipher(stage));}
     private Drawable drawable(int id){return getResources().getDrawable(id,getContext().getTheme()).mutate();}
     void setIcon(int id){icon=id;use(id);transitioning=false;setCipher("");invalidate();}
     void setStage(int value){stage=MilepostPresentation.stage(value);icon=0;transitioning=false;fraction=1;use(THEMES[stage]);setCipher(MilepostPresentation.cipher(stage));invalidate();}
     private void use(int id){if(id!=resource){resource=id;emblem=drawable(id);}}
     void frame(int target,float value){stage=MilepostPresentation.stage(target);icon=0;transitioning=true;fraction=value;use(THEMES[stage]);invalidate();}
     void setCipher(String text){
-        cipher=text.replace(" ","");
+        cipher=ringText?text.replace(" ",""):"";
         if(!cipher.isEmpty()&&glyphs==null){
             glyphs=new android.widget.TextView[13];
             for(int i=0;i<glyphs.length;i++){
                 android.widget.TextView letter=new android.widget.TextView(getContext());letter.setTextColor(0xFFF7C450);
                 letter.setTypeface(android.graphics.Typeface.MONOSPACE);letter.setTextSize(14);letter.setGravity(android.view.Gravity.CENTER);
                 letter.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);letter.setFocusable(false);
-                glyphs[i]=letter;addView(letter,new LayoutParams(32,32));
+                int side=Math.round(32*getResources().getDisplayMetrics().density);
+                glyphs[i]=letter;addView(letter,new LayoutParams(side,side));
             }
         }
         if(glyphs!=null)for(int i=0;i<glyphs.length;i++){
@@ -67,17 +71,21 @@ final class MilepostArtworkView extends android.widget.FrameLayout {
         int save=canvas.save();canvas.translate(left,top);canvas.scale(size/240f,size/240f);
         if(icon!=0){draw(canvas,emblem,12,12,228,228,255);canvas.restoreToCount(save);return;}
         int depth=stackDepth(stage);
+        if(stage>0&&outer==null){
+            inner=drawable(R.drawable.milepost_ring_inner);outer=drawable(R.drawable.milepost_ring_outer);
+            layer=drawable(R.drawable.milepost_card_layer);layer.setTint(0xFF7189B8);
+        }
         // Back-to-front, with an edge for each previously revealed thematic card.
         for(int i=0;i<depth;i++){
             int shift=(depth-1-i)*4;
-            draw(canvas,layer,24-shift,20+shift,216-shift,212+shift,255);
+            draw(canvas,layer,24-shift,20+shift,216-shift,212+shift,150);
         }
         float entrance=transitioning?(1-fraction)*34:0;
         int face=canvas.save();canvas.translate(0,-entrance);
         paint.setColor(0xFF242832);canvas.drawRoundRect(30,24,210,208,10,10,paint);
         if(stage>0){
-            ring(canvas,outer,transitioning?360*fraction:0,10,10,230,230);
-            ring(canvas,inner,transitioning?-240*fraction:0,26,26,214,214);
+            ring(canvas,outer,transitioning?360*fraction:0,34,34,206,206);
+            ring(canvas,inner,transitioning?-240*fraction:0,36,36,204,204);
         }
         int alpha=transitioning?Math.min(255,(int)(fraction*400)):255;
         draw(canvas,emblem,65,65,175,175,alpha);

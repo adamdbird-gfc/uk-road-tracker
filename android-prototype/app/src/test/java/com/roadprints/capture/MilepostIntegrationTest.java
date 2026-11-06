@@ -34,7 +34,7 @@ public class MilepostIntegrationTest {
     @Test public void productionRequiresCorrectPackageAndPinnedCatalogueDespitePreferences()throws Exception{
         f.c.getSharedPreferences("roadprints_mileposts",0).edit().putBoolean("enabled",false).commit();
         assertTrue(MilepostIntegration.PRODUCTION.enabled);
-        assertFalse(MilepostIntegration.PRODUCTION.verified(f.ledger));
+        f.work(()->assertFalse(MilepostIntegration.PRODUCTION.verified(f.ledger)));
         android.content.Context sandbox=new android.content.ContextWrapper(f.c){
             @Override public String getPackageName(){return "com.roadprints.capture.milepostacceptance";}
         };
@@ -114,6 +114,7 @@ public class MilepostIntegrationTest {
     @Test public void integratedRepeatedEntryDismissalAndReplayMeasureHeap()throws Exception{
         prepare(7,100);process();Activity a=Robolectric.buildActivity(Activity.class).setup().get();
         LinearLayout section=new LinearLayout(a);a.setContentView(section);MilepostScreenIntegration screen=new MilepostScreenIntegration(a,gate);screen.mount(section);
+        MilepostPresentationStore presentation=new MilepostPresentationStore(a,gate.user);MilepostPresentationStore.State staticReplay=presentation.read();staticReplay.staticMode=true;presentation.save(staticReplay);
         for(int i=0;i<2;i++)cycle(screen,section);
         System.gc();Thread.sleep(50);long before=MilepostPresentationTest.heap();java.util.concurrent.atomic.AtomicLong peak=new java.util.concurrent.atomic.AtomicLong(before);
         AtomicBoolean stop=new AtomicBoolean();Thread sampler=new Thread(()->{while(!stop.get()){peak.accumulateAndGet(MilepostPresentationTest.heap(),Math::max);try{Thread.sleep(2);}catch(InterruptedException e){return;}}});sampler.start();

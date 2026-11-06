@@ -18,7 +18,7 @@ Checks applied to every row:
 
 - Positive typed OSM node identity, uniqueness and explicit `ncn_milepost` classification. Unsupported design values may approve the location but leave attribution unknown. Non-post and removed classifications reject. Future way/relation inputs require a point-resolution policy; no implicit polygon centres.
 - Finite WGS84 coordinates and a UK anomaly envelope, in addition to the pinned source's **GB administrative-area query**. The envelope alone never establishes UK scope; the source query and original object supply scope for this edition. Conflicting country tags hold. Query provenance is retained; no Roadprints border survey claimed.
-- Duplicate identity and coincident-node checks hold conflicting rows. Nearby distinct nodes with distinct references are not merged. MP reference is non-unique metadata, never the canonical identity. The four different-design posts less than six metres apart remain distinct.
+- Duplicate identity, coincident-node and same-design/same-reference nodes within 100m hold conflicting rows. The proximity test is a review trigger alongside matching identity metadata, never a merge rule. Nearby distinct nodes with distinct references are not merged. MP reference is non-unique metadata, never the canonical identity. Repeated MP898 (12.47km apart), MP658 (63.14km) and MP881 (96.16km) do not imply duplicates; references remain unchanged. The four different-design posts less than six metres apart remain distinct.
 - Explicit unresolved location notes hold. Missing direction arms, an incorrect mileage/route number or absence of a photograph do not make a physical post invalid.
 - Stable project physical ID initially anchored to the typed source node; source aliases remain separate in the existing immutable alias registry. Future replacement nodes, moves and duplicates require an explicit mapping/tombstone update, not a new award inferred by radius.
 - The explicit `ncn_milepost=mills/rowe/mccoll/dudgeon` value supplies designer evidence under OSM's documented tagging convention. Conflicting named artists leave attribution unknown, preserving geographical discovery. No attribution derives from region, MP number, paint or proximity. Known spelling aliases John Mills/Jon Mills and Rowe/Andrew Rowe do not conflict with their explicit design tags.
@@ -36,9 +36,10 @@ For six approved records whose notes explicitly report movement, corrected sourc
 | Input | 889 |
 | Approved / held / rejected | 887 / 2 / 0 |
 | Approved attributed / unknown | 887 / 0 |
+| Approved designs | Mills 445; Rowe 265; McColl 134; Dudgeon 43 |
 | Payload bytes | 1,167,726 |
 | Payload SHA-256 | `1f7468a5ed054c5822c88614650fe33814554502a57779fc1b7375749d35c2ce` |
-| Marker fingerprint | `6b02ee06a7fe5f722d9e622bad8f607c0bdfc7375a0ba6f08d59c1e592d1a428` |
+| Marker fingerprint | `022118567034f1c648c7e158b0f44cb3969b3327618d739fad19a47b26ebc535` |
 | Source snapshot | 15 October 2026, 17:21:06 UTC |
 | Raw source SHA-256 | `4c0cd419196408f1abad27a61bfc84e25bd74e4a2ae9e2b835dcd0688fb39fc6` |
 | Source | Overpass GB area query, retained revision 1 manifest and raw-source archive receipt |

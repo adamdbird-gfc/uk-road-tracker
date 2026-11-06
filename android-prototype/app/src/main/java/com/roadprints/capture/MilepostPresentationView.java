@@ -147,7 +147,7 @@ final class MilepostPresentationView extends ScrollView {
         if(!recording()&&current()&&(snapshot.count>0||snapshot.incomplete>0))
             button(body,"View discoveries","milepost_browse_discoveries",()->loadDiscoveries(0),true);
         if(snapshot.introduced()){
-            MilepostArtworkView collective=new MilepostArtworkView(host,0);collective.setIcon(R.drawable.milepost_collective);
+            MilepostArtworkView collective=MilepostArtworkView.icon(host,R.drawable.milepost_collective);
             body.addView(collective,new LinearLayout.LayoutParams(dp(48),dp(48)));
             heading(body,"In Honour of Time");
             text(body,snapshot.individuals()+" of 6 personalities"+(snapshot.awards.get(6).earned?". Collective achievement earned.":"."),16);
@@ -200,8 +200,7 @@ final class MilepostPresentationView extends ScrollView {
         }
         if(discoveries.discoveries.isEmpty())text(panel,"No currently qualifying physical discoveries.",16);
         for(MilepostPresentationReader.Discovery d:discoveries.discoveries){
-            MilepostArtworkView designIcon=new MilepostArtworkView(host,0);
-            designIcon.setIcon(MilepostArtworkView.DESIGNS[d.design]);panel.addView(designIcon,new LinearLayout.LayoutParams(dp(48),dp(48)));
+            MilepostArtworkView designIcon=MilepostArtworkView.icon(host,MilepostArtworkView.DESIGNS[d.design]);panel.addView(designIcon,new LinearLayout.LayoutParams(dp(48),dp(48)));
             text(panel,"Discovery "+d.ordinal+" · "+d.marker+" · "+(d.date==null?"Historical date unavailable":d.date+" (journey date)"),16);
             text(panel,d.designLabel+" · OSM source location",14);
         }
@@ -216,8 +215,7 @@ final class MilepostPresentationView extends ScrollView {
     private void card(LinearLayout parent,int index){
         MilepostPresentation.Card c=snapshot.card(index);LinearLayout panel=panel(parent);
         // Native text and a neutral generic icon. No identity appears in tags, descriptions or navigation for locked cards.
-        MilepostArtworkView icon=new MilepostArtworkView(host,0);
-        if(c.earned)icon.setIcon(MilepostArtworkView.MEDALLIONS[index]);
+        MilepostArtworkView icon=MilepostArtworkView.icon(host,c.earned?MilepostArtworkView.MEDALLIONS[index]:R.drawable.milepost_mystery);
         icon.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);panel.addView(icon,new LinearLayout.LayoutParams(dp(48),dp(48)));
         text(panel,c.title,20);text(panel,c.status,16);
         if(!c.biography.isEmpty())text(panel,c.biography,16);
@@ -228,7 +226,7 @@ final class MilepostPresentationView extends ScrollView {
     }
     private void reveal(){
         LinearLayout panel=panel(body);heading(panel,"Mystery reveal");
-        revealArt=new MilepostArtworkView(host,displayStage());revealArt.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        revealArt=new MilepostArtworkView(host,displayStage());revealArt.enableCipherRing();revealArt.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         panel.addView(revealArt,new LinearLayout.LayoutParams(-1,dp(180)));
         revealProgress=text(panel,"",18);revealProgress.setTag("milepost_reveal_progress");
         revealThemes=text(panel,"",16);revealCipher=text(panel,"",20);revealCipher.setTag("milepost_replay_cipher");

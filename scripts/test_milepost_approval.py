@@ -26,6 +26,11 @@ class ApprovalTest(unittest.TestCase):
         r=self.rows()[:2];r[1]['osm_id']=r[0]['osm_id'];self.assertTrue(all(d['status']=='held' for d in classify(r)))
         r=self.rows()[:1];r[0]['source_tags']['ncn_milepost']='no';self.assertEqual('rejected',classify(r)[0]['status'])
         r=self.rows()[:2];r[1]['latitude']=r[0]['latitude'];r[1]['longitude']=r[0]['longitude'];self.assertTrue(all(d['status']=='held' for d in classify(r)))
+    def test_same_reference_nearby_conflicts_but_distant_reference_is_metadata(self):
+        r=self.rows()[:2];r[1]['sustrans_ref']=r[0]['sustrans_ref'];r[1]['design']=r[0]['design']
+        r[1]['latitude']=r[0]['latitude']+.0001;r[1]['longitude']=r[0]['longitude']
+        self.assertTrue(all('nearby_reference_identity_conflict' in d['reasons'] for d in classify(r)))
+        r[1]['latitude']+=1;self.assertTrue(all(d['status']=='approved' for d in classify(r)))
     def test_unknown_or_conflicting_design_keeps_location_without_award(self):
         for value in ['yes','unknown']:
             r=self.rows()[:1];r[0]['source_tags']['ncn_milepost']=value;d=classify(r)[0]
