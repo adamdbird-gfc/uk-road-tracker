@@ -11,10 +11,19 @@ android {
     sourceSets.getByName("main").assets.srcDir("../../canonical-a-roads-v5")
     testOptions { unitTests.isIncludeAndroidResources = true }
     buildFeatures { buildConfig = true }
+    // Private synthetic acceptance sandbox. Never changes debug/release identity or gate.
+    buildTypes.create("acceptance") {
+        initWith(buildTypes.getByName("debug"))
+        applicationIdSuffix = ".milepostacceptance"
+        versionNameSuffix = "-synthetic-acceptance"
+        matchingFallbacks += listOf("debug")
+    }
+    testBuildType = "acceptance"
     defaultConfig {
         applicationId = "com.roadprints.capture"
         minSdk = 26
         targetSdk = 35
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         versionCode = 269
         versionName = "0.25.223"
     }
@@ -64,3 +73,13 @@ tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
     }
 }
 
+
+// The sandbox has no Firebase project/client and must not upload measurements.
+tasks.configureEach {
+    if (name.contains("Acceptance") && (name.endsWith("GoogleServices") || name.contains("Crashlytics"))) enabled = false
+}
+dependencies {
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test:core:1.6.1")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+}

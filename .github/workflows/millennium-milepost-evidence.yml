@@ -11,6 +11,7 @@ on:
       - 'android-prototype/app/build.gradle.kts'
       - 'android-prototype/app/src/main/AndroidManifest.xml'
       - '.github/workflows/millennium-milepost-evidence.yml'
+      - 'scripts/milepost_acceptance*'
       - 'reference-data/millennium-mileposts/**'
 permissions:
   contents: read
@@ -69,7 +70,7 @@ jobs:
       # Reference data remains cache-only; Android Test workers reject reference HTTP.
       - name: Compile and lint with SDK downloads disabled
         run: |
-          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:compileDebugJavaWithJavac :app:lintDebug :app:compileDebugUnitTestJavaWithJavac
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:compileDebugJavaWithJavac :app:lintDebug :app:compileDebugUnitTestJavaWithJavac :app:compileReleaseJavaWithJavac :app:compileAcceptanceJavaWithJavac :app:compileAcceptanceUnitTestJavaWithJavac :app:compileAcceptanceAndroidTestJavaWithJavac :app:lintAcceptance
       - name: Resolve the three required Robolectric test fixtures before isolation
         run: |
           mkdir -p "$RUNNER_TEMP/robolectric-offline"
@@ -106,6 +107,10 @@ jobs:
             ip link set lo up
             exec sudo -u runner --preserve-env=JAVA_HOME,ANDROID_HOME,ANDROID_SDK_ROOT,GRADLE_USER_HOME,RUNNER_TEMP,NCN_TEST_DATABASE,MILEPOST_CANDIDATE_CATALOGUE "$1" --offline --no-daemon --stacktrace --init-script "$RUNNER_TEMP/milepost-heap.init.gradle" -p android-prototype -Pandroid.builder.sdkDownload=false -Drobolectric.offline=true -Drobolectric.dependency.dir="$RUNNER_TEMP/robolectric-offline" :app:testDebugUnitTest --tests "*Milepost*Test" --tests "*WalkingCaptureEvidenceTest" --tests "*CaptureQualityValidatorTest" --tests "*Timeline*Test" --tests "*AchievementArchiveVolumeTest" --tests "*AchievementCelebrationsTest" --tests "*AchievementGeometryMemoryTest" --tests "*CaptureRecoveryIntegrationTest" --tests "*CaptureMovementEvidenceTest" --tests "*WalkingCaptureServiceTest" --tests "*JourneyStoreDeletionTest" --tests "*JourneyStoreSummaryTest" --tests "*JourneyCorrectionUtilsTest" --tests "*NcnAndroidTest" --tests "*NcnAchievementThresholdTest" --tests "*PhantomTrain*Test" --tests "*DrivingTransition*Test" --tests "*OnFootContinuity*Test" --tests "*MultimodalFerryTest" --tests "*CaptureStartGateTest" --tests "*FootTraceValidatorTest"
           ' _ "$gradle_path"
+      - name: Validate acceptance sandbox on Robolectric (not device evidence)
+        run: |
+          gradle --offline --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false -Drobolectric.offline=true -Drobolectric.dependency.dir="$RUNNER_TEMP/robolectric-offline" :app:testAcceptanceUnitTest --tests '*MilepostAcceptanceHarnessTest'
+          python3 scripts/milepost_acceptance_isolation.py --compiled
       - name: Measure streaming evaluator with a 64MiB JVM
         run: |
           cat > "$RUNNER_TEMP/milepost-memory.init.gradle" <<'GRADLE'
