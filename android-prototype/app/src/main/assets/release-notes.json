@@ -2,6 +2,22 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.225",
+      "version_code": 271,
+      "release_date": "2026-11-06",
+      "since": "0.25.224",
+      "changes": [
+        {
+          "title": "More stable achievement processing",
+          "description": "Reduce retained memory while assessing journeys and release background map drawing caches. Stored journeys and achievement evidence are preserved."
+        },
+        {
+          "title": "Millennium Mileposts on the map and in NCN achievements",
+          "description": "See 887 approved OpenStreetMap destinations on the map. Locked mystery cards appear immediately inside National Cycle Network achievements, with an honest pending status until historical assessment is verified. Expensive assessment continues while charging and idle."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.224",
       "version_code": 270,
       "release_date": "2026-11-06",
@@ -197,7 +213,7 @@
       "changes": [
         {
           "title": "Ferry evidence and recovery",
-          "description": "Conservative Dover\u2013Calais ferry transitions, preserved recording and explicit split/restore review. Missing ferry GPS is never invented."
+          "description": "Conservative Dover–Calais ferry transitions, preserved recording and explicit split/restore review. Missing ferry GPS is never invented."
         },
         {
           "title": "Transport and matching reliability",
@@ -433,7 +449,7 @@
         },
         {
           "title": "Beta testing requirements",
-          "description": "Please test overnight home/school stays, venue running laps, walk\u2013drive\u2013walk transitions and screen-off recovery on Pixel/Samsung. Automated checks do not establish device acceptance. GPS gaps over 90 seconds may prevent automatic venue credit. National Cycle Network collection is reserved for Beta 2."
+          "description": "Please test overnight home/school stays, venue running laps, walk–drive–walk transitions and screen-off recovery on Pixel/Samsung. Automated checks do not establish device acceptance. GPS gaps over 90 seconds may prevent automatic venue credit. National Cycle Network collection is reserved for Beta 2."
         }
       ]
     },

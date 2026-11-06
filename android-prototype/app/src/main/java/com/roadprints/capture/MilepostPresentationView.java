@@ -212,8 +212,9 @@ final class MilepostPresentationView extends ScrollView {
     }
     private void buildCards(){
         cards.removeAllViews();cardProgress=null;
-        for(int i=0;i<7;i++)card(cards,i);
+        for(int i=0;i<6;i++)card(cards,i);
         if(!snapshot.introduced()){
+            card(cards,6);
             LinearLayout locked=panel(cards);heading(locked,"Mystery reveal");
             art(locked,0);text(locked,"Locked seven-stage cipher. Discover mileposts to reveal the mystery.",16);
         }

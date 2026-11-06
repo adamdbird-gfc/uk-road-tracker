@@ -18,6 +18,7 @@ final class MilepostScreenIntegration {
     private int request,lifecycle;
     private long archive,ncn,ncnEvidence;
     private String receipt="";
+    private MilepostPresentation.Snapshot lastReady;
     MilepostScreenIntegration(Activity host,MilepostIntegration gate){this.host=host;this.gate=gate;}
     void mount(LinearLayout container){
         this.container=container;
@@ -42,7 +43,7 @@ final class MilepostScreenIntegration {
                 if(token!=request||stopped.get()||host.isDestroyed()||host.isFinishing())return;
                 loading=false;
                 if(ready==null||a!=JourneyStore.dataRevision(host)||n!=NcnProgressStore.revision(host)||e!=JourneyStore.ncnDataRevision(host)||!NcnProgressStore.enabled(host)||CaptureService.isActive(host)){if(!receipt.equals("assessment-pending")){clearView();showPending();}return;}
-                archive=a;ncn=n;ncnEvidence=e;
+                archive=a;ncn=n;ncnEvidence=e;lastReady=ready;
                 try{
                     if(view==null){
                         view=new MilepostPresentationView(host,new MilepostPresentationStore(host,gate.user),ready,(after,complete)->loadPage(after,complete));
@@ -55,9 +56,13 @@ final class MilepostScreenIntegration {
     }
     private void showPending(){
         if(container==null||!gate.allowed(host))return;
-        view=new MilepostPresentationView(host,new MilepostPresentationStore(host,gate.user),
-            MilepostPresentation.pending(),this::loadPage);
-        view.freshness=this::fresh;receipt="assessment-pending";container.addView(view);
+        // Re-entry may reuse only the compact verified receipt with identical evidence revisions.
+        // Avoid constructing the entire locked view immediately before replacing it with the same earned view.
+        boolean reuse=lastReady!=null&&archive==JourneyStore.dataRevision(host)&&ncn==NcnProgressStore.revision(host)
+            &&ncnEvidence==JourneyStore.ncnDataRevision(host)&&NcnProgressStore.enabled(host)&&!CaptureService.isActive(host);
+        MilepostPresentation.Snapshot initial=reuse?lastReady:MilepostPresentation.pending();
+        view=new MilepostPresentationView(host,new MilepostPresentationStore(host,gate.user),initial,this::loadPage);
+        view.freshness=this::fresh;receipt=initial.receipt;container.addView(view);
         if(!stopped.get())view.onHostResume();
     }
     private boolean fresh(){return gate.enabled&&!stopped.get()&&archive==JourneyStore.dataRevision(host)&&ncn==NcnProgressStore.revision(host)&&ncnEvidence==JourneyStore.ncnDataRevision(host)&&NcnProgressStore.enabled(host);}
