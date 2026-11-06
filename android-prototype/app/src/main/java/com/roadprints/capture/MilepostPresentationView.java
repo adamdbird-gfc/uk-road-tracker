@@ -105,7 +105,8 @@ final class MilepostPresentationView extends ScrollView {
             float progress=(Float)value.getAnimatedValue();
             revealArt.frame(target,progress);
             revealCipher.setVisibility(View.VISIBLE);
-            revealCipher.setText(MilepostPresentation.animatedCipher(previous,target,progress));
+            String cipher=MilepostPresentation.animatedCipher(previous,target,progress);
+            revealArt.setCipher(cipher);revealCipher.setText(cipher);
         });
         animation.addListener(new android.animation.AnimatorListenerAdapter(){
             @Override public void onAnimationEnd(android.animation.Animator value){
@@ -133,6 +134,9 @@ final class MilepostPresentationView extends ScrollView {
         cancelAnimation();
         body.removeAllViews();
         heading(body,"Millennium Mileposts");
+        TextView attribution=text(body,"© OpenStreetMap contributors · ODbL 1.0\nhttps://www.openstreetmap.org/copyright",12);
+        android.text.util.Linkify.addLinks(attribution,android.text.util.Linkify.WEB_URLS);
+        attribution.setLinkTextColor(GOLD);
         text(body,snapshot.current?"Discoveries: "+snapshot.count:"Updating assessment. Showing the previous complete result.",16);
         if(recording()){
             text(body,"Reveal paused while recording. Your journey has priority.",16);
@@ -195,8 +199,12 @@ final class MilepostPresentationView extends ScrollView {
             button(panel,"Try again","milepost_retry_discoveries",()->loadDiscoveries(0),true);return;
         }
         if(discoveries.discoveries.isEmpty())text(panel,"No currently qualifying physical discoveries.",16);
-        for(MilepostPresentationReader.Discovery d:discoveries.discoveries)
+        for(MilepostPresentationReader.Discovery d:discoveries.discoveries){
+            MilepostArtworkView designIcon=new MilepostArtworkView(host,0);
+            designIcon.setIcon(MilepostArtworkView.DESIGNS[d.design]);panel.addView(designIcon,new LinearLayout.LayoutParams(dp(48),dp(48)));
             text(panel,"Discovery "+d.ordinal+" · "+d.marker+" · "+(d.date==null?"Historical date unavailable":d.date+" (journey date)"),16);
+            text(panel,d.designLabel+" · OSM source location",14);
+        }
         if(discoveries.more){long after=discoveries.discoveries.get(discoveries.discoveries.size()-1).ordinal;
             button(panel,"Next discoveries","milepost_next_discoveries",()->loadDiscoveries(after),true);}
         button(panel,"First discoveries","milepost_first_discoveries",()->loadDiscoveries(0),true);

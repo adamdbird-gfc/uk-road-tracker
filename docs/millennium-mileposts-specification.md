@@ -10,6 +10,12 @@ This document is the single product/behaviour authority for this feature. Compan
 - [Phased implementation plan](millennium-mileposts/implementation-plan.md)
 - [Read-only evidence receipt](millennium-mileposts/readiness-receipt.json)
 
+## Stage 10 owner-policy amendment — 6 November 2026
+
+The Stage 10 brief supersedes the earlier blanket physical-survey, dated-position and portrait/silhouette prerequisites. [Stage 10 source acceptance and production contract](millennium-mileposts/stage-10-production.md) is authoritative for OSM approval, stable identity mapping, explicit retrospective source assumptions and record-specific movement restrictions. A valid explicit OSM design tag is acceptable attribution evidence; unknown/conflicting designs may count for Harrow but never a designer. The fixed six identities, earning conditions, 100m/evidence safeguards and cipher letter positions below remain unchanged.
+
+Locked cards remain fully anonymous question marks at every point: **no silhouette or other identity clue**. Unlocked art is an original symbolic commemorative emblem. Stage 1–7 centre emblems change with each discovery; the existing optional reveal uses native short, interruptible card/ring/glyph animation with a static equivalent. No copied likeness, poetry or source sculpture detail is required. Earlier contradictory artwork/evidence wording below is historical design context and must not restore the superseded blanket hold or locked silhouettes.
+
 ## Scope and precedence
 
 This session specifies only. No production feature, reference publication, entitlement changes, APK, deployment or merge is authorised. The owner's 5 November brief supersedes the six-way geographical assignment in historical PR #238, including its all-geographies distribution and one-person-per-post model. Preserve historical records; never import those allocations into runtime. Actual design determines the four designer awards. Any seven eligible distinct UK posts determine Harrow. A post may contribute to its designer and Harrow together.

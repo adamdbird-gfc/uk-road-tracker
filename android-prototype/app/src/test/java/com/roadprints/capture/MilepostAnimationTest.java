@@ -21,11 +21,12 @@ public class MilepostAnimationTest {
         host=Robolectric.buildActivity(Activity.class).setup().get();
         host.getSharedPreferences("roadprints_capture_state",0).edit().clear().commit();
         store=new MilepostPresentationStore(host,UUID.randomUUID().toString());
-        android.animation.ValueAnimator.setDurationScale(1);
+        durationScale(1f);
         view=new MilepostPresentationView(host,store,MilepostPresentationTest.snapshot(7,7,"motion"),(after,done)->{});
         host.setContentView(view);view.onHostResume();
     }
     @After public void cleanup(){view.onHostPause();host.finish();}
+    void durationScale(float value){org.robolectric.util.ReflectionHelpers.callStaticMethod(android.animation.ValueAnimator.class,"setDurationScale",org.robolectric.util.ReflectionHelpers.ClassParameter.from(float.class,value));}
     void settle(){Shadows.shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(1400));}
     @Test public void animatedNextCompletesOnlyAfterSettlingAndCanReplay(){
         assertTrue(view.motionAllowed());view.replay(true);view.next();
@@ -50,9 +51,9 @@ public class MilepostAnimationTest {
     @Test public void staticPreferenceAndSystemMotionOffHaveIdenticalFinalState(){
         view.replay(true);view.findViewWithTag("milepost_motion").performClick();
         assertTrue(store.read().staticMode);view.replay(false);view.next();assertEquals(1,store.read().cursor);
-        view.findViewWithTag("milepost_motion").performClick();android.animation.ValueAnimator.setDurationScale(0);
+        view.findViewWithTag("milepost_motion").performClick();durationScale(0f);
         view.replay(false);assertFalse(view.motionAllowed());view.next();assertEquals(2,store.read().cursor);
-        android.animation.ValueAnimator.setDurationScale(1);
+        durationScale(1f);
     }
     @Test public void everyUnresolvedFramePreservesPreviouslyResolvedPositionsAndFinalRule(){
         String target="CHARLIEHARROW";

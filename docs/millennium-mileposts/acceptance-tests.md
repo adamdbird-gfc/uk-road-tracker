@@ -1,6 +1,6 @@
 # Discovery and achievement acceptance-test matrix
 
-Planned tests, not tests executed in this documentation session. Each row is a release acceptance criterion; use synthetic/private-free fixtures and independently calculated expected results. All thresholds apply to actual unrounded measurements.
+Original planned matrix, not a claim of execution. Stage 10 owner-approved OSM acceptance replaces blanket independent-survey/date prerequisites; source identity/location approval is distinct from designer attribution. Locked cards use question marks, never silhouettes. See stage-10-production.md for actual execution and remaining device gates. Each row is a release acceptance criterion; use synthetic/private-free fixtures and independently calculated expected results. All thresholds apply to actual unrounded measurements.
 
 | ID | Fixture / operation | Expected result | Gate |
 | --- | --- | --- | --- |
@@ -25,7 +25,7 @@ Planned tests, not tests executed in this documentation session. Each row is a r
 | A04 | True eligible measurable NCN route 100%, displayed rounded near-100%, unmeasurable/held route | Only true complete eligible NCN route awards Grimshaw; use existing noise tolerance | NCN regression |
 | A05 | No complete route but network cumulative distance high; complete RCN only | No Grimshaw under NCN-route condition | NCN regression |
 | A06 | All six earned same batch; only five earned | Parent once in same stable transaction; no parent with five | achievement |
-| A07 | First individual is Grimshaw; first post has unknown design and no individual earned | First reveals remaining anonymous silhouettes/parent; second remains spoiler-safe while discovery saved | UI |
+| A07 | First individual is Grimshaw; first post has unknown design and no individual earned | First reveals remaining anonymous question marks/parent; second remains spoiler-safe while discovery saved | UI |
 | P01 | Seven unique discoveries in sequence | Exact six fixed themes then silhouette/name/biography; resolved position sets monotonically increase | presentation |
 | P02 | Restart, device locale/time change, repeat visit, reordered input files | Same cipher per version; space fixed; duplicates do not advance | presentation |
 | P03 | Older history arrives after stages viewed | Proof dates may update; saved ordinal/revealed letters do not shuffle | persistence/UI |

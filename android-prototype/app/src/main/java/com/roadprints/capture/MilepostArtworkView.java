@@ -7,7 +7,7 @@ import android.graphics.drawable.Drawable;
 import android.view.View;
 
 /** Original line-vector compositions. Only the current drawable is retained; no bitmaps or portraits. */
-final class MilepostArtworkView extends View {
+final class MilepostArtworkView extends android.widget.FrameLayout {
     static final int[] MEDALLIONS={R.drawable.milepost_medallion_mills,R.drawable.milepost_medallion_rowe,
         R.drawable.milepost_medallion_mccoll,R.drawable.milepost_medallion_dudgeon,
         R.drawable.milepost_medallion_grimshaw,R.drawable.milepost_medallion_harrow};
@@ -22,16 +22,45 @@ final class MilepostArtworkView extends View {
     private int stage,resource,icon;
     private float fraction=1;
     private boolean transitioning;
+    private android.widget.TextView[] glyphs;
+    private String cipher="";
     MilepostArtworkView(Context context,int stage){
-        super(context);inner=drawable(R.drawable.milepost_ring_inner);outer=drawable(R.drawable.milepost_ring_outer);
+        super(context);setWillNotDraw(false);inner=drawable(R.drawable.milepost_ring_inner);outer=drawable(R.drawable.milepost_ring_outer);
         layer=drawable(R.drawable.milepost_card_layer);setStage(stage);
         setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO); // Native stage text supplies the equivalent.
     }
     private Drawable drawable(int id){return getResources().getDrawable(id,getContext().getTheme()).mutate();}
-    void setIcon(int id){icon=id;use(id);transitioning=false;invalidate();}
-    void setStage(int value){stage=MilepostPresentation.stage(value);icon=0;transitioning=false;fraction=1;use(THEMES[stage]);invalidate();}
+    void setIcon(int id){icon=id;use(id);transitioning=false;setCipher("");invalidate();}
+    void setStage(int value){stage=MilepostPresentation.stage(value);icon=0;transitioning=false;fraction=1;use(THEMES[stage]);setCipher(MilepostPresentation.cipher(stage));invalidate();}
     private void use(int id){if(id!=resource){resource=id;emblem=drawable(id);}}
     void frame(int target,float value){stage=MilepostPresentation.stage(target);icon=0;transitioning=true;fraction=value;use(THEMES[stage]);invalidate();}
+    void setCipher(String text){
+        cipher=text.replace(" ","");
+        if(!cipher.isEmpty()&&glyphs==null){
+            glyphs=new android.widget.TextView[13];
+            for(int i=0;i<glyphs.length;i++){
+                android.widget.TextView letter=new android.widget.TextView(getContext());letter.setTextColor(0xFFF7C450);
+                letter.setTypeface(android.graphics.Typeface.MONOSPACE);letter.setTextSize(14);letter.setGravity(android.view.Gravity.CENTER);
+                letter.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);letter.setFocusable(false);
+                glyphs[i]=letter;addView(letter,new LayoutParams(32,32));
+            }
+        }
+        if(glyphs!=null)for(int i=0;i<glyphs.length;i++){
+            glyphs[i].setVisibility(cipher.isEmpty()?GONE:VISIBLE);
+            glyphs[i].setText(cipher.isEmpty()?"":String.valueOf(cipher.charAt(i)));
+        }
+    }
+    @Override protected void onLayout(boolean changed,int left,int top,int right,int bottom){
+        if(glyphs==null)return;
+        float size=Math.min(getWidth(),getHeight()),radius=size*.43f,cx=getWidth()/2f,cy=getHeight()/2f;
+        int half=Math.round(16*getResources().getDisplayMetrics().density);
+        for(int p=0;p<13;p++){
+            // Space after the seventh letter remains a fixed gap on the ring.
+            double angle=Math.toRadians(-90+(p>=7?p+1:p)*360f/14);
+            int x=Math.round(cx+(float)Math.cos(angle)*radius),y=Math.round(cy+(float)Math.sin(angle)*radius);
+            glyphs[p].layout(x-half,y-half,x+half,y+half);
+        }
+    }
     static int stackDepth(int stage){return stage<=0||stage>=7?0:stage;}
     @Override protected void onDraw(Canvas canvas){
         super.onDraw(canvas);float size=Math.min(getWidth(),getHeight()),left=(getWidth()-size)/2f,top=(getHeight()-size)/2f;

@@ -62,8 +62,10 @@ final class MilepostPresentationReader {
         }finally{d.endTransaction();}
     }
     static final class Discovery {
-        final String marker,date;final long ordinal;
-        Discovery(String marker,String date,long ordinal){this.marker=marker;this.date=date;this.ordinal=ordinal;}
+        final String marker,date,designLabel;final long ordinal;final int design;
+        Discovery(String marker,String date,long ordinal){this(marker,date,ordinal,4);}
+        Discovery(String marker,String date,long ordinal,int design){this.marker=marker;this.date=date;this.ordinal=ordinal;this.design=design;
+            this.designLabel=new String[]{"Fossil Tree","Nautical fingerpost","Cockerel","Tracks","Unknown design"}[design];}
     }
     static final class Page {
         final List<Discovery> discoveries;final boolean more,current;
@@ -93,7 +95,13 @@ final class MilepostPresentationReader {
                 if(n<16)break;
             }
             List<Discovery> rows=new ArrayList<>(selected);rows.sort(order);boolean more=rows.size()>16;if(more)rows.remove(16);
-            for(int i=0;i<rows.size();i++){Discovery row=rows.get(i);rows.set(i,new Discovery(row.marker,row.date==null?null:calendarDate(row.date),row.ordinal));}
+            for(int i=0;i<rows.size();i++){
+                Discovery row=rows.get(i);int design=4;
+                try(Cursor marker=d.rawQuery("SELECT designer,designer_verified FROM marker WHERE id=?",new String[]{row.marker})){
+                    if(marker.moveToFirst()&&marker.getInt(1)==1){int found=Arrays.asList("mills","rowe","mccoll","dudgeon").indexOf(marker.getString(0));if(found>=0)design=found;}
+                }
+                rows.set(i,new Discovery(row.marker,row.date==null?null:calendarDate(row.date),row.ordinal,design));
+            }
             current=MilepostAchievementDeriver.state(context,ledger,user).getBoolean("current");
             return new Page(current?rows:Collections.emptyList(),more,current);
         }finally{d.endTransaction();}

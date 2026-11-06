@@ -38,7 +38,7 @@ final class MilepostIntegration {
         try(MilepostDiscoveryLedger ledger=new MilepostDiscoveryLedger(context,database);
             MilepostReconciliationJob.CaptureGuard guard=new MilepostReconciliationJob.CaptureGuard(context,stopped,deadline)){
             MilepostArchiveReader.check(guard);
-            if(this==PRODUCTION)MilepostCatalogue.install(context,ledger);
+            if(this==PRODUCTION&&!verified(ledger))MilepostCatalogue.install(context,ledger);
             if(!verified(ledger))return false;
             try(MilepostAchievementDeriver worker=new MilepostAchievementDeriver(context,ledger,user,()->verified(ledger))){
                 BooleanSupplier yield=()->guard.getAsBoolean()||!enabled;
