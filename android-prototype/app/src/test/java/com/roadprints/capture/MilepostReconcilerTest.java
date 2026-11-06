@@ -109,6 +109,29 @@ public class MilepostReconcilerTest {
         try{worker.runSlice(()->++polls[0]>50,1000);}catch(CancellationException expected){}
         drain();assertEquals(1,ledger.proofCount("u"));assertEquals(1,found().get(0).ordinal);
     });}
+    @Test public void projectedPointCeilingIsRetainedAndLargerArraysRemainPending()throws Exception {work(()->{
+        JSONObject j=row("long");JSONArray samples=new JSONArray(),coords=new JSONArray();
+        long start=java.time.Instant.parse(j.getString("started_at")).toEpochMilli();
+        for(int i=0;i<10000;i++) {
+            net.sf.geographiclib.GeodesicData p=net.sf.geographiclib.Geodesic.WGS84.Direct(51.4,-1,90,i*2);
+            coords.put(new JSONArray().put(p.lon2).put(p.lat2));samples.put(new JSONArray().put(p.lon2).put(p.lat2).put(3).put(start+i*2000).put(1));
+        }
+        j.put("capture_route_samples",samples).put("route_geometry",new JSONObject().put("type","LineString").put("coordinates",coords))
+                .put("ended_at",java.time.Instant.ofEpochMilli(start+20000000).toString());
+        Files.write(MilepostArchiveReader.file(c,"long").toPath(),j.toString().getBytes(StandardCharsets.UTF_8));
+        MilepostProximity.Evidence full=MilepostJourneyEvidence.nativeArchive(j),projected=MilepostArchiveReader.read(c,"long",()->false).evidence;
+        assertEquals("android_activity_capture",projected.source());assertEquals(full.problem(),projected.problem());
+        samples.put(samples.get(9999));Files.write(MilepostArchiveReader.file(c,"long").toPath(),j.toString().getBytes(StandardCharsets.UTF_8));
+        assertEquals("projection_limit",MilepostArchiveReader.read(c,"long",()->false).evidence.source());
+    });}
+    @Test public void spatialSqlPreservesExactHundredMetreBoundary()throws Exception {work(()->{
+        List<MilepostDiscoveryLedger.Marker> markers=new ArrayList<>();
+        for(int distance:new int[]{0,75,99,100,101,125,200})markers.add(MilepostDiscoveryLedgerTest.marker("p"+distance,distance,true));
+        ledger.install(1,MilepostDiscoveryLedgerTest.HASH,markers);save(row("a"));drain();assertEquals(4,found().size());
+        assertEquals(MilepostDiscoveryLedger.State.DISCOVERED,ledger.assessmentState("u","a","p100"));
+        assertNotEquals(MilepostDiscoveryLedger.State.DISCOVERED,ledger.assessmentState("u","a","p101"));
+        assertNotEquals(MilepostDiscoveryLedger.State.DISCOVERED,ledger.assessmentState("u","a","p200"));
+    });}
     @Test public void concurrentArchiveCorrectionDuringEvaluationDoesNotBlockSaveOrCommitOldProof()throws Exception {work(()->{
         catalogue();save(row("a"));
         java.util.concurrent.atomic.AtomicBoolean changed=new java.util.concurrent.atomic.AtomicBoolean();
