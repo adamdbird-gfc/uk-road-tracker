@@ -23,6 +23,15 @@ public class MilepostCorrectiveVisibilityTest {
         for(int i=0;i<7;i++)assertNotNull(container.findViewWithTag("milepost_card_"+i));
         screen.pause();a.finish();
     }
+    @Test public void backgroundMapReleasesDecodedTilesWithoutChangingCamera()throws Exception{
+        RoutePreviewView map=RoutePreviewView.overview(RuntimeEnvironment.getApplication());
+        map.restoreCameraState(.36,51.44,14);
+        java.lang.reflect.Field field=RoutePreviewView.class.getDeclaredField("tileBitmaps");field.setAccessible(true);
+        @SuppressWarnings("unchecked") android.util.LruCache<String,android.graphics.Bitmap> tiles=(android.util.LruCache<String,android.graphics.Bitmap>)field.get(map);
+        tiles.put("tile",android.graphics.Bitmap.createBitmap(256,256,android.graphics.Bitmap.Config.ARGB_8888));
+        map.setRenderingActive(false);assertEquals(0,tiles.size());
+        assertArrayEquals(new double[]{.36,51.44,14},map.cameraState(),1e-9);map.setRenderingActive(true);
+    }
     private static String copy(View v){StringBuilder s=new StringBuilder();if(v instanceof TextView)s.append(((TextView)v).getText());if(v instanceof ViewGroup)for(int i=0;i<((ViewGroup)v).getChildCount();i++)s.append(copy(((ViewGroup)v).getChildAt(i)));return s.toString();}
     @Test public void viewportDensityRetainsAllApprovedCatalogueWithoutHeldCandidates()throws Exception{
         java.util.List<MilepostDiscoveryLedger.Marker> markers=MilepostCatalogue.load(RuntimeEnvironment.getApplication());assertEquals(887,markers.size());

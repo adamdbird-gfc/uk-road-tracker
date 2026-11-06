@@ -128,6 +128,11 @@ public class RoutePreviewView extends View {
     private String collectionKind=CollectionAccessStore.SERVICES;
     private Set<String> visitedServiceStationIds = Collections.emptySet();
     private final Paint messagePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private volatile boolean renderingActive=true;
+    void setRenderingActive(boolean active){
+        renderingActive=active;
+        if(!active){tileBitmaps.evictAll();renderGeometry.clear();}else invalidate();
+    }
     private final LruCache<String, Bitmap> tileBitmaps = new LruCache<>(48);
     private final Set<String> loadingTiles =
             Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
@@ -1271,7 +1276,7 @@ public class RoutePreviewView extends View {
     }
 
     private void requestTile(int tileZoom, int tileX, int tileY, String key) {
-        if (!loadingTiles.add(key)) return;
+        if (!renderingActive||!loadingTiles.add(key)) return;
         TILE_EXECUTOR.execute(() -> {
             try {
                 File tile = tileFile(key, ".png");
@@ -1279,14 +1284,14 @@ public class RoutePreviewView extends View {
                 Bitmap cached = tile.exists()
                         ? BitmapFactory.decodeFile(tile.getAbsolutePath()) : null;
                 if (cached != null) {
-                    tileBitmaps.put(key, cached);
+                    if(renderingActive)tileBitmaps.put(key, cached);
                     MAIN_HANDLER.post(this::invalidate);
                 }
                 if (cached != null && readExpiry(expiryFile) > System.currentTimeMillis()) return;
                 fetchTile(tileZoom, tileX, tileY, tile, expiryFile);
                 Bitmap fresh = tile.exists()
                         ? BitmapFactory.decodeFile(tile.getAbsolutePath()) : null;
-                if (fresh != null) tileBitmaps.put(key, fresh);
+                if (fresh != null&&renderingActive) tileBitmaps.put(key, fresh);
             } finally {
                 loadingTiles.remove(key);
                 MAIN_HANDLER.post(this::invalidate);

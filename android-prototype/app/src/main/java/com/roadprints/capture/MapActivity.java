@@ -213,6 +213,7 @@ public class MapActivity extends Activity {
     protected void onResume() {
         super.onResume();navigation.resume(this);if(hasDisplayedMap&&mapView!=null){navigation.frame(mapView,"first_map","cache=retained current="+(displayedMapRevision==mapDataRevision()));if(displayedMapRevision==mapDataRevision())navigation.frame(mapView,"ready","cache=retained");}
         active = true;
+        if(mapView!=null)mapView.setRenderingActive(true);
         if (replayMessage == null && mapFrame != null && mapSubtitle != null) refreshMap();
         String requestedCollection=getIntent().getStringExtra("collection_id");
         if(requestedCollection!=null){CollectionAccessStore.select(this,requestedCollection);getIntent().removeExtra("collection_id");}
@@ -234,6 +235,7 @@ public class MapActivity extends Activity {
     @Override
     protected void onPause() {
         active = false;
+        if(mapView!=null)mapView.setRenderingActive(false);
         if (filterDialog != null) filterDialog.dismiss();
         if (loadingCard != null) loadingCard.stop();
         mainHandler.removeCallbacks(observeChanges);
