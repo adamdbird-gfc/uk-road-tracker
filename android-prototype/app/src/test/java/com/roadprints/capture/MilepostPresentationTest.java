@@ -164,6 +164,12 @@ public class MilepostPresentationTest {
         assertEquals(awards,context.getSharedPreferences("roadprints_achievements_v1",0).getAll().toString());
         assertEquals(celebrations,context.getSharedPreferences("roadprints_achievement_celebrations_v1",0).getAll().toString());
     }
+    @Test public void nextRetainsCardsAndRevealControlsInsteadOfRebuildingScreen(){
+        host(snapshot(7,7,"a"));view.replay(true);
+        View card=view.findViewWithTag("milepost_card_0"),next=view.findViewWithTag("milepost_next");
+        View progress=view.findViewWithTag("milepost_reveal_progress");
+        view.next();assertSame(card,view.findViewWithTag("milepost_card_0"));assertSame(next,view.findViewWithTag("milepost_next"));assertSame(progress,view.findViewWithTag("milepost_reveal_progress"));
+    }
     static long heap(){Runtime r=Runtime.getRuntime();return r.totalMemory()-r.freeMemory();}
     void fullReplay(){view.replay(true);for(int n=0;n<7;n++)view.next();view.skip();}
     @Test public void warmedNativePresentationMeasuresIncrementalHeap()throws Exception{

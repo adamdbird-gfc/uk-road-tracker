@@ -19,7 +19,11 @@ final class MilepostPresentationView extends ScrollView {
     private final MilepostPresentationStore store;
     private final MilepostPresentationStore.State state;
     private MilepostPresentation.Snapshot snapshot;
-    private final LinearLayout body;
+    private final LinearLayout body,cards;
+    private LinearLayout cardProgress;
+    private TextView revealProgress,revealCipher,revealIdentity,revealBiography,revealThemes;
+    private PlaceholderArt revealArt;
+    private Button revealNext;
     private final MilepostPresentationReader.PageLoader discoveryPages;
     private int request;
     private MilepostPresentationReader.Page discoveries;
@@ -48,6 +52,7 @@ final class MilepostPresentationView extends ScrollView {
         capture=host.getSharedPreferences("roadprints_capture_state",0);
         setFillViewport(true);setBackgroundColor(NAVY);
         body=new LinearLayout(host);body.setOrientation(LinearLayout.VERTICAL);body.setPadding(dp(18),dp(12),dp(18),dp(18));
+        cards=new LinearLayout(host);cards.setOrientation(LinearLayout.VERTICAL);buildCards();
         addView(body,new ScrollView.LayoutParams(-1,-2));render();
     }
     @Override protected void onAttachedToWindow(){super.onAttachedToWindow();register();if(host.hasWindowFocus())onHostResume();}
@@ -59,7 +64,7 @@ final class MilepostPresentationView extends ScrollView {
     private boolean recording(){return capture.getBoolean("active",false);}
     private boolean canReveal(){return resumed&&!recording()&&snapshot.current&&snapshot.introduced()&&!host.isFinishing()&&!host.isDestroyed();}
     void update(MilepostPresentation.Snapshot next){
-        snapshot=next;request++;discoveries=null;viewingDiscoveries=false;loadingDiscoveries=false;
+        snapshot=next;buildCards();request++;discoveries=null;viewingDiscoveries=false;loadingDiscoveries=false;
         if(!canReveal())pauseReplay();
         // Never reset the cursor when more historical discoveries arrive.
         render();
@@ -76,7 +81,7 @@ final class MilepostPresentationView extends ScrollView {
         if(state.cursor>=snapshot.target())return;
         state.cursor++;
         state.completedStage=Math.max(state.completedStage,state.cursor);
-        store.save(state);render();
+        store.save(state);updateReveal();
         View control=findViewWithTag("milepost_next");
         if(control==null||!control.isEnabled())control=findViewWithTag("milepost_skip");
         if(control!=null)control.requestFocus();
@@ -98,8 +103,8 @@ final class MilepostPresentationView extends ScrollView {
             text(body,"Reveal paused while recording. Your journey has priority.",16);
             // No summary actions or reveal art while capture is active.
         }else if(store.pending(state,snapshot)&&(!state.dismissed||!snapshot.receipt.equals(state.dismissedReceipt)))summary();
-        LinearLayout cards=column(body);
-        for(int i=0;i<6;i++)card(cards,i);
+        body.addView(cards,new LinearLayout.LayoutParams(-1,-2));
+        if(cardProgress!=null)cardProgress.setVisibility(recording()?View.GONE:View.VISIBLE);
         if(!recording()&&snapshot.current&&(snapshot.count>0||snapshot.incomplete>0))
             button(body,"View discoveries","milepost_browse_discoveries",()->loadDiscoveries(0),true);
         if(snapshot.introduced()){
@@ -158,6 +163,10 @@ final class MilepostPresentationView extends ScrollView {
             button(panel,"Next discoveries","milepost_next_discoveries",()->loadDiscoveries(after),true);}
         button(panel,"First discoveries","milepost_first_discoveries",()->loadDiscoveries(0),true);
     }
+    private void buildCards(){
+        cards.removeAllViews();cardProgress=null;
+        for(int i=0;i<6;i++)card(cards,i);
+    }
     private void card(LinearLayout parent,int index){
         MilepostPresentation.Card c=snapshot.card(index);LinearLayout panel=panel(parent);
         // Native text and a neutral generic icon. No identity appears in tags, descriptions or navigation for locked cards.
@@ -165,23 +174,40 @@ final class MilepostPresentationView extends ScrollView {
         icon.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);panel.addView(icon,new LinearLayout.LayoutParams(dp(48),dp(48)));
         text(panel,c.title,20);text(panel,c.status,16);
         if(!c.biography.isEmpty())text(panel,c.biography,16);
-        if(index==5&&c.stage>0&&!recording()){
-            art(panel,c.stage);text(panel,MilepostPresentation.announcement(c.stage),16);cipher(panel,c.stage);
+        if(index==5&&c.stage>0){
+            cardProgress=column(panel);art(cardProgress,c.stage);text(cardProgress,MilepostPresentation.announcement(c.stage),16);cipher(cardProgress,c.stage);
         }
         panel.setTag("milepost_card_"+index); // Anonymous stable position only.
     }
     private void reveal(){
-        int stage=displayStage();LinearLayout panel=panel(body);heading(panel,"Mystery reveal");
-        art(panel,stage);TextView progress=text(panel,MilepostPresentation.announcement(stage),18);progress.setTag("milepost_reveal_progress");
-        cipher(panel,stage);
-        if(stage==7){text(panel,snapshot.card(5).title,22);text(panel,snapshot.card(5).biography,16);}
+        LinearLayout panel=panel(body);heading(panel,"Mystery reveal");
+        revealArt=new PlaceholderArt(host,displayStage());revealArt.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        panel.addView(revealArt,new LinearLayout.LayoutParams(-1,dp(180)));
+        revealProgress=text(panel,"",18);revealProgress.setTag("milepost_reveal_progress");
+        revealThemes=text(panel,"",16);revealCipher=text(panel,"",20);revealCipher.setTag("milepost_replay_cipher");
+        revealCipher.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);revealCipher.setFocusable(false);
+        revealIdentity=text(panel,"",22);revealBiography=text(panel,"",16);
         if(state.paused)text(panel,"Paused. Resume when ready.",16);
-        button(panel,"Next","milepost_next",this::next,canReveal()&&!state.paused&&stage<snapshot.target());
+        revealNext=button(panel,"Next","milepost_next",this::next,false);
+        updateReveal();
         button(panel,"Skip","milepost_skip",this::skip,canReveal());
         button(panel,"Later","milepost_reveal_later",this::later,true);
         button(panel,"Replay","milepost_replay_again",()->replay(true),canReveal());
         text(panel,"Static reveal. Each completed stage stays available without motion, sound or timing.",16);
     }
+    /** Next changes only the current composition and native text, retaining the six cards and controls. */
+    private void updateReveal(){
+        if(revealProgress==null)return;
+        int stage=displayStage();revealArt.stage=stage;revealArt.invalidate();
+        revealProgress.setText(MilepostPresentation.announcement(stage));
+        revealCipher.setText(MilepostPresentation.cipher(stage));revealCipher.setVisibility(stage==0?View.GONE:View.VISIBLE);
+        revealThemes.setText(stage>0&&stage<7?themeLabels(stage):"");revealThemes.setVisibility(stage>0&&stage<7?View.VISIBLE:View.GONE);
+        revealIdentity.setText(stage==7?snapshot.card(5).title:"");revealBiography.setText(stage==7?snapshot.card(5).biography:"");
+        revealIdentity.setVisibility(stage==7?View.VISIBLE:View.GONE);revealBiography.setVisibility(stage==7?View.VISIBLE:View.GONE);
+        revealNext.setEnabled(canReveal()&&!state.paused&&stage<snapshot.target());
+    }
+    private String themeLabels(int stage){return android.text.TextUtils.join(" · ",MilepostPresentation.layers(stage).stream()
+        .map(s->s.substring(16).replace('-',' ')).toArray());}
     private void cipher(LinearLayout parent,int stage){
         if(stage==0)return;
         TextView cipher=text(parent,MilepostPresentation.cipher(stage),20);
@@ -191,13 +217,12 @@ final class MilepostPresentationView extends ScrollView {
     private void art(LinearLayout parent,int stage){
         PlaceholderArt art=new PlaceholderArt(host,stage);art.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         parent.addView(art,new LinearLayout.LayoutParams(-1,dp(180)));
-        if(stage>0&&stage<7)text(parent,android.text.TextUtils.join(" · ",MilepostPresentation.layers(stage).stream()
-            .map(s->s.substring(16).replace('-',' ')).toArray()),16);
+        if(stage>0&&stage<7)text(parent,themeLabels(stage),16);
     }
     /** Replaceable six independently reconstructible panels, opaque identity veil, separate generic silhouette.
      * No portrait or historical likeness is claimed. Only the current composition exists; zero bitmap decoding. */
     static final class PlaceholderArt extends View {
-        final int stage;final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
+        int stage;final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
         PlaceholderArt(Activity context,int stage){super(context);this.stage=MilepostPresentation.stage(stage);}
         @Override protected void onDraw(Canvas canvas){
             super.onDraw(canvas);float w=getWidth(),h=getHeight();
@@ -227,9 +252,9 @@ final class MilepostPresentationView extends ScrollView {
         parent.addView(t,new LinearLayout.LayoutParams(-1,-2));return t;
     }
     private void heading(LinearLayout parent,String value){TextView t=text(parent,value,22);t.setTypeface(null,Typeface.BOLD);androidx.core.view.ViewCompat.setAccessibilityHeading(t,true);}
-    private void button(LinearLayout parent,String label,String tag,Runnable action,boolean enabled){
+    private Button button(LinearLayout parent,String label,String tag,Runnable action,boolean enabled){
         Button b=new Button(host);b.setText(label);b.setTextSize(16);b.setAllCaps(false);b.setMinHeight(dp(48));b.setTextColor(NAVY);b.setBackgroundTintList(android.content.res.ColorStateList.valueOf(GOLD));b.setTag(tag);b.setEnabled(enabled);
-        b.setOnClickListener(v->action.run());parent.addView(b,new LinearLayout.LayoutParams(-1,-2));
+        b.setOnClickListener(v->action.run());parent.addView(b,new LinearLayout.LayoutParams(-1,-2));return b;
     }
     private int dp(int n){return Math.round(n*getResources().getDisplayMetrics().density);}
 }
