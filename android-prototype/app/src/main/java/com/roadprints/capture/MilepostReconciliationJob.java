@@ -17,14 +17,14 @@ public final class MilepostReconciliationJob extends JobService {
         Future<?> task;
     }
     static int schedule(Context context) {
-        if(!MilepostIntegration.PRODUCTION.enabled)return JobScheduler.RESULT_FAILURE;
+        if(!MilepostIntegration.PRODUCTION.allowed(context))return JobScheduler.RESULT_FAILURE;
         JobScheduler scheduler=context.getSystemService(JobScheduler.class);
         return scheduler.schedule(new JobInfo.Builder(JOB_ID,new ComponentName(context,MilepostReconciliationJob.class))
                 .setRequiresCharging(true).setRequiresDeviceIdle(true)
                 .build());
     }
     @Override public boolean onStartJob(JobParameters parameters) {
-        if(!MilepostIntegration.PRODUCTION.enabled)return false;
+        if(!MilepostIntegration.PRODUCTION.allowed(this))return false;
         if(current!=null&&current.task!=null&&!current.task.isDone())return false;
         Run run=new Run();current=run;
         run.task=ScreenDataLoader.submit(()->{

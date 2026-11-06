@@ -23,9 +23,9 @@ final class MilepostScreenIntegration {
         this.container=container;
         if(view!=null){if(view.getParent() instanceof android.view.ViewGroup)((android.view.ViewGroup)view.getParent()).removeView(view);container.addView(view);view.onHostResume();}
     }
-    void resume(){if(!gate.enabled)return;stopped.set(false);refresh();}
+    void resume(){if(!gate.allowed(host))return;stopped.set(false);refresh();}
     void refresh(){
-        if(!gate.enabled||stopped.get()||container==null||loading)return;
+        if(!gate.allowed(host)||stopped.get()||container==null||loading)return;
         if(!leased){leased=gate.enterPresentation();if(!leased)return;}
         if(view!=null&&!fresh())clearView();
         loading=true;int token=++request;

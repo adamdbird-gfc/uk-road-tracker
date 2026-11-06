@@ -10,11 +10,11 @@ import android.view.View;
 import android.widget.*;
 import java.util.List;
 
-/** Inactive, embeddable native experience. No production caller, manifest entry or award writer.
+/** Embeddable production experience. Entitlements are read-only; replay writes presentation only.
  * Accepts only a worker-prepared compact receipt. Lifecycle and capture suspend optional replay.
  * Static, explicit transitions are also the reduced-motion alternative; no timed task is needed. */
 final class MilepostPresentationView extends ScrollView {
-    private static final int NAVY=0xFF0B1C50,CARD=0xFF233B78,MUTED=0xFFB9C5D8,GOLD=0xFFF7C450;
+    private static final int NAVY=0xFF0B1C50,CARD=0xFF242832,MUTED=0xFFB9C5D8,GOLD=0xFFF7C450;
     private final Activity host;
     private final MilepostPresentationStore store;
     private final MilepostPresentationStore.State state;
@@ -22,7 +22,11 @@ final class MilepostPresentationView extends ScrollView {
     private final LinearLayout body,cards;
     private LinearLayout cardProgress;
     private TextView revealProgress,revealCipher,revealIdentity,revealBiography,revealThemes;
-    private PlaceholderArt revealArt;
+    private MilepostArtworkView revealArt;
+    private android.animation.ValueAnimator animation;
+    private int animationTarget;
+    private boolean cancellingAnimation;
+    static final long ANIMATION_MS=1100;
     private Button revealNext;
     private final MilepostPresentationReader.PageLoader discoveryPages;
     private int request;
@@ -66,42 +70,73 @@ final class MilepostPresentationView extends ScrollView {
     private boolean current(){return snapshot.current&&freshness.getAsBoolean();}
     private boolean canReveal(){return resumed&&!recording()&&current()&&snapshot.introduced()&&!host.isFinishing()&&!host.isDestroyed();}
     void update(MilepostPresentation.Snapshot next){
-        snapshot=next;buildCards();request++;discoveries=null;viewingDiscoveries=false;loadingDiscoveries=false;
+        cancelAnimation();snapshot=next;buildCards();request++;discoveries=null;viewingDiscoveries=false;loadingDiscoveries=false;
         if(!canReveal())pauseReplay();
         // Never reset the cursor when more historical discoveries arrive.
         render();
     }
-    private void pauseReplay(){state.paused=true;store.save(state);}
+    private void cancelAnimation(){
+        if(animation!=null){cancellingAnimation=true;animation.cancel();animation=null;cancellingAnimation=false;}
+        if(revealArt!=null)revealArt.setStage(displayStage());
+        if(revealCipher!=null)revealCipher.setText(MilepostPresentation.cipher(displayStage()));
+    }
+    private void pauseReplay(){cancelAnimation();state.paused=true;store.save(state);}
     void replay(boolean fromBeginning){
         if(!canReveal()){pauseReplay();render();return;}
+        cancelAnimation();
         if(fromBeginning)state.cursor=0;
         state.replaying=true;state.paused=false;state.dismissed=false;
         state.artworkVersion=MilepostPresentation.ARTWORK_VERSION;store.save(state);render();
         View control=revealNext!=null&&revealNext.isEnabled()?revealNext:findViewWithTag("milepost_skip");
         if(control!=null)control.requestFocus(); // ScrollView brings the user-requested controls into view after layout.
     }
+    boolean motionAllowed(){return !state.staticMode&&android.animation.ValueAnimator.areAnimatorsEnabled()
+        &&!((android.view.accessibility.AccessibilityManager)host.getSystemService(android.content.Context.ACCESSIBILITY_SERVICE)).isTouchExplorationEnabled();}
     void next(){
         if(!canReveal()||state.paused||!state.replaying){pauseReplay();render();return;}
-        if(state.cursor>=snapshot.target())return;
-        state.cursor++;
-        state.completedStage=Math.max(state.completedStage,state.cursor);
-        store.save(state);updateReveal();
-        View control=findViewWithTag("milepost_next");
-        if(control==null||!control.isEnabled())control=findViewWithTag("milepost_skip");
-        if(control!=null)control.requestFocus();
-        View stage=findViewWithTag("milepost_reveal_progress");if(stage!=null)stage.announceForAccessibility(MilepostPresentation.announcement(displayStage()));
+        if(animation!=null||state.cursor>=snapshot.target())return;
+        int previous=displayStage(),target=previous+1;
+        if(!motionAllowed()){completeStage(target);return;}
+        animationTarget=target;revealNext.setEnabled(false);
+        animation=android.animation.ValueAnimator.ofFloat(0,1);animation.setDuration(ANIMATION_MS);
+        animation.setInterpolator(new android.view.animation.DecelerateInterpolator());
+        animation.addUpdateListener(value->{
+            if(!canReveal()){pauseReplay();render();return;}
+            float progress=(Float)value.getAnimatedValue();
+            revealArt.frame(target,progress);
+            revealCipher.setVisibility(View.VISIBLE);
+            String cipher=MilepostPresentation.animatedCipher(previous,target,progress);
+            revealArt.setCipher(cipher);revealCipher.setText(cipher);
+        });
+        animation.addListener(new android.animation.AnimatorListenerAdapter(){
+            @Override public void onAnimationEnd(android.animation.Animator value){
+                if(cancellingAnimation)return;
+                animation=null;
+                if(canReveal()&&!state.paused)completeStage(animationTarget);else pauseReplay();
+            }
+        });animation.start();
     }
-    void later(){state.paused=true;state.dismissed=true;state.dismissedReceipt=snapshot.receipt;store.save(state);render();}
+    private void completeStage(int target){
+        state.cursor=target;state.completedStage=Math.max(state.completedStage,target);store.save(state);updateReveal();
+        View control=revealNext!=null&&revealNext.isEnabled()?revealNext:findViewWithTag("milepost_skip");
+        if(control!=null)control.requestFocus();
+        if(revealProgress!=null)revealProgress.announceForAccessibility(MilepostPresentation.announcement(displayStage()));
+    }
+    void later(){cancelAnimation();state.paused=true;state.dismissed=true;state.dismissedReceipt=snapshot.receipt;store.save(state);render();}
     void skip(){
         if(!canReveal())return;
-        state.cursor=snapshot.target();state.completedStage=Math.max(state.completedStage,state.cursor);
+        cancelAnimation();cancelAnimation();state.cursor=snapshot.target();state.completedStage=Math.max(state.completedStage,state.cursor);
         state.replaying=false;state.paused=true;state.dismissed=true;state.dismissedReceipt=snapshot.receipt;
         store.acknowledge(state,snapshot);render();
     }
     int displayStage(){return Math.min(state.cursor,snapshot.target());}
     private void render(){
+        cancelAnimation();
         body.removeAllViews();
         heading(body,"Millennium Mileposts");
+        TextView attribution=text(body,"© OpenStreetMap contributors · ODbL 1.0\nhttps://www.openstreetmap.org/copyright",12);
+        android.text.util.Linkify.addLinks(attribution,android.text.util.Linkify.WEB_URLS);
+        attribution.setLinkTextColor(GOLD);
         text(body,snapshot.current?"Discoveries: "+snapshot.count:"Updating assessment. Showing the previous complete result.",16);
         if(recording()){
             text(body,"Reveal paused while recording. Your journey has priority.",16);
@@ -112,6 +147,8 @@ final class MilepostPresentationView extends ScrollView {
         if(!recording()&&current()&&(snapshot.count>0||snapshot.incomplete>0))
             button(body,"View discoveries","milepost_browse_discoveries",()->loadDiscoveries(0),true);
         if(snapshot.introduced()){
+            MilepostArtworkView collective=MilepostArtworkView.icon(host,R.drawable.milepost_collective);
+            body.addView(collective,new LinearLayout.LayoutParams(dp(48),dp(48)));
             heading(body,"In Honour of Time");
             text(body,snapshot.individuals()+" of 6 personalities"+(snapshot.awards.get(6).earned?". Collective achievement earned.":"."),16);
             if(!recording()){
@@ -136,7 +173,7 @@ final class MilepostPresentationView extends ScrollView {
         button(panel,"Later","milepost_later",this::later,true);
         button(panel,"Skip celebrations","milepost_skip_summary",()->{
             if(!current()||recording())return;
-            state.cursor=snapshot.target();state.completedStage=Math.max(state.completedStage,state.cursor);
+            cancelAnimation();state.cursor=snapshot.target();state.completedStage=Math.max(state.completedStage,state.cursor);
             state.replaying=false;state.paused=true;state.dismissed=true;state.dismissedReceipt=snapshot.receipt;
             store.acknowledge(state,snapshot);render();
         },true);
@@ -162,8 +199,11 @@ final class MilepostPresentationView extends ScrollView {
             button(panel,"Try again","milepost_retry_discoveries",()->loadDiscoveries(0),true);return;
         }
         if(discoveries.discoveries.isEmpty())text(panel,"No currently qualifying physical discoveries.",16);
-        for(MilepostPresentationReader.Discovery d:discoveries.discoveries)
+        for(MilepostPresentationReader.Discovery d:discoveries.discoveries){
+            MilepostArtworkView designIcon=MilepostArtworkView.icon(host,MilepostArtworkView.DESIGNS[d.design]);panel.addView(designIcon,new LinearLayout.LayoutParams(dp(48),dp(48)));
             text(panel,"Discovery "+d.ordinal+" · "+d.marker+" · "+(d.date==null?"Historical date unavailable":d.date+" (journey date)"),16);
+            text(panel,d.designLabel+" · OSM source location",14);
+        }
         if(discoveries.more){long after=discoveries.discoveries.get(discoveries.discoveries.size()-1).ordinal;
             button(panel,"Next discoveries","milepost_next_discoveries",()->loadDiscoveries(after),true);}
         button(panel,"First discoveries","milepost_first_discoveries",()->loadDiscoveries(0),true);
@@ -175,7 +215,7 @@ final class MilepostPresentationView extends ScrollView {
     private void card(LinearLayout parent,int index){
         MilepostPresentation.Card c=snapshot.card(index);LinearLayout panel=panel(parent);
         // Native text and a neutral generic icon. No identity appears in tags, descriptions or navigation for locked cards.
-        PlaceholderArt icon=new PlaceholderArt(host,snapshot.introduced()?7:0);
+        MilepostArtworkView icon=MilepostArtworkView.icon(host,c.earned?MilepostArtworkView.MEDALLIONS[index]:R.drawable.milepost_mystery);
         icon.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);panel.addView(icon,new LinearLayout.LayoutParams(dp(48),dp(48)));
         text(panel,c.title,20);text(panel,c.status,16);
         if(!c.biography.isEmpty())text(panel,c.biography,16);
@@ -186,10 +226,11 @@ final class MilepostPresentationView extends ScrollView {
     }
     private void reveal(){
         LinearLayout panel=panel(body);heading(panel,"Mystery reveal");
-        revealArt=new PlaceholderArt(host,displayStage());revealArt.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        revealArt=new MilepostArtworkView(host,displayStage());revealArt.enableCipherRing();revealArt.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         panel.addView(revealArt,new LinearLayout.LayoutParams(-1,dp(180)));
         revealProgress=text(panel,"",18);revealProgress.setTag("milepost_reveal_progress");
         revealThemes=text(panel,"",16);revealCipher=text(panel,"",20);revealCipher.setTag("milepost_replay_cipher");
+        revealCipher.setGravity(android.view.Gravity.CENTER);revealCipher.setTypeface(Typeface.MONOSPACE);revealCipher.setLetterSpacing(0.08f);
         revealCipher.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);revealCipher.setFocusable(false);
         revealIdentity=text(panel,"",22);revealBiography=text(panel,"",16);
         if(state.paused)text(panel,"Paused. Resume when ready.",16);
@@ -198,12 +239,15 @@ final class MilepostPresentationView extends ScrollView {
         button(panel,"Skip","milepost_skip",this::skip,canReveal());
         button(panel,"Later","milepost_reveal_later",this::later,true);
         button(panel,"Replay","milepost_replay_again",()->replay(true),canReveal());
-        text(panel,"Static reveal. Each completed stage stays available without motion, sound or timing.",16);
+        button(panel,state.staticMode?"Enable animation":"Use static reveal","milepost_motion",()->{
+            pauseReplay();state.staticMode=!state.staticMode;store.save(state);render();
+        },true);
+        text(panel,"Each completed stage stays available. Static reveal follows your motion and accessibility settings.",16);
     }
     /** Next changes only the current composition and native text, retaining the six cards and controls. */
     private void updateReveal(){
         if(revealProgress==null)return;
-        int stage=displayStage();revealArt.stage=stage;revealArt.invalidate();
+        int stage=displayStage();revealArt.setStage(stage);
         revealProgress.setText(MilepostPresentation.announcement(stage));
         revealCipher.setText(MilepostPresentation.cipher(stage));revealCipher.setVisibility(stage==0?View.GONE:View.VISIBLE);
         revealThemes.setText(stage>0&&stage<7?themeLabels(stage):"");revealThemes.setVisibility(stage>0&&stage<7?View.VISIBLE:View.GONE);
@@ -220,31 +264,9 @@ final class MilepostPresentationView extends ScrollView {
         cipher.setFocusable(false);cipher.setTag("milepost_cipher");
     }
     private void art(LinearLayout parent,int stage){
-        PlaceholderArt art=new PlaceholderArt(host,stage);art.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        MilepostArtworkView art=new MilepostArtworkView(host,stage);art.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         parent.addView(art,new LinearLayout.LayoutParams(-1,dp(180)));
         if(stage>0&&stage<7)text(parent,themeLabels(stage),16);
-    }
-    /** Replaceable six independently reconstructible panels, opaque identity veil, separate generic silhouette.
-     * No portrait or historical likeness is claimed. Only the current composition exists; zero bitmap decoding. */
-    static final class PlaceholderArt extends View {
-        int stage;final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
-        PlaceholderArt(Activity context,int stage){super(context);this.stage=MilepostPresentation.stage(stage);}
-        @Override protected void onDraw(Canvas canvas){
-            super.onDraw(canvas);float w=getWidth(),h=getHeight();
-            paint.setColor(MUTED);canvas.drawCircle(w/2,h*.35f,h*.12f,paint);
-            canvas.drawOval(w/2-h*.22f,h*.50f,w/2+h*.22f,h*.85f,paint);
-            if(stage<7){
-                paint.setColor(NAVY);canvas.drawRect(w/2-h*.25f,h*.15f,w/2+h*.25f,h*.9f,paint);
-                for(int i=0;i<stage;i++){
-                    // Fixed reserved panels do not depend on a prior frame or on other layers.
-                    float x=(i%3)*w/3,y=(i/3)*h/2;
-                    paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(3);paint.setColor(GOLD);
-                    canvas.drawRect(x+4,y+4,x+w/3-4,y+h/2-4,paint);paint.setStyle(Paint.Style.FILL);
-                }
-                paint.setColor(Color.WHITE);paint.setTextSize(h*.20f);paint.setTextAlign(Paint.Align.CENTER);
-                canvas.drawText("?",w/2,h*.6f,paint);
-            }
-        }
     }
     private LinearLayout column(LinearLayout parent){LinearLayout v=new LinearLayout(host);v.setOrientation(LinearLayout.VERTICAL);parent.addView(v,new LinearLayout.LayoutParams(-1,-2));return v;}
     private LinearLayout panel(LinearLayout parent){

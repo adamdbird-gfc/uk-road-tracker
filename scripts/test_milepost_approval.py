@@ -1,27 +1,44 @@
+import copy
 import hashlib
 import json
 import unittest
-from scripts.milepost_approval import build, verify, DATA, ASSET, ROOT
+from scripts.milepost_approval import build,verify,DATA,ASSET,ROOT,classify
 
 class ApprovalTest(unittest.TestCase):
+    def rows(self):return [json.loads(x) for x in (DATA/'revision-1/catalogue.jsonl').read_text().splitlines()]
     def test_reproducible_review_and_payload(self):
-        verify()
-        self.assertEqual(build(), build())
-
-    def test_every_candidate_has_exactly_one_non_approval_decision(self):
-        source=[json.loads(x)['osm_id'] for x in (DATA/'revision-1/catalogue.jsonl').read_text().splitlines()]
-        decisions=[json.loads(x) for x in (DATA/'revision-2/decisions.jsonl').read_text().splitlines()]
-        self.assertEqual(source,[r['candidate_id'] for r in decisions])
-        self.assertEqual(889,len(set(source)))
-        for row in decisions:
-            self.assertEqual('held',row['status']);self.assertTrue(row['reasons'])
-        self.assertEqual(4,sum(r['review_kind']=='targeted_source_review' for r in decisions))
-
-    def test_runtime_contains_no_candidates_and_matches_immutable_source_pin(self):
-        catalogue=json.loads(ASSET.read_text())
-        self.assertEqual([],catalogue['records'])
-        java=(ROOT/'android-prototype/app/src/main/java/com/roadprints/capture/MilepostCatalogue.java').read_text()
-        self.assertIn(hashlib.sha256(ASSET.read_bytes()).hexdigest(),java)
-        self.assertIn('APPROVED_COUNT=0',java)
-        self.assertIn('READY=APPROVED_COUNT>0',java)
-        self.assertNotIn('osm:node:',ASSET.read_text())
+        verify();self.assertEqual(build(),build())
+    def test_complete_decisions_and_specific_holds(self):
+        rows=self.rows();ds=classify(rows)
+        self.assertEqual([r['osm_id'] for r in rows],[d['candidate_id'] for d in ds])
+        self.assertEqual(887,sum(d['status']=='approved' for d in ds))
+        self.assertEqual({'osm:node:416710572','osm:node:9825206150'},{d['candidate_id'] for d in ds if d['status']=='held'})
+        for d in ds:
+            if d['status']!='approved':self.assertTrue(d['reasons'])
+    def test_runtime_pin_approved_only_and_attributed(self):
+        r=json.loads(ASSET.read_text())['records'];self.assertEqual(887,len(r))
+        self.assertEqual({'mills','rowe','mccoll','dudgeon'},{x['designer'] for x in r})
+        self.assertTrue(all(x['status']=='approved' for x in r))
+        self.assertEqual(len(r),len({x['physical_marker_id'] for x in r}))
+    def test_hostile_coordinates_identity_classification_and_duplicates(self):
+        for key,value,reason in [('latitude',100,'invalid_coordinates'),('osm_id','test:1','invalid_osm_point_identity')]:
+            r=copy.deepcopy(self.rows()[:1]);r[0][key]=value;self.assertIn(reason,classify(r)[0]['reasons'])
+        r=self.rows()[:2];r[1]['osm_id']=r[0]['osm_id'];self.assertTrue(all(d['status']=='held' for d in classify(r)))
+        r=self.rows()[:1];r[0]['source_tags']['ncn_milepost']='no';self.assertEqual('rejected',classify(r)[0]['status'])
+        r=self.rows()[:2];r[1]['latitude']=r[0]['latitude'];r[1]['longitude']=r[0]['longitude'];self.assertTrue(all(d['status']=='held' for d in classify(r)))
+    def test_same_reference_nearby_conflicts_but_distant_reference_is_metadata(self):
+        r=self.rows()[:2];r[1]['sustrans_ref']=r[0]['sustrans_ref'];r[1]['design']=r[0]['design']
+        r[1]['latitude']=r[0]['latitude']+.0001;r[1]['longitude']=r[0]['longitude']
+        self.assertTrue(all('nearby_reference_identity_conflict' in d['reasons'] for d in classify(r)))
+        r[1]['latitude']+=1;self.assertTrue(all(d['status']=='approved' for d in classify(r)))
+    def test_unknown_or_conflicting_design_keeps_location_without_award(self):
+        for value in ['yes','unknown']:
+            r=self.rows()[:1];r[0]['source_tags']['ncn_milepost']=value;d=classify(r)[0]
+            self.assertEqual('approved',d['status']);self.assertFalse(d['designer_verified'])
+        r=self.rows()[:1];r[0]['source_tags']['artist_name']='Iain McColl';d=classify(r)[0]
+        self.assertEqual('approved',d['status']);self.assertEqual('unknown',d['designer'])
+    def test_movement_limits_history_without_blocking_current_location(self):
+        r=self.rows()[:1];d=classify(r)[0];self.assertEqual('approved',d['status']);self.assertEqual('snapshot_forward_known_movement',d['temporal_policy'])
+    def test_nearby_distinct_posts_are_not_merged(self):
+        rows=[r for r in self.rows() if r['osm_id'] in ('osm:node:11954626856','osm:node:11962688546','osm:node:11962688547','osm:node:11962688548')]
+        self.assertEqual(4,len(rows));self.assertTrue(all(d['status']=='approved' for d in classify(rows)))

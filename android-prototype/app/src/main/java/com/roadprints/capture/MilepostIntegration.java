@@ -31,12 +31,14 @@ final class MilepostIntegration {
             "SELECT COUNT(*) FROM catalogue WHERE singleton=1 AND revision=? AND sha=? AND fingerprint=?",
             Integer.toString(revision),sha,fingerprint)==1;
     }
+    boolean allowed(Context context){return enabled&&(this!=PRODUCTION||"com.roadprints.capture".equals(context.getPackageName()));}
     boolean process(Context context,AtomicBoolean stopped,long deadline)throws Exception {
+        if(!allowed(context))return false;
         if(!enterProcessing())return enabled;
         try(MilepostDiscoveryLedger ledger=new MilepostDiscoveryLedger(context,database);
             MilepostReconciliationJob.CaptureGuard guard=new MilepostReconciliationJob.CaptureGuard(context,stopped,deadline)){
             MilepostArchiveReader.check(guard);
-            if(this==PRODUCTION)MilepostCatalogue.install(context,ledger);
+            if(this==PRODUCTION&&!verified(ledger))MilepostCatalogue.install(context,ledger);
             if(!verified(ledger))return false;
             try(MilepostAchievementDeriver worker=new MilepostAchievementDeriver(context,ledger,user,()->verified(ledger))){
                 BooleanSupplier yield=()->guard.getAsBoolean()||!enabled;
@@ -48,7 +50,7 @@ final class MilepostIntegration {
         }finally{leaveProcessing();}
     }
     MilepostPresentation.Snapshot read(Context context,MilepostDiscoveryLedger ledger,long acknowledged,BooleanSupplier cancelled)throws Exception {
-        if(!verified(ledger))return null;
+        if(!allowed(context)||!verified(ledger))return null;
         MilepostPresentation.Snapshot snapshot=MilepostPresentationReader.read(context,ledger,user,acknowledged,cancelled);
         return snapshot.current&&verified(ledger)?snapshot:null;
     }

@@ -9,15 +9,15 @@ import java.util.*;
 import org.json.*;
 
 /** Sole production catalogue reader. Reviewed source pins only; no network/preferences/import override.
- * Revision 2 is a blocked approval checkpoint, explicitly containing zero approved records.
+ * Revision 3 accepts OSM source evidence under the owner-approved policy.
  * Candidate inventory and acceptance fixtures are never read by this class. */
 final class MilepostCatalogue {
-    static final int REVISION=2, APPROVED_COUNT=0, MAX_BYTES=2*1024*1024;
+    static final int REVISION=3, APPROVED_COUNT=887, MAX_BYTES=2*1024*1024;
     static final String ASSET="millennium-mileposts/catalogue.json";
-    static final String SHA="3ef1c32d74c12f8d24c9892fea3c4e960d09f601a4f9cf71a390c7db3572a28e";
+    static final String SHA="1f7468a5ed054c5822c88614650fe33814554502a57779fc1b7375749d35c2ce";
     // Activation requires a reviewed catalogue/pin change. No runtime/debug bypass.
     static final boolean READY=APPROVED_COUNT>0;
-    static final String BLOCKER="No physical positions with resolved precision and dated validity approved";
+    static final String BLOCKER="Approved catalogue unavailable or incompatible";
     private MilepostCatalogue(){}
 
     static List<MilepostDiscoveryLedger.Marker> load(Context context)throws Exception {
@@ -56,9 +56,10 @@ final class MilepostCatalogue {
                 Instant.parse(e.getString("observed_at"));
                 if(!e.getString("receipt_sha256").matches("[0-9a-f]{64}"))throw new IOException("Missing evidence receipt pin");
             }
-            // Approval records must document resolution; no guessed tolerance or uncertainty radius.
+            // Dates are explicit policy bounds, not invented survey dates. Known moves restrict retrospective use.
             text(r,"coordinate_evidence");text(r,"precision_resolution");text(r,"validity_evidence");Instant.parse(r.getString("reviewed_at"));
             long from=Instant.parse(r.getString("valid_from")).toEpochMilli(),until=Instant.parse(r.getString("valid_until")).toEpochMilli();
+            if(r.has("temporal_policy")&&!Arrays.asList("source_assumed_stable","snapshot_forward_known_movement").contains(r.getString("temporal_policy")))throw new IOException("Unknown temporal policy");
             if(from<946684800000L||until<=from)throw new IOException("Invalid milepost position interval");
             List<String> names=new ArrayList<>();JSONArray a=r.getJSONArray("aliases");
             for(int j=0;j<a.length();j++){
@@ -82,7 +83,7 @@ final class MilepostCatalogue {
     private static String hex(byte[] bytes){StringBuilder s=new StringBuilder();for(byte b:bytes)s.append(String.format(Locale.ROOT,"%02x",b&255));return s.toString();}
     static String fingerprint() {
         // Reviewed marker envelope and file checksum are both checked by production installation.
-        return "f3e3436ecfb80e649cbef6cf06bcde07b54f5b01cc45108f6599c1fd1f359ee3";
+        return "022118567034f1c648c7e158b0f44cb3969b3327618d739fad19a47b26ebc535";
     }
     static void install(Context context,MilepostDiscoveryLedger ledger)throws Exception {
         List<MilepostDiscoveryLedger.Marker> markers=load(context);

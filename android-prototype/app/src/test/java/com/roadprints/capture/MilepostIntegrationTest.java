@@ -31,24 +31,24 @@ public class MilepostIntegrationTest {
     MilepostPresentation.Snapshot read(long acknowledged)throws Exception{
         MilepostPresentation.Snapshot[] s={null};f.work(()->s[0]=gate.read(f.c,f.ledger,acknowledged,()->false));return s[0];
     }
-    @Test public void productionDisabledDespiteImportedPreferencesAndStaleJob()throws Exception{
-        f.c.getSharedPreferences("roadprints_mileposts",0).edit().putBoolean("enabled",true).commit();
-        JobScheduler scheduler=f.c.getSystemService(JobScheduler.class);scheduler.cancelAll();
-        assertFalse(MilepostIntegration.PRODUCTION.enabled);
-        assertFalse(MilepostIntegration.PRODUCTION.enterPresentation());assertFalse(MilepostIntegration.PRODUCTION.enterProcessing());
-        assertEquals(JobScheduler.RESULT_FAILURE,MilepostReconciliationJob.schedule(f.c));assertNull(scheduler.getPendingJob(MilepostReconciliationJob.JOB_ID));
-        assertFalse(Robolectric.buildService(MilepostReconciliationJob.class).create().get().onStartJob(null));
-        f.work(()->assertFalse(MilepostIntegration.PRODUCTION.process(f.c,new AtomicBoolean(),Long.MAX_VALUE)));
-        Activity a=Robolectric.buildActivity(Activity.class).setup().get();LinearLayout section=new LinearLayout(a);
-        MilepostScreenIntegration screen=new MilepostScreenIntegration(a,MilepostIntegration.PRODUCTION);screen.mount(section);screen.resume();screen.refresh();screen.pause();
-        assertEquals(0,section.getChildCount());assertFalse(f.c.getDatabasePath(MilepostReconciliationJob.DATABASE).exists());
+    @Test public void productionRequiresCorrectPackageAndPinnedCatalogueDespitePreferences()throws Exception{
+        f.c.getSharedPreferences("roadprints_mileposts",0).edit().putBoolean("enabled",false).commit();
+        assertTrue(MilepostIntegration.PRODUCTION.enabled);
+        f.work(()->assertFalse(MilepostIntegration.PRODUCTION.verified(f.ledger)));
+        android.content.Context sandbox=new android.content.ContextWrapper(f.c){
+            @Override public String getPackageName(){return "com.roadprints.capture.milepostacceptance";}
+        };
+        assertFalse(MilepostIntegration.PRODUCTION.allowed(sandbox));
+        assertEquals(JobScheduler.RESULT_FAILURE,MilepostReconciliationJob.schedule(sandbox));
+        f.work(()->assertFalse(MilepostIntegration.PRODUCTION.process(sandbox,new AtomicBoolean(),Long.MAX_VALUE)));
+        assertFalse(f.c.getDatabasePath(MilepostReconciliationJob.DATABASE).exists());
     }
     @Test public void validatedArchiveThroughAllSevenAwardsSummaryAndPersistentReplay()throws Exception{
         prepare(7,100);String original=f.c.getSharedPreferences("roadprints_achievements_v1",0).getAll().toString();process();
         MilepostPresentation.Snapshot s=read(0);assertNotNull(s);assertEquals(7,s.count);assertEquals(6,s.individuals());assertTrue(s.awards.get(6).earned);
         for(int i=0;i<4;i++)assertTrue(s.awards.get(i).earned);assertEquals(7,s.target());assertEquals(7,s.newPosts);
         Activity a=Robolectric.buildActivity(Activity.class).setup().get();MilepostPresentationStore store=new MilepostPresentationStore(a,gate.user);
-        MilepostPresentationView view=new MilepostPresentationView(a,store,s,(after,done)->{});a.setContentView(view);view.onHostResume();
+        MilepostPresentationStore.State staticState=store.read();staticState.staticMode=true;store.save(staticState);MilepostPresentationView view=new MilepostPresentationView(a,store,s,(after,done)->{});a.setContentView(view);view.onHostResume();
         assertNotNull(view.findViewWithTag("milepost_summary_replay"));view.replay(true);for(int i=0;i<7;i++)view.next();
         assertEquals(7,store.read().cursor);view.skip();assertEquals(s.postOrdinal,store.read().acknowledgedPosts);
         view.onHostPause();MilepostPresentationView restarted=new MilepostPresentationView(a,store,s,(after,done)->{});a.setContentView(restarted);restarted.onHostResume();
@@ -96,7 +96,7 @@ public class MilepostIntegrationTest {
     }
     @Test public void captureStartAndFreshnessChangeBlockPresentationTransitions()throws Exception{
         prepare(7,100);process();MilepostPresentation.Snapshot s=read(0);Activity a=Robolectric.buildActivity(Activity.class).setup().get();
-        MilepostPresentationStore store=new MilepostPresentationStore(a,gate.user);MilepostPresentationView view=new MilepostPresentationView(a,store,s,(after,done)->{});a.setContentView(view);view.onHostResume();view.replay(true);view.next();
+        MilepostPresentationStore store=new MilepostPresentationStore(a,gate.user);MilepostPresentationStore.State staticState=store.read();staticState.staticMode=true;store.save(staticState);MilepostPresentationView view=new MilepostPresentationView(a,store,s,(after,done)->{});a.setContentView(view);view.onHostResume();view.replay(true);view.next();
         AtomicBoolean fresh=new AtomicBoolean(true);view.freshness=fresh::get;fresh.set(false);view.next();view.skip();assertEquals(1,store.read().cursor);assertEquals(0,store.read().acknowledgedPosts);
         fresh.set(true);view.replay(false);a.getSharedPreferences("roadprints_capture_state",0).edit().putBoolean("active",true).commit();Shadows.shadowOf(Looper.getMainLooper()).idle();view.next();assertEquals(1,store.read().cursor);assertTrue(store.read().paused);
         f.work(()->assertThrows(java.util.concurrent.CancellationException.class,()->gate.process(f.c,new AtomicBoolean(),Long.MAX_VALUE)));
@@ -114,6 +114,7 @@ public class MilepostIntegrationTest {
     @Test public void integratedRepeatedEntryDismissalAndReplayMeasureHeap()throws Exception{
         prepare(7,100);process();Activity a=Robolectric.buildActivity(Activity.class).setup().get();
         LinearLayout section=new LinearLayout(a);a.setContentView(section);MilepostScreenIntegration screen=new MilepostScreenIntegration(a,gate);screen.mount(section);
+        MilepostPresentationStore presentation=new MilepostPresentationStore(a,gate.user);MilepostPresentationStore.State staticReplay=presentation.read();staticReplay.staticMode=true;presentation.save(staticReplay);
         for(int i=0;i<2;i++)cycle(screen,section);
         System.gc();Thread.sleep(50);long before=MilepostPresentationTest.heap();java.util.concurrent.atomic.AtomicLong peak=new java.util.concurrent.atomic.AtomicLong(before);
         AtomicBoolean stop=new AtomicBoolean();Thread sampler=new Thread(()->{while(!stop.get()){peak.accumulateAndGet(MilepostPresentationTest.heap(),Math::max);try{Thread.sleep(2);}catch(InterruptedException e){return;}}});sampler.start();

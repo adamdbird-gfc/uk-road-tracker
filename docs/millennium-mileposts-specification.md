@@ -1,6 +1,6 @@
 # Millennium Mileposts: authoritative feature specification
 
-Date: 5 November 2026. Priority P2. Status: **specified; implementation gated by evidence and separately authorised development**.
+Date: 5 November 2026. Priority P2. Status: **Stage 10 implemented in PR #297; source review and Stage 11 device/release acceptance remain separate**.
 Source baseline: `24278f5256bf367039b9a3adf986d619754ccb15` (main, merged PR #276).
 This document is the single product/behaviour authority for this feature. Companion files supply verification, tests, artwork and delivery detail:
 
@@ -9,6 +9,12 @@ This document is the single product/behaviour authority for this feature. Compan
 - [Artwork and animation brief](millennium-mileposts/artwork-brief.md)
 - [Phased implementation plan](millennium-mileposts/implementation-plan.md)
 - [Read-only evidence receipt](millennium-mileposts/readiness-receipt.json)
+
+## Stage 10 owner-policy amendment — 6 November 2026
+
+The Stage 10 brief supersedes the earlier blanket physical-survey, dated-position and portrait/silhouette prerequisites. [Stage 10 source acceptance and production contract](millennium-mileposts/stage-10-production.md) is authoritative for OSM approval, stable identity mapping, explicit retrospective source assumptions and record-specific movement restrictions. A valid explicit OSM design tag is acceptable attribution evidence; unknown/conflicting designs may count for Harrow but never a designer. The fixed six identities, earning conditions, 100m/evidence safeguards and cipher letter positions below remain unchanged.
+
+Locked cards remain fully anonymous question marks at every point: **no silhouette or other identity clue**. Unlocked art is an original symbolic commemorative emblem. Stage 1–7 centre emblems change with each discovery; the existing optional reveal uses native short, interruptible card/ring/glyph animation with a static equivalent. No copied likeness, poetry or source sculpture detail is required. Earlier contradictory artwork/evidence wording below is historical design context and must not restore the superseded blanket hold or locked silhouettes.
 
 ## Scope and precedence
 

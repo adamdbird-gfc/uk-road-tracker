@@ -35,13 +35,27 @@ public class MilepostCatalogueTest {
     List<MilepostDiscoveryLedger.Marker> parse(JSONObject root,int count)throws Exception{
         byte[] data=bytes(root);return MilepostCatalogue.parse(data,NcnJson.hash(data),2,count);
     }
-    @Test public void bundledApprovalCheckpointFailsClosedWithoutTouchingLedger()throws Exception{f.work(()->{
-        assertFalse(MilepostCatalogue.READY);assertFalse(MilepostIntegration.PRODUCTION.enabled);
-        assertEquals(0,MilepostCatalogue.load(f.c).size());
-        assertEquals(MilepostCatalogue.fingerprint(),MilepostDiscoveryLedger.markerFingerprint(Collections.emptyList()));
-        f.posts(1);String old=MilepostAchievements.catalogue(f.ledger.db());
-        assertThrows(java.io.IOException.class,()->MilepostCatalogue.install(f.c,f.ledger));
-        assertEquals(old,MilepostAchievements.catalogue(f.ledger.db()));
+    @Test public void bundledApprovedCatalogueInstallsWithPinnedFingerprint()throws Exception{f.work(()->{
+        assertTrue(MilepostCatalogue.READY);assertTrue(MilepostIntegration.PRODUCTION.enabled);
+        List<MilepostDiscoveryLedger.Marker> markers=MilepostCatalogue.load(f.c);
+        assertEquals(887,markers.size());
+        assertEquals(MilepostCatalogue.fingerprint(),MilepostDiscoveryLedger.markerFingerprint(markers));
+        MilepostCatalogue.install(f.c,f.ledger);
+        assertTrue(MilepostIntegration.PRODUCTION.verified(f.ledger));
+        MilepostCatalogue.install(f.c,f.ledger); // exact reinstallation is idempotent
+    });}
+    @Test public void approvedOsmLocationSupportsRealCoordinateJourneyAndDesignerAward()throws Exception{f.work(()->{
+        List<MilepostDiscoveryLedger.Marker> markers=MilepostCatalogue.load(f.c);
+        // Real OSM geometry; journey is test evidence, never claimed to be a physical visit.
+        MilepostDiscoveryLedger.Marker actual=markers.stream().filter(m->m.aliases.contains("osm:node:35181782")).findFirst().get();
+        MilepostCatalogue.install(f.c,f.ledger);
+        org.json.JSONObject journey=f.journey("approved-osm");
+        org.json.JSONArray gps=journey.getJSONArray("capture_route_samples");
+        double dx=0.0005;
+        org.json.JSONArray coords=journey.getJSONObject("route_geometry").getJSONArray("coordinates");
+        for(int i=0;i<gps.length();i++){gps.getJSONArray(i).put(0,actual.lon-dx*2+i*dx).put(1,actual.lat);coords.getJSONArray(i).put(0,actual.lon-dx*2+i*dx).put(1,actual.lat);}
+        JourneyStore.save(f.c,journey);MilepostAchievementsTest.setNcn(f.ncn(0));f.derive(1000);
+        assertTrue(f.award(2).getBoolean("earned"));
     });}
     @Test public void checksumAndCountMismatchRejectBeforeInstallation()throws Exception{
         JSONObject root=envelope();assertThrows(java.io.IOException.class,()->MilepostCatalogue.parse(bytes(root),"0".repeat(64),2,1));

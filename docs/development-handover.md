@@ -2,6 +2,14 @@
 
 Last reviewed: 2026-11-04. This is the **entrypoint**, not a replacement for issue specifications or code review.
 
+## Millennium Mileposts Stage 10 — 6 November 2026
+
+PR [#297](https://github.com/adamdbird-gfc/uk-road-tracker/pull/297) is validated and unmerged for owner review. Stage 9 #296 merged, with deployment suppressed, at `14d3042d25af7cc91dac9ea62d83015c8ed99358`, which remains main. Tested Stage 10 code/data is `c5fc85de73302555070ccf8b383db1b3d27d2bb4`; final handover changes Markdown only. [Complete delivery and Stage 11 handover](millennium-mileposts/stage-10-production.md).
+
+The owner-approved OSM source policy replaces Stage 9's blanket independent-survey/date gate: revision 3 approves 887 posts, holds two explicit location anomalies, rejects none; all approved posts have supported explicit OSM design tags. Six movement/location-correction records restrict historical matching to the source snapshot; other records use the documented stable-source retrospective assumption. Do not restore the earlier blanket hold. Original candidate/source receipts remain unchanged.
+
+The branch enables the pinned normal production path, integrates 23 original line vectors and the seven-stage native animated cipher, and preserves anonymous question-mark cards and acceptance-package isolation. 326 Android JVM/acceptance tests, compilation/lint, memory, capture and isolation guards pass; CI Python 35 and local Python 36 pass. No APK, live deployment/publication or physical-device acceptance. Stage 11 owns authorised integration, actual installed/catalogue provenance, Pixel/Samsung acceptance and one installable signed private APK. #283/#286 remain deferred; #294 device gaps remain open. Resume from PR #297's latest head; preserve its implementation and final validation receipts.
+
 ## Exact NCN artifact recovery — 4 November 2026
 
 The previous quota/entrypoint checkpoints below are historical. PR #270 is merged

@@ -12,7 +12,7 @@ final class MilepostPresentationStore {
         long acknowledgedPosts,acknowledgedAwards;
         String acknowledgedReceipt="",dismissedReceipt="";
         int completedStage,cursor,artworkVersion=MilepostPresentation.ARTWORK_VERSION;
-        boolean paused=true,dismissed,replaying,staticMode=true;
+        boolean paused=true,dismissed,replaying,staticMode=false;
     }
     MilepostPresentationStore(Context context,String user){
         prefs=context.getSharedPreferences("roadprints_milepost_presentation_v1",Context.MODE_PRIVATE);

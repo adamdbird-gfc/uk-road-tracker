@@ -1,0 +1,122 @@
+{
+  "artwork_version": 2,
+  "creator": "Original Roadprints project artwork",
+  "rights": "Project-authored line geometry; no third-party images incorporated",
+  "assets": [
+    {
+      "name": "milepost_medallion_mills",
+      "svg_sha256": "2cab256a5684b9d79b9bc530e4d8d52959cd2a1b75b60612ca5d8380db609691",
+      "android_sha256": "e6480865f015a3323a8a5db6d3c3ef209bba18216dd1ddce01085a3344e72789"
+    },
+    {
+      "name": "milepost_medallion_rowe",
+      "svg_sha256": "8a523c0615699a3c3f2490cb1f38c66162521ab557ff4216688df5dd7a904111",
+      "android_sha256": "fb23dc19c1c5525822058f9a46f9f0b1624b55a4ccc483c34caf2624b42694a4"
+    },
+    {
+      "name": "milepost_medallion_mccoll",
+      "svg_sha256": "936ab2fe86aaf5d275d65ffc8f704c377d68cbdc59ff65ae6ced2264ed0cb0d0",
+      "android_sha256": "0ce11ac6ad97a7bf888adf129ff25870acc8ec2863641f9e6b8c329baf856a57"
+    },
+    {
+      "name": "milepost_medallion_dudgeon",
+      "svg_sha256": "dd595c2fcb6e26daa3607858b5656644ae203af3d9401766608aaaa47277d4cc",
+      "android_sha256": "5d11fe457b0e6f7f9fc7e9dab4f58f0997e95a0319b6afa2a75fdf0e4c9e45e0"
+    },
+    {
+      "name": "milepost_medallion_grimshaw",
+      "svg_sha256": "317d5d3794add247c1ba52da922166825885307ae8540d4d0a07927c970265a8",
+      "android_sha256": "b14c9023134cbfd2cdc4d7db6621048caaf910e2c5017eabbc96df6ea3536668"
+    },
+    {
+      "name": "milepost_medallion_harrow",
+      "svg_sha256": "49390014a7fae27aa1003c127e70f35518348d17a63f6cecdba2e8018bac9c83",
+      "android_sha256": "e5467812f4150dad6d006fdf8b2578b34f87aaf1b504d9411f4f2401f32c9a41"
+    },
+    {
+      "name": "milepost_collective",
+      "svg_sha256": "01235b8be2554f5940755256baa4577b094371b58dbe5bcc3ceff7b5234684cc",
+      "android_sha256": "08a882985b55863e47ae218db77e09f5cd618356af770ac68698e0d6b3d5042a"
+    },
+    {
+      "name": "milepost_design_mills",
+      "svg_sha256": "61cf55a0f92b28d21a7cd79cfe2e11aa6ff8509f5043bc19e70083cd5a8bac83",
+      "android_sha256": "f1ab1d4f0dcce86cd0a9439ea87c38353e85efd2e14cc9ef37bdada615deda34"
+    },
+    {
+      "name": "milepost_design_rowe",
+      "svg_sha256": "0dc9cca09230327086311ea19020c889154f41614f63fddde18f81f2662201e4",
+      "android_sha256": "914861b56aef26b487a809da17765a3494cc9ddeeb458b8670156aac540b95d7"
+    },
+    {
+      "name": "milepost_design_mccoll",
+      "svg_sha256": "a007470207ccb6465e1119d914dce1e631ec1eda53c32e5d29ca3e57c8b68936",
+      "android_sha256": "ee91dc06f839bfd104d9d0085e0c8babcd8c78843aeb85225e693ebae7b229c7"
+    },
+    {
+      "name": "milepost_design_dudgeon",
+      "svg_sha256": "580888f6d96f5b569ecd0c9975e21bbce96cd7dd49b25eb758547252676967f9",
+      "android_sha256": "e9a3fbfccae5197c7b03d4213d055ff05839513d63cee67df914a4c5bb3fa7ad"
+    },
+    {
+      "name": "milepost_design_unknown",
+      "svg_sha256": "a1da875417d6e1dd24a5eb93a099d581881eda1da114de8e72bfcce22a0342b6",
+      "android_sha256": "bd2c90c93e31cdcc210f9d1ec0a0616c0067639389cde6e8d7d35ed9998a66e5"
+    },
+    {
+      "name": "milepost_theme_seasons",
+      "svg_sha256": "39e3ab5081431d6b65a46f60a8e0686ebb6a985000b634e51cc54eb5a295f33d",
+      "android_sha256": "4f22ce55f9d137d4e3e9391f0188eb624151d1585222a5f9bfb4233aa81bd111"
+    },
+    {
+      "name": "milepost_theme_continents",
+      "svg_sha256": "05490c6e8c72cce4db5276026d84b2fb205ad4bd3a202589d8bc05b1c487185a",
+      "android_sha256": "c99834110bf49c67ec8725dc199ec61bd468989a76d2a435e6f6738fffd8d441"
+    },
+    {
+      "name": "milepost_theme_ages",
+      "svg_sha256": "30d689d26dd9f99c90cb91a69333f1c01f349165d14a94757d497c8d2823cad1",
+      "android_sha256": "33d1f03a6a06e3b48eafdd0f10ea1e58016842d8721db5b4fcb1914be7a813e5"
+    },
+    {
+      "name": "milepost_theme_zodiac",
+      "svg_sha256": "12ca515aed9d75489e248d54fc41227e558e6b26cc3dbcbeee2d1f97e011108a",
+      "android_sha256": "ff06eee40090892b7acae5ab01a892bcef2b3d4f7061c7cf99f966f14f1abe59"
+    },
+    {
+      "name": "milepost_theme_centuries",
+      "svg_sha256": "419ed7a5919019d5960fb5dd705859568c44d73149ce72fc3d2fbfaa6cb5bbfa",
+      "android_sha256": "8b769996389671d24871e2393329b72ea06eddbb0b327d67fcfa4b84195c8d3c"
+    },
+    {
+      "name": "milepost_theme_mystery",
+      "svg_sha256": "4cef5d9060e3969e320a76b1868a804f68c87b5518f3a83d4c75253f10083e27",
+      "android_sha256": "cd89a182fab9403a5876a9dea002db28c53b72fd1d14a733a6177fb0f617ff16"
+    },
+    {
+      "name": "milepost_theme_harrow",
+      "svg_sha256": "e8c1b4c12342ac359bd09691c47daec6b4614d5da9eca894f186d0bf8cfe3c61",
+      "android_sha256": "8895a604e12d29f8034284758eefb92c6d7982ded4f5d92bbf4cf21a1e460499"
+    },
+    {
+      "name": "milepost_mystery",
+      "svg_sha256": "1b0b6996bb4f3523b4d7771c5ed517fc3e415bb3893bf094c5f29a88da9ec16c",
+      "android_sha256": "284c721f19aaf51d5cf46ca1529294d5e10bfd8dce0ed5e292d8d381947d9149"
+    },
+    {
+      "name": "milepost_ring_inner",
+      "svg_sha256": "34b266a54889852fb130e5f71d05bcc5cd83343b9de26cabf5ee4dcdc4d4881c",
+      "android_sha256": "c42a750caabfda310d96ac93cdc64d3af83ade12510b57c67c4efc3db821cb3f"
+    },
+    {
+      "name": "milepost_ring_outer",
+      "svg_sha256": "3c5e0d3cb89effbe92e560bb0b2bf04305e6c66b71c26a63b750efa1e5cf7060",
+      "android_sha256": "622a60b46cd5c2385443c322c074f862a66d727fd04cf87ff5ca69b75e83aef5"
+    },
+    {
+      "name": "milepost_card_layer",
+      "svg_sha256": "c8bcda82494b821fcfc2369200cc0c30487b67bc8e5af75bf9aef57b7dc30823",
+      "android_sha256": "fcfa61cc25de6e373f72178c1721532a510670be78245717ddcc79f3581661ba"
+    }
+  ]
+}
