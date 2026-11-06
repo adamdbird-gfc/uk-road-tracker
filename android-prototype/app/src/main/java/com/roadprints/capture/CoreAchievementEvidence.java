@@ -7,6 +7,10 @@ import java.util.*;
 
 /** One bounded, streaming scan: totals and distinct matched coverage are separate. */
 final class CoreAchievementEvidence {
+    private final AchievementGeometrySpool spool;
+    CoreAchievementEvidence(){this(null);}
+    CoreAchievementEvidence(AchievementGeometrySpool spool){this.spool=spool;}
+    String retain(JSONObject geometry){return spool==null?geometry.toString():spool.retain(geometry);}
     double roadMetres, footMetres, cycleMetres, longestRoad, longestFoot, longestCycle;
     final Set<String> cycleJourneys=new HashSet<>();
     boolean captured;
@@ -51,7 +55,7 @@ final class CoreAchievementEvidence {
             }
         }
         if((!road&&!foot)||!"complete".equals(journey.optString("processing_status"))) return;
-        TownAchievementEvidence.addRoadDiscovery(journey,townRoads);
+        TownAchievementEvidence.addRoadDiscovery(journey,townRoads,this::retain);
         JSONObject result=journey.optJSONObject("processing_result");
         if(result==null)return;
         (road?roadCoverage:footCoverage).add(result.optJSONObject("geojson"),removed);
@@ -80,7 +84,7 @@ final class CoreAchievementEvidence {
                 if(numbered)continue;
                 String name=normalize(props.optString("name",props.optString("road_name","")));
                 if(name.isEmpty()||name.matches("[0-9.,]+"))continue;
-                named.computeIfAbsent(name,k->new LinkedHashSet<>()).add(geometry.toString());
+                named.computeIfAbsent(name,k->new LinkedHashSet<>()).add(retain(geometry));
             }
         }
     }
@@ -112,8 +116,8 @@ final class CoreAchievementEvidence {
      * Only materialise the road currently being attributed. No simplification or cap. */
     static List<JSONObject> geometries(Set<String> values) {
         List<JSONObject> result=new ArrayList<>();
-        try {for(String value:values)result.add(new JSONObject(value));}
-        catch(org.json.JSONException invalid){throw new IllegalStateException("Invalid retained road geometry",invalid);}
+        try {for(String value:values)result.add(new JSONObject(AchievementGeometrySpool.restore(value)));}
+        catch(org.json.JSONException | java.io.IOException invalid){throw new IllegalStateException("Invalid retained road geometry",invalid);}
         return result;
     }
     static List<JSONArray> lines(JSONObject geometry) {
@@ -139,6 +143,7 @@ final class CoreAchievementEvidence {
             for(int i=0;i<features.length();i++) {
                 JSONObject f=features.optJSONObject(i);
                 for(JSONArray line:lines(f==null?null:f.optJSONObject("geometry")))for(int j=1;j<line.length();j++,edge++) {
+                    if((j&255)==0)JourneyStore.checkAchievementCancellation();
                     if(removed.contains(edge))continue;
                     JSONArray a=line.optJSONArray(j-1),b=line.optJSONArray(j);if(a==null||b==null||a.length()<2||b.length()<2)continue;
                     double lngA=a.optDouble(0,Double.NaN),latA=a.optDouble(1,Double.NaN),lngB=b.optDouble(0,Double.NaN),latB=b.optDouble(1,Double.NaN);

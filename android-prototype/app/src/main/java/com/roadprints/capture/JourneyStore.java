@@ -519,9 +519,17 @@ public final class JourneyStore {
         return journey;
     }
 
+    private static final ThreadLocal<java.util.function.BooleanSupplier> achievementCancellation=new ThreadLocal<>();
+    static void checkAchievementCancellation(){
+        java.util.function.BooleanSupplier cancelled=achievementCancellation.get();
+        if(Thread.currentThread().isInterrupted()||(cancelled!=null&&cancelled.getAsBoolean()))
+            throw new java.util.concurrent.CancellationException();
+    }
     static void forEachAchievementEvidence(Context context, java.util.function.BooleanSupplier cancelled,
                                     JourneyVisitor visitor) throws Exception {
         migrateLegacy(context);
+        achievementCancellation.set(cancelled);
+        try {
         List<File> files = archiveFiles(context);
         files.sort((left, right) -> Long.compare(right.lastModified(), left.lastModified()));
         for (File file : files) {
@@ -561,6 +569,7 @@ public final class JourneyStore {
                 journey = upgrade(context, read(file));
             if (journey != null) visitor.visit(journey);
         }
+        }finally{achievementCancellation.remove();}
     }
 
     /** Retain a small ordered train-route fingerprint without allocating raw GPS history. */
@@ -610,6 +619,7 @@ public final class JourneyStore {
     }
 
     private static Object readEvidenceValue(JsonReader reader) throws Exception {
+        checkAchievementCancellation();
         switch (reader.peek()) {
             case BEGIN_OBJECT:
                 JSONObject object = new JSONObject();reader.beginObject();
@@ -621,8 +631,11 @@ public final class JourneyStore {
                 reader.endArray();return array;
             case NUMBER:
                 String number=reader.nextString();
+                // Coordinates are normally decimal: do not allocate an exception for every ordinate.
+                if(number.indexOf('.')>=0||number.indexOf('e')>=0||number.indexOf('E')>=0)
+                    return Double.parseDouble(number);
                 try { return Long.parseLong(number); }
-                catch(NumberFormatException decimal) { return Double.parseDouble(number); }
+                catch(NumberFormatException overflow) { return Double.parseDouble(number); }
             case BOOLEAN: return reader.nextBoolean();
             case NULL: reader.nextNull();return JSONObject.NULL;
             default: return reader.nextString();

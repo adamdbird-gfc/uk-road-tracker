@@ -124,13 +124,16 @@ final class AchievementStore {
                 +context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).getInt("evidence_revision",0);
     }
 
-    static Snapshot calculate(Context context) {
+    static Snapshot calculate(Context context) {return calculate(context,()->false);}
+    static Snapshot calculate(Context context,java.util.function.BooleanSupplier cancelled) {
+        if(cancelled.getAsBoolean()||Thread.currentThread().isInterrupted())throw new java.util.concurrent.CancellationException();
         Context app=context.getApplicationContext();
         long revision=JourneyStore.dataRevision(app);
         MotorwayProgressCalculator motorways=new MotorwayProgressCalculator(app,null,false);
         ARoadProgressCalculator aRoads=new ARoadProgressCalculator(app,false);
         CrossingTracker crossingTracker=new CrossingTracker();
-        CoreAchievementEvidence core=new CoreAchievementEvidence();
+        try(AchievementGeometrySpool spool=new AchievementGeometrySpool(app.getCacheDir())) {
+        CoreAchievementEvidence core=new CoreAchievementEvidence(spool);
         GroundhogDayEvidence groundhog=new GroundhogDayEvidence();
         final LandmarkEvidence landmarks;
         try { landmarks=new LandmarkEvidence(app); }
@@ -139,7 +142,7 @@ final class AchievementStore {
         try { counties=new CountyCollectorEvidence(new HistoricCountyCatalog(app)); }
         catch(java.io.IOException unavailable) { throw new IllegalStateException("Historic county reference unavailable",unavailable); }
         try {
-            JourneyStore.forEachAchievementEvidence(app,()->false,journey -> {
+            JourneyStore.forEachAchievementEvidence(app,cancelled,journey -> {
                 core.add(journey);
                 landmarks.add(journey);groundhog.add(journey);
                 try { counties.add(journey); }
@@ -154,7 +157,9 @@ final class AchievementStore {
                 crossingTracker.add(result.optJSONObject("motorway_geojson"),journey);
                 crossingTracker.add(result.optJSONObject("a_road_geojson"),journey);
             });
-        } catch(Exception error){throw new IllegalStateException("Achievement evidence scan failed",error);}
+        } catch(java.util.concurrent.CancellationException stopped){throw stopped;}
+        catch(Exception error){throw new IllegalStateException("Achievement evidence scan failed",error);}
+        if(cancelled.getAsBoolean()||Thread.currentThread().isInterrupted())throw new java.util.concurrent.CancellationException();
         MotorwayProgressCalculator.Summary motorwaySummary=motorways.finish();
         ARoadProgressCalculator.Summary aRoadSummary=aRoads.finish();
         Map<String,Double> values=new LinkedHashMap<>();
@@ -210,6 +215,7 @@ final class AchievementStore {
             lists.put("completion-aroad-"+road.id,Collections.singletonList(road.journeyIds.size()+" matched journeys contribute to this road"));
         }
         synchronized(JourneyStore.class) {
+            if(cancelled.getAsBoolean()||Thread.currentThread().isInterrupted())throw new java.util.concurrent.CancellationException();
             if(JourneyStore.dataRevision(app)!=revision)throw new java.util.ConcurrentModificationException("Journey evidence changed; retry refresh");
             if(core.captured)recordCaptureEarned(app);
             for(String id:core.edited)recordSavedEdit(app,id,false);
@@ -224,6 +230,9 @@ final class AchievementStore {
             }
             return result;
         }
+        }
+
+        catch(java.io.IOException failure){throw new IllegalStateException("Achievement spill unavailable",failure);}
     }
 
     static synchronized Snapshot evaluate(Context app,Map<String,Double> values,

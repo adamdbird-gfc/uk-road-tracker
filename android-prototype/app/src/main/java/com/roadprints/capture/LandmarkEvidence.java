@@ -69,6 +69,7 @@ final class LandmarkEvidence {
             for(List<double[]> part:parts) {
                 double[] first=part.get(0);if(previous!=null&&TravelAchievementRoutes.metres(previous,first)>2)run.clear();
                 for(int edge=1;edge<part.size();edge++) {
+                    if((edge&255)==0)JourneyStore.checkAchievementCancellation();
                     double[] a=xy(part.get(edge-1),ref),b=xy(part.get(edge),ref);
                     if(ref.polygon!=null&&ref.areaModes.contains(mode))areaLength+=insideLength(a,b,ref.polygon);
                     cover(ref,a,b,run,allowedRefs);

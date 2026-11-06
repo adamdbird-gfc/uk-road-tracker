@@ -25,6 +25,7 @@ final class CountyCollectorEvidence {
                         &&properties.optString("name",properties.optString("road_name","")).trim().isEmpty())continue;
                 for(JSONArray line:CoreAchievementEvidence.lines(feature.optJSONObject("geometry"))) {
                     for(int p=1;p<line.length();p++) {
+                        if((p&255)==0)JourneyStore.checkAchievementCancellation();
                         JSONArray a=line.optJSONArray(p-1),b=line.optJSONArray(p);if(a==null||b==null||a.length()<2||b.length()<2)continue;
                         double ax=a.optDouble(0,Double.NaN),ay=a.optDouble(1,Double.NaN),bx=b.optDouble(0,Double.NaN),by=b.optDouble(1,Double.NaN);
                         if(!Double.isFinite(ax)||!Double.isFinite(ay)||!Double.isFinite(bx)||!Double.isFinite(by)
