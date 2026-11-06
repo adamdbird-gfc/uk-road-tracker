@@ -59,7 +59,7 @@ public class MilepostReconcilerTest {
     @Test public void projectedAdapterAgreesWithFullReaderAndSkipsLargeRoadTrees()throws Exception {work(()->{
         for(String mode:new String[]{"walking","running","cycling"}) {
             JSONObject row=MilepostJourneyEvidenceTest.journey(mode).put("journey_id",mode);
-            row.getJSONObject("processing_result").put("road_geojson",new JSONObject().put("ignored",String.join("",Collections.nCopies(100000,"x"))));
+            row.getJSONObject("processing_result").put("road_geojson",new JSONObject().put("ignored",new JSONArray(Collections.nCopies(20000,new JSONArray().put(0).put(1)))));
             save(row);MilepostProximity.Evidence full=MilepostJourneyEvidence.nativeArchive(row);
             MilepostProximity.Evidence projected=MilepostArchiveReader.read(c,mode,()->false).evidence;
             assertEquals(full.problem(),projected.problem());
@@ -108,6 +108,26 @@ public class MilepostReconcilerTest {
         final int[] polls={0};
         try{worker.runSlice(()->++polls[0]>50,1000);}catch(CancellationException expected){}
         drain();assertEquals(1,ledger.proofCount("u"));assertEquals(1,found().get(0).ordinal);
+    });}
+    @Test public void concurrentArchiveCorrectionDuringEvaluationDoesNotBlockSaveOrCommitOldProof()throws Exception {work(()->{
+        catalogue();save(row("a"));
+        java.util.concurrent.atomic.AtomicBoolean changed=new java.util.concurrent.atomic.AtomicBoolean();
+        ExecutorService saveThread=Executors.newSingleThreadExecutor();
+        try {
+            worker.runSlice(()->{
+                boolean evaluating=false;
+                for(StackTraceElement frame:Thread.currentThread().getStackTrace())
+                    evaluating|=frame.getClassName().equals(MilepostProximity.class.getName())&&frame.getMethodName().equals("assess");
+                if(evaluating&&changed.compareAndSet(false,true)) {
+                    assertFalse("Proximity must not hold archive monitor",Thread.holdsLock(JourneyStore.class));
+                    try{saveThread.submit(()->{try{save(row("a").put("processing_status","failed"));}catch(Exception e){throw new RuntimeException(e);}}).get(5,TimeUnit.SECONDS);}
+                    catch(Exception e){throw new RuntimeException(e);}
+                }
+                return false;
+            },1000);
+        } finally {saveThread.shutdownNow();}
+        assertTrue("Correction must race actual proximity evaluation",changed.get());assertTrue(found().isEmpty());drain();
+        assertEquals(MilepostDiscoveryLedger.State.PENDING_EVIDENCE,ledger.state("u","a"));assertTrue(found().isEmpty());
     });}
     @Test public void additiveStageThreeSchemaUpgradePreservesRecognition()throws Exception {work(()->{
         catalogue();save(row("a"));drain();ledger.close();

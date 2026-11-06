@@ -9,7 +9,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 /** Read-only, conservative adapter for the pinned Android archive schema.
- * This class is deliberately not called by AchievementStore/JourneyStore or any lifecycle hook. */
+ * Called by the explicit inactive reconciler; never by AchievementStore/JourneyStore or a lifecycle hook. */
 final class MilepostJourneyEvidence {
     static final int MAX_POINTS=10000;
     static final String REVISION="android-archive-milepost-1";

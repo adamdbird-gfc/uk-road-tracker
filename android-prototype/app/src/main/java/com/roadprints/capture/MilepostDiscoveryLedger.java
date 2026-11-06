@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.function.BooleanSupplier;
 
-/** Inactive derived evidence store. No caller in app lifecycle, awards or JourneyStore.
+/** Inactive derived evidence store. Explicit reconciliation job only; no app lifecycle, awards or JourneyStore caller.
  * All entrypoints must run on a worker. Source revisions belong to the caller's durable
  * change feed, not wall-clock time. This ledger never edits source journeys. */
 final class MilepostDiscoveryLedger implements AutoCloseable {

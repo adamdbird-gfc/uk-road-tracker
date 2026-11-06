@@ -21,7 +21,7 @@ public final class MilepostReconciliationJob extends JobService {
         JobScheduler scheduler=context.getSystemService(JobScheduler.class);
         return scheduler.schedule(new JobInfo.Builder(JOB_ID,new ComponentName(context,MilepostReconciliationJob.class))
                 .setRequiresCharging(true).setRequiresDeviceIdle(true)
-                .setBackoffCriteria(30_000,JobInfo.BACKOFF_POLICY_EXPONENTIAL).build());
+                .build());
     }
     @Override public boolean onStartJob(JobParameters parameters) {
         if(current!=null&&current.task!=null&&!current.task.isDone())return false;
