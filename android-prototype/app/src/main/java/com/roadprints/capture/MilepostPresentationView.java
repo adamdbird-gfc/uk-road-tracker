@@ -75,6 +75,8 @@ final class MilepostPresentationView extends ScrollView {
         if(fromBeginning)state.cursor=0;
         state.replaying=true;state.paused=false;state.dismissed=false;
         state.artworkVersion=MilepostPresentation.ARTWORK_VERSION;store.save(state);render();
+        View control=revealNext!=null&&revealNext.isEnabled()?revealNext:findViewWithTag("milepost_skip");
+        if(control!=null)control.requestFocus(); // ScrollView brings the user-requested controls into view after layout.
     }
     void next(){
         if(!canReveal()||state.paused||!state.replaying){pauseReplay();render();return;}
@@ -146,7 +148,8 @@ final class MilepostPresentationView extends ScrollView {
             // Inspection acknowledges this complete summary only after usable details are delivered.
             if(page.current)store.acknowledge(state,snapshot);
             render();View heading=findViewWithTag("milepost_discovery_heading");
-            if(heading!=null)heading.sendAccessibilityEvent(android.view.accessibility.AccessibilityEvent.TYPE_VIEW_FOCUSED);
+            if(heading!=null){heading.setFocusableInTouchMode(true);heading.requestFocus();
+                heading.sendAccessibilityEvent(android.view.accessibility.AccessibilityEvent.TYPE_VIEW_FOCUSED);}
         });
     }
     private void discoveryDetails(){

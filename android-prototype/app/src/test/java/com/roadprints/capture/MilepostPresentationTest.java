@@ -167,7 +167,7 @@ public class MilepostPresentationTest {
     @Test public void nextRetainsCardsAndRevealControlsInsteadOfRebuildingScreen(){
         host(snapshot(7,7,"a"));view.replay(true);
         View card=view.findViewWithTag("milepost_card_0"),next=view.findViewWithTag("milepost_next");
-        View progress=view.findViewWithTag("milepost_reveal_progress");
+        View progress=view.findViewWithTag("milepost_reveal_progress");assertTrue(next.hasFocus());
         view.next();assertSame(card,view.findViewWithTag("milepost_card_0"));assertSame(next,view.findViewWithTag("milepost_next"));assertSame(progress,view.findViewWithTag("milepost_reveal_progress"));
     }
     static long heap(){Runtime r=Runtime.getRuntime();return r.totalMemory()-r.freeMemory();}
