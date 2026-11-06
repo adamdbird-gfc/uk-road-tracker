@@ -9,7 +9,7 @@ permissions:
   contents: read
 concurrency:
   group: milepost-stage11-${{ github.head_ref || github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   verify:
     if: github.head_ref == 'fix/stage11-1-stability-20261106'
