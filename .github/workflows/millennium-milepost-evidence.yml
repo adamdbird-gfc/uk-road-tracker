@@ -5,6 +5,7 @@ on:
     paths:
       - 'android-prototype/app/src/**/com/roadprints/capture/Milepost*.java'
       - 'android-prototype/app/src/**/com/roadprints/capture/Timeline*.java'
+      - 'android-prototype/app/src/**/com/roadprints/capture/NcnAchievements.java'
       - 'android-prototype/app/build.gradle.kts'
       - 'android-prototype/app/src/main/AndroidManifest.xml'
       - '.github/workflows/millennium-milepost-evidence.yml'
@@ -129,7 +130,7 @@ jobs:
           for root in roots:
               for out in root.iter('system-out'):
                   for line in (out.text or '').splitlines():
-                      if 'MILEPOST_LEDGER_PROBE' in line or 'MILEPOST_RECONCILE_PROBE' in line: print(line)
+                      if any(tag in line for tag in ('MILEPOST_LEDGER_PROBE','MILEPOST_RECONCILE_PROBE','MILEPOST_ACHIEVEMENT_PROBE')): print(line)
           assert totals['tests']>=40 and totals['failures']==totals['errors']==totals['skipped']==0
           PY
       - name: Retain reports without APKs or credentials
