@@ -119,13 +119,17 @@ jobs:
           assert roots
           totals={k:sum(int(r.attrib.get(k,0)) for r in roots) for k in ('tests','failures','errors','skipped')}
           print(totals)
+          for root in roots:
+              for out in root.iter('system-out'):
+                  for line in (out.text or '').splitlines():
+                      if 'MILEPOST_LEDGER_PROBE' in line: print(line)
           assert totals['tests']>=40 and totals['failures']==totals['errors']==totals['skipped']==0
           PY
       - name: Retain reports without APKs or credentials
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: milepost-stage2-validation
+          name: milepost-evidence-validation
           path: |
             android-prototype/app/build/reports/
             android-prototype/app/build/test-results/
