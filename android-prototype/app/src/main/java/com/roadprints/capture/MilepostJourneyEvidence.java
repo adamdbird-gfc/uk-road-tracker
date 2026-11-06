@@ -21,6 +21,13 @@ final class MilepostJourneyEvidence {
                 row.optDouble("latitude",Double.NaN)),false,String.valueOf(row.optInt("revision",1)));
     }
     static MilepostProximity.Evidence nativeArchive(JSONObject journey) throws Exception {
+        return nativeArchive(journey,null);
+    }
+    /** Only the streaming archive reader supplies the independently parsed match witness. */
+    static MilepostProximity.Evidence projectedArchive(JSONObject journey,boolean matchPresent)throws Exception {
+        return nativeArchive(journey,matchPresent);
+    }
+    private static MilepostProximity.Evidence nativeArchive(JSONObject journey,Boolean matchPresent) throws Exception {
         String mode=canonical(journey.optString("mode"));
         JSONObject source=journey.optJSONObject("source");
         String type=source==null?"":source.optString("type");
@@ -32,7 +39,7 @@ final class MilepostJourneyEvidence {
         if(!MilepostProximity.eligibleMode(mode))problem=MilepostProximity.Outcome.INELIGIBLE_MODE;
         else if(!"android_activity_capture".equals(type))problem="timeline_import".equals(type)
                 ?MilepostProximity.Outcome.INSUFFICIENT_GEOMETRY:MilepostProximity.Outcome.UNTRUSTED_SOURCE;
-        else if(!"complete".equals(journey.optString("processing_status"))||!hasMatch(journey))
+        else if(!"complete".equals(journey.optString("processing_status"))||!hasMatch(journey,matchPresent))
             problem=MilepostProximity.Outcome.UNVALIDATED_MATCH;
         else if(!validDates(journey))problem=MilepostProximity.Outcome.INSUFFICIENT_GEOMETRY;
         else if(samples==null||coords==null||!"LineString".equals(geometry.optString("type"))
@@ -103,10 +110,11 @@ final class MilepostJourneyEvidence {
         }
         return new Archive(journey.optString("journey_id"),journey.optString("started_at"),journey.optString("ended_at"),mode,type,token,problem,retained,problem==null&&history!=null?new JSONArray(history.toString()):new JSONArray());
     }
-    private static boolean hasMatch(JSONObject j){
+    private static boolean hasMatch(JSONObject j,Boolean matchPresent){
         JSONObject r=j.optJSONObject("processing_result"),g=r==null?null:r.optJSONObject("geojson");
         JSONArray f=g==null?null:g.optJSONArray("features");
-        if(f==null||f.length()==0||!"ok".equals(r.optString("status")))return false;
+        if(r==null||!"ok".equals(r.optString("status")))return false;
+        if(matchPresent==null&&(f==null||f.length()==0))return false;
         for(String flag:new String[]{"walking_partial_match","capture_partial_match","timeline_partial_match","endpoint_partial_match"})
             if(r.optBoolean(flag))return false;
         JSONArray failures=r.optJSONArray("failed_sections");
@@ -115,6 +123,7 @@ final class MilepostJourneyEvidence {
         if(input<2||input!=matched)return false;
         if("cycling".equals(canonical(j.optString("mode")))&&(!"cycling".equals(r.optString("matching_mode"))
                 ||!r.optBoolean("matched_distance_is_deduplicated")))return false;
+        if(matchPresent!=null)return matchPresent;
         for(int i=0;i<f.length();i++){
             JSONObject feature=f.optJSONObject(i),geometry=feature==null?null:feature.optJSONObject("geometry");
             JSONArray coordinates=geometry==null?null:geometry.optJSONArray("coordinates");
