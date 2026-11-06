@@ -73,8 +73,8 @@ public class MilepostPresentationReaderTest {
         try{for(int i=0;i<3;i++)retained=read(0);}finally{stop.set(true);sampler.join();}
         long elapsed=(System.nanoTime()-start)/1000000;System.gc();Thread.sleep(50);long after=heap();
         assertEquals(4096,retained.newPosts);assertEquals(7,retained.awards.size());
+        System.out.println("MILEPOST_PRESENTATION_PROBE markers=4096 sources=1605 proofs=8192 repeats=3 before="+before+" peak="+peak.get()+" incremental_peak="+(peak.get()-before)+" retained="+after+" retained_delta="+(after-before)+" elapsed_ms="+elapsed+" decoded_bitmaps=0");
         assertTrue("Presentation peak exceeds 16MiB",peak.get()-before<16L*1024*1024);
         assertTrue("Presentation retained growth exceeds 4MiB",after-before<4L*1024*1024);
-        System.out.println("MILEPOST_PRESENTATION_PROBE markers=4096 sources=1605 proofs=8192 repeats=3 before="+before+" peak="+peak.get()+" incremental_peak="+(peak.get()-before)+" retained="+after+" retained_delta="+(after-before)+" elapsed_ms="+elapsed+" decoded_bitmaps=0");
     });}
 }

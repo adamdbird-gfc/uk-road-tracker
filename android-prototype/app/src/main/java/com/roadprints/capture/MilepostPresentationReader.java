@@ -31,25 +31,29 @@ final class MilepostPresentationReader {
             int pending=(int)MilepostAchievements.number(d,"SELECT COUNT(*) FROM journey WHERE user=? AND deleted=0 AND state='QUEUED'",user);
             int incomplete=(int)MilepostAchievements.number(d,"SELECT COUNT(*) FROM journey WHERE user=? AND deleted=0 AND state IN ('PENDING_EVIDENCE','PENDING_CATALOGUE')",user);
             boolean current=state.getBoolean("current");
-            int newPosts=0;long postOrdinal=0;String from=null,to=null,after="";
+            int newPosts=0;long postOrdinal=0,earliest=Long.MAX_VALUE,latest=Long.MIN_VALUE;String from=null,to=null,after="";
             if(current)for(;;){
                 MilepostArchiveReader.check(cancelled);int read=0;
                 try(Cursor c=MilepostAchievements.factPage(d,user,after,true)){
                     while(c.moveToNext()){
                         MilepostArchiveReader.check(cancelled);
-                        MilepostAchievements.Fact f=new MilepostAchievements.Fact(c);after=f.marker;read++;
+                        after=c.getString(0);read++;
                         long ordinal=c.isNull(8)?0:c.getLong(8);
                         postOrdinal=Math.max(postOrdinal,ordinal);
                         if(ordinal>acknowledgedPosts){
                             newPosts++;
                             // Display calendar dates only. Journey starts do not establish exact passage times.
-                            if(f.date!=null){String date=Instant.parse(f.date).atOffset(java.time.ZoneOffset.UTC).toLocalDate().toString();
-                                if(from==null||date.compareTo(from)<0)from=date;if(to==null||date.compareTo(to)>0)to=date;}
+                            if(!c.isNull(3)){
+                                long event=c.getLong(4);
+                                if(event<earliest){earliest=event;from=c.getString(3);}
+                                if(event>latest){latest=event;to=c.getString(3);}
+                            }
                         }
                     }
                 }
                 if(read<16)break;
             }
+            if(from!=null)from=calendarDate(from);if(to!=null)to=calendarDate(to);
             String receipt=MilepostAchievements.scalar(d,"SELECT catalogue||':'||ledger_generation||':'||ncn_token FROM achievement_snapshot WHERE user=?",user);
             // Publication/capture may have changed while compact pages were read. Never announce a stale batch.
             current&=MilepostAchievementDeriver.state(context,ledger,user).getBoolean("current");
@@ -81,15 +85,15 @@ final class MilepostPresentationReader {
                     while(c.moveToNext()){
                         MilepostArchiveReader.check(cancelled);after=c.getString(0);n++;
                         long ordinal=c.isNull(8)?0:c.getLong(8);
-                        if(ordinal>afterOrdinal){
-                            String date=c.isNull(3)?null:Instant.parse(c.getString(3)).atOffset(java.time.ZoneOffset.UTC).toLocalDate().toString();
-                            selected.add(new Discovery(after,date,ordinal));if(selected.size()>17)selected.poll();
+                        if(ordinal>afterOrdinal&&(selected.size()<17||ordinal<selected.peek().ordinal)){
+                            selected.add(new Discovery(after,c.isNull(3)?null:c.getString(3),ordinal));if(selected.size()>17)selected.poll();
                         }
                     }
                 }
                 if(n<16)break;
             }
             List<Discovery> rows=new ArrayList<>(selected);rows.sort(order);boolean more=rows.size()>16;if(more)rows.remove(16);
+            for(int i=0;i<rows.size();i++){Discovery row=rows.get(i);rows.set(i,new Discovery(row.marker,row.date==null?null:calendarDate(row.date),row.ordinal));}
             current=MilepostAchievementDeriver.state(context,ledger,user).getBoolean("current");
             return new Page(current?rows:Collections.emptyList(),more,current);
         }finally{d.endTransaction();}
@@ -106,5 +110,6 @@ final class MilepostPresentationReader {
             Page delivered=result;main.post(()->complete.accept(delivered));
         });
     }
+    private static String calendarDate(String value){return Instant.parse(value).atOffset(java.time.ZoneOffset.UTC).toLocalDate().toString();}
     private MilepostPresentationReader(){}
 }

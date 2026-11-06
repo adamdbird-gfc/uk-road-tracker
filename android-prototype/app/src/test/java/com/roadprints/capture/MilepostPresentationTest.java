@@ -39,6 +39,16 @@ public class MilepostPresentationTest {
         for(int i=1;i<6;i++){assertEquals("Mystery personality",s.card(i).title);assertEquals("",s.card(i).biography);}
         assertEquals(1,s.card(5).stage);
     }
+    @Test public void eachIndividualCanBeFirstWithoutSpoilingOtherIdentities(){
+        String[] names={"Jon Mills","Andrew Rowe","Iain McColl","David Dudgeon","John Grimshaw","Charlie Harrow"};
+        for(int first=0;first<6;first++){
+            List<MilepostPresentation.Award> awards=new ArrayList<>();
+            for(int i=0;i<7;i++)awards.add(new MilepostPresentation.Award(i==first,i==first?1:0,null,"unknown"));
+            MilepostPresentation.Snapshot s=new MilepostPresentation.Snapshot(true,first==5?7:1,1,0,0,1,1,"first",null,null,awards);
+            assertTrue(s.introduced());assertEquals(1,s.individuals());assertEquals(names[first],s.card(first).title);
+            for(int i=0;i<6;i++)if(i!=first){assertEquals("Mystery personality",s.card(i).title);assertEquals("",s.card(i).biography);}
+        }
+    }
     @Test public void grimshawCanIntroduceCollectionWithoutAnyPosts(){
         List<MilepostPresentation.Award> awards=new ArrayList<>();for(int i=0;i<7;i++)awards.add(new MilepostPresentation.Award(i==4,i==4?1:0,null,"unknown"));
         MilepostPresentation.Snapshot s=new MilepostPresentation.Snapshot(true,0,0,0,0,0,1,"g",null,null,awards);
@@ -141,4 +151,31 @@ public class MilepostPresentationTest {
         for(int i=0;i<7;i++)view.next();assertTrue(contents(view).contains("Charlie Harrow"));
         assertTrue(((TextView)view.findViewWithTag("milepost_reveal_progress")).getText().toString().contains("7 of 7"));
     }
+    @Test public void discoveryBrowsingAcknowledgesOnlyDeliveredDetailsAndKeepsAnonymousPostsAnonymous(){
+        host(snapshot(1,0,"unknown"));
+        view.findViewWithTag("milepost_view_discoveries").performClick();
+        assertTrue(contents(view).contains("Discovery record"));assertEquals(1,store.read().acknowledgedPosts);
+        assertNull(view.findViewWithTag("milepost_replay"));assertNotNull(view.findViewWithTag("milepost_browse_discoveries"));
+    }
+    @Test public void replayDoesNotChangeAnyExistingEntitlementOrCelebrationPreferences(){
+        String awards=context.getSharedPreferences("roadprints_achievements_v1",0).getAll().toString();
+        String celebrations=context.getSharedPreferences("roadprints_achievement_celebrations_v1",0).getAll().toString();
+        host(snapshot(7,7,"a"));view.replay(true);for(int i=0;i<7;i++)view.next();view.skip();view.replay(true);view.next();view.later();
+        assertEquals(awards,context.getSharedPreferences("roadprints_achievements_v1",0).getAll().toString());
+        assertEquals(celebrations,context.getSharedPreferences("roadprints_achievement_celebrations_v1",0).getAll().toString());
+    }
+    static long heap(){Runtime r=Runtime.getRuntime();return r.totalMemory()-r.freeMemory();}
+    void fullReplay(){view.replay(true);for(int n=0;n<7;n++)view.next();view.skip();}
+    @Test public void warmedNativePresentationMeasuresIncrementalHeap()throws Exception{
+        host(snapshot(7,7,"a"));for(int i=0;i<2;i++)fullReplay();
+        System.gc();Thread.sleep(50);long before=heap();java.util.concurrent.atomic.AtomicLong peak=new java.util.concurrent.atomic.AtomicLong(before);
+        java.util.concurrent.atomic.AtomicBoolean stop=new java.util.concurrent.atomic.AtomicBoolean();
+        Thread sampler=new Thread(()->{while(!stop.get()){peak.accumulateAndGet(heap(),Math::max);try{Thread.sleep(2);}catch(InterruptedException e){return;}}});sampler.start();
+        long started=System.nanoTime();try{for(int i=0;i<3;i++)fullReplay();}finally{stop.set(true);sampler.join();}
+        long elapsed=(System.nanoTime()-started)/1000000;System.gc();Thread.sleep(50);long retained=heap();
+        System.out.println("MILEPOST_PRESENTATION_VIEW_PROBE cycles=3 stages_per_cycle=8 before="+before+" peak="+peak.get()+" incremental_peak="+(peak.get()-before)+" retained="+retained+" retained_delta="+(retained-before)+" elapsed_ms="+elapsed+" decoded_bitmaps=0");
+        assertTrue("Native presentation peak exceeds 32MiB",peak.get()-before<32L*1024*1024);
+        assertTrue("Native presentation retained growth exceeds 8MiB",retained-before<8L*1024*1024);
+    }
+
 }

@@ -44,7 +44,7 @@ final class MilepostPresentationView extends ScrollView {
     MilepostPresentationView(Activity host,MilepostPresentationStore store,MilepostPresentation.Snapshot snapshot,MilepostPresentationReader.PageLoader discoveryPages){
         super(host);this.discoveryPages=discoveryPages;this.host=host;this.store=store;this.snapshot=snapshot;state=store.read();
         // A process/rotation restart restores the completed static cursor, never an in-flight frame.
-        state.paused=true;store.save(state);
+        state.paused=true;state.artworkVersion=MilepostPresentation.ARTWORK_VERSION;store.save(state);
         capture=host.getSharedPreferences("roadprints_capture_state",0);
         setFillViewport(true);setBackgroundColor(NAVY);
         body=new LinearLayout(host);body.setOrientation(LinearLayout.VERTICAL);body.setPadding(dp(18),dp(12),dp(18),dp(18));
@@ -77,6 +77,9 @@ final class MilepostPresentationView extends ScrollView {
         state.cursor++;
         state.completedStage=Math.max(state.completedStage,state.cursor);
         store.save(state);render();
+        View control=findViewWithTag("milepost_next");
+        if(control==null||!control.isEnabled())control=findViewWithTag("milepost_skip");
+        if(control!=null)control.requestFocus();
         View stage=findViewWithTag("milepost_reveal_progress");if(stage!=null)stage.announceForAccessibility(MilepostPresentation.announcement(displayStage()));
     }
     void later(){state.paused=true;state.dismissed=true;state.dismissedReceipt=snapshot.receipt;store.save(state);render();}
@@ -225,7 +228,7 @@ final class MilepostPresentationView extends ScrollView {
     }
     private void heading(LinearLayout parent,String value){TextView t=text(parent,value,22);t.setTypeface(null,Typeface.BOLD);androidx.core.view.ViewCompat.setAccessibilityHeading(t,true);}
     private void button(LinearLayout parent,String label,String tag,Runnable action,boolean enabled){
-        Button b=new Button(host);b.setText(label);b.setTextSize(16);b.setAllCaps(false);b.setMinHeight(dp(48));b.setTag(tag);b.setEnabled(enabled);
+        Button b=new Button(host);b.setText(label);b.setTextSize(16);b.setAllCaps(false);b.setMinHeight(dp(48));b.setTextColor(NAVY);b.setBackgroundTintList(android.content.res.ColorStateList.valueOf(GOLD));b.setTag(tag);b.setEnabled(enabled);
         b.setOnClickListener(v->action.run());parent.addView(b,new LinearLayout.LayoutParams(-1,-2));
     }
     private int dp(int n){return Math.round(n*getResources().getDisplayMetrics().density);}

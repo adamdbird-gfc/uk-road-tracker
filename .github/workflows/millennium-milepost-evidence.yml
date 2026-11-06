@@ -130,7 +130,7 @@ jobs:
           for root in roots:
               for out in root.iter('system-out'):
                   for line in (out.text or '').splitlines():
-                      if any(tag in line for tag in ('MILEPOST_LEDGER_PROBE','MILEPOST_RECONCILE_PROBE','MILEPOST_ACHIEVEMENT_PROBE','MILEPOST_PRESENTATION_PROBE')): print(line)
+                      if any(tag in line for tag in ('MILEPOST_LEDGER_PROBE','MILEPOST_RECONCILE_PROBE','MILEPOST_ACHIEVEMENT_PROBE','MILEPOST_PRESENTATION_PROBE','MILEPOST_PRESENTATION_VIEW_PROBE')): print(line)
           assert totals['tests']>=40 and totals['failures']==totals['errors']==totals['skipped']==0
           PY
       - name: Retain reports without APKs or credentials
