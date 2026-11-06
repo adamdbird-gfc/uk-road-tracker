@@ -44,6 +44,7 @@ final class TravelAchievementRoutes {
             for(JSONArray line:CoreAchievementEvidence.lines(feature==null?null:feature.optJSONObject("geometry"))) {
                 List<double[]> part=new ArrayList<>();
                 for(int p=1;p<line.length();p++,edge++) {
+                    if((p&255)==0)JourneyStore.checkAchievementCancellation();
                     double[] a=point(line.optJSONArray(p-1)),b=point(line.optJSONArray(p));
                     boolean deleted=underground||removedEdges.contains(edge)||JourneyCorrectionUtils.excludesRoadFeature(journey,feature);
                     if(a!=null&&b!=null&&!deleted)for(JSONObject road:deletedRoads)

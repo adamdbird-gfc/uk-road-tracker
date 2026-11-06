@@ -13,7 +13,7 @@ public class AchievementGeometrySpoolTest {
         try(AchievementGeometrySpool spool=new AchievementGeometrySpool(cache)){
             CoreAchievementEvidence core=new CoreAchievementEvidence(spool);core.add(j);core.add(j);
             token=core.named.get("test lane 1").iterator().next();assertTrue(token.length()<300);
-            assertEquals(token,core.townRoads.get("name:test lane 1").iterator().next());
+            assertEquals(token,core.townRoads.get("ref:Test Lane 1").iterator().next());
             assertEquals(original,AchievementGeometrySpool.restore(token));
             assertEquals(original,CoreAchievementEvidence.geometries(core.named.get("test lane 1")).get(0).toString());
             assertEquals(1,cache.listFiles()[0].listFiles().length);

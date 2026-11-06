@@ -137,6 +137,8 @@ public final class JourneyStore {
 
     public static synchronized List<JSONObject> all(Context context) {
         migrateLegacy(context);
+        achievementCancellation.set(cancelled);
+        try {
         List<File> files = archiveFiles(context);
         files.sort((left, right) -> Long.compare(right.lastModified(), left.lastModified()));
         List<JSONObject> journeys = new ArrayList<>();
@@ -519,6 +521,12 @@ public final class JourneyStore {
         return journey;
     }
 
+    private static final ThreadLocal<java.util.function.BooleanSupplier> achievementCancellation=new ThreadLocal<>();
+    static void checkAchievementCancellation(){
+        java.util.function.BooleanSupplier cancelled=achievementCancellation.get();
+        if(Thread.currentThread().isInterrupted()||(cancelled!=null&&cancelled.getAsBoolean()))
+            throw new java.util.concurrent.CancellationException();
+    }
     static void forEachAchievementEvidence(Context context, java.util.function.BooleanSupplier cancelled,
                                     JourneyVisitor visitor) throws Exception {
         migrateLegacy(context);
@@ -561,6 +569,7 @@ public final class JourneyStore {
                 journey = upgrade(context, read(file));
             if (journey != null) visitor.visit(journey);
         }
+        }finally{achievementCancellation.remove();}
     }
 
     /** Retain a small ordered train-route fingerprint without allocating raw GPS history. */
@@ -610,7 +619,7 @@ public final class JourneyStore {
     }
 
     private static Object readEvidenceValue(JsonReader reader) throws Exception {
-        if(Thread.currentThread().isInterrupted())throw new java.util.concurrent.CancellationException();
+        checkAchievementCancellation();
         switch (reader.peek()) {
             case BEGIN_OBJECT:
                 JSONObject object = new JSONObject();reader.beginObject();

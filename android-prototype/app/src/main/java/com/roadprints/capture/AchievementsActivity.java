@@ -50,7 +50,7 @@ public class AchievementsActivity extends Activity {
 
     private static final String SNAPSHOT_PREFS="roadprints_achievement_snapshot";
     private static java.util.concurrent.Executor achievementExecutor=ScreenDataLoader::execute;
-    private static java.util.function.Function<android.content.Context,AchievementStore.Snapshot> achievementCalculator=AchievementStore::calculate;
+    private static java.util.function.Function<android.content.Context,AchievementStore.Snapshot> achievementCalculator=context->AchievementStore.calculate(context,AchievementsActivity::noWaitingScreens);
     private static boolean loadInFlight;
     private static int cacheEpoch;
     private static final List<java.lang.ref.WeakReference<AchievementsActivity>> waitingScreens=new ArrayList<>();
@@ -94,6 +94,8 @@ public class AchievementsActivity extends Activity {
         super.onResume();
         celebrationHostResumed=true;
         mileposts.resume();
+        MilepostReconciliationJob.schedule(this);
+        loadAchievements();
         evidenceRefreshHandler.removeCallbacks(evidenceRefresh);
         evidenceRefreshHandler.postDelayed(evidenceRefresh,2000);
         if(shownSnapshot!=null && shownKilometres!=DistanceUnits.usesKilometres(this))render(shownSnapshot);
@@ -119,6 +121,7 @@ public class AchievementsActivity extends Activity {
 
     @Override protected void onPause() {
         celebrationHostResumed=false;
+        synchronized(SNAPSHOT_CACHE_LOCK){waitingScreens.removeIf(r->r.get()==null||r.get()==this);}
         mileposts.pause();
         MilepostReconciliationJob.schedule(this);
         evidenceRefreshHandler.removeCallbacks(evidenceRefresh);
@@ -201,6 +204,14 @@ public class AchievementsActivity extends Activity {
         long revision=31L*CollectionAccessStore.revision(context)+NcnProgressStore.revision(context);for(VenueCollection.Definition collection:VenueCollection.all())revision=31L*revision+VenueCollection.revision(context,collection.id)+VenueCatalogueUpdates.forCollection(collection).revision();return revision;
     }
 
+    private static boolean noWaitingScreens(){
+        synchronized(SNAPSHOT_CACHE_LOCK){
+            for(java.lang.ref.WeakReference<AchievementsActivity> r:waitingScreens){
+                AchievementsActivity a=r.get();if(a!=null&&!a.isFinishing()&&!a.isDestroyed())return false;
+            }
+            return true;
+        }
+    }
     private boolean pubBackfillRequested;
     private void loadAchievements() {
         NcnProgressStore.ensure(this);
@@ -287,6 +298,10 @@ public class AchievementsActivity extends Activity {
                         screen.renderInitialSnapshot();
                         screen.loadAchievements();
                     }
+                    return;
+                }
+                if(error instanceof java.util.concurrent.CancellationException){
+                    for(AchievementsActivity screen:screens)screen.loadAchievements();
                     return;
                 }
                 boolean changed=JourneyStore.dataRevision(appContext)!=revision

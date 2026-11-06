@@ -143,6 +143,7 @@ final class CoreAchievementEvidence {
             for(int i=0;i<features.length();i++) {
                 JSONObject f=features.optJSONObject(i);
                 for(JSONArray line:lines(f==null?null:f.optJSONObject("geometry")))for(int j=1;j<line.length();j++,edge++) {
+                    if((j&255)==0)JourneyStore.checkAchievementCancellation();
                     if(removed.contains(edge))continue;
                     JSONArray a=line.optJSONArray(j-1),b=line.optJSONArray(j);if(a==null||b==null||a.length()<2||b.length()<2)continue;
                     double lngA=a.optDouble(0,Double.NaN),latA=a.optDouble(1,Double.NaN),lngB=b.optDouble(0,Double.NaN),latB=b.optDouble(1,Double.NaN);

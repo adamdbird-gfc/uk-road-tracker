@@ -124,7 +124,9 @@ final class AchievementStore {
                 +context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).getInt("evidence_revision",0);
     }
 
-    static Snapshot calculate(Context context) {
+    static Snapshot calculate(Context context) {return calculate(context,()->false);}
+    static Snapshot calculate(Context context,java.util.function.BooleanSupplier cancelled) {
+        if(cancelled.getAsBoolean()||Thread.currentThread().isInterrupted())throw new java.util.concurrent.CancellationException();
         Context app=context.getApplicationContext();
         long revision=JourneyStore.dataRevision(app);
         MotorwayProgressCalculator motorways=new MotorwayProgressCalculator(app,null,false);
@@ -140,7 +142,7 @@ final class AchievementStore {
         try { counties=new CountyCollectorEvidence(new HistoricCountyCatalog(app)); }
         catch(java.io.IOException unavailable) { throw new IllegalStateException("Historic county reference unavailable",unavailable); }
         try {
-            JourneyStore.forEachAchievementEvidence(app,()->Thread.currentThread().isInterrupted(),journey -> {
+            JourneyStore.forEachAchievementEvidence(app,cancelled,journey -> {
                 core.add(journey);
                 landmarks.add(journey);groundhog.add(journey);
                 try { counties.add(journey); }
@@ -157,6 +159,7 @@ final class AchievementStore {
             });
         } catch(java.util.concurrent.CancellationException cancelled){throw cancelled;}
         catch(Exception error){throw new IllegalStateException("Achievement evidence scan failed",error);}
+        if(cancelled.getAsBoolean()||Thread.currentThread().isInterrupted())throw new java.util.concurrent.CancellationException();
         MotorwayProgressCalculator.Summary motorwaySummary=motorways.finish();
         ARoadProgressCalculator.Summary aRoadSummary=aRoads.finish();
         Map<String,Double> values=new LinkedHashMap<>();
@@ -212,6 +215,7 @@ final class AchievementStore {
             lists.put("completion-aroad-"+road.id,Collections.singletonList(road.journeyIds.size()+" matched journeys contribute to this road"));
         }
         synchronized(JourneyStore.class) {
+            if(cancelled.getAsBoolean()||Thread.currentThread().isInterrupted())throw new java.util.concurrent.CancellationException();
             if(JourneyStore.dataRevision(app)!=revision)throw new java.util.ConcurrentModificationException("Journey evidence changed; retry refresh");
             if(core.captured)recordCaptureEarned(app);
             for(String id:core.edited)recordSavedEdit(app,id,false);

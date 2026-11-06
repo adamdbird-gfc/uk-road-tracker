@@ -19,6 +19,7 @@ public final class MilepostReconciliationJob extends JobService {
     static int schedule(Context context) {
         if(!MilepostIntegration.PRODUCTION.allowed(context))return JobScheduler.RESULT_FAILURE;
         JobScheduler scheduler=context.getSystemService(JobScheduler.class);
+        if(scheduler.getPendingJob(JOB_ID)!=null)return JobScheduler.RESULT_SUCCESS;
         return scheduler.schedule(new JobInfo.Builder(JOB_ID,new ComponentName(context,MilepostReconciliationJob.class))
                 .setRequiresCharging(true).setRequiresDeviceIdle(true)
                 .build());
