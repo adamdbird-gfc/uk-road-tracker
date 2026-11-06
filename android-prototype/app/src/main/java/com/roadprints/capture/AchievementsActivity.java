@@ -54,6 +54,7 @@ public class AchievementsActivity extends Activity {
     private static boolean loadInFlight;
     private static int cacheEpoch;
     private static final List<java.lang.ref.WeakReference<AchievementsActivity>> waitingScreens=new ArrayList<>();
+    private final MilepostScreenIntegration mileposts=new MilepostScreenIntegration(this,MilepostIntegration.PRODUCTION);
     private AchievementStore.Snapshot shownSnapshot;
     private boolean shownKilometres;
 
@@ -92,6 +93,7 @@ public class AchievementsActivity extends Activity {
     @Override protected void onResume() {
         super.onResume();
         celebrationHostResumed=true;
+        mileposts.resume();
         evidenceRefreshHandler.removeCallbacks(evidenceRefresh);
         evidenceRefreshHandler.postDelayed(evidenceRefresh,2000);
         if(shownSnapshot!=null && shownKilometres!=DistanceUnits.usesKilometres(this))render(shownSnapshot);
@@ -110,12 +112,15 @@ public class AchievementsActivity extends Activity {
             if(shownRevision!=Long.MIN_VALUE && (JourneyStore.dataRevision(AchievementsActivity.this)!=shownRevision
                     ||AchievementStore.highStreetEvidenceRevision(AchievementsActivity.this)!=shownHighStreetEvidenceRevision
                     ||collectionEvidenceRevision(AchievementsActivity.this)!=shownServiceStationRevision))loadAchievements();
+            mileposts.refresh();
             evidenceRefreshHandler.postDelayed(this,2000);
         }
     };
 
     @Override protected void onPause() {
         celebrationHostResumed=false;
+        mileposts.pause();
+        MilepostReconciliationJob.schedule(this);
         evidenceRefreshHandler.removeCallbacks(evidenceRefresh);
         if(celebrationDialog!=null&&celebrationDialog.isShowing())celebrationDialog.dismiss();
         super.onPause();
@@ -448,6 +453,10 @@ public class AchievementsActivity extends Activity {
         }
         content.addView(text("Totals include imported and recorded travel. Coverage uses matched sections; road-name challenges update as town lookups complete.",
                 12,MUTED,false));
+        if(MilepostIntegration.PRODUCTION.enabled){
+            LinearLayout milepostSection=new LinearLayout(this);milepostSection.setOrientation(LinearLayout.VERTICAL);
+            content.addView(milepostSection);mileposts.mount(milepostSection);mileposts.refresh();
+        }
         rebuildJumpMenu();
         scroll.post(() -> {scroll.scrollTo(0,savedScroll);updateActiveJump();});
     }

@@ -18,7 +18,12 @@ final class MilepostAchievementDeriver implements AutoCloseable {
     final MilepostReconciliationJob.CaptureGuard capture;
     private long archive=-1, reconciledGeneration=-1;
     private boolean reconciled;
+    private final BooleanSupplier referenceApproved;
     MilepostAchievementDeriver(Context context,MilepostDiscoveryLedger ledger,String user) {
+        this(context,ledger,user,()->true);
+    }
+    MilepostAchievementDeriver(Context context,MilepostDiscoveryLedger ledger,String user,BooleanSupplier referenceApproved) {
+        this.referenceApproved=referenceApproved;
         this.context=context.getApplicationContext();this.ledger=ledger;this.user=user;
         ledger.db(); // Reject UI thread before registering anything.
         reconciler=new MilepostReconciler(context,ledger,user);
@@ -60,6 +65,9 @@ final class MilepostAchievementDeriver implements AutoCloseable {
                     if(archive!=JourneyStore.dataRevision(context)||ncn!=NcnProgressStore.current()
                             ||ncnRevision!=NcnProgressStore.revision(context)||!freshNcn(context,ncn,archive))
                         throw new ConcurrentModificationException("Archive/NCN changed before achievement commit");
+                    // The integration's reviewed reference pin is checked under the same writer
+                    // transaction as publication, rather than querying SQLite at every GPS poll.
+                    if(!referenceApproved.getAsBoolean())throw new ConcurrentModificationException("Unapproved integration reference");
                     MilepostAchievements.publish(d,user,prepared,archive,ncnToken,recognisedAt,yield);
                     try {d.setTransactionSuccessful();} finally {ended[0]=true;d.endTransaction();}
                 }
