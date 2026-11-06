@@ -23,7 +23,7 @@ def main():
     p.add_argument("--runtime-kind", choices=("emulator", "physical"), required=True)
     p.add_argument("--source-sha", required=True)
     p.add_argument("--output", type=pathlib.Path, required=True)
-    p.add_argument("--method", choices=("onePhysicalPostAndDesigner", "allAwardsAndDuplicateSummary",
+    p.add_argument("--method", choices=("onePhysicalPostAndDesigner", "sixPostsRemainAnonymous", "allAwardsAndDuplicateSummary",
                    "correctionFallbackWithdrawalAndReopen", "interruptedWorkerAndSimulatedCaptureState",
                    "repeatedEntryReplayRecreationAndRuntimeProfile", "replayCapturePauseAccessibilityStructureAndFocus",
                    "processRestartReceipt", "manualAcceptanceWindow"), default="repeatedEntryReplayRecreationAndRuntimeProfile")

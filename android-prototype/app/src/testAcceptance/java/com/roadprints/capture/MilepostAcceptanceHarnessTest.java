@@ -18,6 +18,7 @@ public class MilepostAcceptanceHarnessTest {
     }
     @Before public void setup(){c=RuntimeEnvironment.getApplication();}
     @Test public void onePhysicalPostAndDesigner()throws Exception{work(()->MilepostAcceptanceChecks.onePostAndDesigner(c));}
+    @Test public void sixPostsRemainAnonymous()throws Exception{work(()->MilepostAcceptanceChecks.sixPostsRemainMystery(c));}
     @Test public void sevenPostsAllAwardsAndDuplicateSummary()throws Exception{work(()->MilepostAcceptanceChecks.allAwardsAndDuplicates(c));}
     @Test public void correctionFallbackWithdrawalAndReopen()throws Exception{work(()->MilepostAcceptanceChecks.correctionFallbackAndRestart(c));}
     @Test public void interruptedWorkerAndSimulatedCaptureState()throws Exception{work(()->MilepostAcceptanceChecks.interruptionAndCaptureState(c));}

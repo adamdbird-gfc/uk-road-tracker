@@ -19,6 +19,7 @@ public class MilepostDeviceAcceptanceTest {
     void worker(Callable<Void> task)throws Exception {ScreenDataLoader.submit(()->{try{task.call();}catch(Exception e){throw new RuntimeException(e);}}).get(120,TimeUnit.SECONDS);}
     void seed()throws Exception{worker(()->{MilepostAcceptanceChecks.reset(c);try(MilepostAcceptanceFixture f=new MilepostAcceptanceFixture(c)){f.prepare(7);MilepostAcceptanceChecks.converge(f);}return null;});}
     @Test public void onePhysicalPostAndDesigner()throws Exception{worker(()->{MilepostAcceptanceChecks.onePostAndDesigner(c);return null;});}
+    @Test public void sixPostsRemainAnonymous()throws Exception{worker(()->{MilepostAcceptanceChecks.sixPostsRemainMystery(c);return null;});}
     @Test public void allAwardsAndDuplicateSummary()throws Exception{worker(()->{MilepostAcceptanceChecks.allAwardsAndDuplicates(c);return null;});}
     @Test public void correctionFallbackWithdrawalAndReopen()throws Exception{worker(()->{MilepostAcceptanceChecks.correctionFallbackAndRestart(c);return null;});}
     @Test public void interruptedWorkerAndSimulatedCaptureState()throws Exception{worker(()->{MilepostAcceptanceChecks.interruptionAndCaptureState(c);return null;});}

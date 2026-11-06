@@ -34,6 +34,13 @@ final class MilepostAcceptanceChecks {
             require(!s.awards.get(5).earned&&!s.awards.get(6).earned,"Premature completion");productionIsolated(c);
         }
     }
+    static void sixPostsRemainMystery(Context c)throws Exception {
+        reset(c);try(MilepostAcceptanceFixture f=new MilepostAcceptanceFixture(c)){
+            f.prepare(6);converge(f);MilepostPresentation.Snapshot s=f.read();
+            require(s.count==6&&!s.awards.get(5).earned&&!s.awards.get(6).earned,"Six posts prematurely completed Harrow/collective");
+            require(!s.card(5).accessible().contains("Charlie"),"Locked identity leaked");productionIsolated(c);
+        }
+    }
     static void allAwardsAndDuplicates(Context c)throws Exception {
         reset(c);String before=c.getSharedPreferences("roadprints_achievements_v1",0).getAll().toString();
         try(MilepostAcceptanceFixture f=new MilepostAcceptanceFixture(c)){
