@@ -182,6 +182,7 @@ public class MilepostReconcilerTest {
             }
             Files.write(MilepostArchiveReader.file(c,j.getString("journey_id")).toPath(),j.toString().getBytes(StandardCharsets.UTF_8));
         }
+        long beforeDatabaseBytes=c.getDatabasePath(name).length();
         Runtime rt=Runtime.getRuntime();System.gc();long beforeHeap=rt.totalMemory()-rt.freeMemory();
         java.util.concurrent.atomic.AtomicBoolean sampling=new java.util.concurrent.atomic.AtomicBoolean(true);
         java.util.concurrent.atomic.AtomicLong peak=new java.util.concurrent.atomic.AtomicLong(beforeHeap);
@@ -195,8 +196,11 @@ public class MilepostReconcilerTest {
         try(SQLiteDatabase db=SQLiteDatabase.openDatabase(c.getDatabasePath(name).getPath(),null,SQLiteDatabase.OPEN_READONLY);
             android.database.Cursor cursor=db.rawQuery("SELECT COUNT(*) FROM assessment",null)){assertTrue(cursor.moveToFirst());assessments=cursor.getLong(0);}
         assertTrue("Spatial selection must reduce cross product",assessments<1606L*889/100);
+        long maxCommit=worker.maxCommitNanos;
+        ledger.close();long restart=System.nanoTime();ledger=new MilepostDiscoveryLedger(c,name);worker=new MilepostReconciler(c,ledger,"u");drain();restart=System.nanoTime()-restart;
+        assertEquals("Restart must reuse durable feed without decoding",0,worker.readSources);assertTrue(size>=beforeDatabaseBytes);
         System.out.println("MILEPOST_RECONCILE_PROBE journeys=1606 markers=889 elapsed_ms="+elapsed/1000000+" source_reads="+reads+" pages="+pages
-                +" assessments="+assessments+" cartesian="+(1606L*889)+" database_bytes="+size+" retained_process_heap="+retained
-                +" sampled_peak_heap="+peak.get()+" before_heap="+beforeHeap+" retry_ms="+retry/1000000+" max_commit_monitor_us="+worker.maxCommitNanos/1000);
+                +" assessments="+assessments+" cartesian="+(1606L*889)+" database_bytes="+size+" database_before_bytes="+beforeDatabaseBytes+" database_growth_bytes="+(size-beforeDatabaseBytes)+" retained_process_heap="+retained
+                +" sampled_peak_heap="+peak.get()+" before_heap="+beforeHeap+" retry_ms="+retry/1000000+" restart_rescan_ms="+restart/1000000+" max_commit_monitor_us="+maxCommit/1000);
     });}
 }
