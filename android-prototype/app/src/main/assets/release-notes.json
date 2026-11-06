@@ -2,6 +2,22 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.224",
+      "version_code": 270,
+      "release_date": "2026-11-06",
+      "since": "0.25.223",
+      "changes": [
+        {
+          "title": "Millennium Mileposts",
+          "description": "Discover approved OpenStreetMap Millennium Mileposts within 100 metres on trustworthy walking, running and cycling journeys. Earn commemorative achievements and reveal the seven-stage cipher in Achievements."
+        },
+        {
+          "title": "Historical discovery and replay",
+          "description": "Eligible retained journey evidence is assessed while the phone is idle and charging, after the existing NCN assessment is current. Unsupported historical evidence remains pending. Mystery awards stay anonymous until earned; replay supports reduced motion."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.223",
       "version_code": 269,
       "release_date": "2026-11-04",

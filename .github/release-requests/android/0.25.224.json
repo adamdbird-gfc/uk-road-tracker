@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "version_name": "0.25.224",
+  "version_code": 270,
+  "baseline": "b0484b3d4c2292306629c7d69f9a436931ef889e",
+  "firebase_upload": false,
+  "distribute_existing_testers": false
+}
