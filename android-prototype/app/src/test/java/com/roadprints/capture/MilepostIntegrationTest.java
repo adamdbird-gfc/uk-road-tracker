@@ -19,8 +19,8 @@ public class MilepostIntegrationTest {
     @After public void cleanup()throws Exception{f.cleanup();}
     // No injectable global, production setter, Intent extra or preference. Constructor access is test-only reflection.
     MilepostIntegration isolated(String fingerprint)throws Exception{
-        java.lang.reflect.Constructor<MilepostIntegration> ctor=MilepostIntegration.class.getDeclaredConstructor(boolean.class,String.class,String.class,int.class,String.class,String.class);
-        ctor.setAccessible(true);return ctor.newInstance(true,f.name,MilepostAchievementsTest.USER,1,MilepostDiscoveryLedgerTest.HASH,fingerprint);
+        java.lang.reflect.Constructor<MilepostIntegration> ctor=MilepostIntegration.class.getDeclaredConstructor(boolean.class,String.class,String.class,int.class,String.class,String.class,String.class);
+        ctor.setAccessible(true);return ctor.newInstance(true,f.name,MilepostAchievementsTest.USER,1,MilepostDiscoveryLedgerTest.HASH,fingerprint,MilepostDiscoveryLedger.EVALUATOR);
     }
     void prepare(int posts,double ncn)throws Exception{f.work(()->{
         f.posts(posts);f.save("historical-a");MilepostAchievementsTest.setNcn(f.ncn(ncn));
@@ -95,6 +95,21 @@ public class MilepostIntegrationTest {
         MilepostScreenIntegration screen=new MilepostScreenIntegration(a,gate);screen.mount(section);screen.resume();drain();
         assertEquals(1,section.getChildCount());assertTrue(section.getChildAt(0) instanceof MilepostPresentationView);assertFalse(gate.enterProcessing());
         screen.pause();drain();assertEquals(0,section.getChildCount());assertTrue(gate.enterProcessing());gate.leaveProcessing();screen.resume();drain();assertEquals(1,section.getChildCount());screen.pause();drain();
+    }
+    @Test public void integratedRepeatedEntryDismissalAndReplayMeasureHeap()throws Exception{
+        prepare(7,100);process();Activity a=Robolectric.buildActivity(Activity.class).setup().get();
+        LinearLayout section=new LinearLayout(a);a.setContentView(section);MilepostScreenIntegration screen=new MilepostScreenIntegration(a,gate);screen.mount(section);
+        for(int i=0;i<2;i++)cycle(screen,section);
+        System.gc();Thread.sleep(50);long before=MilepostPresentationTest.heap();java.util.concurrent.atomic.AtomicLong peak=new java.util.concurrent.atomic.AtomicLong(before);
+        AtomicBoolean stop=new AtomicBoolean();Thread sampler=new Thread(()->{while(!stop.get()){peak.accumulateAndGet(MilepostPresentationTest.heap(),Math::max);try{Thread.sleep(2);}catch(InterruptedException e){return;}}});sampler.start();
+        long started=System.nanoTime();try{for(int i=0;i<3;i++)cycle(screen,section);}finally{stop.set(true);sampler.join();}
+        long elapsed=(System.nanoTime()-started)/1000000;System.gc();Thread.sleep(50);long retained=MilepostPresentationTest.heap();
+        System.out.println("MILEPOST_INTEGRATION_PROBE cycles=3 posts=7 source_journeys=1 before="+before+" peak="+peak.get()+" incremental_peak="+(peak.get()-before)+" retained="+retained+" retained_delta="+(retained-before)+" elapsed_ms="+elapsed+" overlap=false decoded_bitmaps=0");
+        assertEquals(0,section.getChildCount());assertTrue("Integration peak exceeds 64MiB",peak.get()-before<64L*1024*1024);assertTrue("Integration retained growth exceeds 8MiB",retained-before<8L*1024*1024);
+    }
+    void cycle(MilepostScreenIntegration screen,LinearLayout section)throws Exception{
+        process();screen.resume();drain();assertEquals(1,section.getChildCount());MilepostPresentationView view=(MilepostPresentationView)section.getChildAt(0);
+        view.replay(true);for(int n=0;n<7;n++)view.next();view.later();screen.pause();drain();
     }
     static void drain()throws Exception{ScreenDataLoader.submit(()->{}).get();Shadows.shadowOf(Looper.getMainLooper()).idle();}
 }

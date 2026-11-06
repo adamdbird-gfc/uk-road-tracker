@@ -142,7 +142,7 @@ final class MilepostPresentationView extends ScrollView {
         },true);
     }
     private void loadDiscoveries(long after){
-        if(recording()||!resumed)return;
+        if(recording()||!resumed||!current())return;
         viewingDiscoveries=true;loadingDiscoveries=true;int token=++request;String receipt=snapshot.receipt;render();
         discoveryPages.load(after,page->{
             if(token!=request||!receipt.equals(snapshot.receipt)||!resumed||recording())return;

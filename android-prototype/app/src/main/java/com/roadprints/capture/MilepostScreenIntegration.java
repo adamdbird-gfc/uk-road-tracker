@@ -16,7 +16,7 @@ final class MilepostScreenIntegration {
     private MilepostPresentationView view;
     private boolean leased,loading;
     private int request;
-    private long archive,ncn;
+    private long archive,ncn,ncnEvidence;
     private String receipt="";
     MilepostScreenIntegration(Activity host,MilepostIntegration gate){this.host=host;this.gate=gate;}
     void mount(LinearLayout container){
@@ -30,7 +30,7 @@ final class MilepostScreenIntegration {
         if(view!=null&&!fresh())clearView();
         loading=true;int token=++request;
         ScreenDataLoader.execute(()->{
-            MilepostPresentation.Snapshot result=null;long a=JourneyStore.dataRevision(host),n=NcnProgressStore.revision(host);
+            MilepostPresentation.Snapshot result=null;long a=JourneyStore.dataRevision(host),n=NcnProgressStore.revision(host),e=JourneyStore.ncnDataRevision(host);
             try(MilepostDiscoveryLedger ledger=new MilepostDiscoveryLedger(host,gate.database);
                 MilepostReconciliationJob.CaptureGuard guard=new MilepostReconciliationJob.CaptureGuard(host,stopped,Long.MAX_VALUE)){
                 result=gate.read(host,ledger,new MilepostPresentationStore(host,gate.user).read().acknowledgedPosts,guard);
@@ -39,8 +39,8 @@ final class MilepostScreenIntegration {
             main.post(()->{
                 if(token!=request||stopped.get()||host.isDestroyed()||host.isFinishing())return;
                 loading=false;
-                if(ready==null||a!=JourneyStore.dataRevision(host)||n!=NcnProgressStore.revision(host)||CaptureService.isActive(host)){clearView();return;}
-                archive=a;ncn=n;
+                if(ready==null||a!=JourneyStore.dataRevision(host)||n!=NcnProgressStore.revision(host)||e!=JourneyStore.ncnDataRevision(host)||!NcnProgressStore.enabled(host)||CaptureService.isActive(host)){clearView();return;}
+                archive=a;ncn=n;ncnEvidence=e;
                 try{
                     if(view==null){
                         view=new MilepostPresentationView(host,new MilepostPresentationStore(host,gate.user),ready,(after,complete)->loadPage(after,complete));
@@ -51,7 +51,7 @@ final class MilepostScreenIntegration {
             });
         });
     }
-    private boolean fresh(){return gate.enabled&&!stopped.get()&&archive==JourneyStore.dataRevision(host)&&ncn==NcnProgressStore.revision(host);}
+    private boolean fresh(){return gate.enabled&&!stopped.get()&&archive==JourneyStore.dataRevision(host)&&ncn==NcnProgressStore.revision(host)&&ncnEvidence==JourneyStore.ncnDataRevision(host)&&NcnProgressStore.enabled(host);}
     private void loadPage(long after,java.util.function.Consumer<MilepostPresentationReader.Page> complete){
         int token=request;
         ScreenDataLoader.execute(()->{
