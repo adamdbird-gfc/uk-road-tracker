@@ -102,7 +102,7 @@ jobs:
           sudo --preserve-env=JAVA_HOME,ANDROID_HOME,ANDROID_SDK_ROOT,GRADLE_USER_HOME,RUNNER_TEMP,NCN_TEST_DATABASE,MILEPOST_CANDIDATE_CATALOGUE unshare --net bash -c '
             set -e
             ip link set lo up
-            exec sudo -u runner --preserve-env=JAVA_HOME,ANDROID_HOME,ANDROID_SDK_ROOT,GRADLE_USER_HOME,RUNNER_TEMP,NCN_TEST_DATABASE,MILEPOST_CANDIDATE_CATALOGUE "$1" --offline --no-daemon --stacktrace --init-script "$RUNNER_TEMP/milepost-heap.init.gradle" -p android-prototype -Pandroid.builder.sdkDownload=false -Drobolectric.offline=true -Drobolectric.dependency.dir="$RUNNER_TEMP/robolectric-offline" :app:testDebugUnitTest --tests "*Milepost*Test" --tests "*WalkingCaptureEvidenceTest" --tests "*CaptureQualityValidatorTest" --tests "*Timeline*Test" --tests "*AchievementArchiveVolumeTest" --tests "*CaptureRecoveryIntegrationTest" --tests "*CaptureMovementEvidenceTest" --tests "*WalkingCaptureServiceTest" --tests "*JourneyStoreDeletionTest" --tests "*JourneyStoreSummaryTest" --tests "*JourneyCorrectionUtilsTest" --tests "*NcnAndroidTest" --tests "*NcnAchievementThresholdTest" --tests "*PhantomTrain*Test" --tests "*DrivingTransition*Test" --tests "*OnFootContinuity*Test" --tests "*MultimodalFerryTest" --tests "*CaptureStartGateTest" --tests "*FootTraceValidatorTest"
+            exec sudo -u runner --preserve-env=JAVA_HOME,ANDROID_HOME,ANDROID_SDK_ROOT,GRADLE_USER_HOME,RUNNER_TEMP,NCN_TEST_DATABASE,MILEPOST_CANDIDATE_CATALOGUE "$1" --offline --no-daemon --stacktrace --init-script "$RUNNER_TEMP/milepost-heap.init.gradle" -p android-prototype -Pandroid.builder.sdkDownload=false -Drobolectric.offline=true -Drobolectric.dependency.dir="$RUNNER_TEMP/robolectric-offline" :app:testDebugUnitTest --tests "*Milepost*Test" --tests "*WalkingCaptureEvidenceTest" --tests "*CaptureQualityValidatorTest" --tests "*Timeline*Test" --tests "*AchievementArchiveVolumeTest" --tests "*AchievementCelebrationsTest" --tests "*AchievementGeometryMemoryTest" --tests "*CaptureRecoveryIntegrationTest" --tests "*CaptureMovementEvidenceTest" --tests "*WalkingCaptureServiceTest" --tests "*JourneyStoreDeletionTest" --tests "*JourneyStoreSummaryTest" --tests "*JourneyCorrectionUtilsTest" --tests "*NcnAndroidTest" --tests "*NcnAchievementThresholdTest" --tests "*PhantomTrain*Test" --tests "*DrivingTransition*Test" --tests "*OnFootContinuity*Test" --tests "*MultimodalFerryTest" --tests "*CaptureStartGateTest" --tests "*FootTraceValidatorTest"
           ' _ "$gradle_path"
       - name: Measure streaming evaluator with a 64MiB JVM
         run: |
@@ -130,7 +130,7 @@ jobs:
           for root in roots:
               for out in root.iter('system-out'):
                   for line in (out.text or '').splitlines():
-                      if any(tag in line for tag in ('MILEPOST_LEDGER_PROBE','MILEPOST_RECONCILE_PROBE','MILEPOST_ACHIEVEMENT_PROBE')): print(line)
+                      if any(tag in line for tag in ('MILEPOST_LEDGER_PROBE','MILEPOST_RECONCILE_PROBE','MILEPOST_ACHIEVEMENT_PROBE','MILEPOST_PRESENTATION_PROBE')): print(line)
           assert totals['tests']>=40 and totals['failures']==totals['errors']==totals['skipped']==0
           PY
       - name: Retain reports without APKs or credentials
