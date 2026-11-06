@@ -191,7 +191,7 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
             d.setTransactionSuccessful();
         } finally {d.endTransaction();}
     }
-    private static String markerFingerprint(List<Marker> markers) {
+    static String markerFingerprint(List<Marker> markers) {
         try {
             org.json.JSONArray rows=new org.json.JSONArray();
             java.util.List<Marker> sorted=new ArrayList<>(markers); sorted.sort((a,b)->a.id.compareTo(b.id));

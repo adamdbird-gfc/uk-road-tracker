@@ -13,6 +13,8 @@ on:
       - '.github/workflows/millennium-milepost-evidence.yml'
       - 'scripts/milepost_acceptance*'
       - 'reference-data/millennium-mileposts/**'
+      - 'android-prototype/app/src/main/assets/millennium-mileposts/**'
+      - 'scripts/*milepost*.py'
 permissions:
   contents: read
 concurrency:
@@ -127,7 +129,7 @@ jobs:
           gradle --offline --no-daemon -p android-prototype -Pandroid.builder.sdkDownload=false --init-script "$RUNNER_TEMP/milepost-memory.init.gradle" :app:milepostMemoryProbe
       - name: Validate Stage 1 catalogue and test counts
         run: |
-          python3 -m unittest scripts.test_milepost_catalogue -q
+          python3 -m unittest scripts.test_milepost_catalogue scripts.test_milepost_approval -q
           python3 - <<'PY'
           import pathlib,xml.etree.ElementTree as E
           roots=[E.parse(p).getroot() for p in pathlib.Path('android-prototype/app/build/test-results').rglob('TEST-*.xml')]
