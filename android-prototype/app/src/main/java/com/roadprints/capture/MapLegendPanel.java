@@ -27,9 +27,10 @@ final class MapLegendPanel {
         LinearLayout.LayoutParams lineParams=new LinearLayout.LayoutParams(-1,-2);lineParams.topMargin=dp(activity,4);lineParams.bottomMargin=dp(activity,10);body.addView(lines,lineParams);
         for(MapLayerPreferences.Layer layer:MapLayerPreferences.Layer.values()){
             if(layer==MapLayerPreferences.Layer.BOUNDARIES&&!townMap)continue;
+            if(layer==MapLayerPreferences.Layer.MILEPOSTS&&townMap)continue;
             LinearLayout row=new LinearLayout(activity);row.setGravity(Gravity.CENTER_VERTICAL);row.setPadding(0,dp(activity,4),0,dp(activity,4));
             LinearLayout.LayoutParams sampleParams=new LinearLayout.LayoutParams(dp(activity,40),dp(activity,48));sampleParams.rightMargin=dp(activity,6);
-            row.addView(new Sample(activity,layer.color,null,layer==MapLayerPreferences.Layer.BOUNDARIES),sampleParams);
+            row.addView(new Sample(activity,layer.color,layer==MapLayerPreferences.Layer.MILEPOSTS?"?":null,layer==MapLayerPreferences.Layer.BOUNDARIES),sampleParams);
             LinearLayout labels=new LinearLayout(activity);labels.setOrientation(LinearLayout.VERTICAL);
             labels.addView(text(activity,layer.label,15,0xFF0B1C50,true));labels.addView(text(activity,layer.detail,12,0xFF43516A,false));
             row.addView(labels,new LinearLayout.LayoutParams(0,-2,1));

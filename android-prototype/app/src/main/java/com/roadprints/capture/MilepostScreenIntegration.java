@@ -21,13 +21,15 @@ final class MilepostScreenIntegration {
     MilepostScreenIntegration(Activity host,MilepostIntegration gate){this.host=host;this.gate=gate;}
     void mount(LinearLayout container){
         this.container=container;
+        if(view==null&&gate.allowed(host))showPending();
         if(view!=null){if(view.getParent() instanceof android.view.ViewGroup)((android.view.ViewGroup)view.getParent()).removeView(view);container.addView(view);view.onHostResume();}
     }
     void resume(){if(!gate.allowed(host))return;stopped.set(false);refresh();}
     void refresh(){
         if(!gate.allowed(host)||stopped.get()||container==null||loading)return;
+        if(view!=null&&!receipt.equals("assessment-pending")&&!fresh()){clearView();showPending();}
+        if(view==null)showPending();
         if(!leased){leased=gate.enterPresentation();if(!leased)return;}
-        if(view!=null&&!fresh())clearView();
         loading=true;int token=++request;
         ScreenDataLoader.execute(()->{
             MilepostPresentation.Snapshot result=null;long a=JourneyStore.dataRevision(host),n=NcnProgressStore.revision(host),e=JourneyStore.ncnDataRevision(host);
@@ -39,7 +41,7 @@ final class MilepostScreenIntegration {
             main.post(()->{
                 if(token!=request||stopped.get()||host.isDestroyed()||host.isFinishing())return;
                 loading=false;
-                if(ready==null||a!=JourneyStore.dataRevision(host)||n!=NcnProgressStore.revision(host)||e!=JourneyStore.ncnDataRevision(host)||!NcnProgressStore.enabled(host)||CaptureService.isActive(host)){clearView();return;}
+                if(ready==null||a!=JourneyStore.dataRevision(host)||n!=NcnProgressStore.revision(host)||e!=JourneyStore.ncnDataRevision(host)||!NcnProgressStore.enabled(host)||CaptureService.isActive(host)){if(!receipt.equals("assessment-pending")){clearView();showPending();}return;}
                 archive=a;ncn=n;ncnEvidence=e;
                 try{
                     if(view==null){
@@ -50,6 +52,13 @@ final class MilepostScreenIntegration {
                 }catch(Exception unavailable){clearView();android.util.Log.w("Roadprints","Milepost presentation state unavailable",unavailable);}
             });
         });
+    }
+    private void showPending(){
+        if(container==null||!gate.allowed(host))return;
+        view=new MilepostPresentationView(host,new MilepostPresentationStore(host,gate.user),
+            MilepostPresentation.pending(),this::loadPage);
+        view.freshness=this::fresh;receipt="assessment-pending";container.addView(view);
+        if(!stopped.get())view.onHostResume();
     }
     private boolean fresh(){return gate.enabled&&!stopped.get()&&archive==JourneyStore.dataRevision(host)&&ncn==NcnProgressStore.revision(host)&&ncnEvidence==JourneyStore.ncnDataRevision(host)&&NcnProgressStore.enabled(host);}
     private void loadPage(long after,java.util.function.Consumer<MilepostPresentationReader.Page> complete){

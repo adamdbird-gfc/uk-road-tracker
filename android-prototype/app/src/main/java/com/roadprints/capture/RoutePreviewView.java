@@ -78,6 +78,30 @@ public class RoutePreviewView extends View {
         for(NcnMapOverlay.Line line:ncnOverlay)for(int i=1;i<line.points.length();i++){float distance=editableEdgeDistance(line.points,i,x,y);if(distance<nearest-1){nearest=distance;routes.clear();routes.add(line.route);}else if(distance<=nearest+1)routes.add(line.route);}
         if(routes.isEmpty())return false;ncnTap.accept(routes);return true;
     }
+    private MilepostMapOverlay mileposts;
+    private boolean milepostsVisible;
+    private final MilepostMapOverlay.Projection milepostProjection=new MilepostMapOverlay.Projection(){
+        public float x(double lon){return screenX(lon);}public float y(double lat){return screenY(lat);}
+    };
+    void setMileposts(java.util.List<MilepostDiscoveryLedger.Marker> markers){
+        mileposts=new MilepostMapOverlay(markers,getResources().getDisplayMetrics().density);invalidate();
+    }
+    private void drawMileposts(Canvas canvas){
+        if(!milepostsVisible||mileposts==null)return;
+        mileposts.project(centerLongitude,centerLatitude,cameraZoom,getWidth(),getHeight(),dp(48),milepostProjection);
+        mileposts.draw(canvas,getResources().getDisplayMetrics().density);
+    }
+    private boolean tapMilepost(float x,float y){
+        if(!milepostsVisible||mileposts==null)return false;
+        int i=mileposts.hit(x,y,dp(24));if(i<0)return false;
+        if(mileposts.counts[i]>1&&cameraZoom<MAX_ZOOM){zoomAt(2,x,y);return true;}
+        MilepostDiscoveryLedger.Marker m=mileposts.markers.get(mileposts.indices[i]);
+        new RoadprintsDialog.Builder(getContext()).setTitle("Millennium Milepost")
+            .setMessage(String.format(java.util.Locale.UK,"OSM catalogue location: %.6f, %.6f\n%s\n\nDiscovery requires verified walking, running or cycling within 100 metres.\n© OpenStreetMap contributors · ODbL 1.0",m.lat,m.lon,m.id))
+            .setPositiveButton("OpenStreetMap",(dialog,which)->getContext().startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW,
+                android.net.Uri.parse("https://www.openstreetmap.org/?mlat="+m.lat+"&mlon="+m.lon+"#map=18/"+m.lat+"/"+m.lon))))
+            .setNegativeButton("Close",null).show();return true;
+    }
     private boolean correctionDrawMode;
     private final List<JSONArray> correctionTrace = new ArrayList<>();
     private JSONArray activeCorrectionTrace;
@@ -491,6 +515,7 @@ public class RoutePreviewView extends View {
                         tapNearestRouteEdge(event.getX(), event.getY());
                     return true;
                 }
+                if(tapMilepost(event.getX(),event.getY()))return true;
                 if (tapNcn(event.getX(),event.getY()))return true;
                 if (tapServiceStation(event.getX(), event.getY())) return true;
                 return tapMapRoad(event.getX(), event.getY());
@@ -694,6 +719,7 @@ public class RoutePreviewView extends View {
         drawNcn(canvas);
         long ncnFinished=android.os.SystemClock.elapsedRealtime();
         drawServiceStations(canvas);
+        drawMileposts(canvas);
         drawDiscoveryReplay(canvas);
         drawAttribution(canvas);
         if (!hasTiles) drawMessage(canvas, (coordinatesValid || discoveryReplay != null)
@@ -713,6 +739,7 @@ public class RoutePreviewView extends View {
     }
 
     public void setMapLayersFromPreferences(){
+        milepostsVisible=MapLayerPreferences.visible(getContext(),MapLayerPreferences.Layer.MILEPOSTS);
         travelVisible=MapLayerPreferences.visible(getContext(),MapLayerPreferences.Layer.TRAVEL);
         motorwayVisible=MapLayerPreferences.visible(getContext(),MapLayerPreferences.Layer.MOTORWAYS);
         aRoadVisible=MapLayerPreferences.visible(getContext(),MapLayerPreferences.Layer.A_ROADS);

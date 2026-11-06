@@ -4,6 +4,7 @@ import android.content.Context;
 final class MapLayerPreferences {
     static final String PREFS="roadprints_map_layers_v1";
     enum Layer {
+        MILEPOSTS("Millennium Mileposts",0xFF465A83,"Approved OSM locations. ? = discovery destination; numbers group nearby posts. Discovery assessment is separate."),
         TRAVEL("Recorded travel",0xFF000000,"Matched travel traces, including roads and paths."),
         MOTORWAYS("Motorway coverage",0xFF005EB8,"Motorway sections you have covered."),
         A_ROADS("A-road coverage",0xFF25834A,"A-road sections you have covered."),

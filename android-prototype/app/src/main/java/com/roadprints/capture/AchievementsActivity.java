@@ -445,18 +445,19 @@ public class AchievementsActivity extends Activity {
             for(AchievementStore.Progress item:visible)if(collection.id.equals(item.definition.collectionId)&&!item.definition.id.startsWith("spoons-county-"))content.addView(achievementCard(item));
             if("wetherspoons".equals(collection.id))addRoadCompletionSection(visible,"County completion","spoons-county-");
         }
-        if(NcnProgressStore.enabled(this)){
+        if(NcnProgressStore.enabled(this)||MilepostIntegration.PRODUCTION.enabled){
             View anchor=sectionHeading("National Cycle Network");content.addView(anchor);groupAnchors.put("National Cycle Network",anchor);
             for(AchievementStore.Progress item:visible)if(CollectionAccessStore.NCN.equals(item.definition.collectionId)&&!item.definition.id.startsWith("ncn-route:"))content.addView(achievementCard(item));
             addRoadCompletionSection(visible,"NCN route completion","ncn-route:");
-            content.addView(text("Walking/running and cycling only. Unique verified-open coverage; 100% completes all supported open sections, including disconnected sections. Millennium Time Trail discoveries remain on hold pending verified locations and disc evidence.",12,MUTED,false));
-        }
-        content.addView(text("Totals include imported and recorded travel. Coverage uses matched sections; road-name challenges update as town lookups complete.",
-                12,MUTED,false));
         if(MilepostIntegration.PRODUCTION.enabled){
             LinearLayout milepostSection=new LinearLayout(this);milepostSection.setOrientation(LinearLayout.VERTICAL);
             content.addView(milepostSection);mileposts.mount(milepostSection);mileposts.refresh();
         }
+
+            content.addView(text("Walking/running and cycling only. Unique verified-open coverage; 100% completes all supported open sections, including disconnected sections. Millennium Mileposts use the approved OpenStreetMap catalogue.",12,MUTED,false));
+        }
+        content.addView(text("Totals include imported and recorded travel. Coverage uses matched sections; road-name challenges update as town lookups complete.",
+                12,MUTED,false));
         rebuildJumpMenu();
         scroll.post(() -> {scroll.scrollTo(0,savedScroll);updateActiveJump();});
     }

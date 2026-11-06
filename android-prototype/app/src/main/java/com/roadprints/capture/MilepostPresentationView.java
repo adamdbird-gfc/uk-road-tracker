@@ -137,7 +137,9 @@ final class MilepostPresentationView extends ScrollView {
         TextView attribution=text(body,"© OpenStreetMap contributors · ODbL 1.0\nhttps://www.openstreetmap.org/copyright",12);
         android.text.util.Linkify.addLinks(attribution,android.text.util.Linkify.WEB_URLS);
         attribution.setLinkTextColor(GOLD);
-        text(body,snapshot.current?"Discoveries: "+snapshot.count:"Updating assessment. Showing the previous complete result.",16);
+        text(body,"Explore 887 approved physical mileposts on foot or by bicycle. Pass within 100 metres with verified journey evidence to discover a post.",16);
+        text(body,snapshot.current?"Discoveries: "+snapshot.count+" of 887":
+            "Historical assessment pending. Discoveries have not yet been verified. Assessment continues in small background steps when the device is charging and idle.",16);
         if(recording()){
             text(body,"Reveal paused while recording. Your journey has priority.",16);
             // No summary actions or reveal art while capture is active.
@@ -210,12 +212,16 @@ final class MilepostPresentationView extends ScrollView {
     }
     private void buildCards(){
         cards.removeAllViews();cardProgress=null;
-        for(int i=0;i<6;i++)card(cards,i);
+        for(int i=0;i<7;i++)card(cards,i);
+        if(!snapshot.introduced()){
+            LinearLayout locked=panel(cards);heading(locked,"Mystery reveal");
+            art(locked,0);text(locked,"Locked seven-stage cipher. Discover mileposts to reveal the mystery.",16);
+        }
     }
     private void card(LinearLayout parent,int index){
         MilepostPresentation.Card c=snapshot.card(index);LinearLayout panel=panel(parent);
         // Native text and a neutral generic icon. No identity appears in tags, descriptions or navigation for locked cards.
-        MilepostArtworkView icon=MilepostArtworkView.icon(host,c.earned?MilepostArtworkView.MEDALLIONS[index]:R.drawable.milepost_mystery);
+        MilepostArtworkView icon=MilepostArtworkView.icon(host,c.earned?(index==6?R.drawable.milepost_collective:MilepostArtworkView.MEDALLIONS[index]):R.drawable.milepost_mystery);
         icon.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);panel.addView(icon,new LinearLayout.LayoutParams(dp(48),dp(48)));
         text(panel,c.title,20);text(panel,c.status,16);
         if(!c.biography.isEmpty())text(panel,c.biography,16);

@@ -59,6 +59,11 @@ final class MilepostPresentation {
         final boolean earned;final long ordinal;final String date,precision;
         Award(boolean earned,long ordinal,String date,String precision){this.earned=earned;this.ordinal=ordinal;this.date=date;this.precision=precision;}
     }
+    static Snapshot pending(){
+        List<Award> awards=new ArrayList<>();
+        for(int i=0;i<7;i++)awards.add(new Award(false,0,null,null));
+        return new Snapshot(false,0,0,0,0,0,0,"assessment-pending",null,null,awards);
+    }
     static final class Snapshot {
         final boolean current;final int count,newPosts,pending,incomplete;final long postOrdinal,awardOrdinal;
         final String receipt,from,to;final List<Award> awards;

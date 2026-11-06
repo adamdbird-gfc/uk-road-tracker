@@ -61,6 +61,7 @@ public class MapActivity extends Activity {
     private Map<String, Double> roadPercentages = new HashMap<>();
     private List<RoadCoverageSegment> incompleteRoadSegments = new ArrayList<>();
     private RoutePreviewView mapView;
+    private boolean milepostsRequested;
     private JourneyFilters mapFilters = JourneyFilters.all();
     private TextView mapFilterSummary;
     private View mapFilterControls, zoomControls;
@@ -295,6 +296,14 @@ public class MapActivity extends Activity {
         String selected=CollectionAccessStore.selected(this);
         boolean townMap=getIntent().hasExtra("settlement_code");
         if(townMap)return;
+        if(!milepostsRequested&&MilepostCatalogue.READY){
+            milepostsRequested=true;final RoutePreviewView target=mapView;
+            ScreenDataLoader.execute(()->{
+                try{java.util.List<MilepostDiscoveryLedger.Marker> locations=MilepostCatalogue.load(getApplicationContext());
+                    mainHandler.post(()->{if(!isDestroyed()&&!isFinishing()&&mapView==target)target.setMileposts(locations);});
+                }catch(Exception unavailable){android.util.Log.w("Roadprints","Milepost map catalogue unavailable",unavailable);}
+            });
+        }
         double[] camera=mapView.cameraState();
         JSONArray pins=CollectionAccessStore.known(selected)?VenueCollection.catalogue(this,selected):new JSONArray();
         Set<String> visited=CollectionAccessStore.known(selected)?VenueCollection.completed(this,selected):java.util.Collections.emptySet();
