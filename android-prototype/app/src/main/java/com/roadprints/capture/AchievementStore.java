@@ -157,7 +157,7 @@ final class AchievementStore {
                 crossingTracker.add(result.optJSONObject("motorway_geojson"),journey);
                 crossingTracker.add(result.optJSONObject("a_road_geojson"),journey);
             });
-        } catch(java.util.concurrent.CancellationException cancelled){throw cancelled;}
+        } catch(java.util.concurrent.CancellationException stopped){throw stopped;}
         catch(Exception error){throw new IllegalStateException("Achievement evidence scan failed",error);}
         if(cancelled.getAsBoolean()||Thread.currentThread().isInterrupted())throw new java.util.concurrent.CancellationException();
         MotorwayProgressCalculator.Summary motorwaySummary=motorways.finish();
