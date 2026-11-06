@@ -20,12 +20,16 @@ final class MilepostPresentationView extends ScrollView {
     private final MilepostPresentationStore.State state;
     private MilepostPresentation.Snapshot snapshot;
     private final LinearLayout body;
+    private final MilepostPresentationReader.PageLoader discoveryPages;
+    private int request;
+    private MilepostPresentationReader.Page discoveries;
+    private boolean viewingDiscoveries,loadingDiscoveries;
     private final SharedPreferences capture;
     private boolean resumed,registered;
     private final SharedPreferences.OnSharedPreferenceChangeListener captureListener=(p,k)->{
         if("active".equals(k)&&p.getBoolean("active",false)){
             // SharedPreferences listeners run on main; latch and persist even if recording stops before render.
-            pauseReplay();render();
+            request++;loadingDiscoveries=false;discoveries=null;pauseReplay();render();
         }else if("active".equals(k))render();
     };
     private final Application.ActivityLifecycleCallbacks lifecycle=new Application.ActivityLifecycleCallbacks(){
@@ -37,8 +41,8 @@ final class MilepostPresentationView extends ScrollView {
         public void onActivityStopped(Activity a){}
         public void onActivitySaveInstanceState(Activity a,Bundle b){if(a==host)pauseReplay();}
     };
-    MilepostPresentationView(Activity host,MilepostPresentationStore store,MilepostPresentation.Snapshot snapshot){
-        super(host);this.host=host;this.store=store;this.snapshot=snapshot;state=store.read();
+    MilepostPresentationView(Activity host,MilepostPresentationStore store,MilepostPresentation.Snapshot snapshot,MilepostPresentationReader.PageLoader discoveryPages){
+        super(host);this.discoveryPages=discoveryPages;this.host=host;this.store=store;this.snapshot=snapshot;state=store.read();
         // A process/rotation restart restores the completed static cursor, never an in-flight frame.
         state.paused=true;store.save(state);
         capture=host.getSharedPreferences("roadprints_capture_state",0);
@@ -51,11 +55,11 @@ final class MilepostPresentationView extends ScrollView {
     private void register(){if(!registered){registered=true;capture.registerOnSharedPreferenceChangeListener(captureListener);host.getApplication().registerActivityLifecycleCallbacks(lifecycle);}}
     private void unregister(){if(registered){registered=false;capture.unregisterOnSharedPreferenceChangeListener(captureListener);host.getApplication().unregisterActivityLifecycleCallbacks(lifecycle);}}
     void onHostResume(){resumed=true;if(recording())pauseReplay();render();}
-    void onHostPause(){resumed=false;pauseReplay();}
+    void onHostPause(){resumed=false;request++;loadingDiscoveries=false;pauseReplay();}
     private boolean recording(){return capture.getBoolean("active",false);}
     private boolean canReveal(){return resumed&&!recording()&&snapshot.current&&snapshot.introduced()&&!host.isFinishing()&&!host.isDestroyed();}
     void update(MilepostPresentation.Snapshot next){
-        snapshot=next;
+        snapshot=next;request++;discoveries=null;viewingDiscoveries=false;loadingDiscoveries=false;
         if(!canReveal())pauseReplay();
         // Never reset the cursor when more historical discoveries arrive.
         render();
@@ -69,7 +73,8 @@ final class MilepostPresentationView extends ScrollView {
     }
     void next(){
         if(!canReveal()||state.paused||!state.replaying){pauseReplay();render();return;}
-        state.cursor=Math.min(snapshot.target(),state.cursor+1);
+        if(state.cursor>=snapshot.target())return;
+        state.cursor++;
         state.completedStage=Math.max(state.completedStage,state.cursor);
         store.save(state);render();
         View stage=findViewWithTag("milepost_reveal_progress");if(stage!=null)stage.announceForAccessibility(MilepostPresentation.announcement(displayStage()));
@@ -92,6 +97,8 @@ final class MilepostPresentationView extends ScrollView {
         }else if(store.pending(state,snapshot)&&(!state.dismissed||!snapshot.receipt.equals(state.dismissedReceipt)))summary();
         LinearLayout cards=column(body);
         for(int i=0;i<6;i++)card(cards,i);
+        if(!recording()&&snapshot.current&&(snapshot.count>0||snapshot.incomplete>0))
+            button(body,"View discoveries","milepost_browse_discoveries",()->loadDiscoveries(0),true);
         if(snapshot.introduced()){
             heading(body,"In Honour of Time");
             text(body,snapshot.individuals()+" of 6 personalities"+(snapshot.awards.get(6).earned?". Collective achievement earned.":"."),16);
@@ -101,6 +108,7 @@ final class MilepostPresentationView extends ScrollView {
             }
         }
         if(state.replaying&&!state.dismissed&&!recording()&&snapshot.introduced())reveal();
+        if(viewingDiscoveries&&!recording())discoveryDetails();
     }
     private void summary(){
         LinearLayout panel=panel(body);heading(panel,"Discovery summary");
@@ -111,11 +119,7 @@ final class MilepostPresentationView extends ScrollView {
         boolean unknown=false;for(MilepostPresentation.Award a:snapshot.awards)if(a.earned&&a.ordinal>state.acknowledgedAwards&&a.date==null)unknown=true;
         if(unknown)text(panel,"Some achievement dates are unknown. Recognition time is not a historical event date.",16);
         text(panel,snapshot.pending+" journeys awaiting assessment; "+snapshot.incomplete+" with incomplete evidence or catalogue checks.",16);
-        button(panel,"View discoveries","milepost_view_discoveries",()->{
-            // This bounded details panel avoids an archive-sized list. Detailed maps are a separate workstream.
-            store.acknowledge(state,snapshot);state.dismissed=false;store.save(state);render();
-            text(body,"Discovery record: "+snapshot.count+" unique physical posts. "+snapshot.dates(),16).requestFocus();
-        },true);
+        button(panel,"View discoveries","milepost_view_discoveries",()->loadDiscoveries(0),true);
         button(panel,"Replay reveal","milepost_summary_replay",()->replay(true),canReveal());
         button(panel,"Later","milepost_later",this::later,true);
         button(panel,"Skip celebrations","milepost_skip_summary",()->{
@@ -124,6 +128,32 @@ final class MilepostPresentationView extends ScrollView {
             state.replaying=false;state.paused=true;state.dismissed=true;state.dismissedReceipt=snapshot.receipt;
             store.acknowledge(state,snapshot);render();
         },true);
+    }
+    private void loadDiscoveries(long after){
+        if(recording()||!resumed)return;
+        viewingDiscoveries=true;loadingDiscoveries=true;int token=++request;String receipt=snapshot.receipt;render();
+        discoveryPages.load(after,page->{
+            if(token!=request||!receipt.equals(snapshot.receipt)||!resumed||recording())return;
+            loadingDiscoveries=false;discoveries=page;
+            // Inspection acknowledges this complete summary only after usable details are delivered.
+            if(page.current)store.acknowledge(state,snapshot);
+            render();View heading=findViewWithTag("milepost_discovery_heading");
+            if(heading!=null)heading.sendAccessibilityEvent(android.view.accessibility.AccessibilityEvent.TYPE_VIEW_FOCUSED);
+        });
+    }
+    private void discoveryDetails(){
+        LinearLayout panel=panel(body);TextView title=text(panel,"Discovery record",22);androidx.core.view.ViewCompat.setAccessibilityHeading(title,true);title.setTag("milepost_discovery_heading");
+        if(loadingDiscoveries){text(panel,"Loading discoveries…",16);return;}
+        if(discoveries==null||!discoveries.current){
+            text(panel,"Discovery details need a current assessment. Try again when processing is complete.",16);
+            button(panel,"Try again","milepost_retry_discoveries",()->loadDiscoveries(0),true);return;
+        }
+        if(discoveries.discoveries.isEmpty())text(panel,"No currently qualifying physical discoveries.",16);
+        for(MilepostPresentationReader.Discovery d:discoveries.discoveries)
+            text(panel,"Discovery "+d.ordinal+" · "+d.marker+" · "+(d.date==null?"Historical date unavailable":d.date+" (journey date)"),16);
+        if(discoveries.more){long after=discoveries.discoveries.get(discoveries.discoveries.size()-1).ordinal;
+            button(panel,"Next discoveries","milepost_next_discoveries",()->loadDiscoveries(after),true);}
+        button(panel,"First discoveries","milepost_first_discoveries",()->loadDiscoveries(0),true);
     }
     private void card(LinearLayout parent,int index){
         MilepostPresentation.Card c=snapshot.card(index);LinearLayout panel=panel(parent);
@@ -193,7 +223,7 @@ final class MilepostPresentationView extends ScrollView {
         TextView t=new TextView(host);t.setText(value);t.setTextSize(size);t.setTextColor(Color.WHITE);t.setPadding(0,dp(6),0,dp(6));
         parent.addView(t,new LinearLayout.LayoutParams(-1,-2));return t;
     }
-    private void heading(LinearLayout parent,String value){TextView t=text(parent,value,22);t.setTypeface(null,Typeface.BOLD);t.setAccessibilityHeading(true);}
+    private void heading(LinearLayout parent,String value){TextView t=text(parent,value,22);t.setTypeface(null,Typeface.BOLD);androidx.core.view.ViewCompat.setAccessibilityHeading(t,true);}
     private void button(LinearLayout parent,String label,String tag,Runnable action,boolean enabled){
         Button b=new Button(host);b.setText(label);b.setTextSize(16);b.setAllCaps(false);b.setMinHeight(dp(48));b.setTag(tag);b.setEnabled(enabled);
         b.setOnClickListener(v->action.run());parent.addView(b,new LinearLayout.LayoutParams(-1,-2));

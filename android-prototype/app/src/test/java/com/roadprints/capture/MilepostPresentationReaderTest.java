@@ -21,6 +21,9 @@ public class MilepostPresentationReaderTest {
         String original=fixture.state().toString();MilepostPresentation.Snapshot s=read(0);
         assertTrue(s.current);assertEquals(7,s.count);assertEquals(7,s.newPosts);assertEquals(7,s.postOrdinal);assertEquals(7,s.newAwards(0).size());
         assertEquals("2026-11-05",s.from);assertEquals(s.from,s.to);assertNull(s.awards.get(4).date);assertNull(s.awards.get(6).date);
+        MilepostPresentationReader.Page page=MilepostPresentationReader.page(fixture.c,fixture.ledger,MilepostAchievementsTest.USER,0,()->false);
+        assertTrue(page.current);assertFalse(page.more);assertEquals(7,page.discoveries.size());
+        for(int i=0;i<7;i++)assertEquals(i+1,page.discoveries.get(i).ordinal);
         assertEquals(0,read(s.postOrdinal).newPosts);assertEquals(original,fixture.state().toString());
     });}
     @Test public void freshUnknownOnlyIsSpoilerSafeAndStaleLedgerCannotAnnounceNewDiscoveries()throws Exception{fixture.work(()->{
@@ -59,7 +62,12 @@ public class MilepostPresentationReaderTest {
         // Synthetic prepared publication uses a fixture NCN token. Align it with the actual read fence.
         NcnProgressStore.Snapshot n=NcnProgressStore.current();String token=n.catalogue.version+":"+n.archiveRevision+":"+n.evidenceRevision+":"+NcnProgressStore.revision(fixture.c);
         fixture.ledger.db().execSQL("UPDATE achievement_snapshot SET ncn_token=?",new Object[]{token});
-        assertTrue(read(0).current);read(0);System.gc();Thread.sleep(50);long before=heap();AtomicLong peak=new AtomicLong(before);AtomicBoolean stop=new AtomicBoolean();
+        assertTrue(read(0).current);
+        MilepostPresentationReader.Page first=MilepostPresentationReader.page(fixture.c,fixture.ledger,MilepostAchievementsTest.USER,0,()->false);
+        assertEquals(16,first.discoveries.size());assertTrue(first.more);
+        MilepostPresentationReader.Page second=MilepostPresentationReader.page(fixture.c,fixture.ledger,MilepostAchievementsTest.USER,first.discoveries.get(15).ordinal,()->false);
+        assertTrue(second.discoveries.get(0).ordinal>first.discoveries.get(15).ordinal);
+        read(0);System.gc();Thread.sleep(50);long before=heap();AtomicLong peak=new AtomicLong(before);AtomicBoolean stop=new AtomicBoolean();
         Thread sampler=new Thread(()->{while(!stop.get()){peak.accumulateAndGet(heap(),Math::max);try{Thread.sleep(2);}catch(InterruptedException e){return;}}});sampler.start();
         long start=System.nanoTime();MilepostPresentation.Snapshot retained=null;
         try{for(int i=0;i<3;i++)retained=read(0);}finally{stop.set(true);sampler.join();}

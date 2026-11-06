@@ -86,7 +86,7 @@ public class MilepostPresentationTest {
     }
     ActivityController<Activity> controller;MilepostPresentationView view;
     void host(MilepostPresentation.Snapshot s){controller=Robolectric.buildActivity(Activity.class).setup().visible();
-        view=new MilepostPresentationView(controller.get(),store,s);controller.get().setContentView(view);view.onHostResume();}
+        view=new MilepostPresentationView(controller.get(),store,s,(after,done)->done.accept(new MilepostPresentationReader.Page(Collections.emptyList(),false,true)));controller.get().setContentView(view);view.onHostResume();}
     @After public void closeHost(){if(controller!=null)controller.pause().stop().destroy();}
     @Test public void hiddenNativeViewHasNoNavigationAccessibilityOrBiographySpoilers(){
         host(snapshot(1,0,"a"));String all=contents(view);
@@ -97,7 +97,7 @@ public class MilepostPresentationTest {
     }
     @Test public void staticRevealPersistsCompletedStagesAndRestartsPaused(){
         host(snapshot(6,1,"a"));view.replay(true);view.next();view.next();assertEquals(2,store.read().cursor);
-        view.onHostPause();view=new MilepostPresentationView(controller.get(),store,snapshot(6,1,"a"));controller.get().setContentView(view);view.onHostResume();
+        view.onHostPause();view=new MilepostPresentationView(controller.get(),store,snapshot(6,1,"a"),(after,done)->done.accept(new MilepostPresentationReader.Page(Collections.emptyList(),false,true)));controller.get().setContentView(view);view.onHostResume();
         assertTrue(store.read().paused);assertEquals(2,view.displayStage());view.next();assertEquals(2,view.displayStage());
         view.replay(false);view.next();assertEquals(3,store.read().cursor);assertEquals(3,store.read().completedStage);
         TextView cipher=view.findViewWithTag("milepost_cipher");assertEquals(View.IMPORTANT_FOR_ACCESSIBILITY_NO,cipher.getImportantForAccessibility());assertFalse(cipher.isFocusable());
