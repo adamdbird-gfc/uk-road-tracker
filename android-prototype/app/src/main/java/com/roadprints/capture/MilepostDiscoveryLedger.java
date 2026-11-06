@@ -71,15 +71,29 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
     /** Feed and source revision advance in the same transaction, so crashes cannot
      * acknowledge a change without retracting stale proofs. Versions never use time. */
     void archiveChanged(String user,String id,String stamp,String evidenceToken,boolean deleted) {
-        SQLiteDatabase d=db();d.beginTransaction();
-        try {
+        archiveChanged(user,id,stamp,evidenceToken,deleted,(journey,transaction)->transaction.run());
+    }
+    void archiveChanged(String user,String id,String stamp,String evidenceToken,boolean deleted,CommitFence fence) {
+        SQLiteDatabase d=db();
+        fencedTransaction(d,id,fence,()->{
             if(!stamp.equals(archiveStamp(user,id))) {
                 long version=number(d,"SELECT version FROM journey WHERE user=? AND id=?",user,id)+1;
                 sourceChanged(user,id,version,evidenceToken,deleted);
                 d.insertWithOnConflict("archive_source",null,values("user",user,"id",id,"stamp",stamp),SQLiteDatabase.CONFLICT_REPLACE);
             }
-            d.setTransactionSuccessful();
-        }finally {d.endTransaction();}
+        });
+    }
+    /** Acquire the SQLite writer BEFORE the archive monitor. A concurrent catalogue
+     * install must never make capture wait for SQLite while we hold JourneyStore.
+     * The final commit still occurs inside the short archive fence. */
+    private static void fencedTransaction(SQLiteDatabase d,String id,CommitFence fence,Runnable body) {
+        d.beginTransaction();boolean[] ended={false};
+        try {
+            fence.commit(id,()->{
+                try {body.run();d.setTransactionSuccessful();}
+                finally {ended[0]=true;d.endTransaction();}
+            });
+        }finally {if(!ended[0])d.endTransaction();}
     }
     static final class Discovery {
         final String marker, journey, eventDate;
@@ -253,9 +267,7 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
         }
         final boolean sourceDated=dated;
         final long sourceEvent=event,sourceEnd=end;
-        fence.commit(journey,()->{
-        d.beginTransaction();
-        try {
+        fencedTransaction(d,journey,fence,()->{
             // Fence both simultaneous workers and source/catalogue changes during evaluation.
             if(number(d,"SELECT COUNT(*) FROM journey WHERE user=? AND id=? AND version=? AND token=? AND cursor=? AND state='QUEUED' AND deleted=0",user,journey,Long.toString(version),token,after)!=1
                     || revision!=number(d,"SELECT revision FROM catalogue WHERE singleton=1"))throw new ConcurrentModificationException("Ledger inputs changed");
@@ -291,8 +303,6 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
             }
             if(cancelled.getAsBoolean() || Thread.currentThread().isInterrupted())throw new CancellationException();
             d.update("journey",values("cursor",cursor,"state",state),"user=? AND id=?",new String[]{user,journey});
-            d.setTransactionSuccessful();
-        } finally {d.endTransaction();}
         });
         return true;
     }

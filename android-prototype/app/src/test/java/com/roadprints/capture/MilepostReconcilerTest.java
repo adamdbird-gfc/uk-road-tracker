@@ -94,10 +94,10 @@ public class MilepostReconcilerTest {
         catalogue();save(row("a"));MilepostArchiveReader.Snapshot s=MilepostArchiveReader.read(c,"a",()->false);
         ledger.archiveChanged("u","a",s.stamp,s.evidence.token(),false);
         try {
-            ledger.processNext("u",(u,id)->s.evidence,()->false,1000,true,(id,transaction)->{
+            ledger.processNext("u",(u,id)->{
                 ledger.install(2,String.join("",Collections.nCopies(64,"b")),Collections.singletonList(MilepostDiscoveryLedgerTest.marker("p",200,true)));
-                transaction.run();
-            });fail("Stale catalogue page accepted");
+                return s.evidence;
+            },()->false,1000,true,(id,transaction)->transaction.run());fail("Stale catalogue page accepted");
         }catch(ConcurrentModificationException expected){}assertTrue(found().isEmpty());drain();assertTrue(found().isEmpty());
         save(row("a").put("processing_status","failed"));drain();assertTrue(found().isEmpty());
     });}

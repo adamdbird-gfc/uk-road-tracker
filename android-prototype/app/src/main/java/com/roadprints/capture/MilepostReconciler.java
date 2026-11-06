@@ -39,18 +39,21 @@ final class MilepostReconciler {
         String stamp=MilepostArchiveReader.token(context,id);
         if(stamp.equals(ledger.archiveStamp(user,id)))return;
         if("deleted".equals(stamp)) {
-            synchronized(JourneyStore.class) {
-                MilepostArchiveReader.check(cancelled);
-                if("deleted".equals(MilepostArchiveReader.token(context,id)))ledger.archiveChanged(user,id,"deleted","deleted",true);
-            }
+            ledger.archiveChanged(user,id,"deleted","deleted",true,(journey,transaction)->commit(journey,"deleted",cancelled,transaction));
             return;
         }
         MilepostArchiveReader.Snapshot snapshot=MilepostArchiveReader.read(context,id,cancelled);readSources++;
+        ledger.archiveChanged(user,id,snapshot.stamp,snapshot.evidence.token(),false,
+                (journey,transaction)->commit(journey,snapshot.stamp,cancelled,transaction));
+    }
+    private void commit(String id,String stamp,BooleanSupplier cancelled,Runnable transaction) {
+        long start=System.nanoTime();
         synchronized(JourneyStore.class) {
             MilepostArchiveReader.check(cancelled);
-            if(!snapshot.stamp.equals(MilepostArchiveReader.token(context,id)))throw new ConcurrentModificationException();
-            ledger.archiveChanged(user,id,snapshot.stamp,snapshot.evidence.token(),false);
+            if(!stamp.equals(MilepostArchiveReader.token(context,id)))throw new ConcurrentModificationException("Archive changed before commit");
+            transaction.run();
         }
+        maxCommitNanos=Math.max(maxCommitNanos,System.nanoTime()-start);
     }
     /** Returns whether another slice is needed. Caller owns time/capture cancellation.
      * Cursor advances only after a durable feed update; a cancelled item is retried.
@@ -77,15 +80,7 @@ final class MilepostReconciler {
                     sync(id,cancelled);
                     loaded[0]=MilepostArchiveReader.read(context,id,cancelled);readSources++;
                     return loaded[0].evidence;
-                },cancelled,recognisedAt,true,(id,transaction)->{
-                    long start=System.nanoTime();
-                    synchronized(JourneyStore.class) {
-                        MilepostArchiveReader.check(cancelled);
-                        if(!loaded[0].stamp.equals(MilepostArchiveReader.token(context,id)))throw new ConcurrentModificationException("Archive changed before commit");
-                        transaction.run();
-                    }
-                    maxCommitNanos=Math.max(maxCommitNanos,System.nanoTime()-start);
-                });
+                },cancelled,recognisedAt,true,(id,transaction)->commit(id,loaded[0].stamp,cancelled,transaction));
                 if(!more)return live.size()==SCAN_PAGE||known.size()==SCAN_PAGE;
                 processedPages++;
             }catch(java.io.FileNotFoundException|ConcurrentModificationException raced){return true;}
