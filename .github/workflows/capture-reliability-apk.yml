@@ -16,6 +16,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
+      MILEPOST_CANDIDATE_CATALOGUE: ${{ github.workspace }}/reference-data/millennium-mileposts/revision-1/catalogue.jsonl
       ANDROID_SDK_DISABLE_USAGE_TRACKING: '1'
       NCN_TEST_DATABASE: ${{ github.workspace }}/.cache/ncn/catalogue.db
     steps:
@@ -91,10 +92,10 @@ jobs:
       - name: Run Android regression suite without external network access
         run: |
           gradle_path="$(command -v gradle)"
-          sudo --preserve-env=JAVA_HOME,ANDROID_HOME,ANDROID_SDK_ROOT,GRADLE_USER_HOME,RUNNER_TEMP,NCN_TEST_DATABASE unshare --net bash -c '
+          sudo --preserve-env=JAVA_HOME,ANDROID_HOME,ANDROID_SDK_ROOT,GRADLE_USER_HOME,RUNNER_TEMP,NCN_TEST_DATABASE,MILEPOST_CANDIDATE_CATALOGUE unshare --net bash -c '
             set -e
             ip link set lo up
-            exec sudo -u runner --preserve-env=JAVA_HOME,ANDROID_HOME,ANDROID_SDK_ROOT,GRADLE_USER_HOME,RUNNER_TEMP,NCN_TEST_DATABASE "$1" --offline --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false -Drobolectric.offline=true -Drobolectric.dependency.dir="$RUNNER_TEMP/robolectric-offline" :app:testDebugUnitTest
+            exec sudo -u runner --preserve-env=JAVA_HOME,ANDROID_HOME,ANDROID_SDK_ROOT,GRADLE_USER_HOME,RUNNER_TEMP,NCN_TEST_DATABASE,MILEPOST_CANDIDATE_CATALOGUE "$1" --offline --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false -Drobolectric.offline=true -Drobolectric.dependency.dir="$RUNNER_TEMP/robolectric-offline" :app:testDebugUnitTest
           ' _ "$gradle_path"
           python3 -m unittest scripts.test_review_capture_partition -q
           python3 - <<'PYTOTAL'
