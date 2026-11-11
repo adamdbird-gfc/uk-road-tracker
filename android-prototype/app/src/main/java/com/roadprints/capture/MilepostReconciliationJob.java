@@ -34,6 +34,7 @@ public final class MilepostReconciliationJob extends JobService {
         if(pending!=null&&!pending.isRequireCharging()&&!pending.isRequireDeviceIdle())return JobScheduler.RESULT_SUCCESS;
         return scheduler.schedule(new JobInfo.Builder(JOB_ID,new ComponentName(context,MilepostReconciliationJob.class))
                 .setOverrideDeadline(5_000)
+                .setBackoffCriteria(10_000,JobInfo.BACKOFF_POLICY_LINEAR)
                 .build());
     }
     @Override public boolean onStartJob(JobParameters parameters) {
@@ -56,8 +57,8 @@ public final class MilepostReconciliationJob extends JobService {
                     synchronized(MilepostReconciliationJob.class) {
                         if(run.stopped.get())return;
                         current=null;
-                        jobFinished(parameters,needsRetry||archive!=JourneyStore.dataRevision(this)
-                                ||ncn!=NcnProgressStore.revision(this));
+                        jobFinished(parameters,!CaptureService.isActive(this)&&(needsRetry
+                                ||archive!=JourneyStore.dataRevision(this)||ncn!=NcnProgressStore.revision(this)));
                     }
                 });
             }

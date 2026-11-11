@@ -1665,7 +1665,6 @@ public class CaptureService extends Service {
                     refreshDiagnosticLocationUpdates();
                 }
             }
-            if (!captureDiscarded && continueMode == null) MilepostReconciliationJob.schedule(this);
             broadcastUpdate(captureDiscarded
                     ? "No journey saved: only brief or stationary movement. Waiting for your next journey..."
                     : "Journey saved locally. Review its transport type next time.");

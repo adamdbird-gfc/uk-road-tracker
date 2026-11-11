@@ -46,7 +46,7 @@ final class MilepostArchiveReader {
                 check(cancelled);String k=r.nextName();
                 if(Arrays.asList("journey_id","started_at","ended_at","mode","source",
                         "capture_decisions","capture_route_samples","route_geometry","recording_quality","capture_validation",
-                        "activity_recognition_history","transport_changes","journey_corrections").contains(k))row.put(k,value(r,b,0));
+                        "activity_recognition_history","transport_changes","journey_corrections").contains(k))row.put(k,value(r,budget,0));
                 else r.skipValue(); // Matcher/road trees, raw GPS, diagnostics and Timeline envelopes are never retained.
             }
             r.endObject();
