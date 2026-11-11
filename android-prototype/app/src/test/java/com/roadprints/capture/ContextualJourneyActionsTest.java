@@ -58,6 +58,8 @@ public class ContextualJourneyActionsTest {
         JourneyListActivity screen=Robolectric.buildActivity(JourneyListActivity.class).create().get();
         JSONObject journey=road("unknown").put("transport_confirmation","required").put("revision",1);
         JourneyStore.save(app,journey);
+        long ncnRevision=JourneyStore.ncnDataRevision(app);
+        String raw=journey.getJSONArray("raw_capture_samples").toString();
         java.lang.reflect.Method show=JourneyListActivity.class.getDeclaredMethod("showDetails",JSONObject.class);
         show.setAccessible(true);
         show.invoke(screen,journey);
@@ -97,6 +99,8 @@ public class ContextualJourneyActionsTest {
         assertEquals("required",saved.getString("transport_confirmation"));
         assertFalse(saved.has("transport_changes"));
         assertEquals(2,saved.getInt("revision"));
+        assertEquals(raw,saved.getJSONArray("raw_capture_samples").toString());
+        assertEquals(ncnRevision,JourneyStore.ncnDataRevision(app));
         dialog.dismiss();
         screen.finish();
     }

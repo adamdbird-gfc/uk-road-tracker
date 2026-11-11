@@ -219,7 +219,11 @@ public class CaptureService extends Service {
         }
     };
     private final Runnable visitSamplingTimeout = () -> {
-        if (isArmed(this) && !isActive(this) && candidateMode == null) refreshSamplingSubscriptions();
+        if (isArmed(this) && !isActive(this) && candidateMode == null) {
+            removeLocationUpdates();
+            diagnosticUpdatesRegistered = false;
+            refreshDiagnosticLocationUpdates();
+        }
     };
     private final Runnable candidateTimeout = () -> {
         if (candidateMode != null) cancelStartCandidate(candidatePoints.size() < 2
@@ -970,6 +974,7 @@ public class CaptureService extends Service {
 
     private void activateCapture(String requestedMode, String captureStartedAt, List<Location> initialPoints) {
         if (isActive(this)) return;
+        handler.removeCallbacks(visitSamplingTimeout);
         idleStillness.reset();
         mode = requestedMode == null ? "unknown" : requestedMode;
         captureInitialMode=mode;captureClassifiedAt=Instant.now(wallClock).toString();
@@ -1691,6 +1696,9 @@ public class CaptureService extends Service {
         diagnosticUpdatesRegistered = false;
         if (isActive(this)) requestCaptureLocationUpdates();
         else if (candidateMode != null) requestLocationUpdatesForMode(candidateMode, true);
+        else if (isArmed(this) && visitActivityHint != null
+                && wallClock.millis()-visitActivityHintAt<CaptureStartGate.START_CANDIDATE_TIMEOUT_MS
+                && activeVisit()!=null) requestLocationUpdatesForMode(visitActivityHint, true);
         else refreshDiagnosticLocationUpdates();
     }
 
@@ -2159,6 +2167,7 @@ public class CaptureService extends Service {
         handler.removeCallbacks(samplingWatchdog);
         handler.removeCallbacks(checkpointCapture);
         handler.removeCallbacks(diagnosticWindowExpiry);
+        handler.removeCallbacks(visitSamplingTimeout);
         clearPendingActivityMode();
         handler.removeCallbacks(candidateTimeout);
         handler.removeCallbacks(candidateStillTimeout);

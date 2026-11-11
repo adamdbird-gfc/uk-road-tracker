@@ -61,14 +61,22 @@ public final class JourneyStore {
 
     public static synchronized void save(Context context, JSONObject journey) {
         migrateLegacy(context);
+        saveArchive(context, journey, false);
+    }
+
+    // The caller holds the store lock. Title-only edits use the existing file
+    // transaction and invalidate summaries without recalculating route evidence.
+    private static void saveArchive(Context context, JSONObject journey, boolean titleOnly) {
         String id = journey.optString("journey_id", "unknown");
         File target = new File(context.getFilesDir(), PREFIX + id + SUFFIX);
         File temporary = new File(context.getFilesDir(), PREFIX + id + ".tmp");
         boolean newRecording = !target.isFile();
         long previousModified = target.lastModified();
         try (FileOutputStream output = new FileOutputStream(temporary)) {
-            PlaceBoundaryEvidence.preserveReviews(journey, target.isFile()?readPlaceReviews(target):null);
-            ensureSharedFields(journey);
+            if (!titleOnly) {
+                PlaceBoundaryEvidence.preserveReviews(journey, target.isFile()?readPlaceReviews(target):null);
+                ensureSharedFields(journey);
+            }
             byte[] encoded=journey.toString().getBytes(StandardCharsets.UTF_8);
             SharedPreferences contentHashes=context.getSharedPreferences("roadprints_journey_content",0);
             String contentHash=NcnJson.hash(encoded);
@@ -76,10 +84,13 @@ public final class JourneyStore {
                 temporary.delete();return; // No new evidence, metadata, revision or observer work.
             }
             SharedPreferences inputs=context.getSharedPreferences("roadprints_ncn_inputs",0);
-            String previousNcnHash=inputs.getString(id,null);
-            // A cache eviction/older installation is not evidence that this journey changed.
-            if(previousNcnHash==null&&!newRecording)try{previousNcnHash=ncnEvidenceHash(ncnEvidence(target));}
-            catch(Exception unreadable){/* Conservative invalidation for an unreadable predecessor. */}
+            String previousNcnHash=null;
+            if (!titleOnly && !newRecording) {
+                previousNcnHash=inputs.getString(id,null);
+                // A cache eviction/older installation is not evidence that this journey changed.
+                if(previousNcnHash==null)try{previousNcnHash=ncnEvidenceHash(ncnEvidence(target));}
+                catch(Exception unreadable){/* Conservative invalidation for an unreadable predecessor. */}
+            }
             output.write(encoded);
             output.flush();
             // A replacement has a distinct stable token even for equal-size writes in one millisecond.
@@ -91,13 +102,17 @@ public final class JourneyStore {
                     java.nio.file.StandardCopyOption.ATOMIC_MOVE,
                     java.nio.file.StandardCopyOption.REPLACE_EXISTING);
             contentHashes.edit().putString(id,contentHash).apply();
-            if (newRecording) ReturnRecapStore.record(context, journey);
-            String ncnHash=ncnEvidenceHash(journey);
-            boolean ncnChanged=newRecording||!ncnHash.equals(previousNcnHash);
-            inputs.edit().putString(id,ncnHash).apply();
+            boolean ncnChanged=false;
+            if (!titleOnly) {
+                if (newRecording) ReturnRecapStore.record(context, journey);
+                String ncnHash=ncnEvidenceHash(journey);
+                ncnChanged=newRecording||!ncnHash.equals(previousNcnHash);
+                inputs.edit().putString(id,ncnHash).apply();
+            }
             context.getSharedPreferences("roadprints_ncn_metadata",0).edit()
                     .putString(id,ncnMetadata(journey).toString()).apply();
-            bumpDataRevision(context,ncnChanged);
+            bumpDataRevision(context,ncnChanged,!titleOnly);
+            if (titleOnly) return;
             PlaceAnchorStore.record(context,journey);
             AchievementStore.recordCapture(context, journey);
             try { ServiceStationStore.recordJourney(context,journey);
@@ -793,7 +808,7 @@ public final class JourneyStore {
             }
             if (mode != null) applyModeEdit(journey, mode);
             journey.put("revision", journey.optInt("revision", 1) + 1);
-            save(context, journey);
+            saveArchive(context, journey, mode == null);
         } catch (Exception error) {
             throw new IllegalStateException("Could not save journey details", error);
         }
@@ -927,11 +942,14 @@ public final class JourneyStore {
     }
     private static void bumpDataRevision(Context context) {bumpDataRevision(context,true);}
     private static void bumpDataRevision(Context context,boolean ncnChanged) {
+        bumpDataRevision(context,ncnChanged,true);
+    }
+    private static void bumpDataRevision(Context context,boolean ncnChanged,boolean scheduleNcn) {
         SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         long archive=preferences.getLong(DATA_REVISION,0),ncn=preferences.getLong("ncn_evidence_revision",archive);
         preferences.edit().putLong(DATA_REVISION,archive+1)
                 .putLong("ncn_evidence_revision",ncn+(ncnChanged?1:0)).apply();
-        NcnProgressStore.changed(context);
+        if (scheduleNcn) NcnProgressStore.changed(context);
     }
 
     private static JSONObject read(File file) {
