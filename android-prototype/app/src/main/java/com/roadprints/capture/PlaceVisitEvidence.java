@@ -1,5 +1,6 @@
 package com.roadprints.capture;
 
+import java.time.Instant;
 import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -22,6 +23,19 @@ final class PlaceVisitEvidence {
                 && Double.isFinite(stop.optDouble("latitude")) && Double.isFinite(stop.optDouble("longitude"))
                 && Math.abs(stop.optDouble("latitude"))<=90 && Math.abs(stop.optDouble("longitude"))<=180
                 && stop.optDouble("accuracy_m",1000)>0 && stop.optDouble("accuracy_m",1000)<=50;
+    }
+    static long confirmedAt(JSONObject stop) {
+        try {
+            return Instant.parse(stop.optString("confirmed_at",stop.optString("arrived_at"))).toEpochMilli();
+        } catch (RuntimeException invalid) {
+            return 0;
+        }
+    }
+    static boolean lostContinuity(JSONObject stop, FootTraceValidator.Sample fix, long lastObservation) {
+        return WalkingStillnessDetector.usable(fix) && fix.accuracy<=25
+                && fix.time-lastObservation>120_000L && outside(stop,fix)
+                && RailStationCatalog.metres(stop.optDouble("latitude"),stop.optDouble("longitude"),fix.lat,fix.lon)
+                    > 150+stop.optDouble("accuracy_m")+fix.accuracy;
     }
     static boolean outside(JSONObject stop,FootTraceValidator.Sample p) {
         if(PlaceGeometry.present(stop))return PlaceGeometry.outside(stop,p);

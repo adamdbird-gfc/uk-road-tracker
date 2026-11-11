@@ -75,6 +75,24 @@ public class PlaceVisitCaptureServiceTest {
         assertEquals(morning.size(),points("points").size());
         for(int i=0;i<morning.size();i++)assertEquals(morning.get(i).getTime(),points("points").get(i).getTime());
     }
+    @Test public void disconnectedMorningStopLetsTheOrdinaryCandidateSaveAShortWalk()throws Exception {
+        establish(false);
+        observe(fix(0,0,0,30));
+        time+=10*3600000L;
+        field("visitActivityHint").set(service,"walking");
+        field("visitActivityHintAt").setLong(service,time);
+        Location first=fix(12000,0,1.4f,10);
+        LocationListener listener=(LocationListener)field("locationListener").get(service);
+        listener.onLocationChanged(first);
+        assertEquals("stay",service.getSharedPreferences("roadprints_capture_state",0).getString("departed_visit_id",""));
+        for(int i=1;i<=8&&!CaptureService.isActive(service);i++)
+            listener.onLocationChanged(fix(12000+i*14,0,1.4f,10));
+        assertTrue(CaptureService.isActive(service));
+        assertEquals("walking",field("mode").get(service));
+        assertNull(field("departurePlace").get(service));
+        assertEquals(first.getTime(),points("points").get(0).getTime());
+    }
+
     @Test public void prolongedSchoolStayDoesNotBecomeAJourney()throws Exception {
         establish(true);
         for(int i=0;i<480;i++){Location p=fix(i%5*5,0,i%13==0?1.3f:0,60);p.setAccuracy(20);observe(p);}

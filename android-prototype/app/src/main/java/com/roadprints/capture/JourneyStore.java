@@ -61,14 +61,22 @@ public final class JourneyStore {
 
     public static synchronized void save(Context context, JSONObject journey) {
         migrateLegacy(context);
+        saveArchive(context, journey, false);
+    }
+
+    // The caller holds the store lock. Title-only edits use the existing file
+    // transaction and invalidate summaries without recalculating route evidence.
+    private static void saveArchive(Context context, JSONObject journey, boolean titleOnly) {
         String id = journey.optString("journey_id", "unknown");
         File target = new File(context.getFilesDir(), PREFIX + id + SUFFIX);
         File temporary = new File(context.getFilesDir(), PREFIX + id + ".tmp");
         boolean newRecording = !target.isFile();
         long previousModified = target.lastModified();
         try (FileOutputStream output = new FileOutputStream(temporary)) {
-            PlaceBoundaryEvidence.preserveReviews(journey, target.isFile()?readPlaceReviews(target):null);
-            ensureSharedFields(journey);
+            if (!titleOnly) {
+                PlaceBoundaryEvidence.preserveReviews(journey, target.isFile()?readPlaceReviews(target):null);
+                ensureSharedFields(journey);
+            }
             byte[] encoded=journey.toString().getBytes(StandardCharsets.UTF_8);
             SharedPreferences contentHashes=context.getSharedPreferences("roadprints_journey_content",0);
             String contentHash=NcnJson.hash(encoded);
@@ -76,10 +84,13 @@ public final class JourneyStore {
                 temporary.delete();return; // No new evidence, metadata, revision or observer work.
             }
             SharedPreferences inputs=context.getSharedPreferences("roadprints_ncn_inputs",0);
-            String previousNcnHash=inputs.getString(id,null);
-            // A cache eviction/older installation is not evidence that this journey changed.
-            if(previousNcnHash==null&&!newRecording)try{previousNcnHash=ncnEvidenceHash(ncnEvidence(target));}
-            catch(Exception unreadable){/* Conservative invalidation for an unreadable predecessor. */}
+            String previousNcnHash=null;
+            if (!titleOnly && !newRecording) {
+                previousNcnHash=inputs.getString(id,null);
+                // A cache eviction/older installation is not evidence that this journey changed.
+                if(previousNcnHash==null)try{previousNcnHash=ncnEvidenceHash(ncnEvidence(target));}
+                catch(Exception unreadable){/* Conservative invalidation for an unreadable predecessor. */}
+            }
             output.write(encoded);
             output.flush();
             // A replacement has a distinct stable token even for equal-size writes in one millisecond.
@@ -91,13 +102,17 @@ public final class JourneyStore {
                     java.nio.file.StandardCopyOption.ATOMIC_MOVE,
                     java.nio.file.StandardCopyOption.REPLACE_EXISTING);
             contentHashes.edit().putString(id,contentHash).apply();
-            if (newRecording) ReturnRecapStore.record(context, journey);
-            String ncnHash=ncnEvidenceHash(journey);
-            boolean ncnChanged=newRecording||!ncnHash.equals(previousNcnHash);
-            inputs.edit().putString(id,ncnHash).apply();
+            boolean ncnChanged=false;
+            if (!titleOnly) {
+                if (newRecording) ReturnRecapStore.record(context, journey);
+                String ncnHash=ncnEvidenceHash(journey);
+                ncnChanged=newRecording||!ncnHash.equals(previousNcnHash);
+                inputs.edit().putString(id,ncnHash).apply();
+            }
             context.getSharedPreferences("roadprints_ncn_metadata",0).edit()
                     .putString(id,ncnMetadata(journey).toString()).apply();
-            bumpDataRevision(context,ncnChanged);
+            bumpDataRevision(context,ncnChanged,!titleOnly);
+            if (titleOnly) return;
             PlaceAnchorStore.record(context,journey);
             AchievementStore.recordCapture(context, journey);
             try { ServiceStationStore.recordJourney(context,journey);
@@ -769,51 +784,56 @@ public final class JourneyStore {
     }
 
     public static synchronized void updateTitle(Context context, String journeyId, String title) {
-        migrateLegacy(context);
-        File file = new File(context.getFilesDir(), PREFIX + journeyId + SUFFIX);
-        JSONObject journey = read(file);
-        if (journey == null) return;
-        try {
-            String trimmed = title == null ? "" : title.trim();
-            if (trimmed.length() > 0) journey.put("title", trimmed);
-            else journey.remove("title");
-            journey.put("revision", journey.optInt("revision", 1) + 1);
-            save(context, journey);
-        } catch (Exception error) {
-            throw new IllegalStateException("Could not update journey title", error);
-        }
+        saveDetails(context, journeyId, true, title, null);
     }
 
     public static synchronized void updateMode(Context context, String journeyId, String mode) {
+        saveDetails(context, journeyId, false, null, mode);
+    }
+
+    static synchronized void updateDetails(Context context, String journeyId, String title, String changedMode) {
+        saveDetails(context, journeyId, true, title, changedMode);
+    }
+
+    private static void saveDetails(Context context, String journeyId, boolean updateTitle, String title, String mode) {
         migrateLegacy(context);
         File file = new File(context.getFilesDir(), PREFIX + journeyId + SUFFIX);
         JSONObject journey = read(file);
         if (journey == null) return;
         try {
-            if (!mode.equals(journey.optString("mode"))) {
-                journey.remove("processing_result"); journey.remove("last_match_attempt");
-                journey.remove("walking_outcome"); journey.remove("error_summary"); journey.remove("processing_completed_at");
-                journey.put("processing_status", "pending");
-                JSONObject stages = new JSONObject().put("import", "complete")
-                        .put("road_matching", "not_required").put("foot_matching", "not_required")
-                        .put("cycle_matching", "not_required");
-                if (MatchingCoordinator.isCycle(mode) || "driving".equals(mode) || "bus".equals(mode)
-                        || "walking".equals(mode) || "running".equals(mode) || "pedestrian".equals(mode))
-                    stages.put(MatchingCoordinator.matchingStage(mode), "pending");
-                journey.put("processing", stages); journey.put("stage_statuses", new JSONObject(stages.toString()));
+            if (updateTitle) {
+                String trimmed = title == null ? "" : title.trim();
+                if (trimmed.isEmpty()) journey.remove("title");
+                else journey.put("title", trimmed);
             }
-            JSONArray changes=journey.optJSONArray("transport_changes");if(changes==null)changes=new JSONArray();
-            JSONArray bounded=new JSONArray();for(int i=Math.max(0,changes.length()-15);i<changes.length();i++)bounded.put(changes.opt(i));
-            bounded.put(new JSONObject().put("at_utc",java.time.Instant.now().toString()).put("from",journey.optString("mode","unknown"))
-                    .put("to",mode).put("source","manual_confirmation"));
-            journey.put("transport_changes",bounded);
-            journey.put("mode", mode);
+            if (mode != null) applyModeEdit(journey, mode);
             journey.put("revision", journey.optInt("revision", 1) + 1);
-            journey.put("transport_confirmation", "confirmed");
-            save(context, journey);
+            saveArchive(context, journey, mode == null);
         } catch (Exception error) {
-            throw new IllegalStateException("Could not update journey mode", error);
+            throw new IllegalStateException("Could not save journey details", error);
         }
+    }
+
+    private static void applyModeEdit(JSONObject journey, String mode) throws org.json.JSONException {
+        if (!mode.equals(journey.optString("mode"))) {
+            journey.remove("processing_result"); journey.remove("last_match_attempt");
+            journey.remove("walking_outcome"); journey.remove("error_summary"); journey.remove("processing_completed_at");
+            journey.put("processing_status", "pending");
+            JSONObject stages = new JSONObject().put("import", "complete")
+                    .put("road_matching", "not_required").put("foot_matching", "not_required")
+                    .put("cycle_matching", "not_required");
+            if (MatchingCoordinator.isCycle(mode) || "driving".equals(mode) || "bus".equals(mode)
+                    || "walking".equals(mode) || "running".equals(mode) || "pedestrian".equals(mode))
+                stages.put(MatchingCoordinator.matchingStage(mode), "pending");
+            journey.put("processing", stages); journey.put("stage_statuses", new JSONObject(stages.toString()));
+        }
+        JSONArray changes=journey.optJSONArray("transport_changes");if(changes==null)changes=new JSONArray();
+        JSONArray bounded=new JSONArray();for(int i=Math.max(0,changes.length()-15);i<changes.length();i++)bounded.put(changes.opt(i));
+        bounded.put(new JSONObject().put("at_utc",java.time.Instant.now().toString()).put("from",journey.optString("mode","unknown"))
+                .put("to",mode).put("source","manual_confirmation"));
+        journey.put("transport_changes",bounded);
+        journey.put("mode", mode);
+        journey.put("transport_confirmation", "confirmed");
     }
 
     private static void pruneInsufficientTimelineJourneys(Context context) {
@@ -922,11 +942,14 @@ public final class JourneyStore {
     }
     private static void bumpDataRevision(Context context) {bumpDataRevision(context,true);}
     private static void bumpDataRevision(Context context,boolean ncnChanged) {
+        bumpDataRevision(context,ncnChanged,true);
+    }
+    private static void bumpDataRevision(Context context,boolean ncnChanged,boolean scheduleNcn) {
         SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         long archive=preferences.getLong(DATA_REVISION,0),ncn=preferences.getLong("ncn_evidence_revision",archive);
         preferences.edit().putLong(DATA_REVISION,archive+1)
                 .putLong("ncn_evidence_revision",ncn+(ncnChanged?1:0)).apply();
-        NcnProgressStore.changed(context);
+        if (scheduleNcn) NcnProgressStore.changed(context);
     }
 
     private static JSONObject read(File file) {

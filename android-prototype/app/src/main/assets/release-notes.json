@@ -2,6 +2,26 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.226",
+      "version_code": 272,
+      "release_date": "2026-11-11",
+      "since": "0.25.225",
+      "changes": [
+        {
+          "title": "More reliable automatic journey starts",
+          "description": "Roadprints samples sooner when movement resumes and releases an old stop when reliable GPS shows you have moved elsewhere."
+        },
+        {
+          "title": "Keep continuous train travel together",
+          "description": "A train suggestion from an intermediate station can update the current journey without splitting the ride. The suggested mode is still available for confirmation."
+        },
+        {
+          "title": "Faster journey renaming",
+          "description": "Title edits save in the background without reprocessing the journey or changing its transport confirmation."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.225",
       "version_code": 271,
       "release_date": "2026-11-06",

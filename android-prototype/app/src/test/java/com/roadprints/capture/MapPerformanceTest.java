@@ -157,14 +157,14 @@ public class MapPerformanceTest {
             JourneyStore.updateMode(app,"metadata","walking");assertNull(NcnProgressStore.restore(app));
         }finally{field.set(null,old);}
     }
-    @Test public void missingInputHashDoesNotTurnMetadataSaveIntoNcnEvidenceChange()throws Exception {
+    @Test public void titleEditLeavesEvictedInputHashForTheNextEvidenceChange()throws Exception {
         JSONObject original=trip("legacy");JourneyStore.save(app,original);long ncn=JourneyStore.ncnDataRevision(app);
         app.getSharedPreferences("roadprints_ncn_inputs",0).edit().clear().commit();
         JourneyStore.updateTitle(app,"legacy","New label after cache eviction");
         assertEquals(ncn,JourneyStore.ncnDataRevision(app));
-        assertNotNull(app.getSharedPreferences("roadprints_ncn_inputs",0).getString("legacy",null));
-        app.getSharedPreferences("roadprints_ncn_inputs",0).edit().clear().commit();
+        assertNull(app.getSharedPreferences("roadprints_ncn_inputs",0).getString("legacy",null));
         JourneyStore.updateMode(app,"legacy","walking");assertTrue(JourneyStore.ncnDataRevision(app)>ncn);
+        assertNotNull(app.getSharedPreferences("roadprints_ncn_inputs",0).getString("legacy",null));
     }
     @Test public void missingWalkingHashStillDetectsRealEvidenceChange()throws Exception {
         JSONObject original=trip("foot").put("mode","walking");JourneyStore.save(app,original);

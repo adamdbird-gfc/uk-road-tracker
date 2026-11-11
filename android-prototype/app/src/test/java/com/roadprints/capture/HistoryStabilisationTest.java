@@ -143,12 +143,20 @@ public class HistoryStabilisationTest {
             worker.submit(()->JourneyStore.dataRevision(app)).get(1,java.util.concurrent.TimeUnit.SECONDS);
         }} finally {worker.shutdownNow();}
     }
-    @Test public void foregroundReviewIsIndependentOfBlockedMapAndScreenQueue() throws Exception {
+    @Test public void foregroundReviewKeepsCommittedInboxWithBlockedMapAndStaleSummaries() throws Exception {
         java.util.concurrent.CountDownLatch release=new java.util.concurrent.CountDownLatch(1);
         java.util.concurrent.CountDownLatch sharedBlocked=new java.util.concurrent.CountDownLatch(1);
         ScreenDataLoader.execute(()->{sharedBlocked.countDown();try{release.await();}catch(InterruptedException e){Thread.currentThread().interrupt();}});
         assertTrue(sharedBlocked.await(3,java.util.concurrent.TimeUnit.SECONDS));
         JourneyStore.save(app,journey("foreground"));
+        assertEquals(1,ReturnRecapStore.pending(app).size());
+        Field summaries=JourneyListActivity.class.getDeclaredField("processJourneySummaries");
+        Field revision=JourneyListActivity.class.getDeclaredField("processJourneyRevision");
+        summaries.setAccessible(true);revision.setAccessible(true);
+        Object oldSummaries=summaries.get(null);
+        long oldRevision=revision.getLong(null);
+        summaries.set(null,Collections.emptyList());
+        revision.setLong(null,JourneyStore.dataRevision(app));
         MapActivity.MapRouteLoader previous=MapActivity.mapRouteLoader;
         MapActivity.mapRouteLoader=(s,f,d,z)->{release.await();return new MapActivity.MapRoutes();};
         org.robolectric.android.controller.ActivityController<MapActivity> controller=Robolectric.buildActivity(MapActivity.class);
@@ -161,6 +169,7 @@ public class HistoryStabilisationTest {
             assertEquals(1,ReturnRecapStore.pending(app).size());
         } finally {
             release.countDown();controller.pause().stop().destroy();MapActivity.mapRouteLoader=previous;
+            summaries.set(null,oldSummaries);revision.setLong(null,oldRevision);
         }
     }
 

@@ -54,6 +54,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 import java.util.concurrent.RejectedExecutionException;
 
 public class JourneyListActivity extends Activity {
@@ -74,6 +75,7 @@ public class JourneyListActivity extends Activity {
     private static JourneyDateFilter savedJourneyDateFilter = JourneyDateFilter.all();
     private volatile RailStationCatalog placeStationCatalog;
     private final ExecutorService processor = Executors.newFixedThreadPool(3);
+    private final ExecutorService journeyEdits = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private static final String[] FILTER_LABELS = JourneyFilters.FILTER_LABELS;
     private static final String[] FILTER_VALUES = JourneyFilters.FILTER_VALUES;
@@ -166,6 +168,7 @@ public class JourneyListActivity extends Activity {
         mainHandler.removeCallbacks(observeJourneyChanges);
         refreshGeneration++;
         processor.shutdownNow();
+        journeyEdits.shutdown();
         super.onDestroy();
     }
 
@@ -1308,30 +1311,58 @@ public class JourneyListActivity extends Activity {
         actions.setOrientation(LinearLayout.VERTICAL);
         actions.setPadding(side, dp(12), side, dp(8));
         Button saveChanges = styledModalButton("SAVE CHANGES", 0xFFF7C450, 0xFF0B1C50);
+        final boolean[] saving = {false};
         Runnable updateSaveState = () -> {
-            boolean changed = !titleInput.getText().toString().trim().equals(savedTitle[0])
-                    || !transportModes[transport.getSelectedItemPosition()].equals(savedMode[0]);
+            boolean changed = !saving[0] && (!titleInput.getText().toString().trim().equals(savedTitle[0])
+                    || !transportModes[transport.getSelectedItemPosition()].equals(savedMode[0]));
             saveChanges.setEnabled(changed);
             saveChanges.setAlpha(changed ? 1f : 0.48f);
         };
-        Runnable saveEdits = () -> {
+        Consumer<Runnable> saveEdits = afterSave -> {
+            if (saving[0]) return;
             String updatedTitle = titleInput.getText().toString().trim();
             String updatedMode = transportModes[transport.getSelectedItemPosition()];
-            if(JourneySizeGuard.requiresReview(journey) && !updatedMode.equals(savedMode[0])) {
+            String changedMode = updatedMode.equals(savedMode[0]) ? null : updatedMode;
+            if (JourneySizeGuard.requiresReview(journey) && changedMode != null) {
                 status.setText(JourneySizeGuard.message(journey));
                 return;
             }
-            JourneyStore.updateTitle(this, journey.optString("journey_id"), updatedTitle);
-            JourneyStore.updateMode(this, journey.optString("journey_id"), updatedMode);
-            try {
-                journey.put("title", updatedTitle);
-                journey.put("mode", updatedMode);
-            } catch (Exception ignored) { }
-            savedTitle[0] = updatedTitle;
-            savedMode[0] = updatedMode;
-            refreshJourneysAsync();
+            saving[0] = true;
+            titleInput.setEnabled(false);
+            transport.setEnabled(false);
             updateSaveState.run();
-            Toast.makeText(this, "Journey updated", Toast.LENGTH_SHORT).show();
+            String journeyId = journey.optString("journey_id");
+            journeyEdits.execute(() -> {
+                try {
+                    JourneyStore.updateDetails(getApplicationContext(), journeyId, updatedTitle, changedMode);
+                } catch (RuntimeException failed) {
+                    mainHandler.post(() -> {
+                        if (isDestroyed()) return;
+                        saving[0] = false;
+                        titleInput.setEnabled(true);
+                        transport.setEnabled(true);
+                        status.setText("Could not save journey changes. Please try again.");
+                        updateSaveState.run();
+                    });
+                    return;
+                }
+                mainHandler.post(() -> {
+                    if (isDestroyed()) return;
+                    saving[0] = false;
+                    titleInput.setEnabled(true);
+                    transport.setEnabled(true);
+                    try {
+                        journey.put("title", updatedTitle);
+                        journey.put("mode", updatedMode);
+                    } catch (org.json.JSONException ignored) { }
+                    savedTitle[0] = updatedTitle;
+                    savedMode[0] = updatedMode;
+                    refreshJourneysAsync();
+                    updateSaveState.run();
+                    Toast.makeText(this, "Journey updated", Toast.LENGTH_SHORT).show();
+                    if (afterSave != null && dialogRef[0] != null && dialogRef[0].isShowing()) afterSave.run();
+                });
+            });
         };
         titleInput.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence text, int start, int count, int after) { }
@@ -1350,7 +1381,7 @@ public class JourneyListActivity extends Activity {
             }
         });
         updateSaveState.run();
-        saveChanges.setOnClickListener(v -> saveEdits.run());
+        saveChanges.setOnClickListener(v -> saveEdits.accept(null));
         replayPlay.setOnClickListener(v -> requestCloseWithUnsavedChanges(
                 dialogRef[0], hasUnsavedChanges(titleInput, transport,
                         transportModes, savedTitle[0], savedMode[0]),
@@ -1585,7 +1616,7 @@ public class JourneyListActivity extends Activity {
     }
 
     private void requestCloseWithUnsavedChanges(
-            AlertDialog dialog, boolean dirty, Runnable saveAction, Runnable continueAction) {
+            AlertDialog dialog, boolean dirty, Consumer<Runnable> saveAction, Runnable continueAction) {
         if (!dirty) {
             continueAction.run();
             return;
@@ -1593,10 +1624,7 @@ public class JourneyListActivity extends Activity {
         new RoadprintsDialog.Builder(this)
                 .setTitle("Unsaved changes")
                 .setMessage("Save your journey changes before closing?")
-                .setPositiveButton("Save changes", (prompt, which) -> {
-                    saveAction.run();
-                    continueAction.run();
-                })
+                .setPositiveButton("Save changes", (prompt, which) -> saveAction.accept(continueAction))
                 .setNegativeButton("Continue without saving",
                         (prompt, which) -> continueAction.run())
                 .setNeutralButton("Keep editing", null)
@@ -1697,7 +1725,7 @@ public class JourneyListActivity extends Activity {
     private void startSingleJourneyMatch(
             JSONObject journey, Button action, TextView status, AlertDialog[] dialogRef,
             EditText titleInput, Spinner transport, String[] transportModes,
-            String[] savedTitle, String[] savedMode, Runnable saveEdits) {
+            String[] savedTitle, String[] savedMode, Consumer<Runnable> saveEdits) {
         startSingleJourneyMatch(journey, action, status, dialogRef, titleInput, transport,
                 transportModes, savedTitle, savedMode, saveEdits, false);
     }
@@ -1705,7 +1733,7 @@ public class JourneyListActivity extends Activity {
     private void startSingleJourneyMatch(
             JSONObject journey, Button action, TextView status, AlertDialog[] dialogRef,
             EditText titleInput, Spinner transport, String[] transportModes,
-            String[] savedTitle, String[] savedMode, Runnable saveEdits, boolean forceRematch) {
+            String[] savedTitle, String[] savedMode, Consumer<Runnable> saveEdits, boolean forceRematch) {
         if(JourneySizeGuard.requiresReview(journey)) {
             status.setText(JourneySizeGuard.message(journey));
             return;
@@ -1737,7 +1765,7 @@ public class JourneyListActivity extends Activity {
     private void watchSingleJourneyMatch(
             JSONObject journey, Button action, TextView status, AlertDialog[] dialogRef,
             EditText titleInput, Spinner transport, String[] transportModes,
-            String[] savedTitle, String[] savedMode, Runnable saveEdits, boolean forceRematch) {
+            String[] savedTitle, String[] savedMode, Consumer<Runnable> saveEdits, boolean forceRematch) {
         AlertDialog dialog = dialogRef[0];
         if (dialog == null || !dialog.isShowing()) return;
         MatchingCoordinator.Snapshot snapshot = MatchingCoordinator.get(this).snapshot();
