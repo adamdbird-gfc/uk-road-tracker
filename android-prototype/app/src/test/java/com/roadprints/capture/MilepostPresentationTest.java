@@ -102,7 +102,7 @@ public class MilepostPresentationTest {
         host(snapshot(1,0,"a"));String all=contents(view);
         for(String name:new String[]{"Mills","Rowe","McColl","Dudgeon","Grimshaw","Harrow","Honour","Seasons","Fossil"})assertFalse(name,all.contains(name));
         assertNull(view.findViewWithTag("milepost_replay"));
-        assertFalse(view.findViewWithTag("milepost_summary_replay").isEnabled());
+        assertNull(view.findViewWithTag("milepost_summary_replay"));
         int cards=0;for(int i=0;i<6;i++)if(view.findViewWithTag("milepost_card_"+i)!=null)cards++;assertEquals(6,cards);
     }
     @Test public void staticRevealPersistsCompletedStagesAndRestartsPaused(){
@@ -110,7 +110,29 @@ public class MilepostPresentationTest {
         view.onHostPause();view=new MilepostPresentationView(controller.get(),store,snapshot(6,1,"a"),(after,done)->done.accept(new MilepostPresentationReader.Page(Collections.emptyList(),false,true)));controller.get().setContentView(view);view.onHostResume();
         assertTrue(store.read().paused);assertEquals(2,view.displayStage());view.next();assertEquals(2,view.displayStage());
         view.replay(false);view.next();assertEquals(3,store.read().cursor);assertEquals(3,store.read().completedStage);
-        TextView cipher=view.findViewWithTag("milepost_cipher");assertEquals(View.IMPORTANT_FOR_ACCESSIBILITY_NO,cipher.getImportantForAccessibility());assertFalse(cipher.isFocusable());
+        TextView cipher=view.findViewWithTag("milepost_replay_cipher");assertEquals(View.IMPORTANT_FOR_ACCESSIBILITY_NO,cipher.getImportantForAccessibility());assertFalse(cipher.isFocusable());
+    }
+    @Test public void revisitingChaptersKeepsCompletionAndDoesNotUnlockFutureChapters(){
+        host(snapshot(3,1,"chapter-history"));
+        view.findViewWithTag("milepost_replay").performClick();
+        for(int stage=1;stage<=3;stage++)view.next();
+        View previous=view.findViewWithTag("milepost_previous"),next=view.findViewWithTag("milepost_next");
+        assertFalse(next.isEnabled());
+        assertTrue(previous.performClick());
+        assertEquals(2,store.read().cursor);
+        assertEquals(3,store.read().completedStage);
+        assertTrue(previous.performClick());
+        assertFalse(previous.isEnabled());
+        assertEquals(1,view.displayStage());
+        assertTrue(next.performClick());
+        assertEquals(2,view.displayStage());
+        view.later();
+        view.findViewWithTag("milepost_replay").performClick();
+        assertEquals(2,view.displayStage());
+        view.next();
+        assertFalse(view.findViewWithTag("milepost_next").isEnabled());
+        assertFalse(contents(view).contains("Charlie Harrow"));
+        assertTrue(contents(view).contains("Find another Milepost"));
     }
     @Test public void captureStartPausesImmediatelyAndPreventsEveryTransitionAndResume(){
         host(snapshot(7,7,"a"));view.replay(true);view.next();assertEquals(1,store.read().cursor);
@@ -123,9 +145,9 @@ public class MilepostPresentationTest {
     }
     @Test public void laterSkipAndFutureDiscoveriesDoNotCreateAwardsOrLoseCursor(){
         host(snapshot(3,1,"a"));view.replay(true);view.next();view.later();assertTrue(store.read().dismissed);assertEquals(1,store.read().cursor);assertEquals(0,store.read().acknowledgedPosts);
-        view.update(snapshot(4,1,"b"));assertNotNull(view.findViewWithTag("milepost_later"));assertEquals(1,store.read().cursor);
+        view.update(snapshot(4,1,"b"));assertNotNull(view.findViewWithTag("milepost_replay"));assertEquals(1,store.read().cursor);
         view.replay(false);view.skip();assertEquals(4,store.read().cursor);assertEquals(4,store.read().acknowledgedPosts);
-        view.update(snapshot(5,1,"c"));assertNotNull(view.findViewWithTag("milepost_later"));assertEquals(4,store.read().cursor);
+        view.update(snapshot(5,1,"c"));assertNotNull(view.findViewWithTag("milepost_replay"));assertEquals(4,store.read().cursor);
         assertEquals(1,snapshot(5,1,"c").individuals());
     }
     @Test public void withdrawalsClampVisibleProgressWithoutErasingReplayHistoryAndReinstatementRestores(){
@@ -153,7 +175,7 @@ public class MilepostPresentationTest {
     }
     @Test public void discoveryBrowsingAcknowledgesOnlyDeliveredDetailsAndKeepsAnonymousPostsAnonymous(){
         host(snapshot(1,0,"unknown"));
-        view.findViewWithTag("milepost_view_discoveries").performClick();
+        view.findViewWithTag("milepost_browse_discoveries").performClick();
         assertTrue(contents(view).contains("Discovery record"));assertEquals(1,store.read().acknowledgedPosts);
         assertNull(view.findViewWithTag("milepost_replay"));assertNotNull(view.findViewWithTag("milepost_browse_discoveries"));
     }

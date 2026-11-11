@@ -17,6 +17,9 @@ final class MilepostPresentation {
         "Belfast artist David Dudgeon designed Tracks. The milepost’s imagery reflects the marks cyclists make in the landscape.",
         "Civil engineer John Grimshaw helped volunteers build the Bristol and Bath Railway Path and served as Sustrans’ Chief Engineer. He later helped establish Greenways and Cycleroutes to support community paths.",
         "Charlie Harrow is credited with conceiving the Millennium Time Trail, a puzzle experience on the National Cycle Network. A reproduced launch release describes him as an artist and teacher whose aim was to encourage families to explore by bicycle."};
+    static String designerContext(int design){return design<4?BIOS[design]:
+            "Millennium Mileposts were created for the National Cycle Network to mark the year 2000.";}
+    static String relatedAward(int index){return index==5?"The seven-chapter mystery":NAMES[index];}
     static int stage(int count){return Math.max(0,Math.min(7,count));}
     static boolean resolved(int stage,int position){
         for(int n=1;n<=stage(stage);n++)for(int p:POSITIONS[n])if(p==position)return true;
@@ -80,7 +83,7 @@ final class MilepostPresentation {
         Card card(int index){
             Award a=awards.get(index);boolean visible=a.earned;
             return new Card(visible?NAMES[index]:introduced()?"Mystery personality":"?",
-                visible&&index<6?BIOS[index]:"",visible?"Revealed":a.ordinal>0?"Previously recognised; current qualification withdrawn":introduced()?"Hidden mystery":"Hidden mystery",
+                visible&&index<6?BIOS[index]:"",visible?"Revealed":a.ordinal>0?"Previously unlocked":"Discover Mileposts to reveal more",
                 visible,index==5&&introduced()?target():0);
         }
         String dates(){return from==null?"Historical dates unavailable":

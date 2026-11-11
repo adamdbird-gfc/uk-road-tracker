@@ -468,7 +468,7 @@ public class AchievementsActivity extends Activity {
                 content.addView(milepostSection);mileposts.mount(milepostSection);mileposts.refresh();
             }
 
-            content.addView(text("Walking/running and cycling only. Unique verified-open coverage; 100% completes all supported open sections, including disconnected sections. Millennium Mileposts use the approved OpenStreetMap catalogue.",12,MUTED,false));
+            content.addView(text("Walking, running and cycling count towards National Cycle Network progress. A route is complete when you’ve covered all its open sections shown in Roadprints.",12,MUTED,false));
         }
         content.addView(text("Totals include imported and recorded travel. Coverage uses matched sections; road-name challenges update as town lookups complete.",
                 12,MUTED,false));
@@ -534,30 +534,13 @@ public class AchievementsActivity extends Activity {
         return heading;
     }
 
-    LinearLayout newAchievementCard(boolean unlocked) {
-        LinearLayout card=new LinearLayout(this);
-        card.setOrientation(LinearLayout.VERTICAL);
-        card.setPadding(dp(15),dp(14),dp(15),dp(13));
-        card.setBackground(roundRect(unlocked?0xFF3C3D3A:CARD,
-                unlocked?0xFFC9A24A:0xFF46649E,dp(16)));
-        card.setElevation(dp(1));
-        LinearLayout.LayoutParams cardParams=new LinearLayout.LayoutParams(-1,-2);
-        cardParams.bottomMargin=dp(9);
-        card.setLayoutParams(cardParams);
-
-        return card;
-    }
-    void styleAchievementBadge(View badge,boolean unlocked) {
-        badge.setPadding(dp(10),dp(10),dp(10),dp(10));
-        badge.setBackground(roundRect(unlocked?0xFF5B4C2F:0xFF344A7B,0x00446699,dp(28)));
-    }
     private View achievementCard(AchievementStore.Progress progress) {
-        LinearLayout card=newAchievementCard(progress.unlocked);
+        LinearLayout card=AchievementCardStyle.card(this,progress.unlocked);
         LinearLayout row=new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
         android.widget.ImageView badge=RoadprintsIcons.image(this, RoadprintsIcons.achievement(progress.definition.id), progress.unlocked?GOLD:MUTED, progress.definition.title + (progress.unlocked?", unlocked":", locked"));
-        styleAchievementBadge(badge,progress.unlocked);
+        AchievementCardStyle.badge(badge,progress.unlocked);
         row.addView(badge,new LinearLayout.LayoutParams(dp(48),dp(48)));
 
         LinearLayout copy=new LinearLayout(this);

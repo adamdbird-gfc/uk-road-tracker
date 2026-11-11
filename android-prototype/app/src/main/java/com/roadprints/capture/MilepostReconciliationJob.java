@@ -15,12 +15,12 @@ public final class MilepostReconciliationJob extends JobService {
     private static final AtomicBoolean REQUESTED=new AtomicBoolean();
     private static final AtomicBoolean FOREGROUND_QUEUED=new AtomicBoolean();
     private static final android.os.Handler MAIN=new android.os.Handler(android.os.Looper.getMainLooper());
-    private static volatile String status="Assessment pending for saved journeys.";
+    private static volatile String status="Waiting to check your saved journeys.";
     private static volatile long resultRevision;
     private Run current;
 
     static String status(Context context) {
-        return CaptureService.isActive(context)?"Assessment resumes after recording.":status;
+        return CaptureService.isActive(context)?"Checking for Mileposts will resume after your journey.":status;
     }
     static long resultRevision() {return resultRevision;}
 
@@ -39,17 +39,17 @@ public final class MilepostReconciliationJob extends JobService {
     private static boolean assess(Context context,AtomicBoolean cancelled) {
         Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
         try {
-            status="Assessing saved journeys…";
+            status="Looking for Mileposts in your saved journeys…";
             boolean retry=MilepostIntegration.PRODUCTION.process(context,cancelled,
                     android.os.SystemClock.elapsedRealtime()+SLICE_MS);
-            status=retry?"Continuing assessment of saved journeys…":"Reading saved assessment…";
+            status=retry?"Looking for Mileposts in your saved journeys…":"Updating your Milepost progress…";
             if(!retry)resultRevision++;
             return retry;
         } catch(CancellationException|java.util.ConcurrentModificationException interrupted) {
-            status="Continuing assessment of saved journeys…";
+            status="Looking for Mileposts in your saved journeys…";
             return true;
         } catch(Exception error) {
-            status="Milepost assessment failed. Roadprints will retry automatically.";
+            status="Couldn’t update Milepost progress. Roadprints will try again.";
             android.util.Log.w("Roadprints","Milepost reconciliation failed",error);
             return true;
         }
@@ -76,7 +76,7 @@ public final class MilepostReconciliationJob extends JobService {
                 .setMinimumLatency(1)
                 .setBackoffCriteria(10_000,JobInfo.BACKOFF_POLICY_LINEAR)
                 .build());
-        if(result!=JobScheduler.RESULT_SUCCESS)status="Milepost assessment could not be scheduled.";
+        if(result!=JobScheduler.RESULT_SUCCESS)status="Couldn’t check for Mileposts right now.";
         return result;
     }
     @Override public boolean onStartJob(JobParameters parameters) {
