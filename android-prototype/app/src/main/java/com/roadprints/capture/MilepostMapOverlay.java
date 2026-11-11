@@ -12,7 +12,7 @@ import java.util.Map;
 /** Canvas pins share a viewport grid for drawing, hit testing and cluster membership. */
 final class MilepostMapOverlay {
     interface Projection {float x(double lon);float y(double lat);}
-    private static final int ORANGE=0xFFFFA548,PURPLE=0xFFAD81E8,NAVY=0xFF25183B;
+    private static final int UNFOUND=0xFFE8F1F8,FOUND=0xFFD6B9FF,NAVY=0xFF192C51;
     final MilepostCatalogue.MapLocations markers;
     final float[] x,y;
     final int[] indices,counts,discoveredCounts;
@@ -82,11 +82,11 @@ final class MilepostMapOverlay {
             boolean mixed=discoveredCounts[i]>0&&discoveredCounts[i]<counts[i];
             float radius=(mixed?17:13)*density;
             fill.setColor(NAVY);canvas.drawCircle(x[i],y[i],radius+2*density,fill);
-            fill.setColor(discoveredCounts[i]==counts[i]?PURPLE:ORANGE);
+            fill.setColor(discoveredCounts[i]==counts[i]?FOUND:UNFOUND);
             canvas.drawCircle(x[i],y[i],radius,fill);
             float baseline=y[i]-(text.ascent()+text.descent())/2;
             if(mixed){
-                fill.setColor(PURPLE);
+                fill.setColor(FOUND);
                 canvas.drawArc(x[i]-radius,y[i]-radius,x[i]+radius,y[i]+radius,0,180,true,fill);
                 text.setTextSize(9*density);
                 canvas.drawText(mixedLabels[i],x[i],y[i]-(text.ascent()+text.descent())/2,text);
@@ -119,16 +119,17 @@ final class MilepostMapOverlay {
         }
         void draw(Canvas canvas,float x,float y,boolean discovered){
             canvas.save();canvas.translate(x,y);canvas.scale(density,density);
-            paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(4);paint.setColor(0xFFFFFFFF);
-            canvas.drawPath(post,paint);
-            paint.setStyle(Paint.Style.FILL_AND_STROKE);paint.setStrokeWidth(1.4f);paint.setColor(NAVY);
-            canvas.drawPath(post,paint);
-            paint.setStyle(Paint.Style.FILL);paint.setColor(discovered?PURPLE:ORANGE);
-            canvas.drawPath(post,paint);
+            paint.setStyle(Paint.Style.FILL);
+            paint.setColor(0xFFFFFFFF);canvas.drawCircle(0,0,17,paint);
+            paint.setColor(NAVY);canvas.drawCircle(0,0,15.5f,paint);
+            paint.setColor(discovered?FOUND:UNFOUND);canvas.drawCircle(0,0,14,paint);
+            canvas.save();canvas.scale(.70f,.70f);
+            paint.setColor(NAVY);canvas.drawPath(post,paint);
             if(discovered){
-                paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(1.6f);paint.setColor(NAVY);
+                paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(2);paint.setColor(FOUND);
                 canvas.drawPath(check,paint);
             }
+            canvas.restore();
             canvas.restore();
         }
     }

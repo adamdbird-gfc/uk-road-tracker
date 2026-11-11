@@ -21,26 +21,33 @@ final class MilepostCatalogue {
     private static volatile MapLocations mapLocations;
     private MilepostCatalogue(){}
 
-    /** Reused by map screens. Retain coordinates only, with no source records or aliases. */
+    /** Reused by map screens. Retain coordinates only, with optional source names, without retaining source records or aliases. */
     static final class MapLocations {
         final double[] longitude,latitude;
-        final String[] identity,design;
-        MapLocations(List<MilepostDiscoveryLedger.Marker> markers) {
-            longitude=new double[markers.size()];latitude=new double[markers.size()];identity=new String[markers.size()];design=new String[markers.size()];
+        final String[] identity,design,name;
+        MapLocations(List<MilepostDiscoveryLedger.Marker> markers, Map<String,String> names) {
+            longitude=new double[markers.size()];latitude=new double[markers.size()];identity=new String[markers.size()];design=new String[markers.size()];name=new String[markers.size()];
             for(int i=0;i<markers.size();i++) {
-                longitude[i]=markers.get(i).lon;latitude[i]=markers.get(i).lat;identity[i]=markers.get(i).id;design[i]=markers.get(i).designer;
+                longitude[i]=markers.get(i).lon;latitude[i]=markers.get(i).lat;identity[i]=markers.get(i).id;design[i]=markers.get(i).designerVerified?markers.get(i).designer:null;
+                name[i]=names.get(identity[i]);
             }
         }
         int size(){return longitude.length;}
     }
     static synchronized MapLocations mapLocations(Context context)throws Exception {
-        if(mapLocations==null)mapLocations=new MapLocations(load(context));
+        if(mapLocations==null){
+            Map<String,String> names=new HashMap<>();
+            mapLocations=new MapLocations(load(context,names),names);
+        }
         return mapLocations;
     }
 
     static List<MilepostDiscoveryLedger.Marker> load(Context context)throws Exception {
+        return load(context,null);
+    }
+    private static List<MilepostDiscoveryLedger.Marker> load(Context context,Map<String,String> names)throws Exception {
         try(InputStream input=context.getAssets().open(ASSET)) {
-            List<MilepostDiscoveryLedger.Marker> markers=parse(read(input),SHA,REVISION,APPROVED_COUNT);
+            List<MilepostDiscoveryLedger.Marker> markers=parse(read(input),SHA,REVISION,APPROVED_COUNT,names);
             if(!fingerprint().equals(MilepostDiscoveryLedger.markerFingerprint(markers)))throw new IOException(BLOCKER);
             return markers;
         }
@@ -52,6 +59,10 @@ final class MilepostCatalogue {
     }
     /** Package-private pure validation for hostile-input tests; production always calls load with source pins. */
     static List<MilepostDiscoveryLedger.Marker> parse(byte[] bytes,String sha,int revision,int count)throws Exception {
+        return parse(bytes,sha,revision,count,null);
+    }
+    private static List<MilepostDiscoveryLedger.Marker> parse(byte[] bytes,String sha,int revision,int count,
+            Map<String,String> names)throws Exception {
         if(bytes.length>MAX_BYTES||!hex(MessageDigest.getInstance("SHA-256").digest(bytes)).equals(sha))
             throw new IOException("Milepost catalogue checksum");
         JSONObject root=new JSONObject(new String(bytes,StandardCharsets.UTF_8));
@@ -81,16 +92,21 @@ final class MilepostCatalogue {
             long from=Instant.parse(r.getString("valid_from")).toEpochMilli(),until=Instant.parse(r.getString("valid_until")).toEpochMilli();
             if(r.has("temporal_policy")&&!Arrays.asList("source_assumed_stable","snapshot_forward_known_movement").contains(r.getString("temporal_policy")))throw new IOException("Unknown temporal policy");
             if(from<946684800000L||until<=from)throw new IOException("Invalid milepost position interval");
-            List<String> names=new ArrayList<>();JSONArray a=r.getJSONArray("aliases");
+            List<String> markerAliases=new ArrayList<>();JSONArray a=r.getJSONArray("aliases");
             for(int j=0;j<a.length();j++){
                 String alias=a.getString(j);
                 if(!alias.matches("osm:(node|way|relation):[1-9][0-9]*")||!aliases.add(alias))throw new IOException("Duplicate/invalid alias");
-                names.add(alias);
+                markerAliases.add(alias);
             }
-            if(names.isEmpty())throw new IOException("Missing source identity");
+            if(markerAliases.isEmpty())throw new IOException("Missing source identity");
             String designer=r.getString("designer");boolean verified=r.getBoolean("designer_verified");
             if(verified)text(r,"designer_evidence");
-            markers.add(new MilepostDiscoveryLedger.Marker(id,r.getDouble("longitude"),r.getDouble("latitude"),true,from,until,names,designer,verified));
+            if(names!=null){
+                JSONObject tags=r.optJSONObject("source_tags");
+                String name=tags==null?"":tags.optString("name").trim();
+                if(!name.isEmpty()&&name.length()<=160)names.put(id,name);
+            }
+            markers.add(new MilepostDiscoveryLedger.Marker(id,r.getDouble("longitude"),r.getDouble("latitude"),true,from,until,markerAliases,designer,verified));
         }
         // Validate cross-row geometry/identity invariants before any database write.
         MilepostDiscoveryLedger.markerFingerprint(markers);

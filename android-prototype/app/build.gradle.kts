@@ -24,8 +24,8 @@ android {
         minSdk = 26
         targetSdk = 35
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        versionCode = 274
-        versionName = "0.25.228"
+        versionCode = 277
+        versionName = "0.25.231"
     }
 }
 
@@ -67,6 +67,9 @@ tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
     }
     providers.systemProperty("robolectric.dependency.dir").orNull?.let {
         systemProperty("robolectric.dependency.dir", it)
+    }
+    providers.gradleProperty("roadprintsPreviewDir").orNull?.let {
+        systemProperty("roadprints.previewDir", rootProject.file(it).absolutePath)
     }
     if (providers.gradleProperty("ncnOfflineChecks").orNull == "true") {
         exclude("**/NcnNationalTest*", "**/NcnUiTest*")

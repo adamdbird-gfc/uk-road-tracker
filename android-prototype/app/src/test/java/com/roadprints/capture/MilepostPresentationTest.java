@@ -27,16 +27,16 @@ public class MilepostPresentationTest {
         if(view instanceof ViewGroup)for(int i=0;i<((ViewGroup)view).getChildCount();i++)text.append(contents(((ViewGroup)view).getChildAt(i)));
         return text.toString();
     }
-    @Test public void initialAndUnknownOnlyHaveSixAnonymousCardsAndNoConditions(){
+    @Test public void unknownDesignsUnlockChaptersWithoutRevealingPersonalities(){
         for(int count:new int[]{0,1,6}){
             MilepostPresentation.Snapshot s=snapshot(count,0,"a");assertFalse(s.introduced());assertEquals(0,s.individuals());
-            for(int i=0;i<6;i++){MilepostPresentation.Card c=s.card(i);assertEquals("?",c.title);assertEquals("",c.biography);assertEquals(0,c.stage);assertFalse(c.accessible().contains("Mills"));}
+            for(int i=0;i<6;i++){MilepostPresentation.Card c=s.card(i);assertEquals(i==5?"The seven-chapter mystery":"Hidden personality",c.title);assertEquals("",c.biography);assertEquals(i==5?count:0,c.stage);assertFalse(c.accessible().contains("Mills"));}
         }
     }
     @Test public void firstIndividualRevealsOnlyThatNameAndCollectiveProgress(){
         MilepostPresentation.Snapshot s=snapshot(1,1,"a");assertTrue(s.introduced());assertEquals(1,s.individuals());
         assertEquals("Jon Mills",s.card(0).title);assertFalse(s.card(0).biography.isEmpty());
-        for(int i=1;i<6;i++){assertEquals("Mystery personality",s.card(i).title);assertEquals("",s.card(i).biography);}
+        for(int i=1;i<6;i++){assertEquals(i==5?"The seven-chapter mystery":"Hidden personality",s.card(i).title);assertEquals("",s.card(i).biography);}
         assertEquals(1,s.card(5).stage);
     }
     @Test public void eachIndividualCanBeFirstWithoutSpoilingOtherIdentities(){
@@ -46,13 +46,13 @@ public class MilepostPresentationTest {
             for(int i=0;i<7;i++)awards.add(new MilepostPresentation.Award(i==first,i==first?1:0,null,"unknown"));
             MilepostPresentation.Snapshot s=new MilepostPresentation.Snapshot(true,first==5?7:1,1,0,0,1,1,"first",null,null,awards);
             assertTrue(s.introduced());assertEquals(1,s.individuals());assertEquals(names[first],s.card(first).title);
-            for(int i=0;i<6;i++)if(i!=first){assertEquals("Mystery personality",s.card(i).title);assertEquals("",s.card(i).biography);}
+            for(int i=0;i<6;i++)if(i!=first){assertEquals(i==5?"The seven-chapter mystery":"Hidden personality",s.card(i).title);assertEquals("",s.card(i).biography);}
         }
     }
     @Test public void grimshawCanIntroduceCollectionWithoutAnyPosts(){
         List<MilepostPresentation.Award> awards=new ArrayList<>();for(int i=0;i<7;i++)awards.add(new MilepostPresentation.Award(i==4,i==4?1:0,null,"unknown"));
         MilepostPresentation.Snapshot s=new MilepostPresentation.Snapshot(true,0,0,0,0,0,1,"g",null,null,awards);
-        assertTrue(s.introduced());assertEquals("John Grimshaw",s.card(4).title);assertEquals("?",snapshot(1,0,"u").card(4).title);
+        assertTrue(s.introduced());assertEquals("John Grimshaw",s.card(4).title);assertEquals("Hidden personality",snapshot(1,0,"u").card(4).title);
         assertEquals(0,s.card(5).stage);assertEquals("Historical dates unavailable",s.dates());
     }
     @Test public void everyCipherPositionAndLayerPrefixIsDeterministic(){
@@ -98,34 +98,77 @@ public class MilepostPresentationTest {
     void host(MilepostPresentation.Snapshot s){controller=Robolectric.buildActivity(Activity.class).setup().visible();
         view=new MilepostPresentationView(controller.get(),store,s,(after,done)->done.accept(new MilepostPresentationReader.Page(Collections.emptyList(),false,true)));controller.get().setContentView(view);view.onHostResume();}
     @After public void closeHost(){if(controller!=null)controller.pause().stop().destroy();}
-    @Test public void hiddenNativeViewHasNoNavigationAccessibilityOrBiographySpoilers(){
-        host(snapshot(1,0,"a"));String all=contents(view);
+    @Test public void lockedPersonalitiesAreIndividualWithoutLeakingNames(){
+        host(snapshot(0,0,"a"));String all=contents(view);
         for(String name:new String[]{"Mills","Rowe","McColl","Dudgeon","Grimshaw","Harrow","Honour","Seasons","Fossil"})assertFalse(name,all.contains(name));
         assertNull(view.findViewWithTag("milepost_replay"));
-        assertFalse(view.findViewWithTag("milepost_summary_replay").isEnabled());
-        int cards=0;for(int i=0;i<6;i++)if(view.findViewWithTag("milepost_card_"+i)!=null)cards++;assertEquals(6,cards);
+        assertNull(view.findViewWithTag("milepost_summary_replay"));
+        String hidden=contents(view.findViewWithTag("milepost_card_0"));
+        assertTrue(hidden.contains("Hidden personality"));
+        for(int i=1;i<5;i++)assertEquals(hidden,contents(view.findViewWithTag("milepost_card_"+i)));
+        assertNotNull(view.findViewWithTag("milepost_card_5"));
+        assertNotNull(view.findViewWithTag("milepost_card_6"));
+    }
+    @Test public void unknownPostUnlocksFirstChapterAndFinalIdentityRequiresTheAward(){
+        host(snapshot(1,0,"unknown-post"));
+        assertTrue(contents(view.findViewWithTag("milepost_card_5")).contains("1 of 7 chapters unlocked"));
+        view.next();
+        assertEquals(1,view.displayStage());
+        assertFalse(view.findViewWithTag("milepost_next").isEnabled());
+
+        view.update(snapshot(7,4,"without-final-award"));
+        view.skip();
+        assertEquals(6,view.displayStage());
+        view.replay(false);
+        assertEquals("6 of 7 chapters unlocked. Viewing chapter 6",
+                view.findViewWithTag("milepost_chapter_indicators").getContentDescription());
+        assertFalse(contents(view).contains("Charlie Harrow"));
+        assertTrue(contents(view.findViewWithTag("milepost_card_5")).contains("6 of 7 chapters unlocked"));
     }
     @Test public void staticRevealPersistsCompletedStagesAndRestartsPaused(){
         host(snapshot(6,1,"a"));view.replay(true);view.next();view.next();assertEquals(2,store.read().cursor);
         view.onHostPause();view=new MilepostPresentationView(controller.get(),store,snapshot(6,1,"a"),(after,done)->done.accept(new MilepostPresentationReader.Page(Collections.emptyList(),false,true)));controller.get().setContentView(view);view.onHostResume();
-        assertTrue(store.read().paused);assertEquals(2,view.displayStage());view.next();assertEquals(2,view.displayStage());
-        view.replay(false);view.next();assertEquals(3,store.read().cursor);assertEquals(3,store.read().completedStage);
-        TextView cipher=view.findViewWithTag("milepost_cipher");assertEquals(View.IMPORTANT_FOR_ACCESSIBILITY_NO,cipher.getImportantForAccessibility());assertFalse(cipher.isFocusable());
+        assertTrue(store.read().paused);assertEquals(2,view.displayStage());view.next();assertEquals(3,store.read().cursor);assertEquals(3,store.read().completedStage);
+        TextView cipher=view.findViewWithTag("milepost_replay_cipher");assertEquals(View.IMPORTANT_FOR_ACCESSIBILITY_NO,cipher.getImportantForAccessibility());assertFalse(cipher.isFocusable());
+    }
+    @Test public void revisitingChaptersKeepsCompletionAndDoesNotUnlockFutureChapters(){
+        host(snapshot(3,1,"chapter-history"));
+        for(int stage=1;stage<=3;stage++)view.next();
+        View previous=view.findViewWithTag("milepost_previous"),next=view.findViewWithTag("milepost_next");
+        assertFalse(next.isEnabled());
+        View indicators=view.findViewWithTag("milepost_chapter_indicators");
+        assertEquals("3 of 7 chapters unlocked. Viewing chapter 3",indicators.getContentDescription());
+        assertFalse(indicators.isClickable());
+        assertTrue(previous.performClick());
+        assertEquals("3 of 7 chapters unlocked. Viewing chapter 2",indicators.getContentDescription());
+        assertEquals(2,store.read().cursor);
+        assertEquals(3,store.read().completedStage);
+        assertTrue(previous.performClick());
+        assertFalse(previous.isEnabled());
+        assertEquals(1,view.displayStage());
+        assertTrue(next.performClick());
+        assertEquals(2,view.displayStage());
+        view.later();
+        assertEquals(2,view.displayStage());
+        view.next();
+        assertFalse(view.findViewWithTag("milepost_next").isEnabled());
+        assertFalse(contents(view).contains("Charlie Harrow"));
+        assertTrue(contents(view).contains("Find another Milepost"));
     }
     @Test public void captureStartPausesImmediatelyAndPreventsEveryTransitionAndResume(){
         host(snapshot(7,7,"a"));view.replay(true);view.next();assertEquals(1,store.read().cursor);
         context.getSharedPreferences("roadprints_capture_state",0).edit().putBoolean("active",true).commit();
         Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
-        assertTrue(store.read().paused);assertNull(view.findViewWithTag("milepost_next"));
+        assertTrue(store.read().paused);assertFalse(view.findViewWithTag("milepost_next").isShown());
         view.next();view.replay(false);view.skip();view.onHostResume();assertEquals(1,store.read().cursor);assertTrue(store.read().paused);
         context.getSharedPreferences("roadprints_capture_state",0).edit().putBoolean("active",false).commit();
         Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();view.replay(false);view.next();assertEquals(2,store.read().cursor);
     }
     @Test public void laterSkipAndFutureDiscoveriesDoNotCreateAwardsOrLoseCursor(){
         host(snapshot(3,1,"a"));view.replay(true);view.next();view.later();assertTrue(store.read().dismissed);assertEquals(1,store.read().cursor);assertEquals(0,store.read().acknowledgedPosts);
-        view.update(snapshot(4,1,"b"));assertNotNull(view.findViewWithTag("milepost_later"));assertEquals(1,store.read().cursor);
+        view.update(snapshot(4,1,"b"));assertNotNull(view.findViewWithTag("milepost_card_5"));assertEquals(1,store.read().cursor);
         view.replay(false);view.skip();assertEquals(4,store.read().cursor);assertEquals(4,store.read().acknowledgedPosts);
-        view.update(snapshot(5,1,"c"));assertNotNull(view.findViewWithTag("milepost_later"));assertEquals(4,store.read().cursor);
+        view.update(snapshot(5,1,"c"));assertNotNull(view.findViewWithTag("milepost_card_5"));assertEquals(4,store.read().cursor);
         assertEquals(1,snapshot(5,1,"c").individuals());
     }
     @Test public void withdrawalsClampVisibleProgressWithoutErasingReplayHistoryAndReinstatementRestores(){
@@ -153,9 +196,9 @@ public class MilepostPresentationTest {
     }
     @Test public void discoveryBrowsingAcknowledgesOnlyDeliveredDetailsAndKeepsAnonymousPostsAnonymous(){
         host(snapshot(1,0,"unknown"));
-        view.findViewWithTag("milepost_view_discoveries").performClick();
+        view.findViewWithTag("milepost_browse_discoveries").performClick();
         assertTrue(contents(view).contains("Discovery record"));assertEquals(1,store.read().acknowledgedPosts);
-        assertNull(view.findViewWithTag("milepost_replay"));assertNotNull(view.findViewWithTag("milepost_browse_discoveries"));
+        assertNotNull(view.findViewWithTag("milepost_card_5"));assertNotNull(view.findViewWithTag("milepost_browse_discoveries"));
     }
     @Test public void replayDoesNotChangeAnyExistingEntitlementOrCelebrationPreferences(){
         String awards=context.getSharedPreferences("roadprints_achievements_v1",0).getAll().toString();

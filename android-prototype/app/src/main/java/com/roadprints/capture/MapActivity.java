@@ -40,6 +40,11 @@ public class MapActivity extends Activity {
     private static final int NAV_BAR = 0xFF10275D;
     private static final int MUTED = 0xFFB9C5D8;
     private static final int GOLD = 0xFFF7C450;
+    private static final int LOCATE_PERMISSION_REQUEST=307;
+    private final MapLocationRequest locationRequest=new MapLocationRequest();
+    private android.widget.ImageButton locateControl;
+    private double[] cameraBeforeLocate;
+    private boolean locateAfterPermission;
     private static final int MAX_MAP_POINTS = 350_000;
     private static final int MAX_MOTORWAY_POINTS = 120_000;
     private static final int MAX_POINTS_PER_ROUTE = 1_400;
@@ -199,7 +204,10 @@ public class MapActivity extends Activity {
         legendButton.setOnClickListener(v->MapLegendPanel.show(this,getIntent().hasExtra("settlement_code"),this::applyCollectionLayer));
         FrameLayout.LayoutParams legendParams=new FrameLayout.LayoutParams(-2,-2,Gravity.START|Gravity.BOTTOM);
         legendParams.setMargins(dp(12),dp(12),dp(12),dp(12));mapFrame.addView(legendButton,legendParams);
-        if (!getIntent().hasExtra("settlement_code")) addMapFilters();
+        if (!getIntent().hasExtra("settlement_code")){
+            addMapFilters();
+            locateControl=MapLocationControl.add(mapFrame,this::locateMe);
+        }
         mapView.setMapLayersFromPreferences();
         showMapLoading(false);
 
@@ -216,6 +224,7 @@ public class MapActivity extends Activity {
     protected void onResume() {
         super.onResume();navigation.resume(this);if(hasDisplayedMap&&mapView!=null){navigation.frame(mapView,"first_map","cache=retained current="+(displayedMapRevision==mapDataRevision()));if(displayedMapRevision==mapDataRevision())navigation.frame(mapView,"ready","cache=retained");}
         active = true;
+        startLocateAfterPermission();
         if(mapView!=null)mapView.setRenderingActive(true);
         if (replayMessage == null && mapFrame != null && mapSubtitle != null) refreshMap();
         String requestedCollection=getIntent().getStringExtra("collection_id");
@@ -238,12 +247,20 @@ public class MapActivity extends Activity {
     @Override
     protected void onPause() {
         active = false;
+        locationRequest.cancel();
+        if(locateControl!=null)locateControl.setEnabled(true);
         if(mapView!=null)mapView.setRenderingActive(false);
         if (filterDialog != null) filterDialog.dismiss();
         if (loadingCard != null) loadingCard.stop();
         mainHandler.removeCallbacks(observeChanges);
         if (replayPreparing) stopReplay(false);
         else if (mapView != null) mapView.finishDiscoveryReplay();
+        if(cameraBeforeLocate!=null&&mapView!=null){
+            mapView.clearMapLocation();
+            mapView.restoreCameraState(cameraBeforeLocate[0],cameraBeforeLocate[1],cameraBeforeLocate[2]);
+            cameraBeforeLocate=null;
+            locateControl.setContentDescription("Locate me");
+        }
         saveMapCamera();
         super.onPause();
     }
@@ -259,9 +276,62 @@ public class MapActivity extends Activity {
         super.onSaveInstanceState(state);
     }
 
+    private boolean hasLocationPermission(String permission){
+        return checkSelfPermission(permission)==android.content.pm.PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void locateMe(){
+        if(!active||!mapReady||recapVisible||locateControl==null)return;
+        if(!hasLocationPermission(android.Manifest.permission.ACCESS_FINE_LOCATION)
+                &&!hasLocationPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION)){
+            requestPermissions(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION,
+                    android.Manifest.permission.ACCESS_COARSE_LOCATION},LOCATE_PERMISSION_REQUEST);
+            return;
+        }
+        locateControl.setEnabled(false);
+        locateControl.announceForAccessibility("Finding your location");
+        boolean precise=hasLocationPermission(android.Manifest.permission.ACCESS_FINE_LOCATION);
+        locationRequest.start(token->MapLocationRequest.currentLocation(this,precise,token),location->{
+            locateControl.setEnabled(true);
+            if(!active||isFinishing()||isDestroyed()||mapView==null)return;
+            if(location==null){
+                locationMessage("Couldn’t find your location. Check that device Location is on and try again.");
+                return;
+            }
+            if(cameraBeforeLocate==null)cameraBeforeLocate=mapView.cameraState();
+            mapView.showMapLocation(location);
+            String message=location.hasAccuracy()?"Location shown · within about "
+                    +Math.max(1,Math.round(location.getAccuracy()))+" m":"Location shown";
+            locateControl.setContentDescription("Locate me. "+message);
+            locationMessage(message);
+        });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,String[] permissions,int[] results){
+        super.onRequestPermissionsResult(requestCode,permissions,results);
+        if(requestCode!=LOCATE_PERMISSION_REQUEST)return;
+        if(hasLocationPermission(android.Manifest.permission.ACCESS_FINE_LOCATION)
+                ||hasLocationPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION)){
+            locateAfterPermission=true;
+            startLocateAfterPermission();
+        }else locationMessage("Allow location access to use Locate me.");
+    }
+
+    private void startLocateAfterPermission(){
+        if(!locateAfterPermission||!active||!mapReady||recapVisible)return;
+        locateAfterPermission=false;
+        locateMe();
+    }
+
+    private void locationMessage(String message){
+        android.widget.Toast.makeText(this,message,android.widget.Toast.LENGTH_SHORT).show();
+    }
+
     private void saveMapCamera() {
         if (mapView == null || getIntent().hasExtra("settlement_code")) return;
-        double[] camera = beforeReplayCamera != null ? beforeReplayCamera : mapView.cameraState();
+        double[] camera = cameraBeforeLocate != null ? cameraBeforeLocate
+                : beforeReplayCamera != null ? beforeReplayCamera : mapView.cameraState();
         if (camera == null || camera.length < 3) return;
         savedCameraLongitude = camera[0];
         savedCameraLatitude = camera[1];
@@ -325,6 +395,11 @@ public class MapActivity extends Activity {
         ScreenDataLoader.execute(()->{
             try{
                 MilepostCatalogue.MapLocations locations=MilepostCatalogue.mapLocations(getApplicationContext());
+                // Static pins are usable even if the ledger is busy or unavailable.
+                mainHandler.post(()->{
+                    if(!isDestroyed()&&!isFinishing()&&mapView==target)
+                        target.setMileposts(locations,MilepostPresentationReader.cachedMapDiscoveries());
+                });
                 java.util.Map<String,MilepostPresentationReader.Discovery> discoveries=MilepostPresentationReader.mapDiscoveries(getApplicationContext());
                 mainHandler.post(()->{
                     milepostsRequested=false;
@@ -410,10 +485,11 @@ public class MapActivity extends Activity {
     }
     private void updateMapControls() {
         boolean interactive=mapReady&&!recapVisible;
-        for(View control:new View[]{legendButton,mapFilterControls,zoomControls})
+        for(View control:new View[]{legendButton,mapFilterControls,zoomControls,locateControl})
             if(control!=null)control.setVisibility(interactive?View.VISIBLE:View.GONE);
         if(mapView!=null)mapView.setOverviewLoading(recapVisible||(!interactive&&!hasDisplayedMap));
         if(mapRecovery!=null)mapRecovery.setVisibility(recapVisible?View.GONE:View.VISIBLE);
+        startLocateAfterPermission();
     }
 
     private void refreshMap() {

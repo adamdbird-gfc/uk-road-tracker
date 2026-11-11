@@ -61,30 +61,74 @@ final class MilepostPresentationReader {
                 receipt==null?"":receipt,from,to,awards);
         }finally{d.endTransaction();}
     }
+    private static volatile Map<String,Discovery> publishedMapDiscoveries;
+
+    static Map<String,Discovery> cachedMapDiscoveries(){return publishedMapDiscoveries;}
+
     static Map<String,Discovery> mapDiscoveries(Context context)throws Exception {
         MilepostIntegration gate=MilepostIntegration.PRODUCTION;
         Map<String,Discovery> found=new HashMap<>();
         try(MilepostDiscoveryLedger ledger=new MilepostDiscoveryLedger(context,gate.database)){
-            if(!gate.verified(ledger))return found;
+            if(!gate.verified(ledger))return publishedMapDiscoveries;
             SQLiteDatabase db=ledger.db();
-            String after="";
-            for(;;){
-                int count=0;
-                try(Cursor cursor=MilepostAchievements.factPage(db,gate.user,after)){
-                    while(cursor.moveToNext()){
-                        after=cursor.getString(0);count++;
-                        found.put(after,new Discovery(after,calendarDate(cursor.getString(3)),0));
+            db.beginTransaction();
+            try {
+                Map<String,Integer> support=new HashMap<>();
+                JSONObject snapshot=MilepostAchievementDeriver.state(context,ledger,gate.user);
+                boolean current=snapshot.getBoolean("current");
+                if(!current&&publishedMapDiscoveries!=null)return publishedMapDiscoveries;
+                if(current){
+                    JSONArray awards=snapshot.getJSONArray("rows");
+                    for(int i=0;i<awards.length();i++){
+                        JSONObject award=awards.getJSONObject(i);
+                        int index=Arrays.asList(MilepostAchievements.IDS).indexOf(award.getString("id"));
+                        // Route completion and the collective award do not name a physical Milepost.
+                        if(!award.getBoolean("earned")||index<0||index==4||index==6)continue;
+                        JSONArray evidence=award.getJSONArray("support");
+                        for(int j=0;j<evidence.length();j++){
+                            JSONObject fact=evidence.optJSONObject(j);
+                            if(fact!=null&&fact.has("marker")){
+                                String marker=fact.getString("marker");
+                                support.merge(marker,1<<index,(oldValue,newValue)->oldValue|newValue);
+                            }
+                        }
                     }
                 }
-                if(count<16)return found;
-            }
+                String after="";
+                for(;;){
+                    int count=0;
+                    try(Cursor cursor=MilepostAchievements.factPage(db,gate.user,after)){
+                        while(cursor.moveToNext()){
+                            after=cursor.getString(0);count++;
+                            found.put(after,new Discovery(after,cursor.isNull(3)?null:calendarDate(cursor.getString(3)),
+                                    0,4,support.getOrDefault(after,0)));
+                        }
+                    }
+                    if(count<16){
+                        if(current)publishedMapDiscoveries=Collections.unmodifiableMap(found);
+                        return found;
+                    }
+                }
+            }finally{db.endTransaction();}
         }
     }
     static final class Discovery {
-        final String marker,date,designLabel;final long ordinal;final int design;
+        private static final String[] DESIGNS={"Fossil Tree","Nautical Fingerpost","Cockerel","Tracks","Millennium Milepost"};
+        final String marker,date,designLabel;
+        final long ordinal;
+        final int design, relatedAwards;
         Discovery(String marker,String date,long ordinal){this(marker,date,ordinal,4);}
-        Discovery(String marker,String date,long ordinal,int design){this.marker=marker;this.date=date;this.ordinal=ordinal;this.design=design;
-            this.designLabel=new String[]{"Fossil Tree","Nautical fingerpost","Cockerel","Tracks","Unknown design"}[design];}
+        Discovery(String marker,String date,long ordinal,int design){this(marker,date,ordinal,design,0);}
+        Discovery(String marker,String date,long ordinal,int design,int relatedAwards){
+            this.marker=marker;this.date=date;this.ordinal=ordinal;this.design=design;this.relatedAwards=relatedAwards;
+            this.designLabel=DESIGNS[design];
+        }
+        static int designIndex(String designer){
+            if(designer==null)return 4;
+            int index=Arrays.asList("mills","rowe","mccoll","dudgeon").indexOf(designer);
+            return index<0?4:index;
+        }
+        static String designLabel(int design){return DESIGNS[design];}
     }
     static final class Page {
         final List<Discovery> discoveries;final boolean more,current;
@@ -117,7 +161,7 @@ final class MilepostPresentationReader {
             for(int i=0;i<rows.size();i++){
                 Discovery row=rows.get(i);int design=4;
                 try(Cursor marker=d.rawQuery("SELECT designer,designer_verified FROM marker WHERE id=?",new String[]{row.marker})){
-                    if(marker.moveToFirst()&&marker.getInt(1)==1){int found=Arrays.asList("mills","rowe","mccoll","dudgeon").indexOf(marker.getString(0));if(found>=0)design=found;}
+                    if(marker.moveToFirst()&&marker.getInt(1)==1){design=Discovery.designIndex(marker.getString(0));}
                 }
                 rows.set(i,new Discovery(row.marker,row.date==null?null:calendarDate(row.date),row.ordinal,design));
             }

@@ -49,7 +49,7 @@ public class MilepostIntegrationTest {
         for(int i=0;i<4;i++)assertTrue(s.awards.get(i).earned);assertEquals(7,s.target());assertEquals(7,s.newPosts);
         Activity a=Robolectric.buildActivity(Activity.class).setup().get();MilepostPresentationStore store=new MilepostPresentationStore(a,gate.user);
         MilepostPresentationStore.State staticState=store.read();staticState.staticMode=true;store.save(staticState);MilepostPresentationView view=new MilepostPresentationView(a,store,s,(after,done)->{});a.setContentView(view);view.onHostResume();
-        assertNotNull(view.findViewWithTag("milepost_summary_replay"));view.replay(true);for(int i=0;i<7;i++)view.next();
+        assertNull(view.findViewWithTag("milepost_summary_replay"));assertNotNull(view.findViewWithTag("milepost_card_5"));view.replay(true);for(int i=0;i<7;i++)view.next();
         assertEquals(7,store.read().cursor);view.skip();assertEquals(s.postOrdinal,store.read().acknowledgedPosts);
         view.onHostPause();MilepostPresentationView restarted=new MilepostPresentationView(a,store,s,(after,done)->{});a.setContentView(restarted);restarted.onHostResume();
         assertTrue(store.read().paused);assertEquals(7,store.read().completedStage);restarted.replay(true);restarted.next();assertEquals(1,store.read().cursor);
@@ -153,9 +153,27 @@ public class MilepostIntegrationTest {
         MilepostScreenIntegration screen=new MilepostScreenIntegration(a,gate);screen.mount(section);screen.resume();drain();
         assertEquals(1,section.getChildCount());assertTrue(section.getChildAt(0) instanceof MilepostPresentationView);assertTrue(gate.enterProcessing());gate.leaveProcessing();
         // A normal periodic compact refresh must not discard an in-flight history page callback.
-        section.getChildAt(0).findViewWithTag("milepost_view_discoveries").performClick();screen.refresh();drain();
+        section.getChildAt(0).findViewWithTag("milepost_browse_discoveries").performClick();screen.refresh();drain();
         assertEquals(7,new MilepostPresentationStore(a,gate.user).read().acknowledgedPosts);
         screen.pause();drain();assertEquals(0,section.getChildCount());assertTrue(gate.enterProcessing());gate.leaveProcessing();screen.resume();drain();assertEquals(1,section.getChildCount());screen.pause();drain();
+    }
+    @Test public void reopenedScreenKeepsPublishedAwardsDuringNewJourneyAssessment()throws Exception{
+        prepare(7,100);
+        process();
+        f.work(()->f.save("new-journey"));
+        assertNull(read(0));
+        Activity activity=Robolectric.buildActivity(Activity.class).setup().get();
+        LinearLayout section=new LinearLayout(activity);
+        activity.setContentView(section);
+        MilepostScreenIntegration screen=new MilepostScreenIntegration(activity,gate);
+        screen.mount(section);
+        screen.resume();
+        drain();
+        assertTrue(MilepostPresentationTest.contents(section).contains("Charlie Harrow"));
+        screen.pause();
+        screen.resume();
+        assertTrue(MilepostPresentationTest.contents(section).contains("Charlie Harrow"));
+        screen.pause();
     }
     @Test public void integratedRepeatedEntryDismissalAndReplayMeasureHeap()throws Exception{
         prepare(7,100);process();Activity a=Robolectric.buildActivity(Activity.class).setup().get();

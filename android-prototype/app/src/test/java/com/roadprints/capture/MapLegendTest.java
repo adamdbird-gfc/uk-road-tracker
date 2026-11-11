@@ -42,7 +42,7 @@ public class MapLegendTest {
         dialog.dismiss();AlertDialog reopened=MapLegendPanel.show(activity,false,()->{});
         assertFalse(((Switch)reopened.getWindow().getDecorView().findViewWithTag("map_layer:REMAINING")).isChecked());reopened.dismiss();activity.finish();
     }
-    @Test public void milepostToggleIsInsideNcnAndRetainsItsPreference(){
+    @Test public void milepostsFollowNcnAndIgnoreTheRetiredToggle(){
         Activity activity=Robolectric.buildActivity(Activity.class).create().get();
         app.getSharedPreferences("roadprints_ncn_national_v2",0).edit().putBoolean("enabled",true).commit();
         CollectionAccessStore.select(app,CollectionAccessStore.NONE);
@@ -54,15 +54,14 @@ public class MapLegendTest {
         assertNull(root.findViewWithTag("map_layer:MILEPOSTS"));
         root.findViewWithTag("map_collection:"+CollectionAccessStore.NCN).performClick();
         assertEquals(View.VISIBLE,ncn.getVisibility());
-        Switch mileposts=ncn.findViewWithTag("ncn_map_mileposts");
+        assertNull(ncn.findViewWithTag("ncn_map_mileposts"));
+        app.getSharedPreferences(MapLayerPreferences.PREFS,0).edit().putBoolean("MILEPOSTS",false).commit();
         assertTrue(MapLayerPreferences.milepostsVisible(app));
-        mileposts.setChecked(false);
-        assertFalse(MapLayerPreferences.milepostsVisible(app));
-        assertEquals(CollectionAccessStore.NCN,CollectionAccessStore.selected(app));
         root.findViewWithTag("map_collection:none").performClick();
         assertEquals(View.GONE,ncn.getVisibility());
+        assertFalse(MapLayerPreferences.milepostsVisible(app));
         root.findViewWithTag("map_collection:"+CollectionAccessStore.NCN).performClick();
-        assertFalse(mileposts.isChecked());
+        assertTrue(MapLayerPreferences.milepostsVisible(app));
         dialog.dismiss();activity.finish();
     }
     @Test public void hiddenMotorwayIsExcludedFromRoadTapGroupsAndDataIsRetained()throws Exception{

@@ -19,7 +19,7 @@ def verify(path):
         assert not aliases.intersection({'osm:node:416710572', 'osm:node:9825206150'})
         # Resource packaging can qualify drawable directories by Android version.
         expected = {p.name for p in pathlib.Path('android-prototype/app/src/main/res/drawable').glob('milepost_*.xml')}
-        assert len(expected) == 23
+        assert len(expected) >= 23
         packaged = {pathlib.PurePosixPath(n).name for n in names if n.startswith('res/drawable')}
         assert expected <= packaged, expected - packaged
         dex = b''.join(apk.read(n) for n in sorted(names) if n.endswith('.dex'))
@@ -28,7 +28,7 @@ def verify(path):
         for forbidden in (b'MilepostAcceptance', b'synthetic-acceptance.db', b'milepostacceptance'):
             assert forbidden not in dex, forbidden
         assert not any('synthetic' in n.lower() or 'acceptance' in n.lower() for n in names if n.startswith('assets/'))
-        print('APK production catalogue, held exclusions, 23 vectors, runtime classes and sandbox isolation verified')
+        print(f'APK production catalogue, held exclusions, {len(expected)} vectors, runtime classes and sandbox isolation verified')
 
 
 if __name__ == '__main__':

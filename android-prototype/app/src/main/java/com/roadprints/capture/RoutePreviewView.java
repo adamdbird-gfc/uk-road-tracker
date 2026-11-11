@@ -80,13 +80,44 @@ public class RoutePreviewView extends View {
     }
     private MilepostMapOverlay mileposts;
     private boolean milepostsVisible;
+    private android.location.Location mapLocation;
+    private MapLocationControl.Indicator locationIndicator;
+
+    void showMapLocation(android.location.Location location){
+        mapLocation=location;
+        if(locationIndicator==null)
+            locationIndicator=new MapLocationControl.Indicator(getResources().getDisplayMetrics().density);
+        // Keep the reported area in view for approximate fixes as well as GPS fixes.
+        double zoom=16;
+        if(location.hasAccuracy()&&location.getAccuracy()>0){
+            double radius=MapLocationControl.Indicator.radiusPixels(clampLatitude(location.getLatitude()),
+                    mapTileSize(),location.getAccuracy());
+            double available=Math.min(getWidth(),getHeight())*.30;
+            if(available>0)zoom=Math.min(zoom,log2(available/radius));
+        }
+        restoreCameraState(location.getLongitude(),location.getLatitude(),zoom);
+    }
+
+    void clearMapLocation(){
+        mapLocation=null;
+        invalidate();
+    }
+
+    private void drawMapLocation(Canvas canvas){
+        if(mapLocation==null)return;
+        double latitude=clampLatitude(mapLocation.getLatitude());
+        float radius=mapLocation.hasAccuracy()?MapLocationControl.Indicator.radiusPixels(latitude,
+                mapTileSize()*Math.pow(2,cameraZoom),mapLocation.getAccuracy()):0;
+        locationIndicator.draw(canvas,screenX(mapLocation.getLongitude()),screenY(latitude),radius);
+    }
     private final MilepostMapOverlay.Projection milepostProjection=new MilepostMapOverlay.Projection(){
         public float x(double lon){return screenX(lon);}public float y(double lat){return screenY(lat);}
     };
     void setMileposts(MilepostCatalogue.MapLocations markers,java.util.Map<String,MilepostPresentationReader.Discovery> discoveries){
         if(mileposts==null||mileposts.markers!=markers)
             mileposts=new MilepostMapOverlay(markers,getResources().getDisplayMetrics().density);
-        mileposts.setDiscoveries(discoveries);invalidate();
+        if(discoveries!=null)mileposts.setDiscoveries(discoveries);
+        invalidate();
     }
     private void drawMileposts(Canvas canvas){
         if(!milepostsVisible||mileposts==null)return;
@@ -102,31 +133,18 @@ public class RoutePreviewView extends View {
             CharSequence[] labels=new CharSequence[members.size()];
             for(int j=0;j<members.size();j++){
                 int marker=members.get(j);
-                labels[j]=milepostDesign(marker)+" · "+(mileposts.discovered(marker)?"Discovered":"Undiscovered");
+                labels[j]=mileposts.discovered(marker)
+                        ?MilepostDetailsDialog.discoveredTitle(mileposts.markers.name[marker],mileposts.markers.design[marker])+" · Discovered"
+                        :"Undiscovered Milepost";
             }
             new RoadprintsDialog.Builder(getContext()).setTitle("Nearby Millennium Mileposts")
                 .setItems(labels,(dialog,which)->showMilepost(members.get(which))).setNegativeButton("Close",null).show();
         }else showMilepost(mileposts.indices[i]);
         return true;
     }
-    private String milepostDesign(int marker){
-        switch(mileposts.markers.design[marker]){
-            case "mills":return "Fossil Tree";
-            case "rowe":return "Nautical fingerpost";
-            case "mccoll":return "Cockerel";
-            case "dudgeon":return "Tracks";
-            default:return "Millennium Milepost";
-        }
-    }
     private void showMilepost(int marker){
-        double latitude=mileposts.markers.latitude[marker],longitude=mileposts.markers.longitude[marker];
-        MilepostPresentationReader.Discovery discovery=mileposts.discovery(marker);
-        String status=discovery==null?"Undiscovered":"Discovered on "+discovery.date;
-        new RoadprintsDialog.Builder(getContext()).setTitle(milepostDesign(marker))
-            .setMessage(String.format(java.util.Locale.UK,"%s\nOSM catalogue location: %.6f, %.6f\n\nDiscovery requires verified walking, running or cycling within 100 metres.\n© OpenStreetMap contributors · ODbL 1.0",status,latitude,longitude))
-            .setPositiveButton("OpenStreetMap",(dialog,which)->getContext().startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW,
-                android.net.Uri.parse("https://www.openstreetmap.org/?mlat="+latitude+"&mlon="+longitude+"#map=18/"+latitude+"/"+longitude))))
-            .setNegativeButton("Close",null).show();
+        MilepostDetailsDialog.show(getContext(),mileposts.discovery(marker),mileposts.markers.name[marker],
+                mileposts.markers.design[marker],mileposts.markers.latitude[marker],mileposts.markers.longitude[marker]);
     }
     private boolean correctionDrawMode;
     private final List<JSONArray> correctionTrace = new ArrayList<>();
@@ -741,7 +759,7 @@ public class RoutePreviewView extends View {
                             Color.rgb(190, 55, 55), "E");
             }
         } else if (discoveryReplay == null) {
-            if (showEmptyMessage) { if (!overviewLoading && ncnOverlay==null) drawEmptyMessage(canvas); }
+            if (showEmptyMessage) { if (!overviewLoading && ncnOverlay==null && mapLocation==null) drawEmptyMessage(canvas); }
             else drawMessage(canvas, "Not enough GPS points for a route preview");
         }
 
@@ -751,11 +769,16 @@ public class RoutePreviewView extends View {
         long ncnFinished=android.os.SystemClock.elapsedRealtime();
         drawServiceStations(canvas);
         drawMileposts(canvas);
+        if(discoveryReplay==null)drawMapLocation(canvas);
         drawDiscoveryReplay(canvas);
         drawAttribution(canvas);
-        if (!hasTiles) drawMessage(canvas, (coordinatesValid || discoveryReplay != null)
-                ? "Map tiles unavailable · showing route only"
-                : "Map tiles unavailable · check connection");
+        if (!hasTiles) {
+            if(mapLocation!=null&&discoveryReplay==null)
+                drawMessage(canvas,"Basemap unavailable",Math.max(getHeight()/2f,getHeight()-dp(100)));
+            else drawMessage(canvas,(coordinatesValid || discoveryReplay != null)
+                    ? "Map tiles unavailable · showing route only"
+                    : "Map tiles unavailable · check connection");
+        }
         if (routeEditMode) {
             drawCorrectionTraces(canvas);
             if (correctionDrawMode) drawCorrectionModeHint(canvas);
@@ -1275,12 +1298,15 @@ public class RoutePreviewView extends View {
     }
 
     private void drawMessage(Canvas canvas, String message) {
+        drawMessage(canvas,message,getHeight()/2f);
+    }
+
+    private void drawMessage(Canvas canvas, String message, float centerY) {
         Paint background = new Paint(Paint.ANTI_ALIAS_FLAG);
         background.setColor(0xEFFFFFFF);
         float textWidth = messagePaint.measureText(message);
         float horizontalPadding = dp(10);
         float centerX = getWidth() / 2f;
-        float centerY = getHeight() / 2f;
         canvas.drawRoundRect(new RectF(centerX - textWidth / 2f - horizontalPadding,
                 centerY - dp(18), centerX + textWidth / 2f + horizontalPadding,
                 centerY + dp(8)), dp(6), dp(6), background);

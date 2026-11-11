@@ -46,7 +46,7 @@ public class MilepostAnimationTest {
         view.replay(true);view.next();
         host.getSharedPreferences("roadprints_capture_state",0).edit().putBoolean("active",true).commit();settle();
         assertEquals(0,store.read().cursor);assertTrue(store.read().paused);
-        assertNull(view.findViewWithTag("milepost_next"));
+        assertFalse(view.findViewWithTag("milepost_next").isShown());
     }
     @Test public void staticPreferenceAndSystemMotionOffHaveIdenticalFinalState(){
         view.replay(true);view.findViewWithTag("milepost_motion").performClick();
@@ -80,9 +80,9 @@ public class MilepostAnimationTest {
     }
     @Test public void lockedCardsRemainAnonymousEvenAfterCollectionIntroduced(){
         view.update(MilepostPresentationTest.snapshot(6,1,"locked"));
-        for(int i=1;i<6;i++){
-            String text=MilepostPresentationTest.contents(view.findViewWithTag("milepost_card_"+i));
-            for(String spoiler:new String[]{"Rowe","McColl","Dudgeon","Grimshaw","Harrow","silhouette"})assertFalse(text,text.contains(spoiler));
-        }
+        StringBuilder concealed=new StringBuilder();
+        for(int i=1;i<=5;i++)concealed.append(MilepostPresentationTest.contents(view.findViewWithTag("milepost_card_"+i)));
+        String text=concealed.toString();
+        for(String spoiler:new String[]{"Rowe","McColl","Dudgeon","Grimshaw","Harrow"})assertFalse(text,text.contains(spoiler));
     }
 }

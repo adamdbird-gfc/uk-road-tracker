@@ -66,43 +66,43 @@ final class MapLegendPanel {
                 ncn.addView(text(activity,"NCN: Purple completed · Solid orange verified-open remaining",14,0xFFCFB5F2,true));
                 RadioGroup activities=new RadioGroup(activity);
                 for(String m:new String[]{"combined","cycling","on_foot"}){RadioButton choice=new RadioButton(activity);choice.setId(View.generateViewId());choice.setText(NcnProgressUi.label(m));choice.setTextColor(Color.WHITE);choice.setMinHeight(dp(activity,48));choice.setButtonTintList(ColorStateList.valueOf(0xFF67D5CC));activities.addView(choice);if(m.equals(NcnProgressStore.mode(activity)))activities.check(choice.getId());choice.setOnClickListener(v->{NcnProgressStore.mode(activity,m);changed.run();});}ncn.addView(activities);
-                if(MilepostCatalogue.READY){
-                    Switch mileposts=new Switch(activity);mileposts.setTag("ncn_map_mileposts");
-                    mileposts.setText("Show Millennium Mileposts");mileposts.setTextColor(Color.WHITE);
-                    mileposts.setMinHeight(dp(activity,48));
-                    mileposts.setChecked(activity.getSharedPreferences(MapLayerPreferences.PREFS,0).getBoolean("MILEPOSTS",true));
-                    mileposts.setOnCheckedChangeListener((button,on)->{MapLayerPreferences.setMilepostsVisible(activity,on);changed.run();});
-                    ncn.addView(mileposts);
-                    milepostPin(activity,ncn,false,"Undiscovered Milepost");
-                    milepostPin(activity,ncn,true,"Discovered Milepost");
-                }
                 body.addView(ncn);
             }
             TextView manage=text(activity,"Manage collections",15,0xFFF7C450,true);manage.setMinHeight(dp(activity,48));manage.setGravity(Gravity.CENTER_VERTICAL);
             manage.setOnClickListener(v->activity.startActivity(new Intent(activity,CollectionsActivity.class)));body.addView(manage);
             body.addView(text(activity,"COLLECTION PINS",14,0xFF67D5CC,true));
+            LinearLayout pins=new LinearLayout(activity);
+            pins.setOrientation(LinearLayout.VERTICAL);
+            pins.setTag("map_collection_pins");
+            body.addView(pins);
+            if(MilepostCatalogue.READY){
+                milepostPin(activity,pins,false,"Undiscovered Milepost");
+                milepostPin(activity,pins,true,"Discovered Milepost");
+            }
             for(VenueCollection.Definition collection:VenueCollection.all()){
                 String symbol=collection.pinLabel.isEmpty()?"•":collection.pinLabel;
-                pin(activity,body,collection.shortName+" · not visited",collection.pinColor,symbol);
-                pin(activity,body,collection.shortName+" · visited",0xFFF7C450,symbol);
+                pin(activity,pins,collection.shortName+" · not visited",collection.pinColor,symbol);
+                pin(activity,pins,collection.shortName+" · visited",0xFFF7C450,symbol);
             }
-            pin(activity,body,"Numbered cluster · nearby venues",0xFF238F89,"3");
+            pin(activity,pins,"Numbered cluster · nearby venues",0xFF238F89,"3");
             body.addView(text(activity,"Gold marks a visited venue. A gold cluster contains at least one visited venue. Tap a cluster to zoom or choose a venue.",12,0xFFB9C5D8,false));
         }
         return RoadprintsDialog.show(activity,"Legend & map layers","Changes affect this map's display only.",body,null,null,null,null);
     }
     private static void milepostPin(Activity a,LinearLayout parent,boolean discovered,String label){
-        LinearLayout row=new LinearLayout(a);row.setGravity(Gravity.CENTER_VERTICAL);
         View sample=new View(a){
             private final MilepostMapOverlay.MarkerArt art=new MilepostMapOverlay.MarkerArt(a.getResources().getDisplayMetrics().density);
             @Override protected void onDraw(Canvas canvas){art.draw(canvas,getWidth()/2f,getHeight()/2f,discovered);}
         };
         sample.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-        row.addView(sample,new LinearLayout.LayoutParams(dp(a,62),dp(a,48)));
-        row.addView(text(a,label,14,Color.WHITE,false));parent.addView(row);
+        pin(a,parent,label,sample);
     }
     private static void pin(Activity a,LinearLayout parent,String label,int color,String symbol){
-        LinearLayout row=new LinearLayout(a);row.setGravity(Gravity.CENTER_VERTICAL);row.addView(new Sample(a,color,symbol,false),new LinearLayout.LayoutParams(dp(a,62),dp(a,48)));
+        pin(a,parent,label,new Sample(a,color,symbol,false));
+    }
+    private static void pin(Activity a,LinearLayout parent,String label,View sample){
+        LinearLayout row=new LinearLayout(a);row.setGravity(Gravity.CENTER_VERTICAL);
+        row.addView(sample,new LinearLayout.LayoutParams(dp(a,62),dp(a,48)));
         row.addView(text(a,label,14,Color.WHITE,false),new LinearLayout.LayoutParams(0,-2,1));parent.addView(row);
     }
     private static TextView text(Context c,String label,int size,int color,boolean bold){TextView v=new TextView(c);v.setText(label);v.setTextSize(size);v.setTextColor(color);v.setPadding(dp(c,4),dp(c,6),dp(c,4),dp(c,6));if(bold)v.setTypeface(null,Typeface.BOLD);return v;}
