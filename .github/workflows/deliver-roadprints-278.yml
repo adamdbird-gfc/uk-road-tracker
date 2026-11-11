@@ -32,7 +32,7 @@ jobs:
           printf '%s  %s\n' "$APK_SHA256" "original/$APK" | sha256sum --check
           signer=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -n 1)
           "$signer" verify --print-certs "original/$APK" > certificate.txt
-          grep -Fx "Signer #1 certificate SHA-256 digest: $CERT_SHA256" certificate.txt
+          grep -E "certificate SHA-256 digest: $CERT_SHA256$" certificate.txt
           "${signer%/*}/aapt" dump badging "original/$APK" > package.txt
           grep -E "^package: name='com.roadprints.capture' versionCode='278' versionName='0.25.232'" package.txt
       - name: Publish the APK and verify the public download
