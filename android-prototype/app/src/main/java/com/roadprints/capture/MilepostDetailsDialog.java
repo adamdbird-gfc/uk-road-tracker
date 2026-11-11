@@ -39,14 +39,11 @@ final class MilepostDetailsDialog {
         addText(body,found ? discovery.date==null ? "Discovered · date unavailable"
                 : "Discovered "+displayDate(discovery.date) : "Undiscovered",14,accent,true);
         if(found){
-            String title = discoveredTitle(name,designer);
-            String designLabel = MilepostPresentationReader.Discovery.designLabel(design);
-            if(design<4&&!title.equals(designLabel))addText(body,designLabel,16,Color.WHITE,true);
+            String title = discoveredHeading(name,design);
+            if(name!=null&&!name.equalsIgnoreCase(title))
+                addText(body,name,15,Color.WHITE,true).setTag("milepost_source_name");
             addText(body,MilepostPresentation.designerContext(design),15,0xFFCED8EA,false);
-            for(int index=0;index<MilepostAchievements.IDS.length;index++){
-                if((discovery.relatedAwards&(1<<index))!=0)
-                    addText(body,"Related achievement · "+MilepostPresentation.relatedAward(index),14,accent,false);
-            }
+            if(discovery.relatedAwards!=0)addRelatedAchievements(body,discovery.relatedAwards,accent);
             TextView location=addText(body,"View location on OpenStreetMap ↗",14,accent,true);
             location.setMinHeight(dp(context,48));
             location.setGravity(Gravity.CENTER_VERTICAL);
@@ -58,14 +55,49 @@ final class MilepostDetailsDialog {
                     android.widget.Toast.makeText(context,"No browser is available to open the location.",android.widget.Toast.LENGTH_SHORT).show();
                 }
             });
-            addText(body,"© OpenStreetMap contributors",12,0xFFB9C5D8,false);
+            TextView attribution=addText(body,"",12,0xFFB9C5D8,false);
+            addAttribution(attribution);
         }else{
-            addText(body,"Find it on your next outing",17,Color.WHITE,true);
-            addText(body,"Pass within 100 metres on a recorded walk, run or cycle and Roadprints will mark it as discovered.",
+            addText(body,"A discovery awaits",17,Color.WHITE,true);
+            addText(body,"Walk, run or cycle within 100 metres while recording a journey. Roadprints will discover it automatically.",
                     15,0xFFCED8EA,false);
         }
-        return RoadprintsDialog.show(context,found ? discoveredTitle(name,designer) : "Millennium Milepost",
+        return RoadprintsDialog.show(context,found ? discoveredHeading(name,design) : "Millennium Milepost",
                 null,body,null,null,null,null);
+    }
+
+    private static String discoveredHeading(String name,int design){
+        return design<4||name==null?MilepostPresentationReader.Discovery.designLabel(design):name;
+    }
+
+    private static void addRelatedAchievements(LinearLayout body,int awards,int accent){
+        Context context=body.getContext();
+        LinearLayout row=new LinearLayout(context);
+        row.setOrientation(LinearLayout.VERTICAL);
+        row.setPadding(dp(context,12),dp(context,7),dp(context,12),dp(context,8));
+        GradientDrawable background=new GradientDrawable();
+        background.setColor(0xFF1B3268);
+        background.setCornerRadius(dp(context,10));
+        row.setBackground(background);
+        LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(-1,-2);
+        params.topMargin=dp(context,12);
+        body.addView(row,params);
+        String heading=Integer.bitCount(awards)==1?"Related achievement":"Related achievements";
+        addText(row,heading,12,accent,true).setPadding(0,0,0,0);
+        for(int index=0;index<MilepostAchievements.IDS.length;index++){
+            if((awards&(1<<index))!=0)
+                addText(row,MilepostPresentation.relatedAward(index),14,Color.WHITE,false)
+                        .setPadding(0,dp(context,3),0,0);
+        }
+    }
+
+    static void addAttribution(TextView text){
+        android.text.SpannableString label=new android.text.SpannableString("© OpenStreetMap contributors");
+        label.setSpan(new android.text.style.URLSpan("https://www.openstreetmap.org/copyright"),
+                0,label.length(),android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        text.setText(label);
+        text.setLinkTextColor(0xFFB9C5D8);
+        text.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
     }
 
     static String discoveredTitle(String name,String designer){

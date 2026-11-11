@@ -79,12 +79,14 @@ final class MilepostPresentation {
         }
         boolean introduced(){for(int i=0;i<6;i++)if(awards.get(i).ordinal>0)return true;return false;}
         int individuals(){int n=0;for(int i=0;i<6;i++)if(awards.get(i).earned)n++;return n;}
-        int target(){return stage(count);}
+        int target(){return current?Math.min(stage(count),awards.get(5).earned?7:6):0;}
         Card card(int index){
-            Award a=awards.get(index);boolean visible=a.earned;
-            return new Card(visible?NAMES[index]:introduced()?"Mystery personality":"?",
-                visible&&index<6?BIOS[index]:"",visible?"Revealed":a.ordinal>0?"Previously unlocked":"Discover Mileposts to reveal more",
-                visible,index==5&&introduced()?target():0);
+            Award a=awards.get(index);
+            boolean visible=a.earned&&(index!=5||target()==7);
+            String hiddenTitle=index==5?"The seven-chapter mystery":index==6?"Collection achievement":"Hidden personality";
+            return new Card(visible?NAMES[index]:hiddenTitle,
+                visible&&index<6?BIOS[index]:"",a.ordinal>0?"Previously unlocked":"",
+                visible,index==5?target():0);
         }
         String dates(){return from==null?"Historical dates unavailable":
                 "Journey dates: "+from+(from.equals(to)?"":" to "+to)+". Journey precision; exact passing times unavailable.";}

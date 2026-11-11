@@ -20,7 +20,9 @@ public class MilepostCorrectiveVisibilityTest {
         String copy=copy(container);assertTrue(copy.contains("saved journeys"));assertFalse(copy.toLowerCase(java.util.Locale.ROOT).contains("assess"));
         assertFalse(copy.contains("Discoveries: 0"));
         for(String name:new String[]{"Jon Mills","Andrew Rowe","Iain McColl","David Dudgeon","John Grimshaw","Charlie Harrow"})assertFalse(copy.contains(name));
-        for(int i=0;i<7;i++)assertNotNull(container.findViewWithTag("milepost_card_"+i));
+        assertNotNull(container.findViewWithTag("milepost_hidden_personalities"));
+        assertNotNull(container.findViewWithTag("milepost_card_5"));
+        assertNotNull(container.findViewWithTag("milepost_card_6"));
         screen.pause();a.finish();
     }
     @Test public void backgroundMapReleasesDecodedTilesWithoutChangingCamera()throws Exception{

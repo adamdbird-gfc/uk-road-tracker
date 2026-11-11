@@ -104,7 +104,7 @@ final class MilepostPresentationReader {
         }
     }
     static final class Discovery {
-        private static final String[] DESIGNS={"Fossil Tree","Nautical fingerpost","Cockerel","Tracks","Millennium Milepost"};
+        private static final String[] DESIGNS={"Fossil Tree","Nautical Fingerpost","Cockerel","Tracks","Millennium Milepost"};
         final String marker,date,designLabel;
         final long ordinal;
         final int design, relatedAwards;

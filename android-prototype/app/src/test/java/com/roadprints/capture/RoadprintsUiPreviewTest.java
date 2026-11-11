@@ -49,7 +49,9 @@ public class RoadprintsUiPreviewTest {
             View decor=dialog.getWindow().getDecorView();
             String text=MilepostPresentationTest.contents(decor);
             assertTrue(text.contains("Undiscovered"));
-            assertTrue(text.contains("recorded walk, run or cycle"));
+            assertTrue(text.contains("A discovery awaits"));
+            assertTrue(text.contains("within 100 metres"));
+            assertTrue(text.contains("automatically"));
             for(String hidden:new String[]{"Holes Bay","Rowe","OpenStreetMap",String.valueOf(LAT)})
                 assertFalse(text.contains(hidden));
             assertNull(decor.findViewWithTag("roadprints_dialog_primary"));
@@ -63,9 +65,12 @@ public class RoadprintsUiPreviewTest {
         AlertDialog dialog=MilepostDetailsDialog.show(host,discovery,NAME,"rowe",LAT,LON);
         try{
             String text=MilepostPresentationTest.contents(dialog.getWindow().getDecorView());
-            assertTrue(text.contains(NAME));
+            assertTrue(text.indexOf("Nautical Fingerpost")>=0);
+            assertTrue(text.indexOf("Nautical Fingerpost")<text.indexOf(NAME));
+            assertEquals(NAME,((android.widget.TextView)dialog.getWindow().getDecorView()
+                    .findViewWithTag("milepost_source_name")).getText().toString());
             assertTrue(text.contains("11 November 2026"));
-            assertTrue(text.contains("Related achievement · Andrew Rowe"));
+            assertTrue(text.contains("Related achievement Andrew Rowe"));
             assertTrue(text.contains("View location on OpenStreetMap"));
             assertFalse(text.contains("Charlie Harrow"));
             assertFalse(text.contains(String.valueOf(LAT)));
@@ -89,8 +94,14 @@ public class RoadprintsUiPreviewTest {
         view.onHostResume();
         assertNull(view.findViewWithTag("milepost_summary_replay"));
         assertNotNull(view.findViewWithTag("milepost_card_0"));
-        assertNotNull(view.findViewWithTag("milepost_card_5"));
-        saveScreen("03-achievement-cards",root);
+        assertTrue(MilepostPresentationTest.contents(view.findViewWithTag("milepost_card_5"))
+                .contains("3 of 7 chapters unlocked"));
+        assertTrue(MilepostPresentationTest.contents(view.findViewWithTag("milepost_hidden_personalities"))
+                .contains("3 hidden personalities"));
+        if(System.getProperty("roadprints.previewDir")!=null){
+            layout(root,dp(412),dp(852));
+            save("03-achievement-cards",root);
+        }
         view.findViewWithTag("milepost_replay").performClick();
         view.next();
         view.next();
@@ -138,8 +149,15 @@ public class RoadprintsUiPreviewTest {
             assertEquals(modes.getChildAt(0).getId(),modes.getCheckedRadioButtonId());
             android.widget.Switch toggle=decor.findViewWithTag("ncn_map_mileposts");
             assertNotNull(toggle);
+            ViewGroup legendPins=decor.findViewWithTag("map_collection_pins");
+            assertFalse(MilepostPresentationTest.contents(controls).contains("Undiscovered Milepost"));
+            assertTrue(MilepostPresentationTest.contents(legendPins.getChildAt(0)).contains("Undiscovered Milepost"));
+            assertTrue(MilepostPresentationTest.contents(legendPins.getChildAt(1)).contains("Discovered Milepost"));
+            assertStaticPinRow((ViewGroup)legendPins.getChildAt(0));
+            assertStaticPinRow((ViewGroup)legendPins.getChildAt(1));
             toggle.setChecked(false);
             assertFalse(MapLayerPreferences.milepostsVisible(host));
+            assertEquals(View.VISIBLE,legendPins.getVisibility());
             toggle.setChecked(true);
             assertTrue(MapLayerPreferences.milepostsVisible(host));
             if(System.getProperty("roadprints.previewDir")!=null){
@@ -150,6 +168,15 @@ public class RoadprintsUiPreviewTest {
                 save("06-ncn-layer-controls",decorGroup);
             }
         }finally{dialog.dismiss();}
+    }
+
+    private static void assertStaticPinRow(ViewGroup row){
+        assertFalse(row.isClickable());
+        assertFalse(row.isFocusable());
+        for(int i=0;i<row.getChildCount();i++){
+            assertFalse(row.getChildAt(i).isClickable());
+            assertFalse(row.getChildAt(i).isFocusable());
+        }
     }
 
     private static android.widget.ScrollView scrollParent(View child){

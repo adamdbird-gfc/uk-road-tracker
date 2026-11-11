@@ -80,9 +80,9 @@ public class MilepostAnimationTest {
     }
     @Test public void lockedCardsRemainAnonymousEvenAfterCollectionIntroduced(){
         view.update(MilepostPresentationTest.snapshot(6,1,"locked"));
-        for(int i=1;i<6;i++){
-            String text=MilepostPresentationTest.contents(view.findViewWithTag("milepost_card_"+i));
-            for(String spoiler:new String[]{"Rowe","McColl","Dudgeon","Grimshaw","Harrow","silhouette"})assertFalse(text,text.contains(spoiler));
-        }
+        for(int i=1;i<5;i++)assertNull(view.findViewWithTag("milepost_card_"+i));
+        String text=MilepostPresentationTest.contents(view.findViewWithTag("milepost_hidden_personalities"))
+                +MilepostPresentationTest.contents(view.findViewWithTag("milepost_card_5"));
+        for(String spoiler:new String[]{"Rowe","McColl","Dudgeon","Grimshaw","Harrow"})assertFalse(text,text.contains(spoiler));
     }
 }
