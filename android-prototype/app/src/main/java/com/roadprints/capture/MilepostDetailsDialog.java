@@ -40,8 +40,11 @@ final class MilepostDetailsDialog {
                 : "Discovered "+displayDate(discovery.date) : "Undiscovered",14,accent,true);
         if(found){
             String title = discoveredHeading(name,design);
-            if(name!=null&&!name.equalsIgnoreCase(title))
-                addText(body,name,15,Color.WHITE,true).setTag("milepost_source_name");
+            if(name!=null&&!name.equalsIgnoreCase(title)){
+                String locationName=locationLabel(name);
+                if(!locationName.equalsIgnoreCase(title))
+                    addText(body,locationName,15,Color.WHITE,true).setTag("milepost_source_name");
+            }
             addText(body,MilepostPresentation.designerContext(design),15,0xFFCED8EA,false);
             if(discovery.relatedAwards!=0)addRelatedAchievements(body,discovery.relatedAwards,accent);
             TextView location=addText(body,"View location on OpenStreetMap ↗",14,accent,true);
@@ -64,6 +67,18 @@ final class MilepostDetailsDialog {
         }
         return RoadprintsDialog.show(context,found ? discoveredHeading(name,design) : "Millennium Milepost",
                 null,body,null,null,null,null);
+    }
+
+    private static final java.util.regex.Pattern LOCATION_PREFIX=java.util.regex.Pattern.compile(
+            "^(?i:Millennium Milepost)(?:\\s*[:–—-]\\s*|\\s+)(\\p{Lu}.*)$");
+    private static final java.util.regex.Pattern AMBIGUOUS_NAME=java.util.regex.Pattern.compile(
+            "(?i)^(?:at|in|near|on|by|no|number|ref|mp|ncn|route)\\b.*");
+
+    static String locationLabel(String sourceName){
+        java.util.regex.Matcher prefix=LOCATION_PREFIX.matcher(sourceName);
+        if(!prefix.matches())return sourceName;
+        String location=prefix.group(1);
+        return AMBIGUOUS_NAME.matcher(location).matches()?sourceName:location;
     }
 
     private static String discoveredHeading(String name,int design){

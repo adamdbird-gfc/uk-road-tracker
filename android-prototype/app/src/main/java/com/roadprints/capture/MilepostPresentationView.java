@@ -28,6 +28,7 @@ final class MilepostPresentationView extends ScrollView {
     static final long ANIMATION_MS=1100;
     private Button revealPrevious,revealNext;
     private TextView revealAvailability;
+    private ChapterIndicators revealChapters;
     private final MilepostPresentationReader.PageLoader discoveryPages;
     private int request;
     private MilepostPresentationReader.Page discoveries;
@@ -150,7 +151,7 @@ final class MilepostPresentationView extends ScrollView {
         cancelAnimation();
         body.removeAllViews();
         revealArt=null;revealPrevious=null;revealNext=null;revealProgress=null;revealCipher=null;
-        revealIdentity=null;revealBiography=null;revealThemes=null;
+        revealIdentity=null;revealBiography=null;revealThemes=null;revealChapters=null;
         heading(body,"Millennium Mileposts");
         text(body,"Find Mileposts on your recorded walks, runs and rides.",14);
         assessmentStatus=text(body,"",14);
@@ -273,7 +274,13 @@ final class MilepostPresentationView extends ScrollView {
         close.setContentDescription("Close mystery");
         close.setLayoutParams(new LinearLayout.LayoutParams(-2,-2));
         revealArt=new MilepostArtworkView(host,displayStage());revealArt.enableCipherRing();revealArt.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-        panel.addView(revealArt,new LinearLayout.LayoutParams(-1,dp(180)));
+        LinearLayout.LayoutParams artParams=new LinearLayout.LayoutParams(-1,dp(190));
+        artParams.topMargin=dp(4);
+        artParams.bottomMargin=dp(8);
+        panel.addView(revealArt,artParams);
+        revealChapters=new ChapterIndicators(host);
+        revealChapters.setTag("milepost_chapter_indicators");
+        panel.addView(revealChapters,new LinearLayout.LayoutParams(-1,dp(24)));
         revealProgress=text(panel,"",18);revealProgress.setTag("milepost_reveal_progress");
         revealThemes=text(panel,"",16);revealCipher=text(panel,"",20);revealCipher.setTag("milepost_replay_cipher");
         revealCipher.setGravity(android.view.Gravity.CENTER);revealCipher.setTypeface(Typeface.MONOSPACE);revealCipher.setLetterSpacing(0.08f);
@@ -301,6 +308,7 @@ final class MilepostPresentationView extends ScrollView {
         if(revealProgress==null)return;
         int stage=displayStage();revealArt.setStage(stage);
         revealProgress.setText(chapterLabel(stage));
+        revealChapters.show(stage,snapshot.target());
         revealCipher.setText(MilepostPresentation.cipher(stage));revealCipher.setVisibility(stage==0?View.GONE:View.VISIBLE);
         revealThemes.setText(stage>0&&stage<7?themeLabels(stage):"");revealThemes.setVisibility(stage>0&&stage<7?View.VISIBLE:View.GONE);
         revealIdentity.setText(stage==7?snapshot.card(5).title:"");revealBiography.setText(stage==7?snapshot.card(5).biography:"");
@@ -338,6 +346,37 @@ final class MilepostPresentationView extends ScrollView {
         button.setBackgroundTintList(null);
         button.setTextColor(MUTED);
         return button;
+    }
+    private final class ChapterIndicators extends View {
+        private static final int TOTAL=7;
+        private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
+        private int current,unlocked;
+
+        ChapterIndicators(Activity host){super(host);}
+
+        void show(int current,int unlocked){
+            this.current=current;
+            this.unlocked=unlocked;
+            setContentDescription(unlocked+" of "+TOTAL+" chapters unlocked"
+                    +(current==0?"":". Viewing chapter "+current));
+            invalidate();
+        }
+
+        @Override protected void onDraw(Canvas canvas){
+            float step=Math.min(dp(22),getWidth()/(float)TOTAL);
+            float x=getWidth()/2f-3*step,y=getHeight()/2f;
+            for(int chapter=1;chapter<=TOTAL;chapter++,x+=step){
+                boolean selected=chapter==current;
+                paint.setStyle(chapter>unlocked||selected?Paint.Style.STROKE:Paint.Style.FILL);
+                paint.setStrokeWidth(dp(selected?2:1));
+                paint.setColor(selected?GOLD:chapter<=unlocked?0xFF8DE6DE:0xFF8299BF);
+                canvas.drawCircle(x,y,dp(selected?6:4),paint);
+                if(selected){
+                    paint.setStyle(Paint.Style.FILL);
+                    canvas.drawCircle(x,y,dp(2),paint);
+                }
+            }
+        }
     }
     private int dp(int n){return Math.round(n*getResources().getDisplayMetrics().density);}
 }

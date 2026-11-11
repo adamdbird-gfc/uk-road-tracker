@@ -21,16 +21,27 @@ public final class MilepostAcceptanceActivity extends Activity {
     @Override public void onCreate(Bundle state){
         super.onCreate(state);
         LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);setContentView(root);
-        status=new TextView(this);status.setText("SYNTHETIC acceptance sandbox — production gate remains disabled");root.addView(status);
+        status=new TextView(this);status.setText("Roadprints Acceptance · Sample discoveries");root.addView(status);
         LinearLayout controls=new LinearLayout(this);controls.setOrientation(LinearLayout.VERTICAL);
-        ScrollView setupScroll=new ScrollView(this);setupScroll.addView(controls);root.addView(setupScroll,new LinearLayout.LayoutParams(-1,Math.round(160*getResources().getDisplayMetrics().density)));
+        ScrollView setupScroll=new ScrollView(this);setupScroll.addView(controls);root.addView(setupScroll,new LinearLayout.LayoutParams(-1,Math.round(250*getResources().getDisplayMetrics().density)));
+        button(controls,"Open live map and Locate Me",()->startActivity(new Intent(this,MapActivity.class)
+                .putExtra("collection_id",CollectionAccessStore.NCN)));
+        button(controls,"Undiscovered Milepost dialog",()->sampleDialog(false));
+        button(controls,"Discovered Milepost dialog",()->sampleDialog(true));
+        button(controls,"Load three sample chapters",()->seed(3));
+        button(controls,"Load seven sample chapters",()->seed(7));
         button(controls,"Seed one synthetic post",()->seed(1));
-        button(controls,"Seed seven synthetic posts",()->seed(7));
         button(controls,"Seed 1,605 synthetic journeys",()->runWork(true,7,1605));
         button(controls,"Resume reconciliation",()->runWork(false,0));
         button(controls,"Normal sandbox navigation / capture",()->startActivity(new Intent(this,MainActivity.class)));
         button(controls,"Request GC observation (not guaranteed)",()->{System.gc();if(probe!=null)probe.mark("gc_requested",0);});
         section=new LinearLayout(this);section.setOrientation(LinearLayout.VERTICAL);root.addView(section,new LinearLayout.LayoutParams(-1,0,1));
+    }
+    private void sampleDialog(boolean discovered){
+        MilepostPresentationReader.Discovery sample=discovered?new MilepostPresentationReader.Discovery(
+                "synthetic:dialog","2026-11-11",1,1,1<<1):null;
+        MilepostDetailsDialog.show(this,sample,"Millennium Milepost Holes Bay Roundabout",
+                "rowe",50.7315787,-1.990668);
     }
     void button(LinearLayout parent,String text,Runnable action){Button b=new Button(this);b.setText(text);b.setMinHeight(Math.round(48*getResources().getDisplayMetrics().density));b.setOnClickListener(v->action.run());parent.addView(b);}
     void seed(int posts){runWork(true,posts);}
@@ -38,19 +49,19 @@ public final class MilepostAcceptanceActivity extends Activity {
     void runWork(boolean seed,int posts,int archiveCount){
         int token=++generation;
         if(screen!=null)screen.pause();
-        status.setText("Processing isolated synthetic fixtures…");
+        status.setText(seed?"Loading sample journeys…":"Roadprints Acceptance · Sample discoveries");
         ScreenDataLoader.execute(()->{
             long start=SystemClock.elapsedRealtime();
             try{
                 if(fixture==null)fixture=new MilepostAcceptanceFixture(this);
                 if(seed){fixture.prepare(posts);fixture.populateArchive(archiveCount);}else fixture.restore();
-                if(fixture.gate==null){runOnUiThread(()->{if(resumed&&token==generation)status.setText("Seed fixtures to begin");});return;}
+                if(fixture.gate==null){runOnUiThread(()->{if(resumed&&token==generation)status.setText("Roadprints Acceptance · Open a sample dialog, load chapters or test the live map.");});return;}
                 // Same cooperative two-second deadline as the real job; repeat via explicit Resume.
                 boolean retry=fixture.process(stopped,SystemClock.elapsedRealtime()+2000);
                 long ms=SystemClock.elapsedRealtime()-start;
                 PerformanceDiagnostics.timing("synthetic_milepost_slice",ms,"retry="+retry+" archive_setup="+seed);
                 runOnUiThread(()->{if(!resumed||token!=generation)return;if(probe!=null)probe.mark("background_slice_ms",ms);
-                    status.setText(retry?"Checkpoint saved; Resume reconciliation":"Synthetic receipt ready");
+                    status.setText(retry?"Sample loading paused · tap Resume reconciliation":"Roadprints Acceptance · Sample discoveries ready");
                     screen=new MilepostScreenIntegration(this,fixture.gate);screen.mount(section);screen.resume();awaitView(token);});
             }catch(Exception e){runOnUiThread(()->{if(resumed&&token==generation)status.setText("Stopped / unavailable: "+e.getClass().getSimpleName());});}
         });

@@ -66,8 +66,9 @@ public class RoadprintsUiPreviewTest {
         try{
             String text=MilepostPresentationTest.contents(dialog.getWindow().getDecorView());
             assertTrue(text.indexOf("Nautical Fingerpost")>=0);
-            assertTrue(text.indexOf("Nautical Fingerpost")<text.indexOf(NAME));
-            assertEquals(NAME,((android.widget.TextView)dialog.getWindow().getDecorView()
+            assertTrue(text.indexOf("Nautical Fingerpost")<text.indexOf("Holes Bay Roundabout"));
+            assertFalse(text.contains(NAME));
+            assertEquals("Holes Bay Roundabout",((android.widget.TextView)dialog.getWindow().getDecorView()
                     .findViewWithTag("milepost_source_name")).getText().toString());
             assertTrue(text.contains("11 November 2026"));
             assertTrue(text.contains("Related achievement Andrew Rowe"));
@@ -76,6 +77,14 @@ public class RoadprintsUiPreviewTest {
             assertFalse(text.contains(String.valueOf(LAT)));
             saveDialog("02-milepost-discovered",dialog);
         }finally{dialog.dismiss();}
+    }
+
+    @Test public void locationLabelOnlyStripsAnUnambiguousGenericPrefix(){
+        assertEquals("Holes Bay Roundabout",MilepostDetailsDialog.locationLabel(NAME));
+        assertEquals("Whitlingham Park",MilepostDetailsDialog.locationLabel("Millennium Milepost: Whitlingham Park"));
+        for(String original:Arrays.asList("Holes Bay Roundabout","Millennium Milepost","Millennium Milepost 12",
+                "Millennium Milepost No. 12","Millennium Milepost near the station","Millennium Mileposters Lane"))
+            assertEquals(original,MilepostDetailsDialog.locationLabel(original));
     }
 
     @Test public void achievementCardsAndMysteryRenderWithSampleProgress()throws IOException{

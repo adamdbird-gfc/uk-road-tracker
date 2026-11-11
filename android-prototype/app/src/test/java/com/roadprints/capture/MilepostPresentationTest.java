@@ -119,6 +119,9 @@ public class MilepostPresentationTest {
         view.update(snapshot(7,4,"without-final-award"));
         view.skip();
         assertEquals(6,view.displayStage());
+        view.replay(false);
+        assertEquals("6 of 7 chapters unlocked. Viewing chapter 6",
+                view.findViewWithTag("milepost_chapter_indicators").getContentDescription());
         assertFalse(contents(view).contains("Charlie Harrow"));
         assertTrue(contents(view.findViewWithTag("milepost_card_5")).contains("6 of 7 chapters unlocked"));
     }
@@ -135,7 +138,11 @@ public class MilepostPresentationTest {
         for(int stage=1;stage<=3;stage++)view.next();
         View previous=view.findViewWithTag("milepost_previous"),next=view.findViewWithTag("milepost_next");
         assertFalse(next.isEnabled());
+        View indicators=view.findViewWithTag("milepost_chapter_indicators");
+        assertEquals("3 of 7 chapters unlocked. Viewing chapter 3",indicators.getContentDescription());
+        assertFalse(indicators.isClickable());
         assertTrue(previous.performClick());
+        assertEquals("3 of 7 chapters unlocked. Viewing chapter 2",indicators.getContentDescription());
         assertEquals(2,store.read().cursor);
         assertEquals(3,store.read().completedStage);
         assertTrue(previous.performClick());
