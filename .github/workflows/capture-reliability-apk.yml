@@ -94,7 +94,11 @@ jobs:
           # Use the same constrained test JVM as the Milepost evidence workflow.
           cat > "$RUNNER_TEMP/milepost-heap.init.gradle" <<'GRADLE'
           allprojects {
-              tasks.withType(Test).configureEach { maxHeapSize = '256m' }
+              tasks.withType(Test).configureEach {
+                  maxHeapSize = '256m'
+                  // Release Robolectric asset mappings between batches in the full suite.
+                  forkEvery = 40
+              }
           }
           GRADLE
           gradle_path="$(command -v gradle)"

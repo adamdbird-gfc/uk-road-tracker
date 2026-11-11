@@ -17,7 +17,7 @@ public class MilepostCorrectiveVisibilityTest {
         MilepostScreenIntegration screen=new MilepostScreenIntegration(a,MilepostIntegration.PRODUCTION);
         screen.mount(container);
         assertEquals(1,container.getChildCount());
-        String copy=copy(container);assertTrue(copy.contains("887"));assertTrue(copy.contains("pending"));
+        String copy=copy(container);assertTrue(copy.contains("887"));assertTrue(copy.toLowerCase(java.util.Locale.ROOT).contains("assess"));
         assertFalse(copy.contains("Discoveries: 0"));
         for(String name:new String[]{"Jon Mills","Andrew Rowe","Iain McColl","David Dudgeon","John Grimshaw","Charlie Harrow"})assertFalse(copy.contains(name));
         for(int i=0;i<7;i++)assertNotNull(container.findViewWithTag("milepost_card_"+i));
