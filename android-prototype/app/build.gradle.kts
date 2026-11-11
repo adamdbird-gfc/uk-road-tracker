@@ -15,7 +15,7 @@ android {
     buildTypes.create("acceptance") {
         initWith(buildTypes.getByName("debug"))
         applicationIdSuffix = ".milepostacceptance"
-        versionNameSuffix = "-acceptance"
+        versionNameSuffix = "-synthetic-acceptance"
         matchingFallbacks += listOf("debug")
     }
     testBuildType = "acceptance"
@@ -24,15 +24,8 @@ android {
         minSdk = 26
         targetSdk = 35
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        versionCode = 274
-        versionName = "0.25.228"
-    }
-}
-
-androidComponents.onVariants(androidComponents.selector().withBuildType("acceptance")) { variant ->
-    variant.outputs.forEach { output ->
-        output.versionCode.set(275)
-        output.versionName.set("0.25.229-acceptance")
+        versionCode = 276
+        versionName = "0.25.230"
     }
 }
 
