@@ -50,6 +50,30 @@ public class NcnNationalTest {
         assertTrue(archive.delete());NcnProgressStore.Snapshot deleted=(NcnProgressStore.Snapshot)assess.invoke(null,app);assertEquals(0,deleted.ledger.networkMetres("combined"),0);assertFalse(cache.exists());
         NcnProgressStore.mode(app,"cycling");RoadDetailSelection selection=new RoadDetailSelection(RoadDetailSelection.NCN,"RCN:90","","","");selection.ncnMode=NcnProgressStore.mode(app);assertEquals("cycling",RoadDetailSelection.from(selection.intent(app,false)).ncnMode);assertFalse(selection.intent(app,false).hasExtra("journey_ids"));app.getSharedPreferences("roadprints_ncn_national_v2",0).edit().putBoolean("enabled",false).commit();
     }
+    @Test public void newlySavedRunUpdatesActivatedNcnProgress()throws Exception{
+        Context app=app();
+        app.getSharedPreferences("ncn_reference_updates",0).edit().putInt("checked_build",BuildConfig.VERSION_CODE)
+                .putLong("next",Long.MAX_VALUE).commit();
+        NcnProgressStore.activate(app,true);
+        try {
+            awaitProgress(app,JourneyStore.dataRevision(app));
+            JSONObject run=golden().getJSONArray("cases").getJSONObject(0).getJSONObject("journey");
+            run.put("journey_id","new-run").put("mode","running");
+            JourneyStore.save(app,run);
+            NcnProgressStore.Snapshot updated=awaitProgress(app,JourneyStore.dataRevision(app));
+            assertTrue(updated.ledger.metres("NCN:344","on_foot")>0);
+            assertEquals(JourneyStore.ncnDataRevision(app),updated.evidenceRevision);
+        } finally {NcnProgressStore.activate(app,false);}
+    }
+    private static NcnProgressStore.Snapshot awaitProgress(Context app,long archive)throws Exception{
+        long deadline=System.nanoTime()+java.util.concurrent.TimeUnit.SECONDS.toNanos(20);
+        do {
+            NcnProgressStore.Snapshot snapshot=NcnProgressStore.current();
+            if(snapshot!=null&&snapshot.archiveRevision==archive)return snapshot;
+            Thread.sleep(20);
+        } while(System.nanoTime()<deadline);
+        throw new AssertionError("NCN archive revision "+archive+" not published: "+NcnProgressStore.status());
+    }
     @Test public void achievementsUseEligiblePhysicalUnionAndDurableCelebrations()throws Exception{
         Context app=app();app.getSharedPreferences("roadprints_ncn_national_v2",0).edit().putBoolean("enabled",true).commit();
         try{

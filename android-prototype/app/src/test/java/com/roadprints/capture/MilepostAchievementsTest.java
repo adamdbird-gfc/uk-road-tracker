@@ -135,7 +135,7 @@ public class MilepostAchievementsTest {
     @Test public void correctionDeletionFallbackReinstatementAndHistoricalBackfill()throws Exception {work(()->{
         posts(7);save("a");save("b");setNcn(ncn(100));derive(1000);long ordinal=award(0).getLong("ordinal");
         JourneyStore.delete(c,"a");setNcn(ncn(100));derive(2000);assertEquals(7,earned());assertEquals("b",award(0).getJSONArray("support").getJSONObject(0).getString("journey"));
-        JSONObject bad=journey("b").put("processing_status","failed");JourneyStore.save(c,bad);setNcn(ncn(0));derive(3000);
+        JSONObject bad=journey("b").put("recording_quality",new JSONObject().put("resolved",false));JourneyStore.save(c,bad);setNcn(ncn(0));derive(3000);
         assertEquals(0,earned());assertEquals(1000,award(0).getLong("first_recognised"));assertEquals(ordinal,award(0).getLong("ordinal"));
         save("b");setNcn(ncn(100));derive(4000);assertEquals(7,earned());assertEquals(1000,award(0).getLong("first_recognised"));
         JSONObject early=journey("early");long delta=86400000L;early.put("started_at","2026-11-04T00:00:00Z").put("ended_at","2026-11-04T00:02:00Z");
@@ -145,9 +145,9 @@ public class MilepostAchievementsTest {
         assertEquals("2026-11-05T00:00:00Z",award(0).getString("first_event"));assertEquals(ordinal,award(0).getLong("ordinal"));
         assertEquals("2026-11-04T00:00:00Z",award(5).getString("event_date"));
     });}
-    @Test public void incompleteAndStaleNcnRetainPreviousResult()throws Exception {work(()->{
+    @Test public void staleNcnRetainsRouteAwardWhileDiscoveriesUpdate()throws Exception {work(()->{
         posts(7);save("a");setNcn(ncn(100));derive(1000);String previous=MilepostAchievements.state(ledger,USER).toString();
-        save("b");derive(2000);assertFalse(state().getBoolean("current"));assertEquals(previous,MilepostAchievements.state(ledger,USER).toString());
+        save("b");derive(2000);assertTrue(state().getBoolean("current"));assertEquals(previous,MilepostAchievements.state(ledger,USER).toString());
         setNcn(null);derive(3000);assertEquals(previous,MilepostAchievements.state(ledger,USER).toString());
         setNcn(ncn(0));derive(4000);assertFalse(award(4).getBoolean("earned"));assertFalse(award(6).getBoolean("earned"));
         ledger.reassess(USER,"a");assertThrows(ConcurrentModificationException.class,()->MilepostAchievements.prepare(ledger,USER,null,()->false));
@@ -210,7 +210,7 @@ public class MilepostAchievementsTest {
     }
     @Test public void concurrentSaveDuringDerivationCannotPublishFalseAward()throws Exception {work(()->{
         posts(7);save("a");setNcn(ncn(100));derive(1000);String before=MilepostAchievements.state(ledger,USER).toString();
-        duringDerivation(()->JourneyStore.save(c,journey("a").put("processing_status","failed")));
+        duringDerivation(()->JourneyStore.save(c,journey("a").put("recording_quality",new JSONObject().put("resolved",false))));
         assertEquals(before,MilepostAchievements.state(ledger,USER).toString());assertFalse(state().getBoolean("current"));
         setNcn(ncn(0));derive(3000);assertEquals(0,earned());
     });}

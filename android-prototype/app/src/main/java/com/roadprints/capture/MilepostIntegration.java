@@ -15,13 +15,11 @@ final class MilepostIntegration {
     final String database,user;
     private final int revision;
     private final String sha,fingerprint,evaluator;
-    private boolean presenting,processing;
+    private boolean processing;
     private MilepostIntegration(boolean enabled,String database,String user,int revision,String sha,String fingerprint,String evaluator){
         this.enabled=enabled;this.database=database;this.user=user;this.revision=revision;this.sha=sha;this.fingerprint=fingerprint;this.evaluator=evaluator;
     }
-    synchronized boolean enterPresentation(){if(!enabled||processing||presenting)return false;presenting=true;return true;}
-    synchronized void leavePresentation(){presenting=false;}
-    synchronized boolean enterProcessing(){if(!enabled||presenting||processing)return false;processing=true;return true;}
+    synchronized boolean enterProcessing(){if(!enabled||processing)return false;processing=true;return true;}
     synchronized void leaveProcessing(){processing=false;}
     /** Worker only. The reviewed envelope includes physical eligibility, attribution and aliases.
      * Existing ledger install is the only writer; candidates cannot be promoted by this boundary. */
@@ -39,11 +37,17 @@ final class MilepostIntegration {
             MilepostReconciliationJob.CaptureGuard guard=new MilepostReconciliationJob.CaptureGuard(context,stopped,deadline)){
             MilepostArchiveReader.check(guard);
             if(this==PRODUCTION&&!verified(ledger))MilepostCatalogue.install(context,ledger);
-            if(!verified(ledger))return false;
+            if(!verified(ledger)){
+                if(this==PRODUCTION)throw new java.io.IOException(MilepostCatalogue.BLOCKER);
+                return false;
+            }
+            if(MilepostAchievementDeriver.state(context,ledger,user).getBoolean("current"))return false;
+            JourneyStore.prepareArchive(context);
             try(MilepostAchievementDeriver worker=new MilepostAchievementDeriver(context,ledger,user,()->verified(ledger))){
                 BooleanSupplier yield=()->guard.getAsBoolean()||!enabled;
                 while(worker.runSlice(yield,System.currentTimeMillis())){
-                    MilepostArchiveReader.check(yield);if(!verified(ledger))return false;
+                    MilepostArchiveReader.check(yield);
+                    if(!verified(ledger))throw new java.io.IOException(MilepostCatalogue.BLOCKER);
                 }
                 return !MilepostAchievementDeriver.state(context,ledger,user).getBoolean("current");
             }

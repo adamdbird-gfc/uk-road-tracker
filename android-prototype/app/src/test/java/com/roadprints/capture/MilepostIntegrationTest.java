@@ -58,6 +58,52 @@ public class MilepostIntegrationTest {
     @Test public void sixPhysicalPostsDoNotCompleteHarrowAndUnknownsDoNotRevealDesigners()throws Exception{
         prepare(6,0);process();MilepostPresentation.Snapshot s=read(0);assertEquals(6,s.count);assertFalse(s.awards.get(5).earned);assertFalse(s.awards.get(6).earned);
     }
+    @Test public void offlineRunDiscoversTwoRealPostsWithoutNcnOrDuplicateRecognition()throws Exception{
+        f.work(()->{
+            f.c.getSharedPreferences("roadprints_ncn_national_v2",0).edit().putBoolean("enabled",false).commit();
+            MilepostAchievementsTest.setNcn(null);
+            List<MilepostDiscoveryLedger.Marker> markers=MilepostCatalogue.load(f.c);
+            List<MilepostDiscoveryLedger.Marker> pair=new ArrayList<>();
+            for(MilepostDiscoveryLedger.Marker marker:markers)
+                if(marker.id.endsWith("-11250895145")||marker.id.endsWith("-6924174900"))pair.add(marker);
+            assertEquals(2,pair.size());
+            f.install(1,pair);
+            gate=isolated(MilepostAchievements.scalar(f.ledger.db(),"SELECT fingerprint FROM catalogue"));
+            JourneyStore.save(f.c,realRoute(pair,"lunchtime-run","running",0));
+            JourneyStore.save(f.c,realRoute(pair,"outside-100-metres","running",.002));
+            JourneyStore.save(f.c,realRoute(pair,"vehicle","driving",0));
+        });
+        process();
+        MilepostPresentation.Snapshot first=read(0);
+        assertNotNull(first);assertEquals(2,first.count);assertEquals(2,first.newPosts);
+        f.work(()->{
+            assertEquals(2,f.ledger.proofCount(gate.user));
+            assertEquals(MilepostDiscoveryLedger.State.DISCOVERED,f.ledger.state(gate.user,"lunchtime-run"));
+            assertEquals(MilepostDiscoveryLedger.State.ASSESSED_NO_DISCOVERY,f.ledger.state(gate.user,"outside-100-metres"));
+            assertEquals(MilepostDiscoveryLedger.State.PENDING_EVIDENCE,f.ledger.state(gate.user,"vehicle"));
+            f.ledger.close();f.ledger=new MilepostDiscoveryLedger(f.c,f.name);
+            JourneyStore.save(f.c,realRoute(MilepostCatalogue.load(f.c).stream()
+                    .filter(m->m.id.endsWith("-11250895145")||m.id.endsWith("-6924174900"))
+                    .collect(java.util.stream.Collectors.toList()),"repeat","running",0));
+        });
+        process();
+        assertEquals(2,read(first.postOrdinal).count);assertEquals(0,read(first.postOrdinal).newPosts);
+    }
+    private static org.json.JSONObject realRoute(List<MilepostDiscoveryLedger.Marker> pair,String id,String mode,double east)throws Exception{
+        MilepostDiscoveryLedger.Marker a=pair.get(0),b=pair.get(1);
+        org.json.JSONObject row=MilepostJourneyEvidenceTest.journey(mode).put("journey_id",id)
+                .put("capture_intent","automatic").put("processing_status","pending");
+        row.remove("processing_result");
+        long start=java.time.Instant.parse(row.getString("started_at")).toEpochMilli();
+        org.json.JSONArray samples=new org.json.JSONArray(),coordinates=new org.json.JSONArray();
+        for(int i=0;i<=96;i++){
+            double lon=a.lon+(b.lon-a.lon)*i/96+east,lat=a.lat+(b.lat-a.lat)*i/96;
+            coordinates.put(new org.json.JSONArray().put(lon).put(lat));
+            samples.put(new org.json.JSONArray().put(lon).put(lat).put(3).put(start+i*1000).put(2.4));
+        }
+        return row.put("capture_route_samples",samples).put("route_geometry",
+                new org.json.JSONObject().put("type","LineString").put("coordinates",coordinates));
+    }
     @Test public void missingUnverifiedAndIncompatibleCatalogueFailClosed()throws Exception{
         gate=isolated("0".repeat(64));assertNull(read(0));process();
         prepare(7,100);String pin[]=new String[1];f.work(()->pin[0]=MilepostAchievements.scalar(f.ledger.db(),"SELECT fingerprint FROM catalogue"));
@@ -78,12 +124,12 @@ public class MilepostIntegrationTest {
         f.work(()->{f.save("historical-a");MilepostAchievementsTest.setNcn(f.ncn(100));});process();
         MilepostPresentation.Snapshot restored=read(first.postOrdinal);assertEquals(7,restored.count);assertEquals(0,restored.newPosts);assertEquals(first.awards.get(0).ordinal,restored.awards.get(0).ordinal);
     }
-    @Test public void presentationAndProcessingAreMutuallyExclusiveAndCancellationReleasesLease()throws Exception{
-        prepare(7,100);assertTrue(gate.enterPresentation());assertFalse(gate.enterProcessing());
-        f.work(()->assertTrue(gate.process(f.c,new AtomicBoolean(),Long.MAX_VALUE)));gate.leavePresentation();
-        assertTrue(gate.enterProcessing());assertFalse(gate.enterPresentation());gate.leaveProcessing();
+    @Test public void processingRemainsSingleWriterAndCancellationReleasesLease()throws Exception{
+        prepare(7,100);assertTrue(gate.enterProcessing());
+        try{f.work(()->assertTrue(gate.process(f.c,new AtomicBoolean(),Long.MAX_VALUE)));}
+        finally{gate.leaveProcessing();}
         f.work(()->assertThrows(java.util.concurrent.CancellationException.class,()->gate.process(f.c,new AtomicBoolean(true),Long.MAX_VALUE)));
-        assertTrue(gate.enterPresentation());gate.leavePresentation();process();assertNotNull(read(0));
+        process();assertNotNull(read(0));
     }
     @Test public void withdrawnReferenceAtCommitRollsBackAllAchievementRows()throws Exception{
         prepare(7,100);f.work(()->{
@@ -105,7 +151,7 @@ public class MilepostIntegrationTest {
     @Test public void integratedScreenMountResumePauseAndHistoryUseExistingView()throws Exception{
         prepare(7,100);process();Activity a=Robolectric.buildActivity(Activity.class).setup().get();LinearLayout section=new LinearLayout(a);a.setContentView(section);
         MilepostScreenIntegration screen=new MilepostScreenIntegration(a,gate);screen.mount(section);screen.resume();drain();
-        assertEquals(1,section.getChildCount());assertTrue(section.getChildAt(0) instanceof MilepostPresentationView);assertFalse(gate.enterProcessing());
+        assertEquals(1,section.getChildCount());assertTrue(section.getChildAt(0) instanceof MilepostPresentationView);assertTrue(gate.enterProcessing());gate.leaveProcessing();
         // A normal periodic compact refresh must not discard an in-flight history page callback.
         section.getChildAt(0).findViewWithTag("milepost_view_discoveries").performClick();screen.refresh();drain();
         assertEquals(7,new MilepostPresentationStore(a,gate.user).read().acknowledgedPosts);

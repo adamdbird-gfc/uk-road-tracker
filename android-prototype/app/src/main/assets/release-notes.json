@@ -2,6 +2,38 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.228",
+      "version_code": 274,
+      "release_date": "2026-11-11",
+      "since": "0.25.227",
+      "changes": [
+        {
+          "title": "Millennium Milepost assessment",
+          "description": "Roadprints assesses saved journeys automatically. National Cycle Network achievements show assessment progress and report failures."
+        },
+        {
+          "title": "Mileposts in the National Cycle Network map layer",
+          "description": "Use the NCN controls to show the Milepost silhouettes. Orange shows undiscovered posts and purple with a check shows discovered posts."
+        }
+      ]
+    },
+    {
+      "version_name": "0.25.227",
+      "version_code": 273,
+      "release_date": "2026-11-11",
+      "since": "0.25.226",
+      "changes": [
+        {
+          "title": "Millennium Milepost discoveries after a journey",
+          "description": "Saved walking, running and cycling can earn Milepost discoveries from verified GPS evidence, including offline. Discoveries and commemorative cards appear in National Cycle Network achievements."
+        },
+        {
+          "title": "Check the active NCN catalogue",
+          "description": "NCN progress displays the verified catalogue revision and fingerprint. Roadprints checks for a newer catalogue after an app update."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.226",
       "version_code": 272,
       "release_date": "2026-11-11",

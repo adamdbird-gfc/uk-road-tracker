@@ -7,9 +7,7 @@ import java.util.ConcurrentModificationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 
-/** Explicit inactive worker only. No job/lifecycle/UI caller. A new instance begins a full
- * metadata-only archive pass; interrupted proof pages remain durable. Geometry is loaded
- * only by Stage 4 for changed sources. Never trusts a previous worker's partial scan. */
+/** Derives awards from the reconciled archive and a fresh NCN result when available. */
 final class MilepostAchievementDeriver implements AutoCloseable {
     final Context context;
     final MilepostDiscoveryLedger ledger;
@@ -31,10 +29,13 @@ final class MilepostAchievementDeriver implements AutoCloseable {
     }
     private void start() {
         archive=JourneyStore.dataRevision(context);reconciled=false;
-        ledger.scanCursor(user,"live","");ledger.scanCursor(user,"known","");
+        String pass=MilepostArchiveReader.REVISION+":"+archive;
+        if(!pass.equals(ledger.scanCursor(user,"pass"))) {
+            ledger.scanCursor(user,"live","");ledger.scanCursor(user,"known","");
+            ledger.scanCursor(user,"pass",pass);
+        }
     }
-    /** true: another bounded slice needed; false: committed or waiting for fresh NCN.
-     * Incomplete/stale inputs retain the previous complete seven-row result. */
+    /** True while another bounded archive slice is needed. */
     boolean runSlice(BooleanSupplier cancelled,long recognisedAt)throws Exception {
         if(recognisedAt<0)throw new IllegalArgumentException("Invalid recognition time");
         ledger.db();android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
@@ -49,12 +50,12 @@ final class MilepostAchievementDeriver implements AutoCloseable {
         }
         NcnProgressStore.Snapshot ncn;long ncnRevision;
         synchronized(NcnProgressStore.class) {
-            ncn=NcnProgressStore.current();ncnRevision=NcnProgressStore.revision(context);
-            if(!freshNcn(context,ncn,archive))return false;
+            ncn=freshNcn(context,archive);ncnRevision=NcnProgressStore.revision(context);
         }
         String ncnToken=token(ncn,ncnRevision);
         try {
-        MilepostAchievements.Prepared prepared=MilepostAchievements.prepare(ledger,user,NcnAchievements.firstCompletedRoute(ncn),yield);
+        JSONObject route=ncn==null?previousRouteAward(ledger.db(),user):NcnAchievements.firstCompletedRoute(ncn);
+        MilepostAchievements.Prepared prepared=MilepostAchievements.prepare(ledger,user,route,yield);
         MilepostArchiveReader.check(yield);
         SQLiteDatabase d=ledger.db();d.beginTransaction();boolean[] ended={false};
         try {
@@ -62,8 +63,8 @@ final class MilepostAchievementDeriver implements AutoCloseable {
             // is excluded for this short seven-row commit; no geometry under locks.
             synchronized(NcnProgressStore.class) {
                 synchronized(JourneyStore.class) {
-                    if(archive!=JourneyStore.dataRevision(context)||ncn!=NcnProgressStore.current()
-                            ||ncnRevision!=NcnProgressStore.revision(context)||!freshNcn(context,ncn,archive))
+                    if(archive!=JourneyStore.dataRevision(context)||ncn!=freshNcn(context,archive)
+                            ||ncnRevision!=NcnProgressStore.revision(context))
                         throw new ConcurrentModificationException("Archive/NCN changed before achievement commit");
                     // The integration's reviewed reference pin is checked under the same writer
                     // transaction as publication, rather than querying SQLite at every GPS poll.
@@ -78,12 +79,18 @@ final class MilepostAchievementDeriver implements AutoCloseable {
         return false;
         }catch(Exception failure){archive=-1;reconciled=false;throw failure;}
     }
-    private static boolean freshNcn(Context c,NcnProgressStore.Snapshot ncn,long archive) {
-        return NcnProgressStore.enabled(c)&&ncn!=null&&ncn.archiveRevision==archive
-                &&ncn.evidenceRevision==JourneyStore.ncnDataRevision(c);
+    private static JSONObject previousRouteAward(SQLiteDatabase d,String user)throws Exception {
+        String support=MilepostAchievements.scalar(d,"SELECT support FROM achievement_state WHERE user=? AND id=? AND earned=1",
+                user,MilepostAchievements.IDS[4]);
+        return support==null?null:new org.json.JSONArray(support).optJSONObject(0);
     }
-    private static String token(NcnProgressStore.Snapshot ncn,long revision) {
-        return ncn.catalogue.version+":"+ncn.archiveRevision+":"+ncn.evidenceRevision+":"+revision;
+    private static NcnProgressStore.Snapshot freshNcn(Context c,long archive) {
+        NcnProgressStore.Snapshot ncn=NcnProgressStore.current();
+        return NcnProgressStore.enabled(c)&&ncn!=null&&ncn.archiveRevision==archive
+                &&ncn.evidenceRevision==JourneyStore.ncnDataRevision(c)?ncn:null;
+    }
+    static String token(NcnProgressStore.Snapshot ncn,long revision) {
+        return MilepostArchiveReader.REVISION+":"+(ncn==null?"pending":ncn.catalogue.version+":"+ncn.archiveRevision+":"+ncn.evidenceRevision+":"+revision);
     }
     static JSONObject state(Context context,MilepostDiscoveryLedger ledger,String user)throws Exception {
         SQLiteDatabase d=ledger.db();d.beginTransaction();
@@ -91,10 +98,11 @@ final class MilepostAchievementDeriver implements AutoCloseable {
         JSONObject result=MilepostAchievements.state(ledger,user);
         synchronized(NcnProgressStore.class) {
             synchronized(JourneyStore.class) {
-                NcnProgressStore.Snapshot n=NcnProgressStore.current();long revision=JourneyStore.dataRevision(context);
-                boolean current=freshNcn(context,n,revision)
-                        &&MilepostAchievements.number(d,"SELECT COUNT(*) FROM achievement_snapshot WHERE user=? AND archive_revision=? AND ledger_generation=? AND ncn_token=?",user,
-                            Long.toString(revision),Long.toString(MilepostAchievements.generation(d)),n==null?"":token(n,NcnProgressStore.revision(context)))==1;
+                long revision=JourneyStore.dataRevision(context);
+                NcnProgressStore.Snapshot n=freshNcn(context,revision);
+                String pin=token(n,NcnProgressStore.revision(context));
+                boolean current=MilepostAchievements.number(d,"SELECT COUNT(*) FROM achievement_snapshot WHERE user=? AND archive_revision=? AND ledger_generation=? AND (ncn_token=? OR (?='pending' AND ncn_token LIKE ?))",user,
+                            Long.toString(revision),Long.toString(MilepostAchievements.generation(d)),pin,n==null?"pending":"ready",MilepostArchiveReader.REVISION+":%")==1;
                 return result.put("current",current).put("status",current?"complete":"updating");
             }
         }

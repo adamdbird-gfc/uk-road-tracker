@@ -30,12 +30,12 @@ public class MilepostJourneyEvidenceTest {
     @Test public void nativeWalkingRunningCyclingPassWithoutStop()throws Exception{
         for(String mode:new String[]{"walking","running","cycling"})assertEquals(mode,MilepostProximity.Outcome.QUALIFIED,assess(journey(mode)).outcome);
     }
-    @Test public void failedPendingRejectedAndPartialMatchesNeverQualify()throws Exception{
-        for(String status:new String[]{"failed","pending","processing","rejected"})assertEquals(MilepostProximity.Outcome.UNVALIDATED_MATCH,assess(journey("walking").put("processing_status",status)).outcome);
-        JSONObject j=journey("walking");j.getJSONObject("processing_result").put("capture_partial_match",true);
-        assertEquals(MilepostProximity.Outcome.UNVALIDATED_MATCH,assess(j).outcome);
-        j=journey("walking");j.getJSONObject("processing_result").put("matched_tracepoints",4);
-        assertEquals(MilepostProximity.Outcome.UNVALIDATED_MATCH,assess(j).outcome);
+    @Test public void offlineObservationsQualifyIndependentlyOfMatcherAvailability()throws Exception{
+        for(String mode:new String[]{"walking","running","cycling"}){
+            JSONObject j=journey(mode);j.remove("processing_result");
+            for(String status:new String[]{"failed","pending","processing","rejected"})
+                assertEquals(MilepostProximity.Outcome.QUALIFIED,assess(j.put("processing_status",status)).outcome);
+        }
     }
     @Test public void gapCannotCreateFalseCrossing()throws Exception{
         JSONObject j=journey("walking");JSONArray samples=j.getJSONArray("capture_route_samples");
@@ -66,10 +66,8 @@ public class MilepostJourneyEvidenceTest {
         j=journey("walking");j.getJSONObject("source").put("type","user_drawn");
         assertEquals(MilepostProximity.Outcome.UNTRUSTED_SOURCE,assess(j).outcome);
     }
-    @Test public void cyclingRequiresCyclingMatchAndLocalCyclingMotion()throws Exception{
-        JSONObject j=journey("cycling");j.getJSONObject("processing_result").put("matching_mode","driving");
-        assertEquals(MilepostProximity.Outcome.UNVALIDATED_MATCH,assess(j).outcome);
-        j=journey("cycling");for(int i=0;i<5;i++)j.getJSONArray("capture_route_samples").getJSONArray(i).put(4,25);
+    @Test public void cyclingRequiresLocalCyclingMotion()throws Exception{
+        JSONObject j=journey("cycling");for(int i=0;i<5;i++)j.getJSONArray("capture_route_samples").getJSONArray(i).put(4,25);
         assertNotEquals(MilepostProximity.Outcome.QUALIFIED,assess(j).outcome);
     }
     @Test public void cyclingWithoutActivityEvidenceAndObservedVehicleSpeedCannotQualify()throws Exception{
@@ -118,7 +116,7 @@ public class MilepostJourneyEvidenceTest {
         assertEquals(MilepostProximity.Outcome.UNRELIABLE_LOCATION,assess(journey("walking").put("recording_quality",new JSONObject().put("resolved",false))).outcome);
         JSONObject j=journey("walking");for(int i=0;i<5;i++)j.getJSONArray("capture_route_samples").getJSONArray(i).put(4,7);
         assertNotEquals(MilepostProximity.Outcome.QUALIFIED,assess(j).outcome);
-        assertEquals(MilepostProximity.Outcome.INSUFFICIENT_GEOMETRY,assess(journey("walking").put("walking_validation",new JSONObject().put("station_tail_points",3))).outcome);
+        assertEquals(MilepostProximity.Outcome.UNRELIABLE_LOCATION,assess(journey("walking").put("capture_validation",new JSONObject().put("resolved",false))).outcome);
     }
     @Test public void oversizedArchiveGeometryIsHeldBeforeCopying()throws Exception{
         JSONObject j=journey("walking");JSONArray samples=j.getJSONArray("capture_route_samples"),coords=j.getJSONObject("route_geometry").getJSONArray("coordinates");

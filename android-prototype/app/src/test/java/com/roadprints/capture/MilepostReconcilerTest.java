@@ -50,9 +50,9 @@ public class MilepostReconcilerTest {
         save(a);drain();assertEquals(1,found().get(0).ordinal);assertEquals(1000,found().get(0).firstRecognised);
     });}
     @Test public void validationStatusAndHistoricalPendingAreRetryable()throws Exception {work(()->{
-        catalogue();JSONObject a=row("a");a.put("processing_status","failed");save(a);drain();assertTrue(found().isEmpty());
+        catalogue();JSONObject a=row("a");a.put("recording_quality",new JSONObject().put("resolved",false));save(a);drain();assertTrue(found().isEmpty());
         assertEquals(MilepostDiscoveryLedger.State.PENDING_EVIDENCE,ledger.state("u","a"));
-        a.put("processing_status","complete");save(a);drain();assertEquals(1,found().size());
+        a.remove("recording_quality");save(a);drain();assertEquals(1,found().size());
         JSONObject old=row("old");old.getJSONObject("source").put("type","timeline_import");save(old);drain();
         assertEquals(MilepostDiscoveryLedger.State.PENDING_EVIDENCE,ledger.state("u","old"));assertEquals(1,found().size());
     });}
@@ -99,7 +99,7 @@ public class MilepostReconcilerTest {
                 return s.evidence;
             },()->false,1000,true,(id,transaction)->transaction.run());fail("Stale catalogue page accepted");
         }catch(ConcurrentModificationException expected){}assertTrue(found().isEmpty());drain();assertTrue(found().isEmpty());
-        save(row("a").put("processing_status","failed"));drain();assertTrue(found().isEmpty());
+        save(row("a").put("recording_quality",new JSONObject().put("resolved",false)));drain();assertTrue(found().isEmpty());
     });}
     @Test public void captureCancellationCommitsNoPageAndResumeHasNoDuplicates()throws Exception {work(()->{
         catalogue();save(row("a"));
@@ -143,7 +143,7 @@ public class MilepostReconcilerTest {
                     evaluating|=frame.getClassName().equals(MilepostProximity.class.getName())&&frame.getMethodName().equals("assess");
                 if(evaluating&&changed.compareAndSet(false,true)) {
                     assertFalse("Proximity must not hold archive monitor",Thread.holdsLock(JourneyStore.class));
-                    try{saveThread.submit(()->{try{save(row("a").put("processing_status","failed"));}catch(Exception e){throw new RuntimeException(e);}}).get(5,TimeUnit.SECONDS);}
+                    try{saveThread.submit(()->{try{save(row("a").put("recording_quality",new JSONObject().put("resolved",false)));}catch(Exception e){throw new RuntimeException(e);}}).get(5,TimeUnit.SECONDS);}
                     catch(Exception e){throw new RuntimeException(e);}
                 }
                 return false;

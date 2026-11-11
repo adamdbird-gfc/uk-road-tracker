@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.function.BooleanSupplier;
 
-/** Inactive derived evidence store. Explicit reconciliation job only; no app lifecycle, awards or JourneyStore caller.
+/** Derived Milepost evidence store.
  * All entrypoints must run on a worker. Source revisions belong to the caller's durable
  * change feed, not wall-clock time. This ledger never edits source journeys. */
 final class MilepostDiscoveryLedger implements AutoCloseable {
@@ -87,7 +87,9 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
         fencedTransaction(d,id,fence,()->{
             if(!stamp.equals(archiveStamp(user,id))) {
                 long version=number(d,"SELECT version FROM journey WHERE user=? AND id=?",user,id)+1;
-                sourceChanged(user,id,version,evidenceToken,deleted);
+                boolean unchanged=number(d,"SELECT COUNT(*) FROM journey WHERE user=? AND id=? AND token=? AND deleted=?",
+                        user,id,evidenceToken,deleted?"1":"0")!=0;
+                if(!unchanged)sourceChanged(user,id,version,evidenceToken,deleted);
                 d.insertWithOnConflict("archive_source",null,values("user",user,"id",id,"stamp",stamp),SQLiteDatabase.CONFLICT_REPLACE);
             }
         });
@@ -256,7 +258,8 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
         for(String field:new String[]{e.source(),e.validationRevision(),e.mode()})
             if(field!=null&&field.length()>512)throw new IllegalArgumentException("Oversized evidence metadata");
         MilepostArchiveReader.check(cancelled);
-        MilepostCandidateBounds bounds=spatial?MilepostCandidateBounds.of(bounded(e),cancelled):null;
+        MilepostProximity.Evidence projected=bounded(e);
+        MilepostCandidateBounds bounds=spatial?MilepostCandidateBounds.of(projected,cancelled):null;
         String selection=bounds==null?"1=1":bounds.sql();
         String markerTable=spatial?"marker INDEXED BY marker_bounds":"marker";
         List<Marker> page=new ArrayList<>();
@@ -272,7 +275,7 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
             if(cancelled.getAsBoolean() || Thread.currentThread().isInterrupted())throw new CancellationException();
             boolean validDate=dated&&event>=m.from&&end<=m.until;
             MilepostProximity.Marker target=new MilepostProximity.Marker(m.id,new MilepostProximity.Point(m.lon,m.lat),m.eligible&&validDate,Integer.toString(revision));
-            results.add(MilepostProximity.assess(target,bounded(e),MilepostProximity.Policy.V1,cancelled));
+            results.add(MilepostProximity.assess(target,projected,MilepostProximity.Policy.V1,cancelled));
         }
         final boolean sourceDated=dated;
         final long sourceEvent=event,sourceEnd=end;

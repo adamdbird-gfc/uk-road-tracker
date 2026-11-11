@@ -6,10 +6,11 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.function.BooleanSupplier;
 
-/** Inactive, explicit background slices over the existing archive and derived ledger.
+/** Bounded background slices over the existing archive and derived ledger.
  * No writes to source files, awards, NCN, export/import or backend. */
 final class MilepostReconciler {
     static final int SCAN_PAGE=32, WORK_PAGES=4;
+    private static final String END="/"; // Not a valid journey identity.
     final Context context;
     final MilepostDiscoveryLedger ledger;
     final String user;
@@ -60,18 +61,24 @@ final class MilepostReconciler {
      * At most 32 live records, 32 tombstone checks and 4 x 16 exact assessments per slice. */
     boolean runSlice(BooleanSupplier cancelled,long recognisedAt)throws Exception {
         MilepostArchiveReader.check(cancelled);
-        List<String> live=filesAfter(ledger.scanCursor(user,"live"),cancelled);
-        for(String id:live) {
-            try{sync(id,cancelled);}catch(java.io.FileNotFoundException|ConcurrentModificationException raced){return true;}
-            ledger.scanCursor(user,"live",id);
+        String liveCursor=ledger.scanCursor(user,"live");
+        if(!END.equals(liveCursor)) {
+            List<String> live=filesAfter(liveCursor,cancelled);
+            for(String id:live) {
+                try{sync(id,cancelled);}catch(java.io.FileNotFoundException|ConcurrentModificationException raced){return true;}
+                ledger.scanCursor(user,"live",id);
+            }
+            if(live.size()<SCAN_PAGE)ledger.scanCursor(user,"live",END);
         }
-        if(live.size()<SCAN_PAGE)ledger.scanCursor(user,"live","");
-        List<MilepostDiscoveryLedger.ArchiveSource> known=ledger.archivePage(user,ledger.scanCursor(user,"known"),SCAN_PAGE);
-        for(MilepostDiscoveryLedger.ArchiveSource source:known) {
-            try{sync(source.id,cancelled);}catch(java.io.FileNotFoundException|ConcurrentModificationException raced){return true;}
-            ledger.scanCursor(user,"known",source.id);
+        String knownCursor=ledger.scanCursor(user,"known");
+        if(!END.equals(knownCursor)) {
+            List<MilepostDiscoveryLedger.ArchiveSource> known=ledger.archivePage(user,knownCursor,SCAN_PAGE);
+            for(MilepostDiscoveryLedger.ArchiveSource source:known) {
+                try{sync(source.id,cancelled);}catch(java.io.FileNotFoundException|ConcurrentModificationException raced){return true;}
+                ledger.scanCursor(user,"known",source.id);
+            }
+            if(known.size()<SCAN_PAGE)ledger.scanCursor(user,"known",END);
         }
-        if(known.size()<SCAN_PAGE)ledger.scanCursor(user,"known","");
         for(int i=0;i<WORK_PAGES;i++) {
             MilepostArchiveReader.check(cancelled);
             final MilepostArchiveReader.Snapshot[] loaded={null};
@@ -81,7 +88,11 @@ final class MilepostReconciler {
                     loaded[0]=MilepostArchiveReader.read(context,id,cancelled);readSources++;
                     return loaded[0].evidence;
                 },cancelled,recognisedAt,true,(id,transaction)->commit(id,loaded[0].stamp,cancelled,transaction));
-                if(!more)return live.size()==SCAN_PAGE||known.size()==SCAN_PAGE;
+                if(!more) {
+                    if(!END.equals(ledger.scanCursor(user,"live"))||!END.equals(ledger.scanCursor(user,"known")))return true;
+                    ledger.scanCursor(user,"live","");ledger.scanCursor(user,"known","");
+                    return false;
+                }
                 processedPages++;
             }catch(java.io.FileNotFoundException|ConcurrentModificationException raced){return true;}
         }

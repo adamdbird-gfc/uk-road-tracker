@@ -94,7 +94,7 @@ public class AchievementsActivity extends Activity {
         super.onResume();
         celebrationHostResumed=true;
         mileposts.resume();
-        MilepostReconciliationJob.schedule(this);
+        MilepostReconciliationJob.assessWhileOpen(this);
         loadAchievements();
         evidenceRefreshHandler.removeCallbacks(evidenceRefresh);
         evidenceRefreshHandler.postDelayed(evidenceRefresh,2000);
@@ -123,7 +123,6 @@ public class AchievementsActivity extends Activity {
         celebrationHostResumed=false;
         synchronized(SNAPSHOT_CACHE_LOCK){waitingScreens.removeIf(r->r.get()==null||r.get()==this);}
         mileposts.pause();
-        MilepostReconciliationJob.schedule(this);
         evidenceRefreshHandler.removeCallbacks(evidenceRefresh);
         if(celebrationDialog!=null&&celebrationDialog.isShowing())celebrationDialog.dismiss();
         super.onPause();
@@ -464,10 +463,10 @@ public class AchievementsActivity extends Activity {
             View anchor=sectionHeading("National Cycle Network");content.addView(anchor);groupAnchors.put("National Cycle Network",anchor);
             for(AchievementStore.Progress item:visible)if(CollectionAccessStore.NCN.equals(item.definition.collectionId)&&!item.definition.id.startsWith("ncn-route:"))content.addView(achievementCard(item));
             addRoadCompletionSection(visible,"NCN route completion","ncn-route:");
-        if(MilepostIntegration.PRODUCTION.enabled){
-            LinearLayout milepostSection=new LinearLayout(this);milepostSection.setOrientation(LinearLayout.VERTICAL);
-            content.addView(milepostSection);mileposts.mount(milepostSection);mileposts.refresh();
-        }
+            if(MilepostIntegration.PRODUCTION.enabled){
+                LinearLayout milepostSection=new LinearLayout(this);milepostSection.setOrientation(LinearLayout.VERTICAL);
+                content.addView(milepostSection);mileposts.mount(milepostSection);mileposts.refresh();
+            }
 
             content.addView(text("Walking/running and cycling only. Unique verified-open coverage; 100% completes all supported open sections, including disconnected sections. Millennium Mileposts use the approved OpenStreetMap catalogue.",12,MUTED,false));
         }
@@ -535,23 +534,30 @@ public class AchievementsActivity extends Activity {
         return heading;
     }
 
-    private View achievementCard(AchievementStore.Progress progress) {
+    LinearLayout newAchievementCard(boolean unlocked) {
         LinearLayout card=new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setPadding(dp(15),dp(14),dp(15),dp(13));
-        card.setBackground(roundRect(progress.unlocked?0xFF3C3D3A:CARD,
-                progress.unlocked?0xFFC9A24A:0xFF46649E,dp(16)));
+        card.setBackground(roundRect(unlocked?0xFF3C3D3A:CARD,
+                unlocked?0xFFC9A24A:0xFF46649E,dp(16)));
         card.setElevation(dp(1));
         LinearLayout.LayoutParams cardParams=new LinearLayout.LayoutParams(-1,-2);
         cardParams.bottomMargin=dp(9);
         card.setLayoutParams(cardParams);
 
+        return card;
+    }
+    void styleAchievementBadge(View badge,boolean unlocked) {
+        badge.setPadding(dp(10),dp(10),dp(10),dp(10));
+        badge.setBackground(roundRect(unlocked?0xFF5B4C2F:0xFF344A7B,0x00446699,dp(28)));
+    }
+    private View achievementCard(AchievementStore.Progress progress) {
+        LinearLayout card=newAchievementCard(progress.unlocked);
         LinearLayout row=new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
         android.widget.ImageView badge=RoadprintsIcons.image(this, RoadprintsIcons.achievement(progress.definition.id), progress.unlocked?GOLD:MUTED, progress.definition.title + (progress.unlocked?", unlocked":", locked"));
-        badge.setPadding(dp(10),dp(10),dp(10),dp(10));
-        badge.setBackground(roundRect(progress.unlocked?0xFF5B4C2F:0xFF344A7B,0x00446699,dp(28)));
+        styleAchievementBadge(badge,progress.unlocked);
         row.addView(badge,new LinearLayout.LayoutParams(dp(48),dp(48)));
 
         LinearLayout copy=new LinearLayout(this);

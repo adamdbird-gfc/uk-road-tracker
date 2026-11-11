@@ -6,39 +6,93 @@ import android.os.Process;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/** Gated idle/charging work requested by the achievements host. No boot receiver or live entitlement writer.
- * OS retries a requested run. No foreground/permanent background service. */
+/** Local reconciliation after archive writes, with durable checkpoints and capture priority. */
 public final class MilepostReconciliationJob extends JobService {
     static final int JOB_ID=74104;
     static final String DATABASE="milepost-discoveries.db", USER="local";
+    private static final ExecutorService WORKER=Executors.newSingleThreadExecutor();
+    private static final long SLICE_MS=15_000;
+    private static final AtomicBoolean REQUESTED=new AtomicBoolean();
+    private static final AtomicBoolean FOREGROUND_QUEUED=new AtomicBoolean();
+    private static final android.os.Handler MAIN=new android.os.Handler(android.os.Looper.getMainLooper());
+    private static volatile String status="Assessment pending for saved journeys.";
+    private static volatile long resultRevision;
     private Run current;
+
+    static String status(Context context) {
+        return CaptureService.isActive(context)?"Assessment resumes after recording.":status;
+    }
+    static long resultRevision() {return resultRevision;}
+
+    /** Visible entrypoints can make progress even when the OS defers scheduled jobs. */
+    static void assessWhileOpen(Context context) {
+        Context app=context.getApplicationContext();
+        if(!MilepostIntegration.PRODUCTION.allowed(app)||CaptureService.isActive(app)
+                ||!FOREGROUND_QUEUED.compareAndSet(false,true))return;
+        WORKER.execute(()->{
+            try {
+                if(assess(app,new AtomicBoolean()))MAIN.post(()->schedule(app));
+            } finally {FOREGROUND_QUEUED.set(false);}
+        });
+    }
+
+    private static boolean assess(Context context,AtomicBoolean cancelled) {
+        Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
+        try {
+            status="Assessing saved journeys…";
+            boolean retry=MilepostIntegration.PRODUCTION.process(context,cancelled,
+                    android.os.SystemClock.elapsedRealtime()+SLICE_MS);
+            status=retry?"Continuing assessment of saved journeys…":"Reading saved assessment…";
+            if(!retry)resultRevision++;
+            return retry;
+        } catch(CancellationException|java.util.ConcurrentModificationException interrupted) {
+            status="Continuing assessment of saved journeys…";
+            return true;
+        } catch(Exception error) {
+            status="Milepost assessment failed. Roadprints will retry automatically.";
+            android.util.Log.w("Roadprints","Milepost reconciliation failed",error);
+            return true;
+        }
+    }
+
+    static void archiveChanged(Context context) {
+        Context app=context.getApplicationContext();
+        if(!MilepostIntegration.PRODUCTION.allowed(app)||!REQUESTED.compareAndSet(false,true))return;
+        MAIN.post(()->{
+            REQUESTED.set(false);
+            if(!CaptureService.isActive(app))schedule(app);
+        });
+    }
     private static final class Run {
         final AtomicBoolean cancelled=new AtomicBoolean(), stopped=new AtomicBoolean();
         Future<?> task;
     }
-    static int schedule(Context context) {
+    static synchronized int schedule(Context context) {
         if(!MilepostIntegration.PRODUCTION.allowed(context))return JobScheduler.RESULT_FAILURE;
         JobScheduler scheduler=context.getSystemService(JobScheduler.class);
-        if(scheduler.getPendingJob(JOB_ID)!=null)return JobScheduler.RESULT_SUCCESS;
-        return scheduler.schedule(new JobInfo.Builder(JOB_ID,new ComponentName(context,MilepostReconciliationJob.class))
-                .setRequiresCharging(true).setRequiresDeviceIdle(true)
+        JobInfo pending=scheduler.getPendingJob(JOB_ID);
+        if(pending!=null&&!pending.isRequireCharging()&&!pending.isRequireDeviceIdle())return JobScheduler.RESULT_SUCCESS;
+        int result=scheduler.schedule(new JobInfo.Builder(JOB_ID,new ComponentName(context,MilepostReconciliationJob.class))
+                .setMinimumLatency(1)
+                .setBackoffCriteria(10_000,JobInfo.BACKOFF_POLICY_LINEAR)
                 .build());
+        if(result!=JobScheduler.RESULT_SUCCESS)status="Milepost assessment could not be scheduled.";
+        return result;
     }
     @Override public boolean onStartJob(JobParameters parameters) {
         if(!MilepostIntegration.PRODUCTION.allowed(this))return false;
-        if(current!=null&&current.task!=null&&!current.task.isDone())return false;
+        if(current!=null)return false;
         Run run=new Run();current=run;
-        run.task=ScreenDataLoader.submit(()->{
-            Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-            boolean retry=true;
-            try {
-                retry=MilepostIntegration.PRODUCTION.process(this,run.cancelled,android.os.SystemClock.elapsedRealtime()+2000);
-            }catch(java.util.concurrent.CancellationException|java.util.ConcurrentModificationException interrupted){
-                // Retain checkpoints and request an OS retry under idle/charging constraints.
-            }catch(Exception error){android.util.Log.w("Roadprints","Inactive milepost reconciliation needs retry",error);}
-            finally {
-                if(!run.stopped.get())jobFinished(parameters,retry);
-            }
+        run.task=WORKER.submit(()->{
+            long archive=JourneyStore.dataRevision(this);
+            long ncn=NcnProgressStore.revision(this);
+            boolean needsRetry=assess(this,run.cancelled);
+            MAIN.post(()->{
+                if(run.stopped.get())return;
+                current=null;
+                jobFinished(parameters,!CaptureService.isActive(this)&&(needsRetry
+                        ||archive!=JourneyStore.dataRevision(this)||ncn!=NcnProgressStore.revision(this)));
+            });
         });
         return true;
     }
@@ -59,7 +113,7 @@ public final class MilepostReconciliationJob extends JobService {
         public void close(){state.unregisterOnSharedPreferenceChangeListener(listener);}
     }
     @Override public boolean onStopJob(JobParameters parameters) {
-        Run run=current;
+        Run run=current;current=null;
         if(run!=null) {
             run.stopped.set(true);run.cancelled.set(true);
             if(run.task!=null)run.task.cancel(true);

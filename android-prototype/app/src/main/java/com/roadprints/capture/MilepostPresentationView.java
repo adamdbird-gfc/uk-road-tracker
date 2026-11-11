@@ -21,6 +21,7 @@ final class MilepostPresentationView extends ScrollView {
     private MilepostPresentation.Snapshot snapshot;
     private final LinearLayout body,cards;
     private LinearLayout cardProgress;
+    private TextView assessmentStatus;
     private TextView revealProgress,revealCipher,revealIdentity,revealBiography,revealThemes;
     private MilepostArtworkView revealArt;
     private android.animation.ValueAnimator animation;
@@ -50,12 +51,17 @@ final class MilepostPresentationView extends ScrollView {
         public void onActivitySaveInstanceState(Activity a,Bundle b){if(a==host)pauseReplay();}
     };
     MilepostPresentationView(Activity host,MilepostPresentationStore store,MilepostPresentation.Snapshot snapshot,MilepostPresentationReader.PageLoader discoveryPages){
-        super(host);this.discoveryPages=discoveryPages;this.host=host;this.store=store;this.snapshot=snapshot;state=store.read();
+        this(host,store,snapshot,discoveryPages,false);
+    }
+    MilepostPresentationView(Activity host,MilepostPresentationStore store,MilepostPresentation.Snapshot snapshot,
+                            MilepostPresentationReader.PageLoader discoveryPages,boolean resumed){
+        super(host);this.discoveryPages=discoveryPages;this.host=host;this.store=store;this.snapshot=snapshot;
+        this.resumed=resumed;state=store.read();
         // A process/rotation restart restores the completed static cursor, never an in-flight frame.
         state.paused=true;state.artworkVersion=MilepostPresentation.ARTWORK_VERSION;store.save(state);
         capture=host.getSharedPreferences("roadprints_capture_state",0);
         setFillViewport(true);setBackgroundColor(NAVY);
-        body=new LinearLayout(host);body.setOrientation(LinearLayout.VERTICAL);body.setPadding(dp(18),dp(12),dp(18),dp(18));
+        body=new LinearLayout(host);body.setOrientation(LinearLayout.VERTICAL);body.setPadding(0,dp(8),0,dp(12));
         cards=new LinearLayout(host);cards.setOrientation(LinearLayout.VERTICAL);buildCards();
         addView(body,new ScrollView.LayoutParams(-1,-2));render();
     }
@@ -63,8 +69,8 @@ final class MilepostPresentationView extends ScrollView {
     @Override protected void onDetachedFromWindow(){onHostPause();unregister();super.onDetachedFromWindow();}
     private void register(){if(!registered){registered=true;capture.registerOnSharedPreferenceChangeListener(captureListener);host.getApplication().registerActivityLifecycleCallbacks(lifecycle);}}
     private void unregister(){if(registered){registered=false;capture.unregisterOnSharedPreferenceChangeListener(captureListener);host.getApplication().unregisterActivityLifecycleCallbacks(lifecycle);}}
-    void onHostResume(){resumed=true;if(recording())pauseReplay();render();}
-    void onHostPause(){resumed=false;request++;loadingDiscoveries=false;pauseReplay();}
+    void onHostResume(){if(resumed)return;resumed=true;if(recording())pauseReplay();render();}
+    void onHostPause(){if(!resumed)return;resumed=false;request++;loadingDiscoveries=false;pauseReplay();}
     private boolean recording(){return capture.getBoolean("active",false);}
     java.util.function.BooleanSupplier freshness=()->true;
     private boolean current(){return snapshot.current&&freshness.getAsBoolean();}
@@ -125,7 +131,7 @@ final class MilepostPresentationView extends ScrollView {
     void later(){cancelAnimation();state.paused=true;state.dismissed=true;state.dismissedReceipt=snapshot.receipt;store.save(state);render();}
     void skip(){
         if(!canReveal())return;
-        cancelAnimation();cancelAnimation();state.cursor=snapshot.target();state.completedStage=Math.max(state.completedStage,state.cursor);
+        cancelAnimation();state.cursor=snapshot.target();state.completedStage=Math.max(state.completedStage,state.cursor);
         state.replaying=false;state.paused=true;state.dismissed=true;state.dismissedReceipt=snapshot.receipt;
         store.acknowledge(state,snapshot);render();
     }
@@ -133,13 +139,18 @@ final class MilepostPresentationView extends ScrollView {
     private void render(){
         cancelAnimation();
         body.removeAllViews();
+        revealArt=null;revealNext=null;revealProgress=null;revealCipher=null;
+        revealIdentity=null;revealBiography=null;revealThemes=null;
         heading(body,"Millennium Mileposts");
         TextView attribution=text(body,"© OpenStreetMap contributors · ODbL 1.0\nhttps://www.openstreetmap.org/copyright",12);
         android.text.util.Linkify.addLinks(attribution,android.text.util.Linkify.WEB_URLS);
         attribution.setLinkTextColor(GOLD);
-        text(body,"Explore 887 approved physical mileposts on foot or by bicycle. Pass within 100 metres with verified journey evidence to discover a post.",16);
-        text(body,snapshot.current?"Discoveries: "+snapshot.count+" of 887":
-            "Historical assessment pending. Discoveries have not yet been verified. Assessment continues in small background steps when the device is charging and idle.",16);
+        text(body,"Pass within 100 metres on a recorded walk, run or cycle to discover one of "
+            +MilepostCatalogue.APPROVED_COUNT+" approved posts.",14);
+        assessmentStatus=text(body,"",14);
+        updateAssessmentStatus();
+        if(current()&&snapshot.incomplete>0)
+            text(body,snapshot.incomplete+" saved journeys had incomplete evidence or catalogue checks.",14);
         if(recording()){
             text(body,"Reveal paused while recording. Your journey has priority.",16);
             // No summary actions or reveal art while capture is active.
@@ -149,10 +160,6 @@ final class MilepostPresentationView extends ScrollView {
         if(!recording()&&current()&&(snapshot.count>0||snapshot.incomplete>0))
             button(body,"View discoveries","milepost_browse_discoveries",()->loadDiscoveries(0),true);
         if(snapshot.introduced()){
-            MilepostArtworkView collective=MilepostArtworkView.icon(host,R.drawable.milepost_collective);
-            body.addView(collective,new LinearLayout.LayoutParams(dp(48),dp(48)));
-            heading(body,"In Honour of Time");
-            text(body,snapshot.individuals()+" of 6 personalities"+(snapshot.awards.get(6).earned?". Collective achievement earned.":"."),16);
             if(!recording()){
                 button(body,"Replay reveal","milepost_replay",()->replay(true),canReveal());
                 if(state.replaying||state.cursor>0)button(body,"Resume reveal","milepost_resume",()->replay(false),canReveal());
@@ -161,9 +168,18 @@ final class MilepostPresentationView extends ScrollView {
         if(state.replaying&&!state.dismissed&&!recording()&&snapshot.introduced())reveal();
         if(viewingDiscoveries&&!recording())discoveryDetails();
     }
+    void updateAssessmentStatus(){
+        if(assessmentStatus==null)return;
+        String message=current()?snapshot.count+" of "+MilepostCatalogue.APPROVED_COUNT+" discovered"
+                :MilepostReconciliationJob.status(host);
+        if(!android.text.TextUtils.equals(assessmentStatus.getText(),message))assessmentStatus.setText(message);
+    }
+    void showAssessmentReadFailure(){
+        if(assessmentStatus!=null)assessmentStatus.setText("Could not read the saved Milepost assessment.");
+    }
     private void summary(){
         LinearLayout panel=panel(body);heading(panel,"Discovery summary");
-        text(panel,snapshot.newPosts+" newly discovered unique physical posts.",16);
+        text(panel,snapshot.newPosts==1?"1 new Milepost discovered":snapshot.newPosts+" new Mileposts discovered",16);
         List<String> earned=snapshot.newAwards(state.acknowledgedAwards);
         if(!earned.isEmpty())text(panel,"Achievements earned: "+android.text.TextUtils.join(", ",earned),16);
         text(panel,snapshot.dates(),16);
@@ -212,20 +228,31 @@ final class MilepostPresentationView extends ScrollView {
     }
     private void buildCards(){
         cards.removeAllViews();cardProgress=null;
-        for(int i=0;i<6;i++)card(cards,i);
+        for(int i=0;i<7;i++)card(cards,i);
         if(!snapshot.introduced()){
-            card(cards,6);
             LinearLayout locked=panel(cards);heading(locked,"Mystery reveal");
             art(locked,0);text(locked,"Locked seven-stage cipher. Discover mileposts to reveal the mystery.",16);
         }
     }
     private void card(LinearLayout parent,int index){
-        MilepostPresentation.Card c=snapshot.card(index);LinearLayout panel=panel(parent);
-        // Native text and a neutral generic icon. No identity appears in tags, descriptions or navigation for locked cards.
+        MilepostPresentation.Card c=snapshot.card(index);
+        AchievementsActivity achievements=host instanceof AchievementsActivity?(AchievementsActivity)host:null;
+        LinearLayout panel=achievements==null?panel(parent):achievements.newAchievementCard(c.earned);
+        if(achievements!=null)parent.addView(panel);
+        LinearLayout row=new LinearLayout(host);
+        row.setGravity(android.view.Gravity.CENTER_VERTICAL);panel.addView(row);
         MilepostArtworkView icon=MilepostArtworkView.icon(host,c.earned?(index==6?R.drawable.milepost_collective:MilepostArtworkView.MEDALLIONS[index]):R.drawable.milepost_mystery);
-        icon.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);panel.addView(icon,new LinearLayout.LayoutParams(dp(48),dp(48)));
-        text(panel,c.title,20);text(panel,c.status,16);
-        if(!c.biography.isEmpty())text(panel,c.biography,16);
+        if(achievements!=null)achievements.styleAchievementBadge(icon,c.earned);
+        icon.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        row.addView(icon,new LinearLayout.LayoutParams(dp(48),dp(48)));
+        LinearLayout copy=new LinearLayout(host);copy.setOrientation(LinearLayout.VERTICAL);copy.setPadding(dp(12),0,0,0);
+        row.addView(copy,new LinearLayout.LayoutParams(0,-2,1));
+        TextView status=text(copy,c.earned?"UNLOCKED":"LOCKED",10);
+        status.setTypeface(Typeface.DEFAULT,Typeface.BOLD);status.setTextColor(c.earned?GOLD:0xFF67D5CC);
+        TextView title=text(copy,c.title,16);title.setTypeface(Typeface.DEFAULT,Typeface.BOLD);title.setTextColor(Color.WHITE);
+        text(copy,c.status,13);
+        if(index==6&&snapshot.introduced())text(copy,snapshot.individuals()+" of 6 personalities",13);
+        if(!c.biography.isEmpty())text(copy,c.biography,13);
         if(index==5&&c.stage>0){
             cardProgress=column(panel);art(cardProgress,c.stage);text(cardProgress,MilepostPresentation.announcement(c.stage),16);cipher(cardProgress,c.stage);
         }

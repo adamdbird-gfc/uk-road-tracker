@@ -74,8 +74,12 @@ final class NcnProgressStore {
                 synchronized(NcnProgressStore.class) {
                 if(enabled(app)&&app.getSharedPreferences(PREFS,0).getLong("epoch",0)==epoch&&result.archiveRevision==JourneyStore.dataRevision(app)) {
                     boolean awardsChanged=NcnAchievements.publish(app,awards);
-                    snapshot=result;status="Ready · verified-open NCN sections";
+                    snapshot=result;status=result.catalogue.referenceRevision>0
+                            ?"Ready · NCN catalogue revision "+result.catalogue.referenceRevision
+                                    +" · "+result.catalogue.version.substring(0,12)
+                            :"Ready · verified-open NCN sections";
                     if(!restored||awardsChanged||metadataOnly)app.getSharedPreferences(PREFS,0).edit().putLong("revision",revision(app)+1).apply();
+                    MilepostReconciliationJob.schedule(app);
                 }else retry=enabled(app);
                 }
             }catch(Exception failure){synchronized(NcnProgressStore.class){if(app.getSharedPreferences(PREFS,0).getLong("epoch",0)!=epoch||failure instanceof java.util.concurrent.CancellationException)retry=enabled(app);else{failedRevision=JourneyStore.dataRevision(app);android.util.Log.w("RoadprintsTiming","NCN assessment failed: "+failure.getClass().getSimpleName());status="NCN catalogue or assessment could not finish. Tap Retry to resume.";}}}

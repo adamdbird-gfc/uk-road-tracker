@@ -62,6 +62,8 @@ public class MapActivity extends Activity {
     private List<RoadCoverageSegment> incompleteRoadSegments = new ArrayList<>();
     private RoutePreviewView mapView;
     private boolean milepostsRequested;
+    private long displayedMilepostRevision=Long.MIN_VALUE;
+    private RoutePreviewView milepostTarget;
     private JourneyFilters mapFilters = JourneyFilters.all();
     private TextView mapFilterSummary;
     private View mapFilterControls, zoomControls;
@@ -100,6 +102,7 @@ public class MapActivity extends Activity {
             if (!replayPreparing && replayMessage == null && displayedMapRevision != mapDataRevision()) refreshMap();
             refreshRecap();
             if(CollectionAccessStore.NCN.equals(CollectionAccessStore.selected(MapActivity.this))&&(ncnSnapshot!=NcnProgressStore.current()||!java.util.Objects.equals(ncnMode,NcnProgressStore.mode(MapActivity.this)))){ncnSnapshot=NcnProgressStore.current();ncnMode=NcnProgressStore.mode(MapActivity.this);NcnMapOverlay.apply(MapActivity.this,mapView);}
+            loadMileposts();
             updateMapStatus();
             mainHandler.postDelayed(this, 3000);
         }
@@ -298,14 +301,7 @@ public class MapActivity extends Activity {
         String selected=CollectionAccessStore.selected(this);
         boolean townMap=getIntent().hasExtra("settlement_code");
         if(townMap)return;
-        if(!milepostsRequested&&MilepostCatalogue.READY){
-            milepostsRequested=true;final RoutePreviewView target=mapView;
-            ScreenDataLoader.execute(()->{
-                try{java.util.List<MilepostDiscoveryLedger.Marker> locations=MilepostCatalogue.load(getApplicationContext());
-                    mainHandler.post(()->{if(!isDestroyed()&&!isFinishing()&&mapView==target)target.setMileposts(locations);});
-                }catch(Exception unavailable){android.util.Log.w("Roadprints","Milepost map catalogue unavailable",unavailable);}
-            });
-        }
+        loadMileposts();
         double[] camera=mapView.cameraState();
         JSONArray pins=CollectionAccessStore.known(selected)?VenueCollection.catalogue(this,selected):new JSONArray();
         Set<String> visited=CollectionAccessStore.known(selected)?VenueCollection.completed(this,selected):java.util.Collections.emptySet();
@@ -318,6 +314,29 @@ public class MapActivity extends Activity {
             else if(CollectionAccessStore.known(CollectionAccessStore.selected(this)))showPubCard(venue);
         });
         if(camera!=null)mapView.restoreCameraState(camera[0],camera[1],camera[2]);
+    }
+
+    private void loadMileposts(){
+        if(mapView==null||milepostsRequested||getIntent().hasExtra("settlement_code")||!MapLayerPreferences.milepostsVisible(this))return;
+        long revision=MilepostReconciliationJob.resultRevision();
+        RoutePreviewView target=mapView;
+        if(milepostTarget==target&&displayedMilepostRevision==revision)return;
+        milepostsRequested=true;
+        ScreenDataLoader.execute(()->{
+            try{
+                MilepostCatalogue.MapLocations locations=MilepostCatalogue.mapLocations(getApplicationContext());
+                java.util.Map<String,MilepostPresentationReader.Discovery> discoveries=MilepostPresentationReader.mapDiscoveries(getApplicationContext());
+                mainHandler.post(()->{
+                    milepostsRequested=false;
+                    if(isDestroyed()||isFinishing()||mapView!=target)return;
+                    milepostTarget=target;displayedMilepostRevision=revision;
+                    target.setMileposts(locations,discoveries);
+                });
+            }catch(Exception unavailable){
+                mainHandler.post(()->milepostsRequested=false);
+                android.util.Log.w("Roadprints","Milepost map data unavailable",unavailable);
+            }
+        });
     }
 
     private void showMapLoading(boolean updating) {
