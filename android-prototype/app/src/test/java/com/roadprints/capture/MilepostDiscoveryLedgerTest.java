@@ -67,7 +67,7 @@ public class MilepostDiscoveryLedgerTest {
         MilepostProximity.Evidence a=evidence("a"),b=evidence("b");register(a,1);drain(a);register(b,1);drain(b);
         ledger.sourceChanged("u","a",2,"deletion",true);assertEquals("b",discoveries().get(0).journey);
         ledger.sourceChanged("u","b",2,"correction",false);assertTrue(discoveries().isEmpty());assertTrue(ledger.previouslyRecognised("u","p"));assertNotNull(ledger.withdrawalReason("u","p"));
-        MilepostProximity.Evidence bad=MilepostJourneyEvidence.nativeArchive(MilepostJourneyEvidenceTest.journey("walking").put("journey_id","b").put("processing_status","failed"));
+        MilepostProximity.Evidence bad=MilepostJourneyEvidence.nativeArchive(MilepostJourneyEvidenceTest.journey("walking").put("journey_id","b").put("recording_quality",new JSONObject().put("resolved",false)));
         ledger.sourceChanged("u","b",3,bad.token(),false);drain(bad);
         assertEquals(MilepostDiscoveryLedger.State.PENDING_EVIDENCE,ledger.state("u","b"));assertTrue(discoveries().isEmpty());
         ledger.sourceChanged("u","a",3,a.token(),false);drain(a);assertEquals(1,discoveries().get(0).ordinal);
