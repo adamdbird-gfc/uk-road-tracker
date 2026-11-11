@@ -1,0 +1,57 @@
+name: Publish the existing Roadprints build 278
+on:
+  push:
+    branches: [delivery/roadprints-278-release]
+    paths: [.github/workflows/deliver-roadprints-278.yml]
+permissions:
+  actions: read
+  contents: write
+concurrency: roadprints-278-github-release
+jobs:
+  deliver:
+    if: github.repository == 'adamdbird-gfc/uk-road-tracker'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: adamdbird-gfc/uk-road-tracker
+      APK: Roadprints-0.25.232-278.apk
+      APK_BYTES: '36863121'
+      APK_SHA256: 760a3ae17d18d77b6f4202e4264d7e70350db2aea4c9084ee83a8d5cb5d37d71
+      CERT_SHA256: 5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031
+      SOURCE: 4f132efe465b9ef07456c4a7e37c14137dd96e28
+      TAG: roadprints-0.25.232-278
+    steps:
+      - name: Retrieve and verify the original signed APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh run download 43106595702 --name roadprints-journey-origin-0.25.232-278 --dir original
+          test "$(cat original/source.txt)" = "$SOURCE"
+          test "$(stat -c %s "original/$APK")" = "$APK_BYTES"
+          printf '%s  %s\n' "$APK_SHA256" "original/$APK" | sha256sum --check
+          signer=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -n 1)
+          "$signer" verify --print-certs "original/$APK" > certificate.txt
+          grep -Fx "Signer #1 certificate SHA-256 digest: $CERT_SHA256" certificate.txt
+          "${signer%/*}/aapt" dump badging "original/$APK" > package.txt
+          grep -E "^package: name='com.roadprints.capture' versionCode='278' versionName='0.25.232'" package.txt
+      - name: Publish the APK and verify the public download
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! gh release view "$TAG" --json tagName > /dev/null 2>&1; then
+            gh release create "$TAG" "original/$APK" --target "$SOURCE" --prerelease --latest=false \
+              --title "Roadprints 0.25.232 (278) — Journey Origin Recovery" \
+              --notes "Signed Pixel 10 owner-test build from Actions run 43106595702. Install over build 277. Device acceptance is pending."
+          fi
+          test "$(gh api "repos/$GH_REPO/git/ref/tags/$TAG" --jq .object.sha)" = "$SOURCE"
+          gh api "repos/$GH_REPO/releases/tags/$TAG" > release.json
+          asset_url=$(jq -er --arg apk "$APK" --argjson size "$APK_BYTES" \
+            'select(.draft == false and .prerelease == true) | .assets[] | select(.name == $apk and .size == $size and .state == "uploaded") | .browser_download_url' release.json)
+          test "$asset_url" = "https://github.com/$GH_REPO/releases/download/$TAG/$APK"
+          curl --fail --silent --show-error --location --retry 3 --retry-all-errors \
+            --max-time 120 --output downloaded.apk "$asset_url"
+          test "$(stat -c %s downloaded.apk)" = "$APK_BYTES"
+          printf '%s  downloaded.apk\n' "$APK_SHA256" | sha256sum --check
+          cmp "original/$APK" downloaded.apk
+          printf 'Verified unauthenticated APK download: %s\n' "$asset_url"
