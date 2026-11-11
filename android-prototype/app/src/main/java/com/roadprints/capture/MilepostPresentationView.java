@@ -50,7 +50,12 @@ final class MilepostPresentationView extends ScrollView {
         public void onActivitySaveInstanceState(Activity a,Bundle b){if(a==host)pauseReplay();}
     };
     MilepostPresentationView(Activity host,MilepostPresentationStore store,MilepostPresentation.Snapshot snapshot,MilepostPresentationReader.PageLoader discoveryPages){
-        super(host);this.discoveryPages=discoveryPages;this.host=host;this.store=store;this.snapshot=snapshot;state=store.read();
+        this(host,store,snapshot,discoveryPages,false);
+    }
+    MilepostPresentationView(Activity host,MilepostPresentationStore store,MilepostPresentation.Snapshot snapshot,
+                            MilepostPresentationReader.PageLoader discoveryPages,boolean resumed){
+        super(host);this.discoveryPages=discoveryPages;this.host=host;this.store=store;this.snapshot=snapshot;
+        this.resumed=resumed;state=store.read();
         // A process/rotation restart restores the completed static cursor, never an in-flight frame.
         state.paused=true;state.artworkVersion=MilepostPresentation.ARTWORK_VERSION;store.save(state);
         capture=host.getSharedPreferences("roadprints_capture_state",0);

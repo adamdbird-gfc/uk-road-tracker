@@ -91,11 +91,17 @@ jobs:
           gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false --init-script "$RUNNER_TEMP/robolectric-fixtures.init.gradle" :app:prepareRobolectricOffline
       - name: Run Android regression suite without external network access
         run: |
+          # Use the same constrained test JVM as the Milepost evidence workflow.
+          cat > "$RUNNER_TEMP/milepost-heap.init.gradle" <<'GRADLE'
+          allprojects {
+              tasks.withType(Test).configureEach { maxHeapSize = '256m' }
+          }
+          GRADLE
           gradle_path="$(command -v gradle)"
           sudo --preserve-env=JAVA_HOME,ANDROID_HOME,ANDROID_SDK_ROOT,GRADLE_USER_HOME,RUNNER_TEMP,NCN_TEST_DATABASE,MILEPOST_CANDIDATE_CATALOGUE unshare --net bash -c '
             set -e
             ip link set lo up
-            exec sudo -u runner --preserve-env=JAVA_HOME,ANDROID_HOME,ANDROID_SDK_ROOT,GRADLE_USER_HOME,RUNNER_TEMP,NCN_TEST_DATABASE,MILEPOST_CANDIDATE_CATALOGUE "$1" --offline --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false -Drobolectric.offline=true -Drobolectric.dependency.dir="$RUNNER_TEMP/robolectric-offline" :app:testDebugUnitTest
+            exec sudo -u runner --preserve-env=JAVA_HOME,ANDROID_HOME,ANDROID_SDK_ROOT,GRADLE_USER_HOME,RUNNER_TEMP,NCN_TEST_DATABASE,MILEPOST_CANDIDATE_CATALOGUE "$1" --offline --no-daemon --stacktrace --init-script "$RUNNER_TEMP/milepost-heap.init.gradle" -p android-prototype -Pandroid.builder.sdkDownload=false -Drobolectric.offline=true -Drobolectric.dependency.dir="$RUNNER_TEMP/robolectric-offline" :app:testDebugUnitTest
           ' _ "$gradle_path"
           python3 -m unittest scripts.test_review_capture_partition -q
           python3 - <<'PYTOTAL'

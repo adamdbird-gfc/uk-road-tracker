@@ -48,7 +48,7 @@ final class MilepostScreenIntegration {
                 archive=a;ncn=n;ncnEvidence=e;lastReady=ready;
                 try{
                     if(view==null){
-                        view=new MilepostPresentationView(host,new MilepostPresentationStore(host,gate.user),ready,(after,complete)->loadPage(after,complete));
+                        view=new MilepostPresentationView(host,new MilepostPresentationStore(host,gate.user),ready,this::loadPage,true);
                         view.freshness=this::fresh;container.addView(view);view.onHostResume();
                     }else if(!receipt.equals(ready.receipt)){lifecycle++;view.update(ready);}
                     receipt=ready.receipt;
@@ -63,7 +63,7 @@ final class MilepostScreenIntegration {
         boolean reuse=lastReady!=null&&archive==JourneyStore.dataRevision(host)&&ncn==NcnProgressStore.revision(host)
             &&ncnEvidence==JourneyStore.ncnDataRevision(host)&&!CaptureService.isActive(host);
         MilepostPresentation.Snapshot initial=reuse?lastReady:MilepostPresentation.pending();
-        view=new MilepostPresentationView(host,new MilepostPresentationStore(host,gate.user),initial,this::loadPage);
+        view=new MilepostPresentationView(host,new MilepostPresentationStore(host,gate.user),initial,this::loadPage,!stopped.get());
         view.freshness=this::fresh;receipt=initial.receipt;container.addView(view);
         if(!stopped.get())view.onHostResume();
     }
