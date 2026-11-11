@@ -153,7 +153,7 @@ public class CaptureService extends Service {
 
     private String currentActivity = "unknown";
     private long currentActivityAtMs;
-    private String stationEvidenceReason, stationEvidenceCode;
+    private String stationEvidenceReason, stationEvidenceCode, captureEndReason;
     private List<Location> nextCapturePoints;
     private String nextCaptureStartedAt;
     private String nextCaptureJourneyId;
@@ -206,6 +206,7 @@ public class CaptureService extends Service {
                 if (stationModel!=null && stationModel.stationaryEndIndex(mode)>=1) {
                     stationEndIndex=stationModel.stationaryEndIndex(mode);
                     stationEvidenceReason="station_arrival_waiting";
+                    captureEndReason=stationEvidenceReason;
                     stationEvidenceCode=stationModel.stationCode();
                     // If a mode transition was missed, keep the remaining travel
                     // as an uncertain leg instead of trimming it out of history.
@@ -281,7 +282,7 @@ public class CaptureService extends Service {
                 nextCapturePoints = new ArrayList<>();
                 nextCapturePoints.add(observation);
                 nextCaptureStartedAt = Instant.ofEpochMilli(observation.getTime()).toString();
-                stationEvidenceReason = "long_sampling_break";
+                captureEndReason = "long_sampling_break";
                 MovementDiagnostics.recordEvent(CaptureService.this, "sampling_session_boundary",
                         "Long GPS break near the previous endpoint; preserving separate recording sessions.");
                 finishCapture();
@@ -382,6 +383,7 @@ public class CaptureService extends Service {
             nextCapturePoints = null;
             nextCaptureStartedAt = null; nextCaptureJourneyId = null;
             stationEndIndex = -1;
+            captureEndReason = null;
             clearPendingActivityMode();
             finishCapture();
         } else if (ACTION_START.equals(action)) {
@@ -614,6 +616,7 @@ public class CaptureService extends Service {
                 prepareStationSplit(review.end,review.end,"unknown");
             } else return false;
             stationEvidenceReason="ferry_terminal_transition";
+            captureEndReason=stationEvidenceReason;
             MovementDiagnostics.recordEvent(this,"ferry_transition",review.json().toString());
             finishCapture();return true;
         } catch(Exception invalid){return false;}
@@ -667,6 +670,7 @@ public class CaptureService extends Service {
         // as Unknown so it can be classified in Journeys without road matching.
         int boundary = Math.max(1, confirmedBoundary);
         prepareStationSplit(boundary, boundary, confirmedMode);
+        captureEndReason="mode_change_confirmed";
         MovementDiagnostics.recordEvent(this, "mode_change_confirmed",
                 "mode=" + confirmedMode + "; boundary_index=" + boundary
                         + "; boundary_time_ms=" + points.get(boundary).getTime());
@@ -781,6 +785,7 @@ public class CaptureService extends Service {
         if(decision.nextMode!=null && isActive(this)) {
             int boundary=decision.transitionIndex-decision.startIndex;
             prepareStationSplit(boundary,boundary,decision.nextMode);
+            captureEndReason=decision.reason;
             finishCapture();
         }
         return true;
@@ -908,6 +913,7 @@ public class CaptureService extends Service {
         if(arrival==null || arrival.index<1 || arrival.index>=points.size())return;
         stationEndIndex=arrival.index;
         contextReason="arrival_gps_dwell";
+        captureEndReason=contextReason;
         clearPendingActivityMode();
         MovementDiagnostics.recordEvent(this,"gps_arrival_confirmed",
                 "Sustained GPS dwell; confirmation observations retained outside the travelled route.");
@@ -1278,6 +1284,7 @@ public class CaptureService extends Service {
             stationEndIndex=Math.min(decision.endIndex,points.size()-1);
             stationaryAnchor=new Location(points.get(stationEndIndex));stationarySince=stationaryAnchor.getTime();
         } else prepareStationSplit(decision.endIndex,decision.startIndex,decision.nextMode);
+        captureEndReason=decision.reason;
         finishCapture();
     }
 
@@ -1313,6 +1320,7 @@ public class CaptureService extends Service {
             stationEndIndex=Math.min(decision.boundary,points.size()-1);
             stationaryAnchor=new Location(points.get(stationEndIndex));stationarySince=stationaryAnchor.getTime();
         } else prepareStationSplit(decision.boundary,decision.boundary,decision.nextMode);
+        captureEndReason=decision.reason;
         finishCapture();
     }
 
@@ -1368,7 +1376,7 @@ public class CaptureService extends Service {
         final List<Location> savedNextPoints = nextCapturePoints == null ? null : new ArrayList<>(nextCapturePoints);
         final String savedStationReason = stationEvidenceReason;
         final String savedStationCode = stationEvidenceCode;
-        final String stationEndReason = stationBoundary ? savedStationReason : null;
+        final String savedEndReason = captureEndReason == null ? "stop_or_manual" : captureEndReason;
         final RailStationCatalog savedStationCatalog = stationCatalog;
         final String savedContextReason=contextReason;
         final JSONObject savedDeparturePlace=departurePlace;
@@ -1418,6 +1426,7 @@ public class CaptureService extends Service {
                         savedDistanceMetres,0,fullCapturePoints);
                 pending.put("automatic_capture",savedAutomatic).put("finish_pending",true)
                         .put("finish_boundary_index",stationBoundary?savedPoints.size()-1:-1).put("finish_ended_at",savedEndedAt)
+                        .put("finish_end_reason",savedEndReason)
                         .put("context_reason",savedContextReason).put("departure_place",savedDeparturePlace)
                         .put("station_reason",savedStationReason).put("station_code",savedStationCode);
                 if(savedNextMode!=null&&savedNextPoints!=null&&!savedNextPoints.isEmpty())
@@ -1535,7 +1544,7 @@ public class CaptureService extends Service {
                 journey.put("activity_recognition_history",new JSONArray(savedActivityEvidence));
                 journey.put("capture_decisions",new JSONObject().put("initial_mode",savedInitialMode==null?JSONObject.NULL:savedInitialMode)
                         .put("classified_at_utc",savedClassifiedAt==null?JSONObject.NULL:savedClassifiedAt).put("mode_at_save",savedMode)
-                        .put("mode_source","capture_activity_or_gps_context").put("ended_reason",stationEndReason!=null?stationEndReason:savedContextReason!=null?savedContextReason:"stop_or_manual")
+                        .put("mode_source","capture_activity_or_gps_context").put("ended_reason",savedEndReason)
                         .put("confidence","ferry".equals(savedMode)?"supported_corridor":"requires_transport_confirmation"));
                 journey.put("ferry_evidence",FerryJourneyEvidence.inspect(routeSamples).json());
                 journey.put("capture_route_samples", routeSamples);
@@ -1616,7 +1625,7 @@ public class CaptureService extends Service {
                     try {continueDeparture=PlaceBoundaryEvidence.departure(stop,footSample(continuePoints.get(0),0));}catch(org.json.JSONException ignored){}
             }
             nextCaptureMode = null; nextCapturePoints = null; nextCaptureStartedAt = null; nextCaptureJourneyId = null;
-            stationEndIndex = -1; stationEvidenceReason = null; stationEvidenceCode = null;
+            stationEndIndex = -1; stationEvidenceReason = null; stationEvidenceCode = null; captureEndReason = null;
             contextReason=null;
             departurePlace=null;
             getSharedPreferences(STATE_PREFS, MODE_PRIVATE).edit()
@@ -1666,6 +1675,7 @@ public class CaptureService extends Service {
         } else {
             nextCaptureMode = null; nextCapturePoints = null; nextCaptureStartedAt = null; nextCaptureJourneyId = null;
             stationEndIndex = -1;
+            captureEndReason = null;
             android.os.Bundle failure = new android.os.Bundle();
             failure.putString("mode", BetaMeasurement.normalizedMode(mode));
             failure.putString("source", "capture");
@@ -1963,6 +1973,8 @@ public class CaptureService extends Service {
                 recoveringFinish=true;
                 pendingFinishEndedAt=snapshot.optString("finish_ended_at",null);
                 stationEndIndex=snapshot.optInt("finish_boundary_index",-1);
+                captureEndReason=snapshot.optString("finish_end_reason",
+                        contextReason!=null?contextReason:stationEndIndex>=1?stationEvidenceReason:null);
                 JSONObject next=snapshot.optJSONObject("finish_next");
                 if(next!=null) {
                     nextCaptureMode=next.getString("mode");nextCaptureStartedAt=next.getString("started_at");

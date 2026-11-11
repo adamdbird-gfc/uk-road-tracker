@@ -87,6 +87,20 @@ public class CaptureRecoveryIntegrationTest {
         assertFalse(quality.getBoolean("resolved"));
         assertEquals(888224,quality.getJSONArray("issues").getJSONObject(0).getLong("duration_ms"));
     }
+    @Test public void recoveredFinishReportsTheEndReasonSeparatelyFromStationEvidence()throws Exception {
+        JSONObject state=snapshot("finished-train",0,5).put("mode","train")
+                .put("station_code","SGR").put("station_reason","station_departure_train_suggestion")
+                .put("finish_pending",true).put("finish_boundary_index",4)
+                .put("finish_ended_at",Instant.ofEpochMilli(start+40000).toString())
+                .put("finish_end_reason","arrival_gps_dwell");
+        restore(state);
+        io().submit(()->{}).get(5,TimeUnit.SECONDS);
+        Shadows.shadowOf(Looper.getMainLooper()).idle();
+        JSONObject saved=JourneyStore.get(service,"finished-train");
+        assertEquals("arrival_gps_dwell",saved.getJSONObject("capture_decisions").getString("ended_reason"));
+        assertEquals("SGR",saved.getJSONObject("station_evidence").getString("station_code"));
+        assertEquals(1,JourneyStore.count(service));
+    }
     @Test public void interruptedSaveHandoffIsReplayableAndDoesNotOverwriteCommittedMatch()throws Exception {
         JSONObject archived=new JSONObject().put("journey_id","old").put("mode","unknown")
                 .put("source",new JSONObject().put("type","android_activity_capture"))
