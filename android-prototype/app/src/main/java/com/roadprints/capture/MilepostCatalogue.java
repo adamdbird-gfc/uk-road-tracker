@@ -18,11 +18,31 @@ final class MilepostCatalogue {
     // Activation requires a reviewed catalogue/pin change. No runtime/debug bypass.
     static final boolean READY=APPROVED_COUNT>0;
     static final String BLOCKER="Approved catalogue unavailable or incompatible";
+    private static volatile MapLocations mapLocations;
     private MilepostCatalogue(){}
+
+    /** Reused by map screens. Retain coordinates only, with no source records or aliases. */
+    static final class MapLocations {
+        final double[] longitude,latitude;
+        final String[] identity;
+        MapLocations(List<MilepostDiscoveryLedger.Marker> markers) {
+            longitude=new double[markers.size()];latitude=new double[markers.size()];identity=new String[markers.size()];
+            for(int i=0;i<markers.size();i++) {
+                longitude[i]=markers.get(i).lon;latitude[i]=markers.get(i).lat;identity[i]=markers.get(i).id;
+            }
+        }
+        int size(){return longitude.length;}
+    }
+    static synchronized MapLocations mapLocations(Context context)throws Exception {
+        if(mapLocations==null)mapLocations=new MapLocations(load(context));
+        return mapLocations;
+    }
 
     static List<MilepostDiscoveryLedger.Marker> load(Context context)throws Exception {
         try(InputStream input=context.getAssets().open(ASSET)) {
-            return parse(read(input),SHA,REVISION,APPROVED_COUNT);
+            List<MilepostDiscoveryLedger.Marker> markers=parse(read(input),SHA,REVISION,APPROVED_COUNT);
+            if(!fingerprint().equals(MilepostDiscoveryLedger.markerFingerprint(markers)))throw new IOException(BLOCKER);
+            return markers;
         }
     }
     private static byte[] read(InputStream input)throws IOException {
@@ -87,7 +107,7 @@ final class MilepostCatalogue {
     }
     static void install(Context context,MilepostDiscoveryLedger ledger)throws Exception {
         List<MilepostDiscoveryLedger.Marker> markers=load(context);
-        if(!READY||markers.isEmpty()||!fingerprint().equals(MilepostDiscoveryLedger.markerFingerprint(markers)))
+        if(!READY||markers.isEmpty())
             throw new IOException(BLOCKER);
         ledger.install(REVISION,SHA,markers);
     }

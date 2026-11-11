@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.function.BooleanSupplier;
 
-/** Inactive derived evidence store. Explicit reconciliation job only; no app lifecycle, awards or JourneyStore caller.
+/** Derived Milepost evidence store.
  * All entrypoints must run on a worker. Source revisions belong to the caller's durable
  * change feed, not wall-clock time. This ledger never edits source journeys. */
 final class MilepostDiscoveryLedger implements AutoCloseable {
@@ -87,7 +87,9 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
         fencedTransaction(d,id,fence,()->{
             if(!stamp.equals(archiveStamp(user,id))) {
                 long version=number(d,"SELECT version FROM journey WHERE user=? AND id=?",user,id)+1;
-                sourceChanged(user,id,version,evidenceToken,deleted);
+                boolean unchanged=number(d,"SELECT COUNT(*) FROM journey WHERE user=? AND id=? AND token=? AND deleted=?",
+                        user,id,evidenceToken,deleted?"1":"0")!=0;
+                if(!unchanged)sourceChanged(user,id,version,evidenceToken,deleted);
                 d.insertWithOnConflict("archive_source",null,values("user",user,"id",id,"stamp",stamp),SQLiteDatabase.CONFLICT_REPLACE);
             }
         });

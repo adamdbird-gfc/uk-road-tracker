@@ -83,7 +83,7 @@ public class RoutePreviewView extends View {
     private final MilepostMapOverlay.Projection milepostProjection=new MilepostMapOverlay.Projection(){
         public float x(double lon){return screenX(lon);}public float y(double lat){return screenY(lat);}
     };
-    void setMileposts(java.util.List<MilepostDiscoveryLedger.Marker> markers){
+    void setMileposts(MilepostCatalogue.MapLocations markers){
         mileposts=new MilepostMapOverlay(markers,getResources().getDisplayMetrics().density);invalidate();
     }
     private void drawMileposts(Canvas canvas){
@@ -95,11 +95,13 @@ public class RoutePreviewView extends View {
         if(!milepostsVisible||mileposts==null)return false;
         int i=mileposts.hit(x,y,dp(24));if(i<0)return false;
         if(mileposts.counts[i]>1&&cameraZoom<MAX_ZOOM){zoomAt(2,x,y);return true;}
-        MilepostDiscoveryLedger.Marker m=mileposts.markers.get(mileposts.indices[i]);
+        int marker=mileposts.indices[i];
+        double latitude=mileposts.markers.latitude[marker],longitude=mileposts.markers.longitude[marker];
+        String identity=mileposts.markers.identity[marker];
         new RoadprintsDialog.Builder(getContext()).setTitle("Millennium Milepost")
-            .setMessage(String.format(java.util.Locale.UK,"OSM catalogue location: %.6f, %.6f\n%s\n\nDiscovery requires verified walking, running or cycling within 100 metres.\n© OpenStreetMap contributors · ODbL 1.0",m.lat,m.lon,m.id))
+            .setMessage(String.format(java.util.Locale.UK,"OSM catalogue location: %.6f, %.6f\n%s\n\nDiscovery requires verified walking, running or cycling within 100 metres.\n© OpenStreetMap contributors · ODbL 1.0",latitude,longitude,identity))
             .setPositiveButton("OpenStreetMap",(dialog,which)->getContext().startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW,
-                android.net.Uri.parse("https://www.openstreetmap.org/?mlat="+m.lat+"&mlon="+m.lon+"#map=18/"+m.lat+"/"+m.lon))))
+                android.net.Uri.parse("https://www.openstreetmap.org/?mlat="+latitude+"&mlon="+longitude+"#map=18/"+latitude+"/"+longitude))))
             .setNegativeButton("Close",null).show();return true;
     }
     private boolean correctionDrawMode;

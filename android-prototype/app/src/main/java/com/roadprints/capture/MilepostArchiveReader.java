@@ -13,7 +13,7 @@ import org.json.*;
  * geometry fallback. Decoder budgets apply before JSON graph allocation. */
 final class MilepostArchiveReader {
     static final int MAX_NODES=150000, MAX_TEXT=512, MAX_DEPTH=12;
-    static final String REVISION="milepost-projection-1";
+    static final String REVISION="milepost-projection-2";
     static File file(Context c,String id) {
         if(id==null||id.isEmpty()||id.length()>512||id.contains("/")||id.contains("\\"))throw new IllegalArgumentException("Invalid archive identity");
         return new File(c.getFilesDir(),"journey_"+id+".json");
@@ -32,7 +32,6 @@ final class MilepostArchiveReader {
             check(cancelled);stamp=token(c,id);input=new FileInputStream(file(c,id));
         }
         JSONObject row=new JSONObject().put("journey_id",id);
-        boolean[] matchPresent={false};
         try(JsonReader r=new JsonReader(new InputStreamReader(new FilterInputStream(input) {
             int bytes;
             @Override public int read(byte[] b,int offset,int length)throws IOException {
@@ -45,10 +44,9 @@ final class MilepostArchiveReader {
             r.beginObject();
             while(r.hasNext()) {
                 check(cancelled);String k=r.nextName();
-                if("processing_result".equals(k)&&r.peek()==JsonToken.BEGIN_OBJECT)row.put(k,result(r,budget,matchPresent));
-                else if(Arrays.asList("journey_id","started_at","ended_at","mode","source","processing_status",
-                        "capture_decisions","capture_route_samples","route_geometry","recording_quality","walking_validation",
-                        "activity_recognition_history","transport_changes","journey_corrections").contains(k))row.put(k,value(r,budget,0));
+                if(Arrays.asList("journey_id","started_at","ended_at","mode","source",
+                        "capture_decisions","capture_route_samples","route_geometry","recording_quality","capture_validation",
+                        "activity_recognition_history","transport_changes","journey_corrections").contains(k))row.put(k,value(r,b,0));
                 else r.skipValue(); // Matcher/road trees, raw GPS, diagnostics and Timeline envelopes are never retained.
             }
             r.endObject();
@@ -62,57 +60,8 @@ final class MilepostArchiveReader {
             if(!stamp.equals(token(c,id)))throw new ConcurrentModificationException("Archive replaced during projection");
         }
         if(!id.equals(row.optString("journey_id")))row=new JSONObject().put("journey_id",id);
-        return new Snapshot(stamp,MilepostJourneyEvidence.projectedArchive(row,matchPresent[0]));
+        return new Snapshot(stamp,MilepostJourneyEvidence.nativeArchive(row));
     }
-    private static JSONObject result(JsonReader r,Budget b,boolean[] matchPresent)throws Exception {
-        JSONObject out=new JSONObject();r.beginObject();
-        while(r.hasNext()) {
-            check(b.cancelled);String k=r.nextName();
-            if("geojson".equals(k)) {
-                // Retain only a match-presence witness, not matched coordinates. The adapter
-                // uses this field solely for hasMatch; proximity still uses original samples.
-                matchPresent[0]=matchWitness(r,b);
-            }else if(Arrays.asList("status","input_points","matched_tracepoints","matching_mode","matched_distance_is_deduplicated",
-                    "walking_partial_match","capture_partial_match","timeline_partial_match","endpoint_partial_match","failed_sections").contains(k))out.put(k,value(r,b,0));
-            else r.skipValue();
-        }
-        r.endObject();return out;
-    }
-    private static boolean matchWitness(JsonReader r,Budget b)throws Exception {
-        boolean line=false;
-        if(r.peek()!=JsonToken.BEGIN_OBJECT){r.skipValue();return false;}
-        r.beginObject();
-        while(r.hasNext()) {
-            check(b.cancelled);String k=r.nextName();
-            if("features".equals(k)&&r.peek()==JsonToken.BEGIN_ARRAY) {
-                r.beginArray();int count=0;
-                while(r.hasNext()) {
-                    check(b.cancelled);if(++count>10000)throw new Limit();
-                    if(r.peek()!=JsonToken.BEGIN_OBJECT){r.skipValue();continue;}
-                    r.beginObject();
-                    while(r.hasNext()) {
-                        String f=r.nextName();
-                        if("geometry".equals(f)&&r.peek()==JsonToken.BEGIN_OBJECT) {
-                            String type="";int points=0;r.beginObject();
-                            while(r.hasNext()) {
-                                String g=r.nextName();
-                                if("type".equals(g)&&r.peek()==JsonToken.STRING)type=r.nextString();
-                                else if("coordinates".equals(g)&&r.peek()==JsonToken.BEGIN_ARRAY) {
-                                    r.beginArray();while(r.hasNext()){check(b.cancelled);r.skipValue();points=Math.min(2,points+1);}r.endArray();
-                                }else r.skipValue();
-                            }
-                            r.endObject();line|="LineString".equals(type)&&points>=2;
-                        }else r.skipValue();
-                    }
-                    r.endObject();
-                }
-                r.endArray();
-            }else r.skipValue();
-        }
-        r.endObject();
-        return line;
-    }
-
     static void check(BooleanSupplier cancelled) {
         if(cancelled.getAsBoolean()||Thread.currentThread().isInterrupted())throw new java.util.concurrent.CancellationException();
     }

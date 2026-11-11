@@ -17,6 +17,7 @@ final class NcnCatalogue {
     static final String SCOPE="internal-eight-source-inventory-trial";
     static final String[] KEYS={"NCN:167","NCN:270","NCN:344","NCN:426","NCN:440","NCN:476","NCN:548","NCN:755"};
     final String version,attribution;
+    final long referenceRevision;
     final int heldCount;
     private android.database.sqlite.SQLiteDatabase database;
     double networkLength;
@@ -46,7 +47,7 @@ final class NcnCatalogue {
         double[] project(JSONArray p) throws Exception {JSONArray o=data.getJSONArray("origin");return new double[]{6371008.8*Math.toRadians(p.getDouble(0)-o.getDouble(0))*Math.cos(Math.toRadians(o.getDouble(1))),6371008.8*Math.toRadians(p.getDouble(1)-o.getDouble(1))};}
     }
     NcnCatalogue(byte[] raw,JSONObject manifest) throws Exception {
-        heldCount=0;version=NcnJson.hash(raw);if(!version.equals(manifest.getString("sha256")))throw new IllegalArgumentException("NCN checksum differs");
+        referenceRevision=manifest.optLong("revision");heldCount=0;version=NcnJson.hash(raw);if(!version.equals(manifest.getString("sha256")))throw new IllegalArgumentException("NCN checksum differs");
         JSONObject root=new JSONObject(new String(raw,StandardCharsets.UTF_8));
         if(root.getInt("schema_version")!=1||!SCOPE.equals(root.getString("scope"))||root.getBoolean("whole_published_route_ready")||!root.getBoolean("physical_equivalence_verified"))throw new IllegalArgumentException("NCN scope differs");
         attribution=root.getString("attribution");JSONArray rs=root.getJSONArray("routes");
@@ -68,7 +69,7 @@ final class NcnCatalogue {
     }
     private static volatile NcnCatalogue loaded;
     private NcnCatalogue(android.database.sqlite.SQLiteDatabase db,JSONObject manifest)throws Exception {
-        heldCount=manifest.getJSONArray("held_route_keys").length();database=db;version=manifest.getString("sha256");attribution=manifest.getString("attribution");networkLength=manifest.getDouble("network_length_m");
+        referenceRevision=manifest.getLong("revision");heldCount=manifest.getJSONArray("held_route_keys").length();database=db;version=manifest.getString("sha256");attribution=manifest.getString("attribution");networkLength=manifest.getDouble("network_length_m");
         try(android.database.Cursor cursor=db.rawQuery("SELECT key,data FROM routes ORDER BY key",null)){while(cursor.moveToNext())routes.put(cursor.getString(0),new JSONObject(cursor.getString(1)));}
         if(routes.size()!=manifest.getInt("supported_identities"))throw new IllegalArgumentException("Incomplete national checkpoint");
     }

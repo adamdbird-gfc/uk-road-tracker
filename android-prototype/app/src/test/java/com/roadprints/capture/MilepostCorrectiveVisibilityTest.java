@@ -35,7 +35,7 @@ public class MilepostCorrectiveVisibilityTest {
     private static String copy(View v){StringBuilder s=new StringBuilder();if(v instanceof TextView)s.append(((TextView)v).getText());if(v instanceof ViewGroup)for(int i=0;i<((ViewGroup)v).getChildCount();i++)s.append(copy(((ViewGroup)v).getChildAt(i)));return s.toString();}
     @Test public void viewportDensityRetainsAllApprovedCatalogueWithoutHeldCandidates()throws Exception{
         java.util.List<MilepostDiscoveryLedger.Marker> markers=MilepostCatalogue.load(RuntimeEnvironment.getApplication());assertEquals(887,markers.size());
-        MilepostMapOverlay layer=new MilepostMapOverlay(markers,1);
+        MilepostMapOverlay layer=new MilepostMapOverlay(MilepostCatalogue.mapLocations(RuntimeEnvironment.getApplication()),1);
         MilepostMapOverlay.Projection projection=new MilepostMapOverlay.Projection(){public float x(double lon){return 100;}public float y(double lat){return 100;}};
         layer.project(0,0,5,800,600,48,projection);assertEquals(1,layer.size);assertEquals(887,layer.counts[0]);assertEquals(0,layer.hit(100,100,24));
         assertEquals(-1,layer.hit(300,300,24));

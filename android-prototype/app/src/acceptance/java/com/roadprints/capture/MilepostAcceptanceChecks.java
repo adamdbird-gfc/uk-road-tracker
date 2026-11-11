@@ -58,7 +58,7 @@ final class MilepostAcceptanceChecks {
         try(MilepostAcceptanceFixture f=new MilepostAcceptanceFixture(c)){
             f.prepare(7);converge(f);ordinal=f.read().awards.get(0).ordinal;
             JourneyStore.delete(c,"synthetic:a");f.restore();converge(f);require(f.read().count==7,"Fallback evidence lost");
-            JourneyStore.save(c,MilepostAcceptanceFixture.journey("walking").put("journey_id","synthetic:b").put("processing_status","failed"));
+            JourneyStore.save(c,MilepostAcceptanceFixture.journey("walking").put("journey_id","synthetic:b").put("recording_quality",new org.json.JSONObject().put("resolved",false)));
             f.restore();converge(f);require(f.read().count==0,"Correction not withdrawn");
         }
         try(MilepostAcceptanceFixture f=new MilepostAcceptanceFixture(c)){
@@ -72,7 +72,7 @@ final class MilepostAcceptanceChecks {
             f.prepare(7);AtomicBoolean stop=new AtomicBoolean(true);boolean cancelled=false;
             try{f.process(stop,Long.MAX_VALUE);}catch(CancellationException expected){cancelled=true;}
             require(cancelled,"Worker ignored interruption");
-            require(f.gate.enterPresentation(),"Worker lease leaked");f.gate.leavePresentation();
+            require(f.gate.enterProcessing(),"Worker lease leaked");f.gate.leaveProcessing();
             try(MilepostReconciliationJob.CaptureGuard guard=new MilepostReconciliationJob.CaptureGuard(c,new AtomicBoolean(),Long.MAX_VALUE)){
                 require(!guard.getAsBoolean(),"Capture already active");
                 c.getSharedPreferences("roadprints_capture_state",0).edit().putBoolean("active",true).commit();

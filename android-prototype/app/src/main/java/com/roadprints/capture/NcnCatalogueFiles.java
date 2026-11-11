@@ -57,7 +57,7 @@ final class NcnCatalogueFiles {
                     if(Thread.currentThread().isInterrupted())throw new InterruptedIOException("NCN request cancelled");
                     NcnProgressStore.catalogueStatus("Downloading verified-open NCN catalogue…");
                     install(c,selected);
-                    retry.edit().remove("install_retry_after").putLong("next",System.currentTimeMillis()+7L*24*60*60_000).apply();
+                    retry.edit().remove("install_retry_after").putInt("checked_build",BuildConfig.VERSION_CODE).putLong("next",System.currentTimeMillis()+7L*24*60*60_000).apply();
                     return cached(c);
                 } finally { cachedVersion.remove(); }
             }
@@ -101,7 +101,8 @@ final class NcnCatalogueFiles {
     }
     static void write(File target,JSONObject m)throws Exception{AtomicFile file=new AtomicFile(target);FileOutputStream out=null;try{out=file.startWrite();out.write(m.toString().getBytes(StandardCharsets.UTF_8));file.finishWrite(out);}catch(Exception e){if(out!=null)file.failWrite(out);throw e;}}
     static synchronized void refreshIfDue(Context context){
-        Context c=context.getApplicationContext();ReferenceDataDiagnostics.initialize(c.getFilesDir());android.content.SharedPreferences prefs=c.getSharedPreferences("ncn_reference_updates",0);long now=System.currentTimeMillis();if(updating||now<prefs.getLong("next",0))return;updating=true;prefs.edit().putLong("next",now+60*60_000).apply();
+        Context c=context.getApplicationContext();ReferenceDataDiagnostics.initialize(c.getFilesDir());android.content.SharedPreferences prefs=c.getSharedPreferences("ncn_reference_updates",0);long now=System.currentTimeMillis();if(updating||(prefs.getInt("checked_build",0)==BuildConfig.VERSION_CODE&&now<prefs.getLong("next",0)))return;
+        updating=true;prefs.edit().putInt("checked_build",BuildConfig.VERSION_CODE).putLong("next",now+60*60_000).apply();
         WORKER.execute(()->{try{Installed previous=cached(c);cachedVersion.set(previous.manifest.getString("sha256"));JSONObject incoming=remoteManifest();validate(incoming);if(incoming.getLong("revision")>previous.manifest.getLong("revision")){install(c,incoming);NcnCatalogue.invalidate();NcnProgressStore.catalogueChanged(c);}prefs.edit().putLong("next",System.currentTimeMillis()+7L*24*60*60_000).apply();}catch(Exception unavailable){/* Keep the last fully validated offline catalogue. */}finally{cachedVersion.remove();synchronized(NcnCatalogueFiles.class){updating=false;}}});
     }
 }

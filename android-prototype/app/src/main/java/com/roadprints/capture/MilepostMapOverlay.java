@@ -2,19 +2,19 @@ package com.roadprints.capture;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import java.util.*;
+import java.util.Arrays;
 
 /** One canvas layer. Projection/density work only when the camera changes; no Android marker Views. */
 final class MilepostMapOverlay {
     interface Projection {float x(double lon);float y(double lat);}
-    final List<MilepostDiscoveryLedger.Marker> markers;
+    final MilepostCatalogue.MapLocations markers;
     final float[] x,y;final int[] indices,counts;
     private final int[] cells=new int[2048],slots=new int[2048];
     private final String[] labels;
     int size;private double lon=Double.NaN,lat,zoom;private int width,height;
     private final Paint fill=new Paint(3),outline=new Paint(3),text=new Paint(3);
-    MilepostMapOverlay(List<MilepostDiscoveryLedger.Marker> markers,float density){
-        this.markers=Collections.unmodifiableList(new ArrayList<>(markers));
+    MilepostMapOverlay(MilepostCatalogue.MapLocations markers,float density){
+        this.markers=markers;
         int n=markers.size();x=new float[n];y=new float[n];indices=new int[n];counts=new int[n];labels=new String[n+1];
         for(int i=1;i<=n;i++)labels[i]=Integer.toString(i);
         fill.setColor(0xFF465A83);outline.setColor(0xFFFFFFFF);text.setColor(0xFFFFFFFF);
@@ -25,8 +25,7 @@ final class MilepostMapOverlay {
         this.lon=lon;this.lat=lat;this.zoom=zoom;this.width=width;this.height=height;
         size=0;Arrays.fill(slots,-1);int columns=(int)Math.ceil(width/cell)+2;
         for(int i=0;i<markers.size();i++){
-            MilepostDiscoveryLedger.Marker m=markers.get(i);if(!m.eligible)continue;
-            float px=p.x(m.lon),py=p.y(m.lat);if(px<0||px>width||py<0||py>height)continue;
+            float px=p.x(markers.longitude[i]),py=p.y(markers.latitude[i]);if(px<0||px>width||py<0||py>height)continue;
             int key=(int)(py/cell)*columns+(int)(px/cell),slot=(key*0x9e3779b9)>>>21;
             while(slots[slot]>=0&&cells[slot]!=key)slot=(slot+1)&2047;
             if(slots[slot]>=0){counts[slots[slot]]++;continue;}

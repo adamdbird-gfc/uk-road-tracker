@@ -950,6 +950,7 @@ public final class JourneyStore {
         preferences.edit().putLong(DATA_REVISION,archive+1)
                 .putLong("ncn_evidence_revision",ncn+(ncnChanged?1:0)).apply();
         if (scheduleNcn) NcnProgressStore.changed(context);
+        MilepostReconciliationJob.archiveChanged(context);
     }
 
     private static JSONObject read(File file) {

@@ -9,7 +9,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 /** Read-only, conservative adapter for the pinned Android archive schema.
- * Called by the explicit inactive reconciler; never by AchievementStore/JourneyStore or a lifecycle hook. */
+ * Uses locally validated capture observations, independent of route matching. */
 final class MilepostJourneyEvidence {
     static final int MAX_POINTS=10000;
     static final String REVISION="android-archive-milepost-1";
@@ -21,13 +21,9 @@ final class MilepostJourneyEvidence {
                 row.optDouble("latitude",Double.NaN)),false,String.valueOf(row.optInt("revision",1)));
     }
     static MilepostProximity.Evidence nativeArchive(JSONObject journey) throws Exception {
-        return nativeArchive(journey,null);
+        return capturedEvidence(journey);
     }
-    /** Only the streaming archive reader supplies the independently parsed match witness. */
-    static MilepostProximity.Evidence projectedArchive(JSONObject journey,boolean matchPresent)throws Exception {
-        return nativeArchive(journey.put("_milepost_match_present",matchPresent),matchPresent);
-    }
-    private static MilepostProximity.Evidence nativeArchive(JSONObject journey,Boolean matchPresent) throws Exception {
+    private static MilepostProximity.Evidence capturedEvidence(JSONObject journey) throws Exception {
         String mode=canonical(journey.optString("mode"));
         JSONObject source=journey.optJSONObject("source");
         String type=source==null?"":source.optString("type");
@@ -39,8 +35,6 @@ final class MilepostJourneyEvidence {
         if(!MilepostProximity.eligibleMode(mode))problem=MilepostProximity.Outcome.INELIGIBLE_MODE;
         else if(!"android_activity_capture".equals(type))problem="timeline_import".equals(type)
                 ?MilepostProximity.Outcome.INSUFFICIENT_GEOMETRY:MilepostProximity.Outcome.UNTRUSTED_SOURCE;
-        else if(!"complete".equals(journey.optString("processing_status"))||!hasMatch(journey,matchPresent))
-            problem=MilepostProximity.Outcome.UNVALIDATED_MATCH;
         else if(!validDates(journey))problem=MilepostProximity.Outcome.INSUFFICIENT_GEOMETRY;
         else if(samples==null||coords==null||!"LineString".equals(geometry.optString("type"))
                 ||samples.length()<3||samples.length()>MAX_POINTS||samples.length()!=coords.length())
@@ -48,9 +42,9 @@ final class MilepostJourneyEvidence {
         else {
             JSONObject savedQuality=journey.optJSONObject("recording_quality");
             if(savedQuality!=null&&!savedQuality.optBoolean("resolved"))problem=MilepostProximity.Outcome.UNRELIABLE_LOCATION;
-            JSONObject walking=journey.optJSONObject("walking_validation");
-            if(walking!=null)for(String key:new String[]{"removed_gps_points","station_tail_points","vehicle_tail_points","stationary_points"})
-                if(walking.optInt(key)>0)problem=MilepostProximity.Outcome.INSUFFICIENT_GEOMETRY;
+            JSONObject capture=journey.optJSONObject("capture_validation");
+            if(capture!=null&&!capture.optBoolean("resolved"))
+                problem=MilepostProximity.Outcome.UNRELIABLE_LOCATION;
             JSONObject decisions=journey.optJSONObject("capture_decisions");
             if(decisions==null||!mode.equals(canonical(decisions.optString("mode_at_save")))
                     ||!"capture_activity_or_gps_context".equals(decisions.optString("mode_source")))
@@ -102,34 +96,13 @@ final class MilepostJourneyEvidence {
         }
         // Snapshot only the bounded observation array, never the matcher/full-road trees.
         // Digest includes all original input fields: callers must supply a single bounded archive row.
-        String token=digestJson(journey);
+        String token="observations-v2:"+digestJson(journey);
         JSONArray retained=new JSONArray();
         if(problem==null)for(int i=0;i<samples.length();i++){
             JSONArray p=samples.getJSONArray(i),copy=new JSONArray();
             for(int k=0;k<5;k++)copy.put(p.get(k));retained.put(copy);
         }
-        return new Archive(journey.optString("journey_id"),journey.optString("started_at"),journey.optString("ended_at"),mode,type,token,problem,retained,problem==null&&history!=null?new JSONArray(history.toString()):new JSONArray());
-    }
-    private static boolean hasMatch(JSONObject j,Boolean matchPresent){
-        JSONObject r=j.optJSONObject("processing_result"),g=r==null?null:r.optJSONObject("geojson");
-        JSONArray f=g==null?null:g.optJSONArray("features");
-        if(r==null||!"ok".equals(r.optString("status")))return false;
-        if(matchPresent==null&&(f==null||f.length()==0))return false;
-        for(String flag:new String[]{"walking_partial_match","capture_partial_match","timeline_partial_match","endpoint_partial_match"})
-            if(r.optBoolean(flag))return false;
-        JSONArray failures=r.optJSONArray("failed_sections");
-        if(failures!=null&&failures.length()>0)return false;
-        int input=r.optInt("input_points",-1),matched=r.optInt("matched_tracepoints",-2);
-        if(input<2||input!=matched)return false;
-        if("cycling".equals(canonical(j.optString("mode")))&&(!"cycling".equals(r.optString("matching_mode"))
-                ||!r.optBoolean("matched_distance_is_deduplicated")))return false;
-        if(matchPresent!=null)return matchPresent;
-        for(int i=0;i<f.length();i++){
-            JSONObject feature=f.optJSONObject(i),geometry=feature==null?null:feature.optJSONObject("geometry");
-            JSONArray coordinates=geometry==null?null:geometry.optJSONArray("coordinates");
-            if(geometry!=null&&"LineString".equals(geometry.optString("type"))&&coordinates!=null&&coordinates.length()>=2)return true;
-        }
-        return false;
+        return new Archive(journey.optString("journey_id"),journey.optString("started_at"),journey.optString("ended_at"),mode,type,token,problem,retained,problem==null&&"cycling".equals(mode)&&history!=null?new JSONArray(history.toString()):new JSONArray());
     }
     private static boolean validDates(JSONObject j){
         try{return java.time.Instant.parse(j.getString("ended_at")).isAfter(java.time.Instant.parse(j.getString("started_at")));}
@@ -186,21 +159,28 @@ final class MilepostJourneyEvidence {
         }
         public Iterable<MilepostProximity.Segment> segments(){
             if(problem!=null)return Collections.emptyList();
+            java.util.List<FootTraceValidator.Sample> observations=new java.util.ArrayList<>(samples.length());
+            for(int i=0;i<samples.length();i++)observations.add(sample(samples,i));
             return ()->new Iterator<MilepostProximity.Segment>(){
                 int at=1;MilepostProximity.Segment next;
                 public boolean hasNext(){
-                    while(next==null&&at<samples.length()){
+                    while(next==null&&at<observations.size()){
                         int i=at++;
-                        // Local three-observation witness, not an archive-wide 'was moving' flag.
-                        int start=Math.max(0,i-2),end=Math.min(samples.length()-1,start+2);
-                        java.util.List<FootTraceValidator.Sample> local=new java.util.ArrayList<>(3);
-                        for(int k=start;k<=end;k++)local.add(sample(samples,k));
-                        if(!CaptureMovementEvidence.hasJourneyMovement(local,mode))continue;
-                        FootTraceValidator.Sample a=sample(samples,i-1),b=sample(samples,i);
-                        if(!"cycling".equals(mode)){
-                            boolean vehicle=false;for(FootTraceValidator.Sample p:local)vehicle|=p.speed>=6;
-                            if(vehicle)continue;
+                        FootTraceValidator.Sample a=observations.get(i-1),b=observations.get(i);
+                        // Use time as well as point count: a normal 1Hz run needs
+                        // more than three fixes to establish local movement.
+                        int first=i-1,last=i;
+                        while(first>0&&i-first<96&&a.time-observations.get(first-1).time<=45_000)first--;
+                        while(last+1<observations.size()&&last-i<96&&observations.get(last+1).time-b.time<=45_000)last++;
+                        if(last-first<2){if(first>0)first--;else if(last+1<observations.size())last++;}
+                        java.util.List<FootTraceValidator.Sample> local=new java.util.ArrayList<>();
+                        boolean cycle="cycling".equals(mode),vehicle=false;
+                        for(int k=first;k<=last;k++){
+                            FootTraceValidator.Sample p=observations.get(k);
+                            if(!cycle)vehicle|=p.speed>=6;
+                            if(local.isEmpty()||p.time-local.get(local.size()-1).time>=10_000||k==last)local.add(p);
                         }
+                        if(vehicle||!CaptureMovementEvidence.hasJourneyMovement(local,mode))continue;
                         if("cycling".equals(mode)){
                             // Generic non-foot plausibility admits cars; retain cycling speed/provenance too.
                             boolean cycling=cycleActivitySupports(a.time,b.time);

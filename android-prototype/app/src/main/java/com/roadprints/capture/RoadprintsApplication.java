@@ -9,6 +9,7 @@ public class RoadprintsApplication extends Application {
         BetaMeasurement.install(this);
         CrashReporter.install(this);
         PerformanceDiagnostics.install(this);
+        MilepostReconciliationJob.schedule(this);
     }
 
     @Override public void onTrimMemory(int level) {

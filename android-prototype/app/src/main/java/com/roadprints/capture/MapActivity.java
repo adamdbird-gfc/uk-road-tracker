@@ -298,10 +298,10 @@ public class MapActivity extends Activity {
         String selected=CollectionAccessStore.selected(this);
         boolean townMap=getIntent().hasExtra("settlement_code");
         if(townMap)return;
-        if(!milepostsRequested&&MilepostCatalogue.READY){
+        if(!milepostsRequested&&MilepostCatalogue.READY&&MapLayerPreferences.visible(this,MapLayerPreferences.Layer.MILEPOSTS)){
             milepostsRequested=true;final RoutePreviewView target=mapView;
             ScreenDataLoader.execute(()->{
-                try{java.util.List<MilepostDiscoveryLedger.Marker> locations=MilepostCatalogue.load(getApplicationContext());
+                try{MilepostCatalogue.MapLocations locations=MilepostCatalogue.mapLocations(getApplicationContext());
                     mainHandler.post(()->{if(!isDestroyed()&&!isFinishing()&&mapView==target)target.setMileposts(locations);});
                 }catch(Exception unavailable){android.util.Log.w("Roadprints","Milepost map catalogue unavailable",unavailable);}
             });
