@@ -1917,13 +1917,16 @@ public class MapActivity extends Activity {
                     mainHandler.post(() -> { if (generation == recapGeneration) { recapLoading = false; if (active) refreshRecap(); } });
                     return;
                 }
-                List<JSONObject> collected = ReturnRecapStore.collect(getApplicationContext(), rows, observedAt);
+                ReturnRecapStore.collect(getApplicationContext(), rows, observedAt);
                 ReturnRecapStore.inboxReady(getApplicationContext(),true);
+                // Migration can receive an older or partial summary. Display the
+                // committed inbox, including captures missing from that summary.
+                List<JSONObject> pending = ReturnRecapStore.pending(getApplicationContext());
                 mainHandler.post(() -> {
                     if (isFinishing() || generation != recapGeneration) return;
                     recapLoading = false;
                     recapRevision = revision;
-                    recapJourneys = collected;
+                    recapJourneys = pending;
                     renderRecap();
                 });
             } catch (Exception error) {
