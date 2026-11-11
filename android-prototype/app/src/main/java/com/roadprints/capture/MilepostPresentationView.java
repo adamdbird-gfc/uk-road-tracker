@@ -216,7 +216,7 @@ final class MilepostPresentationView extends ScrollView {
         }
         if(hidden>0){
             String title=hidden==1?"1 hidden personality":hidden+" hidden personalities";
-            achievementCard(false,R.drawable.milepost_mystery,title,"",
+            achievementCard(false,"LOCKED",R.drawable.milepost_mystery,title,"",
                     "Discover more Mileposts and explore the National Cycle Network.").setTag("milepost_hidden_personalities");
         }
         MilepostPresentation.Card mystery=snapshot.card(5);
@@ -231,9 +231,10 @@ final class MilepostPresentationView extends ScrollView {
                 :R.drawable.milepost_mystery;
         String note=achievement.earned?"":achievement.status;
         String progress=index==5&&achievement.earned?"7 of 7 chapters unlocked":note;
-        achievementCard(achievement.earned,icon,achievement.title,progress,detail).setTag("milepost_card_"+index);
+        String status=achievement.earned?"UNLOCKED":achievement.stage>0?"IN PROGRESS":"LOCKED";
+        achievementCard(achievement.earned,status,icon,achievement.title,progress,detail).setTag("milepost_card_"+index);
     }
-    private LinearLayout achievementCard(boolean unlocked,int artwork,String title,String progress,String detail){
+    private LinearLayout achievementCard(boolean unlocked,String stateLabel,int artwork,String title,String progress,String detail){
         LinearLayout panel=AchievementCardStyle.milepostCard(host,unlocked);
         cards.addView(panel);
         LinearLayout row=new LinearLayout(host);
@@ -246,7 +247,7 @@ final class MilepostPresentationView extends ScrollView {
         copy.setOrientation(LinearLayout.VERTICAL);
         copy.setPadding(dp(12),0,0,0);
         row.addView(copy,new LinearLayout.LayoutParams(0,-2,1));
-        TextView status=cardText(copy,unlocked?"UNLOCKED":"LOCKED",10);
+        TextView status=cardText(copy,stateLabel,10);
         status.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
         status.setTextColor(unlocked?GOLD:0xFF8DE6DE);
         cardText(copy,title,16).setTypeface(Typeface.DEFAULT,Typeface.BOLD);

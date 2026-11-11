@@ -94,8 +94,10 @@ public class RoadprintsUiPreviewTest {
         view.onHostResume();
         assertNull(view.findViewWithTag("milepost_summary_replay"));
         assertNotNull(view.findViewWithTag("milepost_card_0"));
-        assertTrue(MilepostPresentationTest.contents(view.findViewWithTag("milepost_card_5"))
-                .contains("3 of 7 chapters unlocked"));
+        String mystery=MilepostPresentationTest.contents(view.findViewWithTag("milepost_card_5"));
+        assertTrue(mystery.contains("3 of 7 chapters unlocked"));
+        assertTrue(mystery.contains("IN PROGRESS"));
+        assertFalse(mystery.contains("LOCKED"));
         assertTrue(MilepostPresentationTest.contents(view.findViewWithTag("milepost_hidden_personalities"))
                 .contains("3 hidden personalities"));
         if(System.getProperty("roadprints.previewDir")!=null){
