@@ -14,10 +14,7 @@ final class MapLayerPreferences {
     }
     static boolean milepostsVisible(Context c){
         return CollectionAccessStore.NCN.equals(CollectionAccessStore.selected(c))
-                && MilepostCatalogue.READY && c.getSharedPreferences(PREFS,0).getBoolean("MILEPOSTS",true);
-    }
-    static void setMilepostsVisible(Context c,boolean visible){
-        c.getSharedPreferences(PREFS,0).edit().putBoolean("MILEPOSTS",visible).apply();
+                && MilepostCatalogue.READY;
     }
     static boolean visible(Context c,Layer layer){return c.getSharedPreferences(PREFS,0).getBoolean(layer.name(),true);}
     static void set(Context c,Layer layer,boolean visible){c.getSharedPreferences(PREFS,0).edit().putBoolean(layer.name(),visible).apply();}

@@ -20,7 +20,7 @@ final class MilepostPresentationView extends ScrollView {
     private MilepostPresentation.Snapshot snapshot;
     private final LinearLayout body,cards;
     private TextView assessmentStatus;
-    private TextView revealProgress,revealCipher,revealIdentity,revealBiography,revealThemes;
+    private TextView revealProgress,revealCipher,revealBiography,revealThemes;
     private MilepostArtworkView revealArt;
     private android.animation.ValueAnimator animation;
     private int animationTarget;
@@ -99,8 +99,8 @@ final class MilepostPresentationView extends ScrollView {
     boolean motionAllowed(){return !state.staticMode&&android.animation.ValueAnimator.areAnimatorsEnabled()
         &&!((android.view.accessibility.AccessibilityManager)host.getSystemService(android.content.Context.ACCESSIBILITY_SERVICE)).isTouchExplorationEnabled();}
     void next(){
-        if(!canReveal()||state.paused||!state.replaying){pauseReplay();render();return;}
-        if(animation!=null||state.cursor>=snapshot.target())return;
+        if(!canReveal()||animation!=null||displayStage()>=snapshot.target())return;
+        state.replaying=true;state.paused=false;state.dismissed=false;
         int previous=displayStage(),target=previous+1;
         if(target<=state.completedStage||!motionAllowed()){completeStage(target);return;}
         animationTarget=target;revealNext.setEnabled(false);revealPrevious.setEnabled(false);
@@ -123,7 +123,8 @@ final class MilepostPresentationView extends ScrollView {
         });animation.start();
     }
     private void previous(){
-        if(!canReveal()||state.paused||animation!=null||displayStage()<=1)return;
+        if(!canReveal()||animation!=null||displayStage()<=1)return;
+        state.replaying=true;state.paused=false;state.dismissed=false;
         state.cursor=displayStage()-1;
         store.save(state);
         updateReveal();
@@ -150,20 +151,13 @@ final class MilepostPresentationView extends ScrollView {
     private void render(){
         cancelAnimation();
         body.removeAllViews();
-        revealArt=null;revealPrevious=null;revealNext=null;revealProgress=null;revealCipher=null;
-        revealIdentity=null;revealBiography=null;revealThemes=null;revealChapters=null;
         heading(body,"Millennium Mileposts");
         text(body,"Find Mileposts on your recorded walks, runs and rides.",14);
         assessmentStatus=text(body,"",14);
         updateAssessmentStatus();
         if(recording())text(body,"The mystery is paused while you’re recording a journey.",15);
         body.addView(cards,new LinearLayout.LayoutParams(-1,-2));
-        if(!recording()&&current()&&snapshot.count>0)
-            button(body,"View discoveries","milepost_browse_discoveries",()->loadDiscoveries(0),true);
-        if(snapshot.target()>0&&!recording()){
-            if(state.replaying&&!state.dismissed&&!state.paused&&current())reveal();
-            else button(body,"Open mystery","milepost_replay",()->replay(false),canReveal());
-        }
+        updateReveal();
         if(viewingDiscoveries&&!recording())discoveryDetails();
         TextView attribution=text(body,"",12);
         MilepostDetailsDialog.addAttribution(attribution);
@@ -171,11 +165,14 @@ final class MilepostPresentationView extends ScrollView {
     void updateAssessmentStatus(){
         if(assessmentStatus==null)return;
         String message=current()?(snapshot.count==1?"1 Milepost discovered":snapshot.count+" Mileposts discovered")
-                :MilepostReconciliationJob.status(host);
+                :snapshot.receipt.equals("assessment-pending")?"Loading saved Milepost progress…"
+                :snapshot.count+" Mileposts discovered · checking for updates";
         if(!android.text.TextUtils.equals(assessmentStatus.getText(),message))assessmentStatus.setText(message);
+        updateChapterControls();
     }
     void showAssessmentReadFailure(){
-        if(assessmentStatus!=null)assessmentStatus.setText("Couldn’t load your Milepost progress.");
+        if(assessmentStatus!=null)assessmentStatus.setText(snapshot.receipt.equals("assessment-pending")
+                ?"Couldn’t load your Milepost progress.":"Showing your saved Milepost progress.");
     }
     private void loadDiscoveries(long after){
         if(recording()||!resumed||!current())return;
@@ -209,31 +206,33 @@ final class MilepostPresentationView extends ScrollView {
     }
     private void buildCards(){
         cards.removeAllViews();
-        int hidden=0;
+        revealArt=null;revealPrevious=null;revealNext=null;revealProgress=null;revealCipher=null;
+        revealBiography=null;revealThemes=null;revealChapters=null;
+        if(snapshot.receipt.equals("assessment-pending"))return;
         for(int index=0;index<5;index++){
             MilepostPresentation.Card achievement=snapshot.card(index);
-            if(achievement.earned)card(index,achievement,achievement.biography);
-            else hidden++;
-        }
-        if(hidden>0){
-            String title=hidden==1?"1 hidden personality":hidden+" hidden personalities";
-            achievementCard(false,"LOCKED",R.drawable.milepost_mystery,title,"",
-                    "Discover more Mileposts and explore the National Cycle Network.").setTag("milepost_hidden_personalities");
+            card(index,achievement,achievement.earned?achievement.biography:
+                    "Discover more Mileposts and explore the National Cycle Network.");
         }
         MilepostPresentation.Card mystery=snapshot.card(5);
-        String chapters=mystery.stage==0?"Discover a Milepost to unlock the first chapter."
-                :mystery.stage+" of 7 chapters unlocked";
-        card(5,mystery,mystery.earned?mystery.biography:chapters);
+        LinearLayout expanded=card(5,mystery,"");
+        reveal(expanded);
         MilepostPresentation.Card collective=snapshot.card(6);
-        card(6,collective,snapshot.individuals()+" of 6 personalities revealed");
+        LinearLayout collection=card(6,collective,snapshot.individuals()+" of 6 personalities revealed");
+        if(snapshot.count>0){
+            Button history=quietButton(collection,"Discovery record","milepost_browse_discoveries",()->loadDiscoveries(0));
+            history.setLayoutParams(new LinearLayout.LayoutParams(-2,-2));
+        }
     }
-    private void card(int index,MilepostPresentation.Card achievement,String detail){
+    private LinearLayout card(int index,MilepostPresentation.Card achievement,String detail){
         int icon=achievement.earned?(index==6?R.drawable.milepost_collective:MilepostArtworkView.MEDALLIONS[index])
                 :R.drawable.milepost_mystery;
-        String note=achievement.earned?"":achievement.status;
-        String progress=index==5&&achievement.earned?"7 of 7 chapters unlocked":note;
+        String progress=index==5?(achievement.stage==0?"Discover a Milepost to unlock the first chapter."
+                :achievement.stage+" of 7 chapters unlocked"):achievement.earned?"":achievement.status;
         String status=achievement.earned?"UNLOCKED":achievement.stage>0?"IN PROGRESS":"LOCKED";
-        achievementCard(achievement.earned,status,icon,achievement.title,progress,detail).setTag("milepost_card_"+index);
+        LinearLayout card=achievementCard(achievement.earned,status,icon,achievement.title,progress,detail);
+        card.setTag("milepost_card_"+index);
+        return card;
     }
     private LinearLayout achievementCard(boolean unlocked,String stateLabel,int artwork,String title,String progress,String detail){
         LinearLayout panel=AchievementCardStyle.milepostCard(host,unlocked);
@@ -261,20 +260,9 @@ final class MilepostPresentationView extends ScrollView {
         text.setPadding(0,dp(2),0,dp(2));
         return text;
     }
-    private void reveal(){
-        LinearLayout panel=panel(body);
-        LinearLayout header=new LinearLayout(host);
-        header.setGravity(android.view.Gravity.CENTER_VERTICAL);
-        panel.addView(header);
-        TextView title=text(header,"Mystery reveal",21);
-        title.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
-        title.setLayoutParams(new LinearLayout.LayoutParams(0,-2,1));
-        androidx.core.view.ViewCompat.setAccessibilityHeading(title,true);
-        Button close=quietButton(header,"Close","milepost_reveal_later",this::later);
-        close.setContentDescription("Close mystery");
-        close.setLayoutParams(new LinearLayout.LayoutParams(-2,-2));
+    private void reveal(LinearLayout panel){
         revealArt=new MilepostArtworkView(host,displayStage());revealArt.enableCipherRing();revealArt.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-        LinearLayout.LayoutParams artParams=new LinearLayout.LayoutParams(-1,dp(190));
+        LinearLayout.LayoutParams artParams=new LinearLayout.LayoutParams(-1,dp(164));
         artParams.topMargin=dp(4);
         artParams.bottomMargin=dp(8);
         panel.addView(revealArt,artParams);
@@ -285,7 +273,7 @@ final class MilepostPresentationView extends ScrollView {
         revealThemes=text(panel,"",16);revealCipher=text(panel,"",20);revealCipher.setTag("milepost_replay_cipher");
         revealCipher.setGravity(android.view.Gravity.CENTER);revealCipher.setTypeface(Typeface.MONOSPACE);revealCipher.setLetterSpacing(0.08f);
         revealCipher.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);revealCipher.setFocusable(false);
-        revealIdentity=text(panel,"",22);revealBiography=text(panel,"",16);
+        revealBiography=text(panel,"",16);
         revealAvailability=text(panel,"",14);
         LinearLayout navigation=new LinearLayout(host);
         panel.addView(navigation,new LinearLayout.LayoutParams(-1,-2));
@@ -294,30 +282,42 @@ final class MilepostPresentationView extends ScrollView {
         revealPrevious.setLayoutParams(new LinearLayout.LayoutParams(0,-2,1));
         LinearLayout.LayoutParams nextParams=new LinearLayout.LayoutParams(0,-2,1);
         nextParams.setMarginStart(dp(8));revealNext.setLayoutParams(nextParams);
-        updateReveal();
         Button motion=quietButton(panel,state.staticMode?"Animation off":"Animation on","milepost_motion",()->{
-            cancelAnimation();state.staticMode=!state.staticMode;store.save(state);render();
+            cancelAnimation();state.staticMode=!state.staticMode;store.save(state);
+            Button control=panel.findViewWithTag("milepost_motion");
+            control.setText(state.staticMode?"Animation off":"Animation on");
+            control.setContentDescription(state.staticMode?"Turn animation on":"Turn animation off");
+            updateReveal();
         });
         motion.setContentDescription(state.staticMode?"Turn animation on":"Turn animation off");
         LinearLayout.LayoutParams motionParams=new LinearLayout.LayoutParams(-2,-2);
         motionParams.gravity=android.view.Gravity.END;
         motion.setLayoutParams(motionParams);
+        motion.setVisibility(snapshot.target()>0?View.VISIBLE:View.GONE);
+        updateReveal();
     }
     /** Next changes only the current composition and native text, retaining the six cards and controls. */
     private void updateReveal(){
         if(revealProgress==null)return;
         int stage=displayStage();revealArt.setStage(stage);
         revealProgress.setText(chapterLabel(stage));
+        revealProgress.setVisibility(snapshot.target()>0?View.VISIBLE:View.GONE);
         revealChapters.show(stage,snapshot.target());
         revealCipher.setText(MilepostPresentation.cipher(stage));revealCipher.setVisibility(stage==0?View.GONE:View.VISIBLE);
         revealThemes.setText(stage>0&&stage<7?themeLabels(stage):"");revealThemes.setVisibility(stage>0&&stage<7?View.VISIBLE:View.GONE);
-        revealIdentity.setText(stage==7?snapshot.card(5).title:"");revealBiography.setText(stage==7?snapshot.card(5).biography:"");
-        revealIdentity.setVisibility(stage==7?View.VISIBLE:View.GONE);revealBiography.setVisibility(stage==7?View.VISIBLE:View.GONE);
-        revealPrevious.setEnabled(canReveal()&&!state.paused&&animation==null&&stage>1);
-        revealNext.setEnabled(canReveal()&&!state.paused&&animation==null&&stage<snapshot.target());
-        boolean locked=stage==snapshot.target()&&stage<7;
+        revealBiography.setText(stage==7?snapshot.card(5).biography:"");
+        revealBiography.setVisibility(stage==7?View.VISIBLE:View.GONE);
+        updateChapterControls();
+        boolean locked=stage>0&&stage==snapshot.target()&&stage<7;
         revealAvailability.setVisibility(locked?View.VISIBLE:View.GONE);
         revealAvailability.setText(locked?"Find another Milepost to unlock the next chapter.":"");
+    }
+    private void updateChapterControls(){
+        if(revealNext==null)return;
+        int stage=displayStage();
+        revealPrevious.setEnabled(canReveal()&&animation==null&&stage>1);
+        revealNext.setEnabled(canReveal()&&animation==null&&stage<snapshot.target());
+        ((View)revealNext.getParent()).setVisibility(snapshot.target()>0&&!recording()?View.VISIBLE:View.GONE);
     }
     private String themeLabels(int stage){return android.text.TextUtils.join(" · ",MilepostPresentation.layers(stage).stream()
         .map(s->s.substring(16).replace('-',' ')).toArray());}

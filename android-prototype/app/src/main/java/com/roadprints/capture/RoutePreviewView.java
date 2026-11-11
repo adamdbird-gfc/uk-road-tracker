@@ -116,7 +116,8 @@ public class RoutePreviewView extends View {
     void setMileposts(MilepostCatalogue.MapLocations markers,java.util.Map<String,MilepostPresentationReader.Discovery> discoveries){
         if(mileposts==null||mileposts.markers!=markers)
             mileposts=new MilepostMapOverlay(markers,getResources().getDisplayMetrics().density);
-        mileposts.setDiscoveries(discoveries);invalidate();
+        if(discoveries!=null)mileposts.setDiscoveries(discoveries);
+        invalidate();
     }
     private void drawMileposts(Canvas canvas){
         if(!milepostsVisible||mileposts==null)return;

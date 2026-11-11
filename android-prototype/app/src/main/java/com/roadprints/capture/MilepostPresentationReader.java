@@ -61,17 +61,23 @@ final class MilepostPresentationReader {
                 receipt==null?"":receipt,from,to,awards);
         }finally{d.endTransaction();}
     }
+    private static volatile Map<String,Discovery> publishedMapDiscoveries;
+
+    static Map<String,Discovery> cachedMapDiscoveries(){return publishedMapDiscoveries;}
+
     static Map<String,Discovery> mapDiscoveries(Context context)throws Exception {
         MilepostIntegration gate=MilepostIntegration.PRODUCTION;
         Map<String,Discovery> found=new HashMap<>();
         try(MilepostDiscoveryLedger ledger=new MilepostDiscoveryLedger(context,gate.database)){
-            if(!gate.verified(ledger))return found;
+            if(!gate.verified(ledger))return publishedMapDiscoveries;
             SQLiteDatabase db=ledger.db();
             db.beginTransaction();
             try {
                 Map<String,Integer> support=new HashMap<>();
                 JSONObject snapshot=MilepostAchievementDeriver.state(context,ledger,gate.user);
-                if(snapshot.getBoolean("current")){
+                boolean current=snapshot.getBoolean("current");
+                if(!current&&publishedMapDiscoveries!=null)return publishedMapDiscoveries;
+                if(current){
                     JSONArray awards=snapshot.getJSONArray("rows");
                     for(int i=0;i<awards.length();i++){
                         JSONObject award=awards.getJSONObject(i);
@@ -98,7 +104,10 @@ final class MilepostPresentationReader {
                                     0,4,support.getOrDefault(after,0)));
                         }
                     }
-                    if(count<16)return found;
+                    if(count<16){
+                        if(current)publishedMapDiscoveries=Collections.unmodifiableMap(found);
+                        return found;
+                    }
                 }
             }finally{db.endTransaction();}
         }

@@ -395,6 +395,11 @@ public class MapActivity extends Activity {
         ScreenDataLoader.execute(()->{
             try{
                 MilepostCatalogue.MapLocations locations=MilepostCatalogue.mapLocations(getApplicationContext());
+                // Static pins are usable even if the ledger is busy or unavailable.
+                mainHandler.post(()->{
+                    if(!isDestroyed()&&!isFinishing()&&mapView==target)
+                        target.setMileposts(locations,MilepostPresentationReader.cachedMapDiscoveries());
+                });
                 java.util.Map<String,MilepostPresentationReader.Discovery> discoveries=MilepostPresentationReader.mapDiscoveries(getApplicationContext());
                 mainHandler.post(()->{
                     milepostsRequested=false;

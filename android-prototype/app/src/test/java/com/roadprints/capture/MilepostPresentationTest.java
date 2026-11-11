@@ -98,20 +98,20 @@ public class MilepostPresentationTest {
     void host(MilepostPresentation.Snapshot s){controller=Robolectric.buildActivity(Activity.class).setup().visible();
         view=new MilepostPresentationView(controller.get(),store,s,(after,done)->done.accept(new MilepostPresentationReader.Page(Collections.emptyList(),false,true)));controller.get().setContentView(view);view.onHostResume();}
     @After public void closeHost(){if(controller!=null)controller.pause().stop().destroy();}
-    @Test public void lockedPersonalitiesAreGroupedWithoutLeakingNames(){
+    @Test public void lockedPersonalitiesAreIndividualWithoutLeakingNames(){
         host(snapshot(0,0,"a"));String all=contents(view);
         for(String name:new String[]{"Mills","Rowe","McColl","Dudgeon","Grimshaw","Harrow","Honour","Seasons","Fossil"})assertFalse(name,all.contains(name));
         assertNull(view.findViewWithTag("milepost_replay"));
         assertNull(view.findViewWithTag("milepost_summary_replay"));
-        for(int i=0;i<5;i++)assertNull(view.findViewWithTag("milepost_card_"+i));
-        assertTrue(contents(view.findViewWithTag("milepost_hidden_personalities")).contains("5 hidden personalities"));
+        String hidden=contents(view.findViewWithTag("milepost_card_0"));
+        assertTrue(hidden.contains("Hidden personality"));
+        for(int i=1;i<5;i++)assertEquals(hidden,contents(view.findViewWithTag("milepost_card_"+i)));
         assertNotNull(view.findViewWithTag("milepost_card_5"));
         assertNotNull(view.findViewWithTag("milepost_card_6"));
     }
     @Test public void unknownPostUnlocksFirstChapterAndFinalIdentityRequiresTheAward(){
         host(snapshot(1,0,"unknown-post"));
         assertTrue(contents(view.findViewWithTag("milepost_card_5")).contains("1 of 7 chapters unlocked"));
-        view.findViewWithTag("milepost_replay").performClick();
         view.next();
         assertEquals(1,view.displayStage());
         assertFalse(view.findViewWithTag("milepost_next").isEnabled());
@@ -128,13 +128,11 @@ public class MilepostPresentationTest {
     @Test public void staticRevealPersistsCompletedStagesAndRestartsPaused(){
         host(snapshot(6,1,"a"));view.replay(true);view.next();view.next();assertEquals(2,store.read().cursor);
         view.onHostPause();view=new MilepostPresentationView(controller.get(),store,snapshot(6,1,"a"),(after,done)->done.accept(new MilepostPresentationReader.Page(Collections.emptyList(),false,true)));controller.get().setContentView(view);view.onHostResume();
-        assertTrue(store.read().paused);assertEquals(2,view.displayStage());view.next();assertEquals(2,view.displayStage());
-        view.replay(false);view.next();assertEquals(3,store.read().cursor);assertEquals(3,store.read().completedStage);
+        assertTrue(store.read().paused);assertEquals(2,view.displayStage());view.next();assertEquals(3,store.read().cursor);assertEquals(3,store.read().completedStage);
         TextView cipher=view.findViewWithTag("milepost_replay_cipher");assertEquals(View.IMPORTANT_FOR_ACCESSIBILITY_NO,cipher.getImportantForAccessibility());assertFalse(cipher.isFocusable());
     }
     @Test public void revisitingChaptersKeepsCompletionAndDoesNotUnlockFutureChapters(){
         host(snapshot(3,1,"chapter-history"));
-        view.findViewWithTag("milepost_replay").performClick();
         for(int stage=1;stage<=3;stage++)view.next();
         View previous=view.findViewWithTag("milepost_previous"),next=view.findViewWithTag("milepost_next");
         assertFalse(next.isEnabled());
@@ -151,7 +149,6 @@ public class MilepostPresentationTest {
         assertTrue(next.performClick());
         assertEquals(2,view.displayStage());
         view.later();
-        view.findViewWithTag("milepost_replay").performClick();
         assertEquals(2,view.displayStage());
         view.next();
         assertFalse(view.findViewWithTag("milepost_next").isEnabled());
@@ -162,16 +159,16 @@ public class MilepostPresentationTest {
         host(snapshot(7,7,"a"));view.replay(true);view.next();assertEquals(1,store.read().cursor);
         context.getSharedPreferences("roadprints_capture_state",0).edit().putBoolean("active",true).commit();
         Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
-        assertTrue(store.read().paused);assertNull(view.findViewWithTag("milepost_next"));
+        assertTrue(store.read().paused);assertFalse(view.findViewWithTag("milepost_next").isShown());
         view.next();view.replay(false);view.skip();view.onHostResume();assertEquals(1,store.read().cursor);assertTrue(store.read().paused);
         context.getSharedPreferences("roadprints_capture_state",0).edit().putBoolean("active",false).commit();
         Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();view.replay(false);view.next();assertEquals(2,store.read().cursor);
     }
     @Test public void laterSkipAndFutureDiscoveriesDoNotCreateAwardsOrLoseCursor(){
         host(snapshot(3,1,"a"));view.replay(true);view.next();view.later();assertTrue(store.read().dismissed);assertEquals(1,store.read().cursor);assertEquals(0,store.read().acknowledgedPosts);
-        view.update(snapshot(4,1,"b"));assertNotNull(view.findViewWithTag("milepost_replay"));assertEquals(1,store.read().cursor);
+        view.update(snapshot(4,1,"b"));assertNotNull(view.findViewWithTag("milepost_card_5"));assertEquals(1,store.read().cursor);
         view.replay(false);view.skip();assertEquals(4,store.read().cursor);assertEquals(4,store.read().acknowledgedPosts);
-        view.update(snapshot(5,1,"c"));assertNotNull(view.findViewWithTag("milepost_replay"));assertEquals(4,store.read().cursor);
+        view.update(snapshot(5,1,"c"));assertNotNull(view.findViewWithTag("milepost_card_5"));assertEquals(4,store.read().cursor);
         assertEquals(1,snapshot(5,1,"c").individuals());
     }
     @Test public void withdrawalsClampVisibleProgressWithoutErasingReplayHistoryAndReinstatementRestores(){
@@ -201,7 +198,7 @@ public class MilepostPresentationTest {
         host(snapshot(1,0,"unknown"));
         view.findViewWithTag("milepost_browse_discoveries").performClick();
         assertTrue(contents(view).contains("Discovery record"));assertEquals(1,store.read().acknowledgedPosts);
-        assertNotNull(view.findViewWithTag("milepost_replay"));assertNotNull(view.findViewWithTag("milepost_browse_discoveries"));
+        assertNotNull(view.findViewWithTag("milepost_card_5"));assertNotNull(view.findViewWithTag("milepost_browse_discoveries"));
     }
     @Test public void replayDoesNotChangeAnyExistingEntitlementOrCelebrationPreferences(){
         String awards=context.getSharedPreferences("roadprints_achievements_v1",0).getAll().toString();

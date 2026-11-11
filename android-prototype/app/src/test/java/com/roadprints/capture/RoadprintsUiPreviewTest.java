@@ -107,13 +107,13 @@ public class RoadprintsUiPreviewTest {
         assertTrue(mystery.contains("3 of 7 chapters unlocked"));
         assertTrue(mystery.contains("IN PROGRESS"));
         assertFalse(mystery.contains("LOCKED"));
-        assertTrue(MilepostPresentationTest.contents(view.findViewWithTag("milepost_hidden_personalities"))
-                .contains("3 hidden personalities"));
+        for(int i=2;i<5;i++)assertTrue(MilepostPresentationTest.contents(view.findViewWithTag("milepost_card_"+i))
+                .contains("Hidden personality"));
+        assertNull(view.findViewWithTag("milepost_replay"));
         if(System.getProperty("roadprints.previewDir")!=null){
             layout(root,dp(412),dp(852));
             save("03-achievement-cards",root);
         }
-        view.findViewWithTag("milepost_replay").performClick();
         view.next();
         view.next();
         view.next();
@@ -158,18 +158,13 @@ public class RoadprintsUiPreviewTest {
             assertNotNull(controls);
             android.widget.RadioGroup modes=(android.widget.RadioGroup)((ViewGroup)controls).getChildAt(1);
             assertEquals(modes.getChildAt(0).getId(),modes.getCheckedRadioButtonId());
-            android.widget.Switch toggle=decor.findViewWithTag("ncn_map_mileposts");
-            assertNotNull(toggle);
+            assertNull(decor.findViewWithTag("ncn_map_mileposts"));
             ViewGroup legendPins=decor.findViewWithTag("map_collection_pins");
             assertFalse(MilepostPresentationTest.contents(controls).contains("Undiscovered Milepost"));
             assertTrue(MilepostPresentationTest.contents(legendPins.getChildAt(0)).contains("Undiscovered Milepost"));
             assertTrue(MilepostPresentationTest.contents(legendPins.getChildAt(1)).contains("Discovered Milepost"));
             assertStaticPinRow((ViewGroup)legendPins.getChildAt(0));
             assertStaticPinRow((ViewGroup)legendPins.getChildAt(1));
-            toggle.setChecked(false);
-            assertFalse(MapLayerPreferences.milepostsVisible(host));
-            assertEquals(View.VISIBLE,legendPins.getVisibility());
-            toggle.setChecked(true);
             assertTrue(MapLayerPreferences.milepostsVisible(host));
             if(System.getProperty("roadprints.previewDir")!=null){
                 ViewGroup decorGroup=(ViewGroup)decor;

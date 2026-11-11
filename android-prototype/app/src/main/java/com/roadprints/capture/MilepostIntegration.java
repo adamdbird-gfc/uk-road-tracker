@@ -54,8 +54,12 @@ final class MilepostIntegration {
         }finally{leaveProcessing();}
     }
     MilepostPresentation.Snapshot read(Context context,MilepostDiscoveryLedger ledger,long acknowledged,BooleanSupplier cancelled)throws Exception {
+        MilepostPresentation.Snapshot snapshot=readPublished(context,ledger,acknowledged,cancelled);
+        return snapshot!=null&&snapshot.current?snapshot:null;
+    }
+    MilepostPresentation.Snapshot readPublished(Context context,MilepostDiscoveryLedger ledger,long acknowledged,BooleanSupplier cancelled)throws Exception {
         if(!allowed(context)||!verified(ledger))return null;
         MilepostPresentation.Snapshot snapshot=MilepostPresentationReader.read(context,ledger,user,acknowledged,cancelled);
-        return snapshot.current&&verified(ledger)?snapshot:null;
+        return !snapshot.receipt.isEmpty()&&verified(ledger)?snapshot:null;
     }
 }

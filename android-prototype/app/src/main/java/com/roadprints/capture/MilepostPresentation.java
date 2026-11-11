@@ -79,7 +79,7 @@ final class MilepostPresentation {
         }
         boolean introduced(){for(int i=0;i<6;i++)if(awards.get(i).ordinal>0)return true;return false;}
         int individuals(){int n=0;for(int i=0;i<6;i++)if(awards.get(i).earned)n++;return n;}
-        int target(){return current?Math.min(stage(count),awards.get(5).earned?7:6):0;}
+        int target(){return Math.min(stage(count),awards.get(5).earned?7:6);}
         Card card(int index){
             Award a=awards.get(index);
             boolean visible=a.earned&&(index!=5||target()==7);

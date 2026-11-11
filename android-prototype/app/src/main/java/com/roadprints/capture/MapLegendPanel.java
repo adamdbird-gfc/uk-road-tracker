@@ -66,14 +66,6 @@ final class MapLegendPanel {
                 ncn.addView(text(activity,"NCN: Purple completed · Solid orange verified-open remaining",14,0xFFCFB5F2,true));
                 RadioGroup activities=new RadioGroup(activity);
                 for(String m:new String[]{"combined","cycling","on_foot"}){RadioButton choice=new RadioButton(activity);choice.setId(View.generateViewId());choice.setText(NcnProgressUi.label(m));choice.setTextColor(Color.WHITE);choice.setMinHeight(dp(activity,48));choice.setButtonTintList(ColorStateList.valueOf(0xFF67D5CC));activities.addView(choice);if(m.equals(NcnProgressStore.mode(activity)))activities.check(choice.getId());choice.setOnClickListener(v->{NcnProgressStore.mode(activity,m);changed.run();});}ncn.addView(activities);
-                if(MilepostCatalogue.READY){
-                    Switch mileposts=new Switch(activity);mileposts.setTag("ncn_map_mileposts");
-                    mileposts.setText("Show Millennium Mileposts");mileposts.setTextColor(Color.WHITE);
-                    mileposts.setMinHeight(dp(activity,48));
-                    mileposts.setChecked(activity.getSharedPreferences(MapLayerPreferences.PREFS,0).getBoolean("MILEPOSTS",true));
-                    mileposts.setOnCheckedChangeListener((button,on)->{MapLayerPreferences.setMilepostsVisible(activity,on);changed.run();});
-                    ncn.addView(mileposts);
-                }
                 body.addView(ncn);
             }
             TextView manage=text(activity,"Manage collections",15,0xFFF7C450,true);manage.setMinHeight(dp(activity,48));manage.setGravity(Gravity.CENTER_VERTICAL);
