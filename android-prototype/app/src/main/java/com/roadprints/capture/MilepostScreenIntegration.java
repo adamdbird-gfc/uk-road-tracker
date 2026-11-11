@@ -30,6 +30,9 @@ final class MilepostScreenIntegration {
         if(!gate.allowed(host)||stopped.get()||container==null||loading)return;
         if(view!=null&&!receipt.equals("assessment-pending")&&!fresh()){clearView();showPending();}
         if(view==null)showPending();
+        // A verified receipt is immutable for the same archive and NCN revisions.
+        // Pending views still poll until the first complete receipt arrives.
+        if(lastReady!=null&&receipt.equals(lastReady.receipt)&&fresh())return;
         loading=true;int token=++request;
         ScreenDataLoader.execute(()->{
             MilepostPresentation.Snapshot result=null;long a=JourneyStore.dataRevision(host),n=NcnProgressStore.revision(host),e=JourneyStore.ncnDataRevision(host);

@@ -63,8 +63,8 @@ final class MilepostPresentationView extends ScrollView {
     @Override protected void onDetachedFromWindow(){onHostPause();unregister();super.onDetachedFromWindow();}
     private void register(){if(!registered){registered=true;capture.registerOnSharedPreferenceChangeListener(captureListener);host.getApplication().registerActivityLifecycleCallbacks(lifecycle);}}
     private void unregister(){if(registered){registered=false;capture.unregisterOnSharedPreferenceChangeListener(captureListener);host.getApplication().unregisterActivityLifecycleCallbacks(lifecycle);}}
-    void onHostResume(){resumed=true;if(recording())pauseReplay();render();}
-    void onHostPause(){resumed=false;request++;loadingDiscoveries=false;pauseReplay();}
+    void onHostResume(){if(resumed)return;resumed=true;if(recording())pauseReplay();render();}
+    void onHostPause(){if(!resumed)return;resumed=false;request++;loadingDiscoveries=false;pauseReplay();}
     private boolean recording(){return capture.getBoolean("active",false);}
     java.util.function.BooleanSupplier freshness=()->true;
     private boolean current(){return snapshot.current&&freshness.getAsBoolean();}
@@ -125,7 +125,7 @@ final class MilepostPresentationView extends ScrollView {
     void later(){cancelAnimation();state.paused=true;state.dismissed=true;state.dismissedReceipt=snapshot.receipt;store.save(state);render();}
     void skip(){
         if(!canReveal())return;
-        cancelAnimation();cancelAnimation();state.cursor=snapshot.target();state.completedStage=Math.max(state.completedStage,state.cursor);
+        cancelAnimation();state.cursor=snapshot.target();state.completedStage=Math.max(state.completedStage,state.cursor);
         state.replaying=false;state.paused=true;state.dismissed=true;state.dismissedReceipt=snapshot.receipt;
         store.acknowledge(state,snapshot);render();
     }
@@ -133,6 +133,8 @@ final class MilepostPresentationView extends ScrollView {
     private void render(){
         cancelAnimation();
         body.removeAllViews();
+        revealArt=null;revealNext=null;revealProgress=null;revealCipher=null;
+        revealIdentity=null;revealBiography=null;revealThemes=null;
         heading(body,"Millennium Mileposts");
         TextView attribution=text(body,"© OpenStreetMap contributors · ODbL 1.0\nhttps://www.openstreetmap.org/copyright",12);
         android.text.util.Linkify.addLinks(attribution,android.text.util.Linkify.WEB_URLS);
