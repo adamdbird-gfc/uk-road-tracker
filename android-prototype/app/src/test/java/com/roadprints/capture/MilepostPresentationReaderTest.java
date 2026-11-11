@@ -60,7 +60,7 @@ public class MilepostPresentationReaderTest {
         // Publish the existing compact Stage 5 result; do not run reconciliation/geometry benchmarks.
         fixture.publishPrepared(1000);
         // Synthetic prepared publication uses a fixture NCN token. Align it with the actual read fence.
-        NcnProgressStore.Snapshot n=NcnProgressStore.current();String token=n.catalogue.version+":"+n.archiveRevision+":"+n.evidenceRevision+":"+NcnProgressStore.revision(fixture.c);
+        String token=MilepostAchievementDeriver.token(NcnProgressStore.current(),NcnProgressStore.revision(fixture.c));
         fixture.ledger.db().execSQL("UPDATE achievement_snapshot SET ncn_token=?",new Object[]{token});
         assertTrue(read(0).current);
         MilepostPresentationReader.Page first=MilepostPresentationReader.page(fixture.c,fixture.ledger,MilepostAchievementsTest.USER,0,()->false);

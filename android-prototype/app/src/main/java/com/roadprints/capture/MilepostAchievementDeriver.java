@@ -89,7 +89,7 @@ final class MilepostAchievementDeriver implements AutoCloseable {
         return NcnProgressStore.enabled(c)&&ncn!=null&&ncn.archiveRevision==archive
                 &&ncn.evidenceRevision==JourneyStore.ncnDataRevision(c)?ncn:null;
     }
-    private static String token(NcnProgressStore.Snapshot ncn,long revision) {
+    static String token(NcnProgressStore.Snapshot ncn,long revision) {
         return MilepostArchiveReader.REVISION+":"+(ncn==null?"pending":ncn.catalogue.version+":"+ncn.archiveRevision+":"+ncn.evidenceRevision+":"+revision);
     }
     static JSONObject state(Context context,MilepostDiscoveryLedger ledger,String user)throws Exception {
