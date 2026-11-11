@@ -37,12 +37,17 @@ final class MilepostIntegration {
             MilepostReconciliationJob.CaptureGuard guard=new MilepostReconciliationJob.CaptureGuard(context,stopped,deadline)){
             MilepostArchiveReader.check(guard);
             if(this==PRODUCTION&&!verified(ledger))MilepostCatalogue.install(context,ledger);
-            if(!verified(ledger)||MilepostAchievementDeriver.state(context,ledger,user).getBoolean("current"))return false;
+            if(!verified(ledger)){
+                if(this==PRODUCTION)throw new java.io.IOException(MilepostCatalogue.BLOCKER);
+                return false;
+            }
+            if(MilepostAchievementDeriver.state(context,ledger,user).getBoolean("current"))return false;
             JourneyStore.prepareArchive(context);
             try(MilepostAchievementDeriver worker=new MilepostAchievementDeriver(context,ledger,user,()->verified(ledger))){
                 BooleanSupplier yield=()->guard.getAsBoolean()||!enabled;
                 while(worker.runSlice(yield,System.currentTimeMillis())){
-                    MilepostArchiveReader.check(yield);if(!verified(ledger))return false;
+                    MilepostArchiveReader.check(yield);
+                    if(!verified(ledger))throw new java.io.IOException(MilepostCatalogue.BLOCKER);
                 }
                 return !MilepostAchievementDeriver.state(context,ledger,user).getBoolean("current");
             }

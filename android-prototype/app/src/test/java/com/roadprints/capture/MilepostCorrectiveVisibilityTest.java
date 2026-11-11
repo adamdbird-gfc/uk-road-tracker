@@ -38,6 +38,12 @@ public class MilepostCorrectiveVisibilityTest {
         MilepostMapOverlay layer=new MilepostMapOverlay(MilepostCatalogue.mapLocations(RuntimeEnvironment.getApplication()),1);
         MilepostMapOverlay.Projection projection=new MilepostMapOverlay.Projection(){public float x(double lon){return 100;}public float y(double lat){return 100;}};
         layer.project(0,0,5,800,600,48,projection);assertEquals(1,layer.size);assertEquals(887,layer.counts[0]);assertEquals(0,layer.hit(100,100,24));
+        String first=layer.markers.identity[0];
+        layer.setDiscoveries(java.util.Collections.singletonMap(first,new MilepostPresentationReader.Discovery(first,"2026-11-11",1)));
+        layer.project(0,0,5,800,600,48,projection);
+        assertEquals(1,layer.discoveredCounts[0]);
+        assertEquals(887,layer.members(0).size());
+        assertEquals(Integer.valueOf(0),layer.members(0).get(0));
         assertEquals(-1,layer.hit(300,300,24));
         layer.project(0,0,6,800,600,48,new MilepostMapOverlay.Projection(){public float x(double lon){return -1;}public float y(double lat){return 100;}});assertEquals(0,layer.size);
     }

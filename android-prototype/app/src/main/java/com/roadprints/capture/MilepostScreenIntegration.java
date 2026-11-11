@@ -27,7 +27,9 @@ final class MilepostScreenIntegration {
     }
     void resume(){if(!gate.allowed(host))return;stopped.set(false);refresh();}
     void refresh(){
-        if(!gate.allowed(host)||stopped.get()||container==null||loading)return;
+        if(!gate.allowed(host)||stopped.get()||container==null)return;
+        if(view!=null)view.updateAssessmentStatus();
+        if(loading)return;
         if(view!=null&&!receipt.equals("assessment-pending")&&!fresh()){clearView();showPending();}
         if(view==null)showPending();
         // A verified receipt is immutable for the same archive and NCN revisions.
@@ -35,15 +37,20 @@ final class MilepostScreenIntegration {
         if(lastReady!=null&&receipt.equals(lastReady.receipt)&&fresh())return;
         loading=true;int token=++request;
         ScreenDataLoader.execute(()->{
-            MilepostPresentation.Snapshot result=null;long a=JourneyStore.dataRevision(host),n=NcnProgressStore.revision(host),e=JourneyStore.ncnDataRevision(host);
+            MilepostPresentation.Snapshot result=null;boolean readFailed=false;long a=JourneyStore.dataRevision(host),n=NcnProgressStore.revision(host),e=JourneyStore.ncnDataRevision(host);
             try(MilepostDiscoveryLedger ledger=new MilepostDiscoveryLedger(host,gate.database);
                 MilepostReconciliationJob.CaptureGuard guard=new MilepostReconciliationJob.CaptureGuard(host,stopped,Long.MAX_VALUE)){
                 result=gate.read(host,ledger,new MilepostPresentationStore(host,gate.user).read().acknowledgedPosts,guard);
-            }catch(Exception unavailable){android.util.Log.w("Roadprints","Milepost screen unavailable",unavailable);}
-            MilepostPresentation.Snapshot ready=result;
+            }catch(java.util.concurrent.CancellationException interrupted){
+                // Capture or a screen transition invalidated this read.
+            }catch(Exception unavailable){
+                readFailed=true;android.util.Log.w("Roadprints","Milepost screen unavailable",unavailable);
+            }
+            MilepostPresentation.Snapshot ready=result;boolean failed=readFailed;
             main.post(()->{
                 if(token!=request||stopped.get()||host.isDestroyed()||host.isFinishing())return;
                 loading=false;
+                if(failed){if(view!=null)view.showAssessmentReadFailure();return;}
                 if(ready==null||a!=JourneyStore.dataRevision(host)||n!=NcnProgressStore.revision(host)||e!=JourneyStore.ncnDataRevision(host)||CaptureService.isActive(host)){if(!receipt.equals("assessment-pending")){clearView();showPending();}return;}
                 archive=a;ncn=n;ncnEvidence=e;lastReady=ready;
                 try{

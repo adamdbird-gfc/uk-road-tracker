@@ -21,6 +21,7 @@ final class MilepostPresentationView extends ScrollView {
     private MilepostPresentation.Snapshot snapshot;
     private final LinearLayout body,cards;
     private LinearLayout cardProgress;
+    private TextView assessmentStatus;
     private TextView revealProgress,revealCipher,revealIdentity,revealBiography,revealThemes;
     private MilepostArtworkView revealArt;
     private android.animation.ValueAnimator animation;
@@ -146,8 +147,10 @@ final class MilepostPresentationView extends ScrollView {
         attribution.setLinkTextColor(GOLD);
         text(body,"Pass within 100 metres on a recorded walk, run or cycle to discover one of "
             +MilepostCatalogue.APPROVED_COUNT+" approved posts.",14);
-        text(body,current()?snapshot.count+" of "+MilepostCatalogue.APPROVED_COUNT+" discovered":
-            "Assessment pending for saved journeys.",14);
+        assessmentStatus=text(body,"",14);
+        updateAssessmentStatus();
+        if(current()&&snapshot.incomplete>0)
+            text(body,snapshot.incomplete+" saved journeys had incomplete evidence or catalogue checks.",14);
         if(recording()){
             text(body,"Reveal paused while recording. Your journey has priority.",16);
             // No summary actions or reveal art while capture is active.
@@ -164,6 +167,15 @@ final class MilepostPresentationView extends ScrollView {
         }
         if(state.replaying&&!state.dismissed&&!recording()&&snapshot.introduced())reveal();
         if(viewingDiscoveries&&!recording())discoveryDetails();
+    }
+    void updateAssessmentStatus(){
+        if(assessmentStatus==null)return;
+        String message=current()?snapshot.count+" of "+MilepostCatalogue.APPROVED_COUNT+" discovered"
+                :MilepostReconciliationJob.status(host);
+        if(!android.text.TextUtils.equals(assessmentStatus.getText(),message))assessmentStatus.setText(message);
+    }
+    void showAssessmentReadFailure(){
+        if(assessmentStatus!=null)assessmentStatus.setText("Could not read the saved Milepost assessment.");
     }
     private void summary(){
         LinearLayout panel=panel(body);heading(panel,"Discovery summary");

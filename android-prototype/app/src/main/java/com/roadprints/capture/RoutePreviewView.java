@@ -83,8 +83,10 @@ public class RoutePreviewView extends View {
     private final MilepostMapOverlay.Projection milepostProjection=new MilepostMapOverlay.Projection(){
         public float x(double lon){return screenX(lon);}public float y(double lat){return screenY(lat);}
     };
-    void setMileposts(MilepostCatalogue.MapLocations markers){
-        mileposts=new MilepostMapOverlay(markers,getResources().getDisplayMetrics().density);invalidate();
+    void setMileposts(MilepostCatalogue.MapLocations markers,java.util.Map<String,MilepostPresentationReader.Discovery> discoveries){
+        if(mileposts==null||mileposts.markers!=markers)
+            mileposts=new MilepostMapOverlay(markers,getResources().getDisplayMetrics().density);
+        mileposts.setDiscoveries(discoveries);invalidate();
     }
     private void drawMileposts(Canvas canvas){
         if(!milepostsVisible||mileposts==null)return;
@@ -95,14 +97,36 @@ public class RoutePreviewView extends View {
         if(!milepostsVisible||mileposts==null)return false;
         int i=mileposts.hit(x,y,dp(24));if(i<0)return false;
         if(mileposts.counts[i]>1&&cameraZoom<MAX_ZOOM){zoomAt(2,x,y);return true;}
-        int marker=mileposts.indices[i];
+        if(mileposts.counts[i]>1){
+            java.util.List<Integer> members=mileposts.members(i);
+            CharSequence[] labels=new CharSequence[members.size()];
+            for(int j=0;j<members.size();j++){
+                int marker=members.get(j);
+                labels[j]=milepostDesign(marker)+" · "+(mileposts.discovered(marker)?"Discovered":"Undiscovered");
+            }
+            new RoadprintsDialog.Builder(getContext()).setTitle("Nearby Millennium Mileposts")
+                .setItems(labels,(dialog,which)->showMilepost(members.get(which))).setNegativeButton("Close",null).show();
+        }else showMilepost(mileposts.indices[i]);
+        return true;
+    }
+    private String milepostDesign(int marker){
+        switch(mileposts.markers.design[marker]){
+            case "mills":return "Fossil Tree";
+            case "rowe":return "Nautical fingerpost";
+            case "mccoll":return "Cockerel";
+            case "dudgeon":return "Tracks";
+            default:return "Millennium Milepost";
+        }
+    }
+    private void showMilepost(int marker){
         double latitude=mileposts.markers.latitude[marker],longitude=mileposts.markers.longitude[marker];
-        String identity=mileposts.markers.identity[marker];
-        new RoadprintsDialog.Builder(getContext()).setTitle("Millennium Milepost")
-            .setMessage(String.format(java.util.Locale.UK,"OSM catalogue location: %.6f, %.6f\n%s\n\nDiscovery requires verified walking, running or cycling within 100 metres.\n© OpenStreetMap contributors · ODbL 1.0",latitude,longitude,identity))
+        MilepostPresentationReader.Discovery discovery=mileposts.discovery(marker);
+        String status=discovery==null?"Undiscovered":"Discovered on "+discovery.date;
+        new RoadprintsDialog.Builder(getContext()).setTitle(milepostDesign(marker))
+            .setMessage(String.format(java.util.Locale.UK,"%s\nOSM catalogue location: %.6f, %.6f\n\nDiscovery requires verified walking, running or cycling within 100 metres.\n© OpenStreetMap contributors · ODbL 1.0",status,latitude,longitude))
             .setPositiveButton("OpenStreetMap",(dialog,which)->getContext().startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW,
                 android.net.Uri.parse("https://www.openstreetmap.org/?mlat="+latitude+"&mlon="+longitude+"#map=18/"+latitude+"/"+longitude))))
-            .setNegativeButton("Close",null).show();return true;
+            .setNegativeButton("Close",null).show();
     }
     private boolean correctionDrawMode;
     private final List<JSONArray> correctionTrace = new ArrayList<>();
@@ -746,7 +770,7 @@ public class RoutePreviewView extends View {
     }
 
     public void setMapLayersFromPreferences(){
-        milepostsVisible=MapLayerPreferences.visible(getContext(),MapLayerPreferences.Layer.MILEPOSTS);
+        milepostsVisible=MapLayerPreferences.milepostsVisible(getContext());
         travelVisible=MapLayerPreferences.visible(getContext(),MapLayerPreferences.Layer.TRAVEL);
         motorwayVisible=MapLayerPreferences.visible(getContext(),MapLayerPreferences.Layer.MOTORWAYS);
         aRoadVisible=MapLayerPreferences.visible(getContext(),MapLayerPreferences.Layer.A_ROADS);

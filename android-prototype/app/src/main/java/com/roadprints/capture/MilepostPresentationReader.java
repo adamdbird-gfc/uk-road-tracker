@@ -61,6 +61,25 @@ final class MilepostPresentationReader {
                 receipt==null?"":receipt,from,to,awards);
         }finally{d.endTransaction();}
     }
+    static Map<String,Discovery> mapDiscoveries(Context context)throws Exception {
+        MilepostIntegration gate=MilepostIntegration.PRODUCTION;
+        Map<String,Discovery> found=new HashMap<>();
+        try(MilepostDiscoveryLedger ledger=new MilepostDiscoveryLedger(context,gate.database)){
+            if(!gate.verified(ledger))return found;
+            SQLiteDatabase db=ledger.db();
+            String after="";
+            for(;;){
+                int count=0;
+                try(Cursor cursor=MilepostAchievements.factPage(db,gate.user,after)){
+                    while(cursor.moveToNext()){
+                        after=cursor.getString(0);count++;
+                        found.put(after,new Discovery(after,calendarDate(cursor.getString(3)),0));
+                    }
+                }
+                if(count<16)return found;
+            }
+        }
+    }
     static final class Discovery {
         final String marker,date,designLabel;final long ordinal;final int design;
         Discovery(String marker,String date,long ordinal){this(marker,date,ordinal,4);}

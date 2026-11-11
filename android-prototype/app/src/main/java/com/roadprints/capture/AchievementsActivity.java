@@ -94,7 +94,7 @@ public class AchievementsActivity extends Activity {
         super.onResume();
         celebrationHostResumed=true;
         mileposts.resume();
-        MilepostReconciliationJob.schedule(this);
+        MilepostReconciliationJob.assessWhileOpen(this);
         loadAchievements();
         evidenceRefreshHandler.removeCallbacks(evidenceRefresh);
         evidenceRefreshHandler.postDelayed(evidenceRefresh,2000);

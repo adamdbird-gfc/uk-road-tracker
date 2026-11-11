@@ -24,11 +24,11 @@ final class MilepostCatalogue {
     /** Reused by map screens. Retain coordinates only, with no source records or aliases. */
     static final class MapLocations {
         final double[] longitude,latitude;
-        final String[] identity;
+        final String[] identity,design;
         MapLocations(List<MilepostDiscoveryLedger.Marker> markers) {
-            longitude=new double[markers.size()];latitude=new double[markers.size()];identity=new String[markers.size()];
+            longitude=new double[markers.size()];latitude=new double[markers.size()];identity=new String[markers.size()];design=new String[markers.size()];
             for(int i=0;i<markers.size();i++) {
-                longitude[i]=markers.get(i).lon;latitude[i]=markers.get(i).lat;identity[i]=markers.get(i).id;
+                longitude[i]=markers.get(i).lon;latitude[i]=markers.get(i).lat;identity[i]=markers.get(i).id;design[i]=markers.get(i).designer;
             }
         }
         int size(){return longitude.length;}

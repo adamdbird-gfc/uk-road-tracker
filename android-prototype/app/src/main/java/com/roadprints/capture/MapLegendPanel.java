@@ -27,10 +27,9 @@ final class MapLegendPanel {
         LinearLayout.LayoutParams lineParams=new LinearLayout.LayoutParams(-1,-2);lineParams.topMargin=dp(activity,4);lineParams.bottomMargin=dp(activity,10);body.addView(lines,lineParams);
         for(MapLayerPreferences.Layer layer:MapLayerPreferences.Layer.values()){
             if(layer==MapLayerPreferences.Layer.BOUNDARIES&&!townMap)continue;
-            if(layer==MapLayerPreferences.Layer.MILEPOSTS&&townMap)continue;
             LinearLayout row=new LinearLayout(activity);row.setGravity(Gravity.CENTER_VERTICAL);row.setPadding(0,dp(activity,4),0,dp(activity,4));
             LinearLayout.LayoutParams sampleParams=new LinearLayout.LayoutParams(dp(activity,40),dp(activity,48));sampleParams.rightMargin=dp(activity,6);
-            row.addView(new Sample(activity,layer.color,layer==MapLayerPreferences.Layer.MILEPOSTS?"?":null,layer==MapLayerPreferences.Layer.BOUNDARIES),sampleParams);
+            row.addView(new Sample(activity,layer.color,null,layer==MapLayerPreferences.Layer.BOUNDARIES),sampleParams);
             LinearLayout labels=new LinearLayout(activity);labels.setOrientation(LinearLayout.VERTICAL);
             labels.addView(text(activity,layer.label,15,0xFF0B1C50,true));labels.addView(text(activity,layer.detail,12,0xFF43516A,false));
             row.addView(labels,new LinearLayout.LayoutParams(0,-2,1));
@@ -55,12 +54,29 @@ final class MapLegendPanel {
                 RadioButton option=new RadioButton(activity);option.setId(View.generateViewId());option.setText(CollectionAccessStore.NONE.equals(id)?"No collection":CollectionAccessStore.name(id));
                 option.setTextColor(Color.WHITE);option.setMinHeight(dp(activity,48));option.setTag("map_collection:"+id);
                 option.setButtonTintList(ColorStateList.valueOf(0xFF67D5CC));group.addView(option);if(id.equals(selected))group.check(option.getId());
-                option.setOnClickListener(v->{CollectionAccessStore.select(activity,id);changed.run();});
+                option.setOnClickListener(v->{CollectionAccessStore.select(activity,id);
+                    View nc=body.findViewWithTag("ncn_map_controls");
+                    if(nc!=null)nc.setVisibility(CollectionAccessStore.NCN.equals(id)?View.VISIBLE:View.GONE);
+                    changed.run();});
             }body.addView(group);
             if(NcnProgressStore.enabled(activity)){
-                body.addView(text(activity,"NCN: Purple completed · Solid orange verified-open remaining",14,0xFFCFB5F2,true));
+                LinearLayout ncn=new LinearLayout(activity);ncn.setOrientation(LinearLayout.VERTICAL);
+                ncn.setTag("ncn_map_controls");
+                ncn.setVisibility(CollectionAccessStore.NCN.equals(selected)?View.VISIBLE:View.GONE);
+                ncn.addView(text(activity,"NCN: Purple completed · Solid orange verified-open remaining",14,0xFFCFB5F2,true));
                 RadioGroup activities=new RadioGroup(activity);
-                for(String m:new String[]{"combined","cycling","on_foot"}){RadioButton choice=new RadioButton(activity);choice.setId(View.generateViewId());choice.setText(NcnProgressUi.label(m));choice.setTextColor(Color.WHITE);choice.setMinHeight(dp(activity,48));choice.setButtonTintList(ColorStateList.valueOf(0xFF67D5CC));activities.addView(choice);if(m.equals(NcnProgressStore.mode(activity)))activities.check(choice.getId());choice.setOnClickListener(v->{NcnProgressStore.mode(activity,m);changed.run();});}body.addView(activities);
+                for(String m:new String[]{"combined","cycling","on_foot"}){RadioButton choice=new RadioButton(activity);choice.setId(View.generateViewId());choice.setText(NcnProgressUi.label(m));choice.setTextColor(Color.WHITE);choice.setMinHeight(dp(activity,48));choice.setButtonTintList(ColorStateList.valueOf(0xFF67D5CC));activities.addView(choice);if(m.equals(NcnProgressStore.mode(activity)))activities.check(choice.getId());choice.setOnClickListener(v->{NcnProgressStore.mode(activity,m);changed.run();});}ncn.addView(activities);
+                if(MilepostCatalogue.READY){
+                    Switch mileposts=new Switch(activity);mileposts.setTag("ncn_map_mileposts");
+                    mileposts.setText("Show Millennium Mileposts");mileposts.setTextColor(Color.WHITE);
+                    mileposts.setMinHeight(dp(activity,48));
+                    mileposts.setChecked(activity.getSharedPreferences(MapLayerPreferences.PREFS,0).getBoolean("MILEPOSTS",true));
+                    mileposts.setOnCheckedChangeListener((button,on)->{MapLayerPreferences.setMilepostsVisible(activity,on);changed.run();});
+                    ncn.addView(mileposts);
+                    milepostPin(activity,ncn,false,"Undiscovered Milepost");
+                    milepostPin(activity,ncn,true,"Discovered Milepost");
+                }
+                body.addView(ncn);
             }
             TextView manage=text(activity,"Manage collections",15,0xFFF7C450,true);manage.setMinHeight(dp(activity,48));manage.setGravity(Gravity.CENTER_VERTICAL);
             manage.setOnClickListener(v->activity.startActivity(new Intent(activity,CollectionsActivity.class)));body.addView(manage);
@@ -74,6 +90,16 @@ final class MapLegendPanel {
             body.addView(text(activity,"Gold marks a visited venue. A gold cluster contains at least one visited venue. Tap a cluster to zoom or choose a venue.",12,0xFFB9C5D8,false));
         }
         return RoadprintsDialog.show(activity,"Legend & map layers","Changes affect this map's display only.",body,null,null,null,null);
+    }
+    private static void milepostPin(Activity a,LinearLayout parent,boolean discovered,String label){
+        LinearLayout row=new LinearLayout(a);row.setGravity(Gravity.CENTER_VERTICAL);
+        View sample=new View(a){
+            private final MilepostMapOverlay.MarkerArt art=new MilepostMapOverlay.MarkerArt(a.getResources().getDisplayMetrics().density);
+            @Override protected void onDraw(Canvas canvas){art.draw(canvas,getWidth()/2f,getHeight()/2f,discovered);}
+        };
+        sample.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        row.addView(sample,new LinearLayout.LayoutParams(dp(a,62),dp(a,48)));
+        row.addView(text(a,label,14,Color.WHITE,false));parent.addView(row);
     }
     private static void pin(Activity a,LinearLayout parent,String label,int color,String symbol){
         LinearLayout row=new LinearLayout(a);row.setGravity(Gravity.CENTER_VERTICAL);row.addView(new Sample(a,color,symbol,false),new LinearLayout.LayoutParams(dp(a,62),dp(a,48)));

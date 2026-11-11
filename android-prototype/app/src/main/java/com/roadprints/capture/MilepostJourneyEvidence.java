@@ -139,6 +139,7 @@ final class MilepostJourneyEvidence {
         final String id,date,end,mode,source,token;
         final MilepostProximity.Outcome problem;
         final JSONArray samples,history;
+        private java.util.List<MilepostProximity.Segment> supportedSegments;
         Archive(String id,String date,String end,String mode,String source,String token,MilepostProximity.Outcome problem,JSONArray samples,JSONArray history){
             this.id=id;this.date=date;this.end=end;this.mode=mode;this.source=source;this.token=token;this.problem=problem;this.samples=samples;this.history=history;
         }
@@ -159,45 +160,54 @@ final class MilepostJourneyEvidence {
         }
         public Iterable<MilepostProximity.Segment> segments(){
             if(problem!=null)return Collections.emptyList();
-            java.util.List<FootTraceValidator.Sample> observations=new java.util.ArrayList<>(samples.length());
-            for(int i=0;i<samples.length();i++)observations.add(sample(samples,i));
-            return ()->new Iterator<MilepostProximity.Segment>(){
-                int at=1;MilepostProximity.Segment next;
-                public boolean hasNext(){
-                    while(next==null&&at<observations.size()){
-                        int i=at++;
-                        FootTraceValidator.Sample a=observations.get(i-1),b=observations.get(i);
-                        // Use time as well as point count: a normal 1Hz run needs
-                        // more than three fixes to establish local movement.
-                        int first=i-1,last=i;
-                        while(first>0&&i-first<96&&a.time-observations.get(first-1).time<=45_000)first--;
-                        while(last+1<observations.size()&&last-i<96&&observations.get(last+1).time-b.time<=45_000)last++;
-                        if(last-first<2){if(first>0)first--;else if(last+1<observations.size())last++;}
-                        java.util.List<FootTraceValidator.Sample> local=new java.util.ArrayList<>();
-                        boolean cycle="cycling".equals(mode),vehicle=false;
-                        for(int k=first;k<=last;k++){
-                            FootTraceValidator.Sample p=observations.get(k);
-                            if(!cycle)vehicle|=p.speed>=6;
-                            if(local.isEmpty()||p.time-local.get(local.size()-1).time>=10_000||k==last)local.add(p);
-                        }
-                        if(vehicle||!CaptureMovementEvidence.hasJourneyMovement(local,mode))continue;
-                        if("cycling".equals(mode)){
-                            // Generic non-foot plausibility admits cars; retain cycling speed/provenance too.
-                            boolean cycling=cycleActivitySupports(a.time,b.time);
-                            for(FootTraceValidator.Sample p:local)cycling&=Double.isFinite(p.speed)&&p.speed>=.8&&p.speed<=12;
-                            double elapsed=(b.time-a.time)/1000.0;
-                            cycling&=FootTraceValidator.metres(a,b)<=12*elapsed+Math.min(50,a.accuracy+b.accuracy);
-                            if(!cycling)continue;
-                        }
-                        // Local movement support does not make a stationary endpoint edge travel.
-                        if(FootTraceValidator.metres(a,b)<=0)continue;
-                        next=new MilepostProximity.Segment(new MilepostProximity.Point(a.lon,a.lat),
-                                new MilepostProximity.Point(b.lon,b.lat),0,i-1,i);
+            if(supportedSegments==null){
+                java.util.List<MilepostProximity.Segment> segments=new java.util.ArrayList<>();
+                for(SegmentIterator it=new SegmentIterator();it.hasNext();)segments.add(it.next());
+                supportedSegments=Collections.unmodifiableList(segments);
+            }
+            return supportedSegments;
+        }
+        private final class SegmentIterator implements Iterator<MilepostProximity.Segment> {
+            final java.util.List<FootTraceValidator.Sample> observations=new java.util.ArrayList<>(samples.length());
+            SegmentIterator(){
+                for(int i=0;i<samples.length();i++)observations.add(sample(samples,i));
+            }
+            int at=1;MilepostProximity.Segment next;
+            public boolean hasNext(){
+                while(next==null&&at<observations.size()){
+                    if(Thread.currentThread().isInterrupted())throw new java.util.concurrent.CancellationException();
+                    int i=at++;
+                    FootTraceValidator.Sample a=observations.get(i-1),b=observations.get(i);
+                    // Use time as well as point count: a normal 1Hz run needs
+                    // more than three fixes to establish local movement.
+                    int first=i-1,last=i;
+                    while(first>0&&i-first<96&&a.time-observations.get(first-1).time<=45_000)first--;
+                    while(last+1<observations.size()&&last-i<96&&observations.get(last+1).time-b.time<=45_000)last++;
+                    if(last-first<2){if(first>0)first--;else if(last+1<observations.size())last++;}
+                    java.util.List<FootTraceValidator.Sample> local=new java.util.ArrayList<>();
+                    boolean cycle="cycling".equals(mode),vehicle=false;
+                    for(int k=first;k<=last;k++){
+                        FootTraceValidator.Sample p=observations.get(k);
+                        if(!cycle)vehicle|=p.speed>=6;
+                        if(local.isEmpty()||p.time-local.get(local.size()-1).time>=10_000||k==last)local.add(p);
                     }
-                    return next!=null;
+                    if(vehicle||!CaptureMovementEvidence.hasJourneyMovement(local,mode))continue;
+                    if("cycling".equals(mode)){
+                        // Generic non-foot plausibility admits cars; retain cycling speed/provenance too.
+                        boolean cycling=cycleActivitySupports(a.time,b.time);
+                        for(FootTraceValidator.Sample p:local)cycling&=Double.isFinite(p.speed)&&p.speed>=.8&&p.speed<=12;
+                        double elapsed=(b.time-a.time)/1000.0;
+                        cycling&=FootTraceValidator.metres(a,b)<=12*elapsed+Math.min(50,a.accuracy+b.accuracy);
+                        if(!cycling)continue;
+                    }
+                    // Local movement support does not make a stationary endpoint edge travel.
+                    if(FootTraceValidator.metres(a,b)<=0)continue;
+                    next=new MilepostProximity.Segment(new MilepostProximity.Point(a.lon,a.lat),
+                            new MilepostProximity.Point(b.lon,b.lat),0,i-1,i);
                 }
-                public MilepostProximity.Segment next(){if(!hasNext())throw new NoSuchElementException();MilepostProximity.Segment n=next;next=null;return n;}
-            };
+                return next!=null;
+            }
+            public MilepostProximity.Segment next(){if(!hasNext())throw new NoSuchElementException();MilepostProximity.Segment n=next;next=null;return n;}
         }
     }
 }

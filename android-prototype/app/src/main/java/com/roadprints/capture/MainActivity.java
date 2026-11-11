@@ -142,6 +142,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        MilepostReconciliationJob.assessWhileOpen(this);
         updateDebugLink();
         if (CaptureService.isArmed(this) && getSharedPreferences("roadprints_capture_state",MODE_PRIVATE)
                 .contains("tracking_blocked")) {

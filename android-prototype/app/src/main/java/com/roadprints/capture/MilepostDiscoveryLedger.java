@@ -258,7 +258,8 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
         for(String field:new String[]{e.source(),e.validationRevision(),e.mode()})
             if(field!=null&&field.length()>512)throw new IllegalArgumentException("Oversized evidence metadata");
         MilepostArchiveReader.check(cancelled);
-        MilepostCandidateBounds bounds=spatial?MilepostCandidateBounds.of(bounded(e),cancelled):null;
+        MilepostProximity.Evidence projected=bounded(e);
+        MilepostCandidateBounds bounds=spatial?MilepostCandidateBounds.of(projected,cancelled):null;
         String selection=bounds==null?"1=1":bounds.sql();
         String markerTable=spatial?"marker INDEXED BY marker_bounds":"marker";
         List<Marker> page=new ArrayList<>();
@@ -274,7 +275,7 @@ final class MilepostDiscoveryLedger implements AutoCloseable {
             if(cancelled.getAsBoolean() || Thread.currentThread().isInterrupted())throw new CancellationException();
             boolean validDate=dated&&event>=m.from&&end<=m.until;
             MilepostProximity.Marker target=new MilepostProximity.Marker(m.id,new MilepostProximity.Point(m.lon,m.lat),m.eligible&&validDate,Integer.toString(revision));
-            results.add(MilepostProximity.assess(target,bounded(e),MilepostProximity.Policy.V1,cancelled));
+            results.add(MilepostProximity.assess(target,projected,MilepostProximity.Policy.V1,cancelled));
         }
         final boolean sourceDated=dated;
         final long sourceEvent=event,sourceEnd=end;
