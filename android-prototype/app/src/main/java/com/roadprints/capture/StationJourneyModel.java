@@ -65,7 +65,7 @@ final class StationJourneyModel {
         if (station==null) return null;
         // A station dwell can be established by spatially stable fixes even when
         // Android never delivers STILL. Preserve the actual arrival boundary.
-        if(speed<=.5 && accuracy<=35) {
+        if(nearby!=null && nearby.code.equals(station.code) && speed<=.5 && accuracy<=35) {
             if(quietSince==0 || gap>120000 || RailStationCatalog.metres(lat,lon,quietLat,quietLon)>35) {
                 quietSince=time; quietLat=lat; quietLon=lon; quietIndex=index;
             }
@@ -108,9 +108,11 @@ final class StationJourneyModel {
                 && time-arrivalTime>=60000 && !"train".equals(mode)) {
             if ("walking".equals(mode) || "running".equals(mode))
                 return new Decision(Math.max(1,arrivalIndex),Math.max(1,departureIndex),"train",station.code,"station_boarding_departure");
-            // Origin, dwell, activity and sustained departure support a train suggestion.
-            // Existing transport confirmation remains required, including possible car/bus departures.
-            return new Decision(Math.max(1,departureIndex),Math.max(1,departureIndex),"train",station.code,"station_departure_train_suggestion");
+            // An unclassified recording may already be aboard the same train.
+            // The station supports a mode suggestion without a change of vehicle.
+            Decision suggestion=new Decision(-1,-1,"train",station.code,"station_departure_train_suggestion");
+            clearStation();
+            return suggestion;
         }
         // Walking past the station must not leave a stale boarding candidate behind.
         if (!"train".equals(mode) && fromStation>station.radius+200 && speed<3 && fastSince==0 && !departureConfirmed) clearStation();
@@ -127,8 +129,8 @@ final class StationJourneyModel {
     boolean holdStill(String mode, long now) {
         // A label is not rail-location evidence. Keep real intermediate station stops,
         // but do not hold a train-labelled recording at an unrelated destination.
-        return ("train".equals(mode) && station!=null)
-                || (station!=null && stopEvidence && now-arrivalTime<45*60000L);
+        return ("train".equals(mode) && station!=null && now-lastTime<=120_000L)
+                || (!"train".equals(mode) && station!=null && stopEvidence && now-arrivalTime<45*60000L);
     }
     boolean ownsModeChange(String mode) {
         return "train".equals(mode) || (station!=null && stopEvidence && ("walking".equals(mode)||"running".equals(mode)));

@@ -81,12 +81,42 @@ public class StationJourneyModelTest {
         assertEquals(1,d.endIndex); assertEquals(3,d.startIndex);
         assertTrue(d.startIndex>d.endIndex); // waiting GPS is retained outside the matched walk
     }
-    @Test public void unknownDepartureSeparatesWaitingFromTrainTravel() {
+    @Test public void unknownDepartureSuggestsTrainWithoutChangingTheRecordingBoundary() {
         StationJourneyModel m=model(); fix(m,"unknown",0,1000,0,0); m.activity("vehicle",2000,0);
         fix(m,"unknown",1,71000,300,10);
         StationJourneyModel.Decision d=fix(m,"unknown",2,111000,850,20);
-        assertNotNull(d); assertEquals(1,d.endIndex); assertEquals(1,d.startIndex); assertEquals("train",d.nextMode);
+        assertNotNull(d); assertEquals(-1,d.endIndex); assertEquals(-1,d.startIndex); assertEquals("train",d.nextMode);
     }
+    @Test public void unknownTrainThroughAnIntermediateStationKeepsItsOriginalRecording() {
+        StationJourneyModel model=model();
+        model.activity("vehicle",1000,0);
+        fix(model,"unknown",0,1000,-1200,18);
+        fix(model,"unknown",1,41000,-500,17);
+        fix(model,"unknown",2,71000,-30,0);
+        fix(model,"unknown",3,101000,-30,0);
+        model.sample("unknown",4,120000,LAT,LON,110,0); // Rejected degradation.
+        fix(model,"unknown",5,131000,-30,0);
+        fix(model,"unknown",6,151000,100,8);
+        fix(model,"unknown",7,171000,390,12);
+        StationJourneyModel.Decision decision=fix(model,"unknown",8,191000,850,20);
+        assertNotNull(decision);
+        assertEquals("train",decision.nextMode);
+        assertEquals(-1,decision.endIndex);
+        assertEquals("TEST",decision.stationCode);
+        assertFalse(model.holdStill("train",191000));
+    }
+
+    @Test public void distantStillnessCannotConfirmAnOldStationOrHoldATrainAfterSilence() {
+        StationJourneyModel model=model();
+        fix(model,"unknown",0,1000,0,0);
+        fix(model,"unknown",1,31000,800,0);
+        fix(model,"unknown",2,91000,800,0);
+        assertFalse(model.holdStill("unknown",91000));
+        fix(model,"train",3,101000,0,0);
+        assertTrue(model.holdStill("train",101000));
+        assertFalse(model.holdStill("train",101000+49*3600000L));
+    }
+
     @Test public void walkingPastStationDoesNotSplitOrLeaveBoardingEvidence() {
         StationJourneyModel m=model(); m.activity("walking",1000,0);
         assertNull(fix(m,"walking",0,1000,-100,1));

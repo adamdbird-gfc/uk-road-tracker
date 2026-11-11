@@ -769,51 +769,56 @@ public final class JourneyStore {
     }
 
     public static synchronized void updateTitle(Context context, String journeyId, String title) {
-        migrateLegacy(context);
-        File file = new File(context.getFilesDir(), PREFIX + journeyId + SUFFIX);
-        JSONObject journey = read(file);
-        if (journey == null) return;
-        try {
-            String trimmed = title == null ? "" : title.trim();
-            if (trimmed.length() > 0) journey.put("title", trimmed);
-            else journey.remove("title");
-            journey.put("revision", journey.optInt("revision", 1) + 1);
-            save(context, journey);
-        } catch (Exception error) {
-            throw new IllegalStateException("Could not update journey title", error);
-        }
+        saveDetails(context, journeyId, true, title, null);
     }
 
     public static synchronized void updateMode(Context context, String journeyId, String mode) {
+        saveDetails(context, journeyId, false, null, mode);
+    }
+
+    static synchronized void updateDetails(Context context, String journeyId, String title, String changedMode) {
+        saveDetails(context, journeyId, true, title, changedMode);
+    }
+
+    private static void saveDetails(Context context, String journeyId, boolean updateTitle, String title, String mode) {
         migrateLegacy(context);
         File file = new File(context.getFilesDir(), PREFIX + journeyId + SUFFIX);
         JSONObject journey = read(file);
         if (journey == null) return;
         try {
-            if (!mode.equals(journey.optString("mode"))) {
-                journey.remove("processing_result"); journey.remove("last_match_attempt");
-                journey.remove("walking_outcome"); journey.remove("error_summary"); journey.remove("processing_completed_at");
-                journey.put("processing_status", "pending");
-                JSONObject stages = new JSONObject().put("import", "complete")
-                        .put("road_matching", "not_required").put("foot_matching", "not_required")
-                        .put("cycle_matching", "not_required");
-                if (MatchingCoordinator.isCycle(mode) || "driving".equals(mode) || "bus".equals(mode)
-                        || "walking".equals(mode) || "running".equals(mode) || "pedestrian".equals(mode))
-                    stages.put(MatchingCoordinator.matchingStage(mode), "pending");
-                journey.put("processing", stages); journey.put("stage_statuses", new JSONObject(stages.toString()));
+            if (updateTitle) {
+                String trimmed = title == null ? "" : title.trim();
+                if (trimmed.isEmpty()) journey.remove("title");
+                else journey.put("title", trimmed);
             }
-            JSONArray changes=journey.optJSONArray("transport_changes");if(changes==null)changes=new JSONArray();
-            JSONArray bounded=new JSONArray();for(int i=Math.max(0,changes.length()-15);i<changes.length();i++)bounded.put(changes.opt(i));
-            bounded.put(new JSONObject().put("at_utc",java.time.Instant.now().toString()).put("from",journey.optString("mode","unknown"))
-                    .put("to",mode).put("source","manual_confirmation"));
-            journey.put("transport_changes",bounded);
-            journey.put("mode", mode);
+            if (mode != null) applyModeEdit(journey, mode);
             journey.put("revision", journey.optInt("revision", 1) + 1);
-            journey.put("transport_confirmation", "confirmed");
             save(context, journey);
         } catch (Exception error) {
-            throw new IllegalStateException("Could not update journey mode", error);
+            throw new IllegalStateException("Could not save journey details", error);
         }
+    }
+
+    private static void applyModeEdit(JSONObject journey, String mode) throws org.json.JSONException {
+        if (!mode.equals(journey.optString("mode"))) {
+            journey.remove("processing_result"); journey.remove("last_match_attempt");
+            journey.remove("walking_outcome"); journey.remove("error_summary"); journey.remove("processing_completed_at");
+            journey.put("processing_status", "pending");
+            JSONObject stages = new JSONObject().put("import", "complete")
+                    .put("road_matching", "not_required").put("foot_matching", "not_required")
+                    .put("cycle_matching", "not_required");
+            if (MatchingCoordinator.isCycle(mode) || "driving".equals(mode) || "bus".equals(mode)
+                    || "walking".equals(mode) || "running".equals(mode) || "pedestrian".equals(mode))
+                stages.put(MatchingCoordinator.matchingStage(mode), "pending");
+            journey.put("processing", stages); journey.put("stage_statuses", new JSONObject(stages.toString()));
+        }
+        JSONArray changes=journey.optJSONArray("transport_changes");if(changes==null)changes=new JSONArray();
+        JSONArray bounded=new JSONArray();for(int i=Math.max(0,changes.length()-15);i<changes.length();i++)bounded.put(changes.opt(i));
+        bounded.put(new JSONObject().put("at_utc",java.time.Instant.now().toString()).put("from",journey.optString("mode","unknown"))
+                .put("to",mode).put("source","manual_confirmation"));
+        journey.put("transport_changes",bounded);
+        journey.put("mode", mode);
+        journey.put("transport_confirmation", "confirmed");
     }
 
     private static void pruneInsufficientTimelineJourneys(Context context) {

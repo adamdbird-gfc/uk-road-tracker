@@ -4,6 +4,10 @@ import android.app.AlertDialog;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import android.widget.LinearLayout;
 import org.json.*;
 import org.junit.Test;
@@ -48,6 +52,68 @@ public class ContextualJourneyActionsTest {
         assertTrue(FerryJourneyEvidence.reviewAvailable(road("driving").put("ferry_recovery",
                 new JSONObject().put("source_id","original").put("backup_key","original-r1"))));
     }
+    @Test public void titleSaveDoesNotWaitForTheArchiveLockOnTheMainThread()throws Exception {
+        android.content.Context app=RuntimeEnvironment.getApplication();
+        Shadows.shadowOf(RuntimeEnvironment.getApplication()).grantPermissions("com.roadprints.capture.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION");
+        JourneyListActivity screen=Robolectric.buildActivity(JourneyListActivity.class).create().get();
+        JSONObject journey=road("unknown").put("transport_confirmation","required").put("revision",1);
+        JourneyStore.save(app,journey);
+        java.lang.reflect.Method show=JourneyListActivity.class.getDeclaredMethod("showDetails",JSONObject.class);
+        show.setAccessible(true);
+        show.invoke(screen,journey);
+        AlertDialog dialog=ShadowAlertDialog.getLatestAlertDialog();
+        View root=dialog.getWindow().getDecorView();
+        EditText title=find(root,EditText.class,null);
+        Button save=find(root,Button.class,"SAVE CHANGES");
+        assertNotNull(title);
+        assertNotNull(save);
+        title.setText("New title");
+
+        CountDownLatch locked=new CountDownLatch(1), release=new CountDownLatch(1), unlocked=new CountDownLatch(1);
+        Thread archiveReader=new Thread(() -> {
+            synchronized (JourneyStore.class) {
+                locked.countDown();
+                try { release.await(4,TimeUnit.SECONDS); }
+                catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); }
+                unlocked.countDown();
+            }
+        });
+        archiveReader.start();
+        try {
+            assertTrue(locked.await(4,TimeUnit.SECONDS));
+            assertTrue(save.performClick());
+            assertEquals("Save returned while the archive was still busy",1,unlocked.getCount());
+        } finally {
+            release.countDown();
+            archiveReader.join();
+        }
+
+        java.lang.reflect.Field edits=JourneyListActivity.class.getDeclaredField("journeyEdits");
+        edits.setAccessible(true);
+        ((ExecutorService)edits.get(screen)).submit(() -> {}).get(5,TimeUnit.SECONDS);
+        Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
+        JSONObject saved=JourneyStore.get(app,"ordinary");
+        assertEquals("New title",saved.getString("title"));
+        assertEquals("required",saved.getString("transport_confirmation"));
+        assertFalse(saved.has("transport_changes"));
+        assertEquals(2,saved.getInt("revision"));
+        dialog.dismiss();
+        screen.finish();
+    }
+
+    private static <T extends View> T find(View view,Class<T> type,String buttonText) {
+        if(type.isInstance(view)&&(buttonText==null||buttonText.contentEquals(((Button)view).getText())))
+            return type.cast(view);
+        if(view instanceof ViewGroup) {
+            ViewGroup children=(ViewGroup)view;
+            for(int i=0;i<children.getChildCount();i++) {
+                T found=find(children.getChildAt(i),type,buttonText);
+                if(found!=null)return found;
+            }
+        }
+        return null;
+    }
+
     @Test public void detailUsesEvidenceGateAndSpacesEveryAction()throws Exception {
         Shadows.shadowOf(RuntimeEnvironment.getApplication()).grantPermissions("com.roadprints.capture.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION");
         JourneyListActivity screen=Robolectric.buildActivity(JourneyListActivity.class).create().get();

@@ -218,6 +218,9 @@ public class CaptureService extends Service {
             }
         }
     };
+    private final Runnable visitSamplingTimeout = () -> {
+        if (isArmed(this) && !isActive(this) && candidateMode == null) refreshSamplingSubscriptions();
+    };
     private final Runnable candidateTimeout = () -> {
         if (candidateMode != null) cancelStartCandidate(candidatePoints.size() < 2
                 ? "Journey could not be confirmed: insufficient location updates."
@@ -542,9 +545,18 @@ public class CaptureService extends Service {
 
         if(isActive(this)&&"ferry".equals(mode)&&activityType!=DetectedActivity.STILL)return;
         String detectedMode = modeForActivity(activityType);
-        if (!isActive(this) && activeVisit() != null) {
+        if (!isActive(this) && detectedMode != null && activeVisit() != null) {
             visitActivityHint=detectedMode;visitActivityHintAt=wallClock.millis();
             clearCandidateStillness();
+            // A place visit still needs timely fixes when Android detects movement.
+            // Keep the place's evidence rules, but sample as promptly as an ordinary start candidate.
+            try {
+                requestLocationUpdatesForMode(detectedMode, true);
+                handler.removeCallbacks(visitSamplingTimeout);
+                handler.postDelayed(visitSamplingTimeout, CaptureStartGate.START_CANDIDATE_TIMEOUT_MS);
+            } catch (SecurityException ignored) {
+                MovementDiagnostics.recordEvent(this, "visit_sampling_unavailable", "Location permission required.");
+            }
             broadcastUpdate("At a place; checking for departure or sustained activity...");
             return;
         }
@@ -721,11 +733,22 @@ public class CaptureService extends Service {
                 } catch(org.json.JSONException ignored) {}
             }
         }
-        if(!visitPoints.isEmpty()) {
-            long last=visitPoints.get(visitPoints.size()-1).getTime();
-            if(location.getTime()<=last || location.getTime()-last<3_000L)return true;
-            if(location.getTime()-last>120_000L)visitPoints.clear();
+        Location previous = visitPoints.isEmpty() ? null : visitPoints.get(visitPoints.size()-1);
+        if (previous != null && location.getTime()-previous.getTime()<3_000L) return true;
+        FootTraceValidator.Sample fix = footSample(location, 0);
+        long lastSupport = previous == null ? PlaceVisitEvidence.confirmedAt(stop) : previous.getTime();
+        if (PlaceVisitEvidence.lostContinuity(stop, fix, lastSupport)) {
+            String movementHint = wallClock.millis()-visitActivityHintAt<=120_000L ? visitActivityHint : null;
+            retireVisit(stop);
+            clearDepartureAnchor();
+            idleStillness.reset();
+            MovementDiagnostics.recordEvent(this,"place_visit_continuity_lost",
+                    "Reliable location outside an unobserved visit; resuming ordinary movement detection.");
+            if (movementHint != null) beginStartCandidate(movementHint);
+            else refreshDiagnosticLocationUpdates();
+            return false;
         }
+        if (previous != null && location.getTime()-previous.getTime()>120_000L) visitPoints.clear();
         visitPoints.add(new Location(location));
         while(visitPoints.size()>360 || visitPoints.size()>1
                 && location.getTime()-visitPoints.get(0).getTime()>1_200_000L)visitPoints.remove(0);
@@ -747,9 +770,8 @@ public class CaptureService extends Service {
         catch(org.json.JSONException ignored) {departurePlace=null;}
         cancelStartCandidate(null);
         automaticCapture=true;
-        getSharedPreferences(STATE_PREFS,MODE_PRIVATE).edit().putString("departed_visit_id",stop.optString("id"))
-                .remove("visit_buffer").apply();
-        visitPoints.clear();visitActivityHint=null;idleStillness.reset();
+        retireVisit(stop);
+        idleStillness.reset();
         MovementDiagnostics.recordEvent(this,"place_visit_departure",decision.reason+"; mode="+decision.mode);
         activateCapture(decision.mode,Instant.ofEpochMilli(seed.get(0).getTime()).toString(),seed);
         if(decision.nextMode!=null && isActive(this)) {
@@ -758,6 +780,16 @@ public class CaptureService extends Service {
             finishCapture();
         }
         return true;
+    }
+
+    private void retireVisit(JSONObject stop) {
+        getSharedPreferences(STATE_PREFS,MODE_PRIVATE).edit().putString("departed_visit_id",stop.optString("id"))
+                .remove("visit_buffer").apply();
+        visitPoints.clear();
+        visitPointStopId="";
+        visitActivityHint=null;
+        lastVisitBufferSave=0;
+        handler.removeCallbacks(visitSamplingTimeout);
     }
 
     private void restoreVisitBuffer(String stopId) {
@@ -1197,7 +1229,9 @@ public class CaptureService extends Service {
             // A previous confirmed station arrival supplies origin context,
             // while only new movement belongs to this journey's geometry.
             if(departureAnchor!=null && departureAnchor.getTime()>0 && !points.isEmpty()
-                    && points.get(0).getTime()-departureAnchor.getTime()<3*60*60*1000L) {
+                    && points.get(0).getTime()>departureAnchor.getTime()
+                    && points.get(0).getTime()-departureAnchor.getTime()<3*60*60*1000L
+                    && departureAnchor.distanceTo(points.get(0))<=250) {
                 stationModel.sample("unknown",0,departureAnchor.getTime(),departureAnchor.getLatitude(),
                         departureAnchor.getLongitude(),departureAnchor.getAccuracy(),0);
                 stationModel.activity("still",departureAnchor.getTime(),0);
@@ -1226,10 +1260,12 @@ public class CaptureService extends Service {
         if (decision==null) return;
         stationEvidenceReason=decision.reason; stationEvidenceCode=decision.stationCode;
         MovementDiagnostics.recordEvent(this,"station_transition_confirmed",
-                "reason="+decision.reason+"; station="+decision.stationCode+"; next_mode="+decision.nextMode);
+                "reason="+decision.reason+"; station="+decision.stationCode+"; next_mode="+decision.nextMode
+                        +"; boundary_index="+decision.endIndex);
         clearPendingActivityMode();
         if (decision.endIndex<0) {
             mode=decision.nextMode;
+            captureClassifiedAt=Instant.now(wallClock).toString();
             getSharedPreferences(STATE_PREFS,MODE_PRIVATE).edit().putString(STATE_MODE,mode).apply();
             return;
         }
@@ -1327,6 +1363,7 @@ public class CaptureService extends Service {
         final List<Location> savedNextPoints = nextCapturePoints == null ? null : new ArrayList<>(nextCapturePoints);
         final String savedStationReason = stationEvidenceReason;
         final String savedStationCode = stationEvidenceCode;
+        final String stationEndReason = stationBoundary ? savedStationReason : null;
         final RailStationCatalog savedStationCatalog = stationCatalog;
         final String savedContextReason=contextReason;
         final JSONObject savedDeparturePlace=departurePlace;
@@ -1493,7 +1530,7 @@ public class CaptureService extends Service {
                 journey.put("activity_recognition_history",new JSONArray(savedActivityEvidence));
                 journey.put("capture_decisions",new JSONObject().put("initial_mode",savedInitialMode==null?JSONObject.NULL:savedInitialMode)
                         .put("classified_at_utc",savedClassifiedAt==null?JSONObject.NULL:savedClassifiedAt).put("mode_at_save",savedMode)
-                        .put("mode_source","capture_activity_or_gps_context").put("ended_reason",savedStationReason!=null?savedStationReason:savedContextReason!=null?savedContextReason:"stop_or_manual")
+                        .put("mode_source","capture_activity_or_gps_context").put("ended_reason",stationEndReason!=null?stationEndReason:savedContextReason!=null?savedContextReason:"stop_or_manual")
                         .put("confidence","ferry".equals(savedMode)?"supported_corridor":"requires_transport_confirmation"));
                 journey.put("ferry_evidence",FerryJourneyEvidence.inspect(routeSamples).json());
                 journey.put("capture_route_samples", routeSamples);
