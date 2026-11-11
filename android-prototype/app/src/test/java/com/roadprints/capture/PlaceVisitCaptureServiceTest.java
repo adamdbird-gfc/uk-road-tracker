@@ -163,6 +163,33 @@ public class PlaceVisitCaptureServiceTest {
         assertTrue(CaptureService.isActive(service));assertEquals("unknown",field("mode").get(service));
         assertEquals(first.getTime(),points("points").get(0).getTime());
     }
+    @Test public void lateVehicleRecognitionRecoversMeasuredDepartureFromDropOff() throws Exception {
+        establish(false);
+        LocationListener listener = (LocationListener) field("locationListener").get(service);
+        listener.onLocationChanged(fix(0, 0, 0, 30));
+        Location departure = fix(0, 0, 0, 10);
+        listener.onLocationChanged(departure);
+        Location pullAway = fix(14, 0, 2.5f, 5);
+        listener.onLocationChanged(pullAway);
+        assertFalse(CaptureService.isActive(service));
+
+        Location firstFastFix = fix(55, 0, 8, 5);
+        listener.onLocationChanged(firstFastFix);
+        listener.onLocationChanged(fix(145, 0, 9, 10));
+        listener.onLocationChanged(fix(255, 0, 11, 10));
+
+        assertTrue(CaptureService.isActive(service));
+        assertEquals("unknown", field("mode").get(service));
+        assertEquals(Instant.ofEpochMilli(departure.getTime()).toString(), field("startedAt").get(service));
+        assertEquals(5, points("points").size());
+        assertEquals(departure.getTime(), points("points").get(0).getTime());
+        assertEquals(pullAway.getTime(), points("points").get(1).getTime());
+        assertEquals(firstFastFix.getTime(), points("points").get(2).getTime());
+        JSONObject place = (JSONObject) field("departurePlace").get(service);
+        assertEquals("observed_departure", place.getString("origin_recovery"));
+        assertEquals(Instant.ofEpochMilli(firstFastFix.getTime()).toString(), place.getString("original_departure_at"));
+    }
+
     @Test public void measuredArrivalKeepsTheDwellOnsetOutsideTheConfirmationTail()throws Exception {
         field("automaticCapture").setBoolean(service,true);field("mode").set(service,"walking");
         List<Location> original=points("points");
