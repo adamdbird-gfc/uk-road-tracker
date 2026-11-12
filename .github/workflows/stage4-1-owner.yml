@@ -28,37 +28,15 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
-      - name: Verify and publish the original Git commit
+      - name: Check out and verify the recovered trial source
         shell: bash
         run: |
           set -euo pipefail
-          bundle="$RUNNER_TEMP/roadprints-stage4.bundle"
-          cat .github/stage4-recovery/part-* > "$bundle"
-          printf '%s  %s\n' c18a583a9a1d1472baf022f6f91cbe21ab1cdb321a092c454f8f0e452b0b125e "$bundle" | sha256sum --check
-          git bundle verify "$bundle"
-          git fetch "$bundle" refs/heads/feat/railway-stage4
-          test "$(git rev-parse FETCH_HEAD)" = "$RECOVERED"
+          git fetch origin refs/heads/feat/railway-stage4 refs/heads/feat/railway-stage4-1
+          source_sha=e3344726238adf7853c842b599c582937b73106e
+          git merge-base --is-ancestor "$RECOVERED" "$source_sha"
           test "$(git rev-parse "$RECOVERED^")" = "$BASE"
-          git push origin "$RECOVERED:refs/heads/feat/railway-stage4"
-      - name: Preserve the installed build 278 fix in the trial source
-        shell: bash
-        run: |
-          set -euo pipefail
-          git fetch origin "refs/tags/roadprints-0.25.232-278"
-          test "$(git rev-parse 'refs/tags/roadprints-0.25.232-278^{commit}')" = "$OWNER_BASE"
-          test "$(git rev-parse "$OWNER_BASE^")" = "$BASE"
-          git switch --detach "$RECOVERED"
-          git diff --binary "$BASE" "$OWNER_BASE" -- android-prototype/app/src/main android-prototype/app/src/test             | git apply --index
-          gradle_file=android-prototype/app/build.gradle.kts
-          grep -Fq 'versionCode = 277' "$gradle_file"
-          grep -Fq 'versionName = "0.25.231"' "$gradle_file"
-          sed -i 's/versionCode = 277/versionCode = 279/;s/versionName = "0.25.231"/versionName = "0.25.233"/' "$gradle_file"
-          git add "$gradle_file"
-          export GIT_AUTHOR_DATE="$(git show -s --format=%aI "$RECOVERED")"
-          export GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE"
-          git -c user.name=Codex -c user.email=codex@openai.com commit             -m 'Prepare Stage 4.1 owner trial on the build 278 Android baseline [skip render]'
-          source_sha=$(git rev-parse HEAD)
-          git push origin "$source_sha:refs/heads/feat/railway-stage4-1"
+          git switch --detach "$source_sha"
           echo "SOURCE_SHA=$source_sha" >> "$GITHUB_ENV"
       - name: Restore existing packaging reference cache
         uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
@@ -89,11 +67,11 @@ jobs:
       - name: Compile the app and run Android SQLite and upgrade-baseline checks
         run: |
           set -euo pipefail
-          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false             :app:compileDebugJavaWithJavac :app:testDebugUnitTest             --tests '*RegionalRailwayCatalogueTest' --tests '*JourneyOriginRecoveryTest'
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false             :app:compileDebugJavaWithJavac :app:testDebugUnitTest             --tests '*RailwayTrialWorkerTest' --tests '*RegionalRailwayCatalogueTest' --tests '*JourneyOriginRecoveryTest'
           python3 - <<'PY'
           import pathlib, xml.etree.ElementTree as ET
           root = pathlib.Path('android-prototype/app/build/test-results/testDebugUnitTest')
-          for name in ('RegionalRailwayCatalogueTest', 'JourneyOriginRecoveryTest'):
+          for name in ('RegionalRailwayCatalogueTest', 'RailwayTrialWorkerTest', 'JourneyOriginRecoveryTest'):
               report = ET.parse(root / f'TEST-com.roadprints.capture.{name}.xml').getroot()
               counts = {key: int(report.attrib[key]) for key in ('tests', 'failures', 'errors', 'skipped')}
               print(name, counts)
