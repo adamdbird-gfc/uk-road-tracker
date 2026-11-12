@@ -142,6 +142,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        RailwayTrialWorker.resume(this);
         MilepostReconciliationJob.assessWhileOpen(this);
         updateDebugLink();
         if (CaptureService.isArmed(this) && getSharedPreferences("roadprints_capture_state",MODE_PRIVATE)
@@ -158,6 +159,7 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onPause() {
+        RailwayTrialWorker.pause();
         super.onPause();
     }
 
