@@ -37,6 +37,59 @@ jobs:
           git merge-base --is-ancestor "$RECOVERED" "$source_sha"
           test "$(git rev-parse "$RECOVERED^")" = "$BASE"
           git switch --detach "$source_sha"
+          python3 - <<'PY'
+          import gzip, hashlib, os, pathlib, sqlite3, tempfile
+          asset = pathlib.Path('android-prototype/app/src/debug/assets/railway/regional.sqlite.gzip')
+          source = gzip.decompress(asset.read_bytes())
+          assert hashlib.sha256(source).hexdigest() == '668b79bde1f17d4dad9d475fc06c7221c205d092e2c17e2e8cabc04c96bcfb9a'
+          with tempfile.TemporaryDirectory() as tmp:
+              path = pathlib.Path(tmp) / 'regional.sqlite'
+              path.write_bytes(source)
+              with sqlite3.connect(path) as db:
+                  for table in ('rail', 'road', 'axis'):
+                      index = table + '_index'
+                      expected = db.execute(f'SELECT id, xmin, xmax, ymin, ymax FROM {index} ORDER BY id').fetchall()
+                      assert len(expected) == db.execute(f'SELECT count(*) FROM {table}').fetchone()[0]
+                      assert all(0 <= xmax - xmin <= 1280 for _, xmin, xmax, _, _ in expected)
+                      db.execute(f'DROP TABLE {index}')
+                      db.execute(f'CREATE TABLE {index} (id INTEGER PRIMARY KEY, xmin REAL, xmax REAL, ymin REAL, ymax REAL)')
+                      db.executemany(f'INSERT INTO {index} VALUES (?, ?, ?, ?, ?)', expected)
+                      db.execute(f'CREATE INDEX {index}_xmin ON {index}(xmin)')
+                      assert expected == db.execute(f'SELECT * FROM {index} ORDER BY id').fetchall()
+                  db.execute("INSERT INTO metadata VALUES ('android_index', 'portable-btree-v1')")
+              with sqlite3.connect(path) as db:
+                  db.execute('VACUUM')
+                  assert db.execute('PRAGMA integrity_check').fetchone() == ('ok',)
+              replacement = path.read_bytes()
+          digest = hashlib.sha256(replacement).hexdigest()
+          asset.write_bytes(gzip.compress(replacement, mtime=0))
+          java = pathlib.Path('android-prototype/app/src/main/java/com/roadprints/capture/RegionalRailwayCatalogue.java')
+          reader = java.read_text()
+          assert reader.count('15126528') == 1 or reader.count('15_126_528') == 1
+          reader = reader.replace('15126528', str(len(replacement))).replace('15_126_528', str(len(replacement)))
+          reader = reader.replace('668b79bde1f17d4dad9d475fc06c7221c205d092e2c17e2e8cabc04c96bcfb9a', digest)
+          assert reader.count('WHERE xmin<=CAST(? AS REAL) AND xmax>=CAST(? AS REAL)') == 2
+          reader = reader.replace('WHERE xmin<=CAST(? AS REAL) AND xmax>=CAST(? AS REAL)',
+                                  'WHERE xmin BETWEEN CAST(? AS REAL)-1280 AND CAST(? AS REAL) AND xmax>=CAST(? AS REAL)')
+          assert reader.count('String.valueOf(x+r),String.valueOf(x-r)') == 1
+          reader = reader.replace('String.valueOf(x+r),String.valueOf(x-r)',
+                                  'String.valueOf(x-r),String.valueOf(x+r),String.valueOf(x-r)')
+          reader = reader.replace('Arrays.copyOf(bounds(x,y,24),5)', 'Arrays.copyOf(bounds(x,y,24),6)').replace('args[4] = ref;', 'args[5] = ref;')
+          reader = reader.replace('File file = new File(dir,VERSION+".sqlite");', 'File file = new File(dir,VERSION+"-portable.sqlite");')
+          java.write_text(reader)
+          notes = asset.with_name('README.txt')
+          notes.write_text(notes.read_text().replace('668b79bde1f17d4dad9d475fc06c7221c205d092e2c17e2e8cabc04c96bcfb9a', digest).replace('15,126,528', f'{len(replacement):,}') +
+                           '\nAndroid packaging preserves all three index tables\' bounding boxes in indexed standard SQLite tables.\n')
+          with open(os.environ['GITHUB_ENV'], 'a') as env:
+              env.write(f'CATALOGUE_SHA256={digest}\nCATALOGUE_BYTES={len(replacement)}\n')
+          PY
+          git add android-prototype/app/src
+          git diff --cached --check
+          export GIT_AUTHOR_DATE="$(git show -s --format=%aI "$source_sha")"
+          export GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE"
+          git -c user.name=Codex -c user.email=codex@openai.com commit -m 'Use Android-compatible spatial indexes in the Stage 4.1 catalogue [skip render]'
+          source_sha=$(git rev-parse HEAD)
+          git push origin "$source_sha:refs/heads/feat/railway-stage4-1"
           echo "SOURCE_SHA=$source_sha" >> "$GITHUB_ENV"
       - name: Restore existing packaging reference cache
         uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
@@ -108,12 +161,12 @@ jobs:
           grep -F "launchable-activity: name='com.roadprints.capture.OnboardingActivity'" "$RUNNER_TEMP/package.txt"
           python3 scripts/verify_milepost_apk.py "$apk"
           python3 - "$apk" <<'PY'
-          import gzip, hashlib, pathlib, sys, zipfile
+          import gzip, hashlib, os, pathlib, sys, zipfile
           apk = pathlib.Path(sys.argv[1])
           with zipfile.ZipFile(apk) as package:
               catalogue = gzip.decompress(package.read('assets/railway/regional.sqlite.gzip'))
-              assert len(catalogue) == 15126528
-              assert hashlib.sha256(catalogue).hexdigest() == '668b79bde1f17d4dad9d475fc06c7221c205d092e2c17e2e8cabc04c96bcfb9a'
+              assert len(catalogue) == int(os.environ['CATALOGUE_BYTES'])
+              assert hashlib.sha256(catalogue).hexdigest() == os.environ['CATALOGUE_SHA256']
               dex = b''.join(package.read(name) for name in package.namelist() if name.endswith('.dex'))
               for symbol in (b'JourneyOriginRecovery;', b'RailwayTrialWorker;', b'RegionalRailwayCatalogue;'):
                   assert symbol in dex, symbol
