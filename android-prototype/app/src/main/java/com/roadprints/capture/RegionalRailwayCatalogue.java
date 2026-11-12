@@ -12,8 +12,8 @@ import java.util.zip.GZIPInputStream;
 
 final class RegionalRailwayCatalogue implements RailwayMatcher.Graph, AutoCloseable {
     static final String VERSION = "stage1-osm-20261112-r1";
-    static final String SHA256 = "668b79bde1f17d4dad9d475fc06c7221c205d092e2c17e2e8cabc04c96bcfb9a";
-    private static final int BYTES = 15_126_528;
+    static final String SHA256 = "5409cf795b0ab58e4ef9911531b463c538c0a5e8c8555e3183ecb7d23c3dad5a";
+    private static final int BYTES = 15183872;
     private final SQLiteDatabase db;
     private final Map<NodeKey,List<RailwayMatcher.Edge>> adjacency =
             new LinkedHashMap<NodeKey,List<RailwayMatcher.Edge>>(256,.75f,true) {
@@ -25,7 +25,7 @@ final class RegionalRailwayCatalogue implements RailwayMatcher.Graph, AutoClosea
     static final class QueryLimit extends RuntimeException {}
 
     static RegionalRailwayCatalogue open(Context context, File dir, BooleanSupplier stop) throws Exception {
-        File file = new File(dir,VERSION+".sqlite");
+        File file = new File(dir,VERSION+"-portable.sqlite");
         if (!file.isFile() || file.length() != BYTES) {
             File temp = File.createTempFile("railway-", ".tmp", dir);
             try {
@@ -74,11 +74,11 @@ final class RegionalRailwayCatalogue implements RailwayMatcher.Graph, AutoClosea
         String fields = road?"e.id,0,0,ax,ay,bx,by,length,'',0"
                 :"e.id,a,b,ax,ay,bx,by,length,ref,eligible AND NOT tunnel";
         return edges("SELECT "+fields+" FROM "+table+"_index s JOIN "+table+" e ON e.id=s.id"
-                +" WHERE xmin<=CAST(? AS REAL) AND xmax>=CAST(? AS REAL) AND ymin<=CAST(? AS REAL) AND ymax>=CAST(? AS REAL) LIMIT 257", bounds(p.x(),p.y(),radius));
+                +" WHERE xmin BETWEEN CAST(? AS REAL)-1280 AND CAST(? AS REAL) AND xmax>=CAST(? AS REAL) AND ymin<=CAST(? AS REAL) AND ymax>=CAST(? AS REAL) LIMIT 257", bounds(p.x(),p.y(),radius));
     }
 
     private static String[] bounds(double x,double y,double r) {
-        return new String[]{String.valueOf(x+r),String.valueOf(x-r),String.valueOf(y+r),String.valueOf(y-r)};
+        return new String[]{String.valueOf(x-r),String.valueOf(x+r),String.valueOf(x-r),String.valueOf(y+r),String.valueOf(y-r)};
     }
 
     @Override public List<RailwayMatcher.Edge> adjacent(String ref,long node) {
@@ -104,11 +104,11 @@ final class RegionalRailwayCatalogue implements RailwayMatcher.Graph, AutoClosea
     @Override public RailwayMatcher.Axis axis(String ref,RailwayMatcher.Hit p) {
         double x = p.x(), y = p.y(), best = 24;
         RailwayMatcher.Axis result = null;
-        String[] args = Arrays.copyOf(bounds(x,y,24),5);
-        args[4] = ref;
+        String[] args = Arrays.copyOf(bounds(x,y,24),6);
+        args[5] = ref;
         try (Cursor c = db.rawQuery("SELECT e.id,ax,ay,bx,by,length,start,assessable"
                 +" FROM axis_index s JOIN axis e ON e.id=s.id"
-                +" WHERE xmin<=CAST(? AS REAL) AND xmax>=CAST(? AS REAL) AND ymin<=CAST(? AS REAL) AND ymax>=CAST(? AS REAL) AND ref=? ORDER BY e.id LIMIT 257",args)) {
+                +" WHERE xmin BETWEEN CAST(? AS REAL)-1280 AND CAST(? AS REAL) AND xmax>=CAST(? AS REAL) AND ymin<=CAST(? AS REAL) AND ymax>=CAST(? AS REAL) AND ref=? ORDER BY e.id LIMIT 257",args)) {
             int count = 0;
             while (c.moveToNext()) {
                 if (++count > 256) throw new QueryLimit();
