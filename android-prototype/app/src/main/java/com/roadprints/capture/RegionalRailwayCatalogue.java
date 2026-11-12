@@ -30,7 +30,7 @@ final class RegionalRailwayCatalogue implements RailwayMatcher.Graph, AutoClosea
             File temp = File.createTempFile("railway-", ".tmp", dir);
             try {
                 MessageDigest digest = MessageDigest.getInstance("SHA-256");
-                try (InputStream input = new GZIPInputStream(context.getAssets().open("railway/regional.sqlite.gz"));
+                try (InputStream input = new GZIPInputStream(context.getAssets().open("railway/regional.sqlite.gzip"));
                      FileOutputStream output = new FileOutputStream(temp)) {
                     byte[] buffer = new byte[32*1024];
                     int total = 0;
