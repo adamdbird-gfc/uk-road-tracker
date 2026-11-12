@@ -7,6 +7,10 @@ plugins {
 android {
     namespace = "com.roadprints.capture"
     compileSdk = 35
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
     androidResources { noCompress += "bin" }
     sourceSets.getByName("main").assets.srcDir("../../canonical-a-roads-v5")
     testOptions { unitTests.isIncludeAndroidResources = true }
