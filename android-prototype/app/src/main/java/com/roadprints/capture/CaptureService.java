@@ -103,6 +103,7 @@ public class CaptureService extends Service {
     private PendingIntent activityPendingIntent;
     private final List<Location> points = new ArrayList<>();
     private final List<Location> candidatePoints = new ArrayList<>();
+    private final JourneyOriginRecovery journeyOrigin = new JourneyOriginRecovery();
     private Location candidateOrigin;
     private Location candidateMovementLast;
     private float candidateMovementMetres;
@@ -257,6 +258,7 @@ public class CaptureService extends Service {
             }
             if (!isActive(CaptureService.this)) {
                 if(!callbackFresh){MovementDiagnostics.recordLocation(CaptureService.this,location,"rejected_stale_idle");return;}
+                if (isArmed(CaptureService.this)) journeyOrigin.observe(location);
                 if (observePlaceVisit(location)) return;
                 if (observeIdlePlace(location)) return;
                 if (candidateMode != null) {
@@ -466,6 +468,7 @@ public class CaptureService extends Service {
     private void disarmTracking() {
         MovementDiagnostics.recordEvent(this, "tracking_disarmed", "Automatic tracking disabled.");
         visitPoints.clear();visitPointStopId="";
+        journeyOrigin.clear();
         idleStillness.reset();
         getSharedPreferences(STATE_PREFS,MODE_PRIVATE).edit().remove("visit_buffer").apply();
         cancelStartCandidate(null);
@@ -776,6 +779,9 @@ public class CaptureService extends Service {
         List<Location> seed=new ArrayList<>(visitPoints.subList(decision.startIndex,visitPoints.size()));
         try {departurePlace=PlaceBoundaryEvidence.departure(stop,footSample(seed.get(0),0));departurePlace.put("departure_reason",decision.reason);}
         catch(org.json.JSONException ignored) {departurePlace=null;}
+        if (decision.nextMode == null) {
+            seed = recoverJourneyOrigin(seed, decision.mode, departurePlace);
+        }
         cancelStartCandidate(null);
         automaticCapture=true;
         retireVisit(stop);
@@ -981,6 +987,7 @@ public class CaptureService extends Service {
     private void activateCapture(String requestedMode, String captureStartedAt, List<Location> initialPoints) {
         if (isActive(this)) return;
         handler.removeCallbacks(visitSamplingTimeout);
+        journeyOrigin.clear();
         idleStillness.reset();
         mode = requestedMode == null ? "unknown" : requestedMode;
         captureInitialMode=mode;captureClassifiedAt=Instant.now(wallClock).toString();
@@ -1159,10 +1166,46 @@ public class CaptureService extends Service {
                 confirmedStart=Instant.ofEpochMilli(seedPoints.get(0).getTime()).toString();
             } catch(Exception ignored){supportedDeparture=null; /* Preserve the measured candidate when origin is unavailable. */ }
         }
+        List<Location> recovered = recoverJourneyOrigin(seedPoints, confirmedMode, supportedDeparture);
+        if (recovered != seedPoints) {
+            seedPoints = recovered;
+            confirmedStart = Instant.ofEpochMilli(seedPoints.get(0).getTime()).toString();
+        }
         cancelStartCandidate(null);
         automaticCapture = true;
         departurePlace=supportedDeparture;
         activateCapture(confirmedMode, confirmedStart, seedPoints);
+    }
+
+    private List<Location> recoverJourneyOrigin(List<Location> seed, String confirmedMode, JSONObject place) {
+        JourneyOriginRecovery.Result recovery = journeyOrigin.recover(seed, confirmedMode, wallClock.millis());
+        if (recovery.prefix.isEmpty()) {
+            MovementDiagnostics.recordEvent(this, "journey_origin_recovery", recovery.status);
+            return seed;
+        }
+        Location origin = recovery.prefix.get(0);
+        if (place != null) {
+            double distance = RailStationCatalog.metres(place.optDouble("latitude"), place.optDouble("longitude"),
+                    origin.getLatitude(), origin.getLongitude());
+            if (!(distance <= 35 + place.optDouble("accuracy_m", 25) + origin.getAccuracy())) {
+                MovementDiagnostics.recordEvent(this, "journey_origin_recovery", "different_place");
+                return seed;
+            }
+            try {
+                String observedStart = Instant.ofEpochMilli(origin.getTime()).toString();
+                place.put("original_departure_at", place.optString("departed_at"))
+                        .put("origin_recovery", "observed_departure")
+                        .put("departed_at", observedStart).put("boundary_at", observedStart);
+            } catch (org.json.JSONException ignored) {
+                return seed;
+            }
+        }
+        List<Location> extended = new ArrayList<>(recovery.prefix);
+        extended.addAll(seed);
+        MovementDiagnostics.recordEvent(this, "journey_origin_recovery",
+                "recovered; fixes=" + recovery.prefix.size()
+                        + "; start_ms=" + origin.getTime() + "; previous_first_fix_ms=" + seed.get(0).getTime());
+        return extended;
     }
 
     private void clearCandidateStillness() {
