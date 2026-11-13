@@ -1,0 +1,59 @@
+name: Validate Stage 4.7 railway reassessment
+on:
+  pull_request:
+    branches: [fix/railway-reassessment-stability]
+    paths:
+      - 'android-prototype/**'
+      - 'scripts/build_national_railway.py'
+      - '.github/workflows/stage4-7-railway-validation.yml'
+permissions:
+  contents: read
+jobs:
+  android:
+    if: github.head_ref == 'feat/railway-stage4-7'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: |
+            .cache/ncn/catalogue.db
+            android-prototype/app/src/main/assets/historic-counties/boundaries.bin
+          key: reference-pins-v2-${{ runner.os }}-${{ hashFiles('android-prototype/app/src/main/assets/ncn-national/manifest.json', 'android-prototype/app/src/main/assets/historic-counties/catalogue.json') }}
+          fail-on-cache-miss: true
+      - name: Select Java 17
+        run: |
+          test -n "$JAVA_HOME_17_X64"
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.10'
+          cache-read-only: true
+      - name: Prepare the pinned offline railway catalogue
+        run: |
+          python3 -m pip install 'osmium==4.3.2' 'pyproj==3.8.0'
+          curl --fail --location --retry 2 --output "$RUNNER_TEMP/uk-261112.osm.pbf" \
+            https://download.geofabrik.de/europe/united-kingdom-261112.osm.pbf
+          python3 scripts/build_national_railway.py "$RUNNER_TEMP/uk-261112.osm.pbf" \
+            android-prototype/app/src/main/assets/railway \
+            --source-sha256 4d9cac6df2a62d850e2ec647b54ca919d78eb3ba4bcec05557a83aa238b92721
+      - name: Run focused Android regressions
+        run: |
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:testDebugUnitTest --tests '*Railway*' --tests '*ProgressAvailabilityTest' --tests '*NavigationPerformanceTest' --tests '*ReleaseNotes*'
+      - name: Allow the hosted Android emulator to use KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Assemble the isolated instrumentation target
+        run: gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:assembleAcceptance :app:assembleAcceptanceAndroidTest
+      - name: Replay migration, restart and navigation on Android API 35
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: bash scripts/check_railway_migration_android.sh navigation

@@ -2,6 +2,22 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.238",
+      "version_code": 284,
+      "release_date": "2026-11-13",
+      "since": "0.25.237",
+      "changes": [
+        {
+          "title": "Train distances follow more railway routes",
+          "description": "Roadprints uses the railway network and your recorded locations to work out how far you travelled. If there is enough evidence to identify the route, the saved distance and your totals can go up or down."
+        },
+        {
+          "title": "Saved train journeys are checked automatically",
+          "description": "You can keep browsing your journeys while Roadprints checks saved train trips. The saved distance stays visible until the check finds a route it can measure."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.237",
       "version_code": 283,
       "release_date": "2026-11-13",

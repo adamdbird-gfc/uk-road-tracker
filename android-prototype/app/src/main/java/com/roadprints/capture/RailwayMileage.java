@@ -17,9 +17,16 @@ final class RailwayMileage {
                 && "network_route_inferred".equals(receipt.optString("reason"))
                 && RailwayMatcher.VERSION.equals(receipt.optString("matcher"))
                 && RegionalRailwayCatalogue.SHA256.equals(receipt.optString("catalogue_sha256"))
-                && NetworkFirstRailway.SHA256.equals(receipt.optString("network_catalogue_sha256"))
+                && approvedCatalogue(receipt)
                 && receipt.optString("network_path_sha256").matches("[0-9a-f]{64}")
                 && Double.isFinite(metres) && metres > 0;
+    }
+
+    private static boolean approvedCatalogue(JSONObject receipt) {
+        String sha = receipt.optString("network_catalogue_sha256");
+        return NetworkFirstRailway.SHA256.equals(sha)
+                || NationalRailwayCatalogue.VERSION.equals(receipt.optString("network_catalogue"))
+                && NationalRailwayCatalogue.SHA256.equals(sha);
     }
 
     static boolean apply(JSONObject journey, JSONObject receipt) throws JSONException {
@@ -39,8 +46,14 @@ final class RailwayMileage {
                 "network_branch", "inferred_endpoints"}) {
             provenance.put(field, receipt.opt(field));
         }
-        provenance.put("method", "inferred_physical_rail_path").put(DISTANCE, metres)
-                .put(ORIGINAL, previous == null ? journey.opt(DISTANCE) : previous.opt(ORIGINAL));
+        Object original = previous == null ? journey.opt(DISTANCE) : previous.opt(ORIGINAL);
+        double priorMetres = journey.optDouble(DISTANCE);
+        provenance.put("journey_id", journey.getString("journey_id"))
+                .put("method", "inferred_physical_rail_path").put(DISTANCE, metres)
+                .put(ORIGINAL, original)
+                .put("superseded_distance_meters", Double.isFinite(priorMetres) ? priorMetres : JSONObject.NULL)
+                .put("distance_change_meters", Double.isFinite(priorMetres) ? metres-priorMetres : JSONObject.NULL)
+                .put("migration_status", "committed").put("reason", receipt.getString("reason"));
         journey.put(PROVENANCE, provenance).put(DISTANCE, metres);
         return true;
     }
