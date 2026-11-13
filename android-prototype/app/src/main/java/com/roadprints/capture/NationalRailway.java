@@ -23,9 +23,7 @@ final class NationalRailway {
     private record Segment(Track track, double offset, boolean forward) {}
     private record Point(double residual, double offset, boolean tunnel) {}
     private record Scored(Path path, NetworkFirstRailway.EvidenceScore evidence) {}
-    // A national diversion around a tunnel can settle more than 60,000 nodes.
-    // Keep the discovery and whole-journey budgets independent of this cap.
-    private static final int MAX_NODES = 70_000;
+    private static final int MAX_NODES = 60_000;
     private static final int MAX_SEARCHES = 12;
     private static final int GRID = 256;
 
@@ -63,11 +61,13 @@ final class NationalRailway {
             if (NetworkFirstRailway.usable(fix,start,end)) observed.add(cell(fix.x(),fix.y()));
         }
         var budget = new SearchBudget();
+        var lowerBounds = new HashMap<Long,Double>();
         try {
-            // First search follows travel evidence where available. The second
-            // uses neutral costs to challenge it with a physically shorter route.
-            add(candidates,seen,search(origins,targets,last,maxDistance,observed,Set.of(),budget,stop));
-            add(candidates,seen,search(origins,targets,last,maxDistance,Set.of(),Set.of(),budget,stop));
+            // Search from the destination first. Settled costs on the unmodified graph
+            // are lower bounds for searches that exclude track to test diversions.
+            // The neutral search still challenges the evidence-weighted route.
+            add(candidates,seen,reverse(search(targets,origins,first,maxDistance,observed,Set.of(),budget,stop,lowerBounds,true)));
+            add(candidates,seen,search(origins,targets,last,maxDistance,Set.of(),Set.of(),budget,stop,Map.of(),false));
             if (candidates.isEmpty())
                 return result("unresolved","passenger_topology_gap",null,0,started,0,0);
             // Challenge the leading route with deviations at actual junctions.
@@ -78,7 +78,7 @@ final class NationalRailway {
             if (diversionCells.size() > MAX_SEARCHES-2)
                 return result("ambiguous","route_alternative_search_limit",null,0,started,0,candidates.size());
             for (var excluded : diversionCells)
-                add(candidates,seen,search(origins,targets,last,maxDistance,observed,excluded,budget,stop));
+                add(candidates,seen,search(origins,targets,last,maxDistance,observed,excluded,budget,stop,lowerBounds,false));
         } catch (SearchLimit failure) {
             return result("unresolved","national_search_limit",null,0,started,0,candidates.size());
         }
@@ -100,6 +100,13 @@ final class NationalRailway {
         }
         return result("inferred","network_route_inferred",selected.path(),selected.evidence().witnesses(),
                 started,candidateMs,candidates.size());
+    }
+
+    private static Path reverse(Path path) {
+        if (path == null) return null;
+        var tracks = new ArrayList<>(path.tracks());
+        Collections.reverse(tracks);
+        return new Path(tracks,path.to(),path.from(),path.metres());
     }
 
     private List<Station> endpointStations(RailwayMatcher.Fix fix,BooleanSupplier stop) {
@@ -124,7 +131,7 @@ final class NationalRailway {
     }
 
     private Path search(List<Station> origins,List<Station> targets,RailwayMatcher.Fix end,double limit,
-                        Set<Cell> observed,Set<Cell> excluded,SearchBudget budget,BooleanSupplier stop) {
+                        Set<Cell> observed,Set<Cell> excluded,SearchBudget budget,BooleanSupplier stop,Map<Long,Double> bounds,boolean recordBounds) {
         var goals = new HashMap<Long,Station>();
         targets.forEach(s -> goals.putIfAbsent(s.node(),s));
         var starts = new HashMap<Long,Station>();
@@ -142,6 +149,7 @@ final class NationalRailway {
             Search current = pending.remove();
             if (current.cost() != best.get(current.node())) continue;
             if (++settled > MAX_NODES || --budget.remaining < 0) throw new SearchLimit();
+            if (recordBounds) bounds.put(current.node(),current.cost());
             Station target = goals.get(current.node());
             if (target != null && current.via() != null) {
                 List<Track> path = new ArrayList<>();
@@ -165,6 +173,7 @@ final class NationalRailway {
                 double cost = current.cost()+e.length()*(observed.isEmpty() || observed.contains(cell) ? 1 : 1.35);
                 // Subtract the largest endpoint offset before bounding A*.
                 double remaining = Math.max(0,Math.hypot(x-end.x(),y-end.y())*.997-1100);
+                if (!recordBounds) remaining = Math.max(remaining, bounds.getOrDefault(node, 0.0));
                 if (cost+remaining > limit*1.35 || cost >= best.getOrDefault(node,Double.POSITIVE_INFINITY)) continue;
                 if (best.size() >= 75_000) throw new SearchLimit();
                 best.put(node,cost);

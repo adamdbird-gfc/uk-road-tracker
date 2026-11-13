@@ -184,15 +184,16 @@ public class RailwayMileageRuntimeTest {
         Context app = instrumentation.getTargetContext();
         assertTrue(app.getPackageName().endsWith(".milepostacceptance"));
         var trace = new ArrayList<RailwayMatcher.Fix>();
-        try (var input = new BufferedReader(new InputStreamReader(new GZIPInputStream(instrumentation.getContext()
-                .getAssets().open("railway/paddington-swansea.csv.gz")), StandardCharsets.UTF_8))) {
+        try (var input = new BufferedReader(new InputStreamReader(instrumentation.getContext()
+                .getAssets().open("railway/paddington-swansea.csv"), StandardCharsets.UTF_8))) {
             for (String line; (line = input.readLine()) != null;) {
                 var fields = line.split(",");
                 trace.add(new RailwayMatcher.Fix(Double.parseDouble(fields[0]), Double.parseDouble(fields[1]),
-                        8, START + Long.parseLong(fields[2])));
+                        8, START + Long.parseLong(fields[2]) * 72 / 100));
             }
         }
-        long interchange = START + 10_610_000;
+        // The sampled trace represents roughly 2h 7m to Cardiff and 40m onward to Swansea.
+        long interchange = START + 10_610_000L * 72 / 100;
         var platform = trace.stream().filter(fix -> fix.time() == interchange).findFirst().orElseThrow();
         try (var graph = NationalRailwayCatalogue.open(app, () -> false)) {
             var matcher = new NationalRailway(graph);
