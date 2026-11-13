@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+trap 'adb logcat -d -s RoadprintsRailwayRuntime:I RoadprintsRailway:I RoadprintsTiming:I AndroidRuntime:E | tail -180' EXIT
 package=com.roadprints.capture.milepostacceptance
 test_class=com.roadprints.capture.RailwayMileageRuntimeTest
 apk_root=android-prototype/app/build/outputs/apk
@@ -17,4 +18,3 @@ if [[ "${1:-}" == navigation ]]; then
   printf '%s\n' "$output"
   grep -F 'OK (1 test)' <<< "$output"
 fi
-adb logcat -d -s RoadprintsRailwayRuntime:I

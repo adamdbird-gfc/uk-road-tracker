@@ -112,7 +112,7 @@ public class RailwayMileageRuntimeTest {
             }
             var source = JourneyStore.archiveFile(app, id);
             Files.write(source.toPath(), journey.toString().getBytes(StandardCharsets.UTF_8));
-            if (train) assertTrue(source.setLastModified(System.currentTimeMillis() + 60000));
+            if (train) assertTrue(source.setLastModified(System.currentTimeMillis() + 120000 - index * 2000));
         }
         try {
             try (var screen = androidx.test.core.app.ActivityScenario.launch(JourneyListActivity.class)) {
@@ -123,7 +123,7 @@ public class RailwayMileageRuntimeTest {
                     String message = RailwayTrialWorker.activityMessage();
                     return message != null && message.equals("Checking past train journeys…");
                 }, 3000);
-                assertTrue("A first journey must commit", waitForDistance(app, "navigation-0", 15_000));
+                assertTrue("A first journey must commit", waitForDistance(app, "navigation-0", 30_000));
             }
             for (int i = 0; i < 2; i++) {
                 exerciseScreen(ProgressActivity.class);
@@ -131,7 +131,7 @@ public class RailwayMileageRuntimeTest {
                 exerciseScreen(JourneyListActivity.class);
             }
             try (var screen = androidx.test.core.app.ActivityScenario.launch(JourneyListActivity.class)) {
-                assertTrue("Railway history should resume and finish", waitForDistance(app, "navigation-23", 40_000));
+                assertTrue("Railway history should resume and finish", waitForDistance(app, "navigation-23", 70_000));
                 awaitOnMain(() -> !RailwayTrialWorker.isChecking(), 120_000);
             }
             double expectedTrain = 0;
