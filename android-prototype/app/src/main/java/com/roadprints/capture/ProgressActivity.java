@@ -165,6 +165,7 @@ public class ProgressActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();navigation.resume(this);if(loadedStats!=null&&!loadedStats.pending){navigation.frame(statisticsContent,"first_content", "cache=retained");if(!loadedStats.summaryOnly&&loadedRevision==JourneyStore.dataRevision(this))navigation.frame(statisticsContent,"ready","cache=retained");}
+        RailwayTrialWorker.resume(this);
         String checkinId=getIntent().getStringExtra("pub_checkin_id");
         if(checkinId!=null){
             getIntent().removeExtra("pub_checkin_id");
@@ -190,6 +191,7 @@ public class ProgressActivity extends Activity {
 
     @Override
     protected void onPause() {
+        RailwayTrialWorker.pause();
         if (statisticsScroll != null) savedScrollY = statisticsScroll.getScrollY();
         stopLocalRoadProgressTicker();
         mainHandler.removeCallbacks(revisionTicker);
