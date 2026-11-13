@@ -42,6 +42,7 @@ public class NationalRailwayTest {
         clipped.remove(0);
         var result = matcher.infer(clipped,START,END,()->false);
         assertEquals("partial",result.confidence());
+        assertEquals("missing_station_attachment",result.reason());
         assertEquals(0,result.metres(),0);
     }
 

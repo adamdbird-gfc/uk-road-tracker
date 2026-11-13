@@ -33,12 +33,12 @@ The host replay uses synthetic observations sampled from the mapped track and om
 | --- | --- | --- |
 | Gravesend–St Pancras via HS1 | 39.539 km | Approx. 39.948 km from the Springhead junction chainage and Gravesend's HDR mileage. Difference −409 m. Platform, terminal and junction track selection remain under review. |
 | St Pancras–Sheffield via Derby | 264.841 km | Approx. 264.335 km using the Clay Cross mileage reset and Sheffield platform 4. Difference +506 m. Platform choice and the route through Derby affect this comparison. |
-| King's Cross–York, East Coast Main Line | Ambiguous | No proposed distance. |
-| Euston–Birmingham, West Coast Main Line | Ambiguous | No proposed distance. |
-| Paddington–Cardiff via the Severn Tunnel | 233.425 km | Independent end-to-end chainage comparison pending. |
+| King's Cross–York, East Coast Main Line | 303.098 km | 303.361 km using York ECM4 chainage from King’s Cross. Difference −263 m. Parallel-platform paths are treated as one corridor. |
+| Euston–Birmingham New Street via Northampton | 185.374 km | Approx. 185.368 km from HNR and RBS1 chainage. Difference +6 m before the Euston platform datum allowance. |
+| Paddington–Cardiff via the Severn Tunnel | 233.425 km | 233.516 km via Patchway and Severn Tunnel junction chainages. Difference −91 m. |
 | Cardiff–Swansea | 73.556 km | 73.748 km from Network Rail's Cardiff sectional appendix and Swansea engineering mileage. Difference −192 m. |
 | Glasgow Queen Street–Edinburgh Waverley | 75.967 km | Approx. 76.102 km using the EGM2/EGM3 change at Haymarket. Difference −134 m. |
-| Inverness–Kyle of Lochalsh | 132.565 km | Independent end-to-end chainage comparison pending. |
+| Inverness–Kyle of Lochalsh | 132.565 km | 132.634 km using WCK and KYL at Dingwall. Difference −69 m. |
 | Belfast Grand Central–Bangor | 22.997 km | Operator route verified. Independent platform-to-platform distance pending. |
 | Belfast Grand Central–Derry~Londonderry | 154.100 km | Operator route verified. Independent platform-to-platform distance pending. |
 | Belfast Grand Central–Larne Harbour | 43.672 km | Operator route verified. Independent platform-to-platform distance pending. |
@@ -60,6 +60,6 @@ The first national replay proposed station-to-station distances for two clipped 
 | Historical writes, recovery and totals | Focused local archive tests pass. The Stage 4.7 national asset still needs the mixed 1,652-journey Android runtime replay and per-journey reconciliation. The complete Build 283 device archive delta remains unavailable. |
 | Normal journey presentation and What's New | Pass in focused local Android JVM checks. |
 | Packaged asset, ANR, memory, battery and upgrade | Awaiting Android runtime evidence and signed build. Pixel 10 acceptance remains open. |
-| Interchanges and route alternatives | Fail for release readiness. Dedicated transfer validation remains open, as do the East and West Coast ambiguity cases. |
+| Interchanges and route alternatives | Fail for release readiness. Dedicated transfer validation remains open, for separately recorded train legs. |
 
 No APK packaging or publication should run from this checkpoint. Firebase promotion, production deployment and Train Collection work are outside this stage.

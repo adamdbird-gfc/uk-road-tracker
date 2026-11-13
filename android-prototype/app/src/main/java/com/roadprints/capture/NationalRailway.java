@@ -49,8 +49,8 @@ final class NationalRailway {
         if (!supports(fixes,start,end)) return unavailableEndpoints();
         var first = NetworkFirstRailway.endpointFix(fixes,start,end,false);
         var last = NetworkFirstRailway.endpointFix(fixes,start,end,true);
-        var origins = graph.stations(first,550);
-        var targets = graph.stations(last,550);
+        var origins = endpointStations(first,stop);
+        var targets = endpointStations(last,stop);
         if (origins.isEmpty() || targets.isEmpty())
             return result("partial","missing_station_attachment",null,0,started,0,0);
         double maxDistance = Math.min(1_350_000,(end-start)*.065+500);
@@ -85,8 +85,6 @@ final class NationalRailway {
         var road = new HashMap<Integer,Double>();
         for (Path path : candidates) {
             check(stop);
-            if (!atAttachment(first,path.tracks().get(0).edge(),path.from().node())
-                    || !atAttachment(last,path.tracks().get(path.tracks().size()-1).edge(),path.to().node())) continue;
             var score = score(path,fixes,start,end,road,stop);
             if (score.plausible()) plausible.add(new Scored(path,score));
         }
@@ -100,6 +98,17 @@ final class NationalRailway {
         }
         return result("inferred","network_route_inferred",selected.path(),selected.evidence().witnesses(),
                 started,candidateMs,candidates.size());
+    }
+
+    private List<Station> endpointStations(RailwayMatcher.Fix fix,BooleanSupplier stop) {
+        var supported = new ArrayList<Station>();
+        for (var station : graph.stations(fix,550)) {
+            check(stop);
+            var tracks = graph.adjacent(station.node());
+            if (!tracks.isEmpty() && atAttachment(fix,tracks.get(0).edge(),station.node()))
+                supported.add(station);
+        }
+        return supported;
     }
 
     private static boolean atAttachment(RailwayMatcher.Fix fix,RailwayMatcher.Edge edge,long node) {
@@ -254,7 +263,7 @@ final class NationalRailway {
     private static boolean sameCorridor(Path first,Path second,BooleanSupplier stop) {
         if (first.from().id()!=second.from().id() || first.to().id()!=second.to().id()
                 || Math.abs(first.metres()-second.metres()) > 250) return false;
-        return separatedMetres(first,index(second),stop)<150 && separatedMetres(second,index(first),stop)<150;
+        return separatedMetres(first,index(second),stop)<250 && separatedMetres(second,index(first),stop)<250;
     }
 
     private static double separatedMetres(Path path,Map<Cell,List<Segment>> other,BooleanSupplier stop) {

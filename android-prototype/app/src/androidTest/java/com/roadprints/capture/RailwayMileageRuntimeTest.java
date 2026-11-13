@@ -6,7 +6,9 @@ import android.content.Context;
 import android.os.SystemClock;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
+import java.io.BufferedReader;
 import java.io.DataInputStream;
+import java.io.InputStreamReader;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -86,16 +88,27 @@ public class RailwayMileageRuntimeTest {
         var controls = app.getSharedPreferences("roadprints_capture_state", 0);
         controls.edit().putBoolean("active", true).commit();
         var trace = sample(publicRoute(app));
+        var nationalTrace = new JSONArray();
+        try (var input = new BufferedReader(new InputStreamReader(instrumentation.getContext()
+                .getAssets().open("railway/belfast-bangor.csv"), StandardCharsets.UTF_8))) {
+            for (String line; (line=input.readLine())!=null;) {
+                String[] point = line.split(",");
+                nationalTrace.put(new JSONArray().put(Double.parseDouble(point[0]))
+                        .put(Double.parseDouble(point[1])).put(8).put(START+Long.parseLong(point[2]))
+                        .put(0).put("gps"));
+            }
+        }
         for (int index = 0; index < 1652; index++) {
             boolean train = index < 24;
+            boolean national = train && index%2!=0;
             String id = "navigation-" + index;
             var journey = new JSONObject().put("journey_id", id)
                     .put("mode", train ? "train" : "unknown").put("title", "Saved journey " + index)
                     .put("distance_meters", train ? 43_900 : 200)
                     .put("started_at", Instant.ofEpochMilli(START - (train ? 0 : index * 60000L)).toString())
-                    .put("ended_at", Instant.ofEpochMilli(END).toString());
+                    .put("ended_at", Instant.ofEpochMilli(national ? START+1_050_000 : END).toString());
             if (train) {
-                journey.put("raw_capture_samples", trace);
+                journey.put("raw_capture_samples", national ? nationalTrace : trace);
             } else if (index % 3 == 0) {
                 var coordinates = new JSONArray();
                 for (int point = 0; point < 24; point++)
@@ -123,7 +136,7 @@ public class RailwayMileageRuntimeTest {
                     String message = RailwayTrialWorker.activityMessage();
                     return message != null && message.equals("Checking past train journeys…");
                 }, 3000);
-                assertTrue("A first journey must commit", waitForDistance(app, "navigation-0", 30_000));
+                assertTrue("A first journey must commit", waitForDistance(app, "navigation-0", 39_228, 30_000));
             }
             for (int i = 0; i < 2; i++) {
                 exerciseScreen(ProgressActivity.class);
@@ -131,14 +144,14 @@ public class RailwayMileageRuntimeTest {
                 exerciseScreen(JourneyListActivity.class);
             }
             try (var screen = androidx.test.core.app.ActivityScenario.launch(JourneyListActivity.class)) {
-                assertTrue("Railway history should resume and finish", waitForDistance(app, "navigation-23", 70_000));
+                assertTrue("Railway history should resume and finish", waitForDistance(app, "navigation-23", 22_997, 90_000));
                 awaitOnMain(() -> !RailwayTrialWorker.isChecking(), 120_000);
             }
             double expectedTrain = 0;
             for (int i = 0; i < 24; i++) {
                 var saved = JourneyStore.readSummary(JourneyStore.archiveFile(app, "navigation-" + i));
                 double distance = saved.getDouble("distance_meters");
-                assertEquals(39_228, distance, 150);
+                assertEquals(i%2==0 ? 39_228 : 22_997, distance, 150);
                 expectedTrain += distance;
             }
             try (var screen = androidx.test.core.app.ActivityScenario.launch(ProgressActivity.class)) {
@@ -189,11 +202,11 @@ public class RailwayMileageRuntimeTest {
         fail("Expected foreground state did not arrive");
     }
 
-    private static boolean waitForDistance(Context app, String id, long timeout) throws Exception {
+    private static boolean waitForDistance(Context app, String id, double expected, long timeout) throws Exception {
         long deadline = SystemClock.elapsedRealtime() + timeout;
         do {
             var row = JourneyStore.readSummary(JourneyStore.archiveFile(app, id));
-            if (row != null && Math.abs(row.optDouble("distance_meters") - 39_228) < 150) return true;
+            if (row != null && Math.abs(row.optDouble("distance_meters") - expected) < 150) return true;
             Thread.sleep(100);
         } while (SystemClock.elapsedRealtime() < deadline);
         return false;
