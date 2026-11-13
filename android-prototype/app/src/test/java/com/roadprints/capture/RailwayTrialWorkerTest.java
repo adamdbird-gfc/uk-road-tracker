@@ -173,7 +173,7 @@ public class RailwayTrialWorkerTest {
                 .put("started_at", java.time.Instant.ofEpochMilli(start).toString())
                 .put("ended_at", java.time.Instant.ofEpochMilli(start + 3_600_000).toString())
                 .put("distance_meters", 42000).put("raw_capture_samples", samples);
-        Files.writeString(source.toPath(), journey.toString());
+        Files.write(source.toPath(), journey.toString().getBytes(StandardCharsets.UTF_8));
         byte[] original = Files.readAllBytes(source.toPath());
         var matcher = new RailwayMatcher(RailwayStage4Test.graph(false, false), () -> false);
         assertThrows(CancellationException.class, () -> RailwayTrialWorker.assess(source, output, "historic",

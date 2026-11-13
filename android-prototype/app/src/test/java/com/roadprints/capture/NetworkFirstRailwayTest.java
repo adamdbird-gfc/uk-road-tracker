@@ -47,7 +47,7 @@ public class NetworkFirstRailwayTest {
             assertEquals(0x52504e31, input.readInt());
             int count = input.readUnsignedShort();
             int routes = input.readUnsignedShort();
-            input.skipNBytes(24L * input.readUnsignedByte());
+            input.readFully(new byte[24 * input.readUnsignedByte()]);
             var edges = new ArrayList<Segment>();
             for (int i = 0; i < count; i++) {
                 input.readInt();
@@ -58,7 +58,7 @@ public class NetworkFirstRailwayTest {
             for (int i = 0; i < routes; i++) {
                 int branch = input.readUnsignedByte();
                 boolean qualified = input.readBoolean();
-                input.skipNBytes(2);
+                input.readUnsignedShort();
                 int n = input.readUnsignedShort();
                 var geometry = new ArrayList<Segment>();
                 for (int j = 0; j < n; j++) geometry.add(edges.get(input.readUnsignedShort()));
