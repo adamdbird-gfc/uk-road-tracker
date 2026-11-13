@@ -34,11 +34,11 @@ The host replay uses synthetic observations sampled from the mapped track and om
 | Gravesend–St Pancras via HS1 | 39.539 km | Approx. 39.948 km from the Springhead junction chainage and Gravesend's HDR mileage. Difference −409 m. Platform, terminal and junction track selection remain under review. |
 | St Pancras–Sheffield via Derby | 264.841 km | Approx. 264.335 km using the Clay Cross mileage reset and Sheffield platform 4. Difference +506 m. Platform choice and the route through Derby affect this comparison. |
 | King's Cross–York, East Coast Main Line | 303.098 km | 303.361 km using York ECM4 chainage from King’s Cross. Difference −263 m. Parallel-platform paths are treated as one corridor. |
-| Euston–Birmingham New Street via Northampton | 185.374 km | Approx. 185.368 km from HNR and RBS1 chainage. Difference +6 m before the Euston platform datum allowance. |
+| Euston–Birmingham New Street via Northampton | 185.374 km | Approx. 185.577 km using the HNR/Rugby datum offset and RBS1 chainage. Difference −203 m before the Euston platform datum allowance. |
 | Paddington–Cardiff via the Severn Tunnel | 233.425 km | 233.516 km via Patchway and Severn Tunnel junction chainages. Difference −91 m. |
 | Cardiff–Swansea | 73.556 km | 73.748 km from Network Rail's Cardiff sectional appendix and Swansea engineering mileage. Difference −192 m. |
 | Glasgow Queen Street–Edinburgh Waverley | 75.967 km | Approx. 76.102 km using the EGM2/EGM3 change at Haymarket. Difference −134 m. |
-| Inverness–Kyle of Lochalsh | 132.565 km | 132.634 km using WCK and KYL at Dingwall. Difference −69 m. |
+| Inverness–Kyle of Lochalsh | 132.565 km | 132.791 km using WCK and KYL at Dingwall. Difference −226 m. |
 | Belfast Grand Central–Bangor | 22.997 km | Operator route verified. Independent platform-to-platform distance pending. |
 | Belfast Grand Central–Derry~Londonderry | 154.100 km | Operator route verified. Independent platform-to-platform distance pending. |
 | Belfast Grand Central–Larne Harbour | 43.672 km | Operator route verified. Independent platform-to-platform distance pending. |
@@ -56,9 +56,9 @@ The first national replay proposed station-to-station distances for two clipped 
 | Preserved Build 283 and PR #314 implementation | Pass. Confirmed ancestry and existing verified Sidcup results. |
 | Representative national topology | Pass on the listed corridor sample. A complete audit of every eligible station and passenger route remains open. |
 | Independent distance accuracy | Fail for release readiness. Independent checks still needed on multiple corridors, and HS1 terminal/track differences need review. |
-| Road and ambiguity safeguards | Pass for synthetic parallel-road, ambiguous branch and clipped-endpoint controls. A genuine forced-Train road replay against the national asset remains open. |
-| Historical writes, recovery and totals | Focused local archive tests pass. The Stage 4.7 national asset still needs the mixed 1,652-journey Android runtime replay and per-journey reconciliation. The complete Build 283 device archive delta remains unavailable. |
-| Normal journey presentation and What's New | Pass in focused local Android JVM checks. |
+| Road and ambiguity safeguards | Pass for synthetic parallel-road, ambiguous branch and clipped-endpoint controls. The genuine Milton Road drive remained partial in a forced-Train host replay and proposed no railway distance. |
+| Historical writes, recovery and totals | Focused local archive tests pass. The Android runtime fixture now mixes 12 Sidcup and 12 Belfast–Bangor train rows in the 1,652-row archive. The hosted emulator result and per-journey reconciliation are pending. The complete Build 283 device archive delta remains unavailable. |
+| Normal journey presentation and What's New | Pass in focused local Android JVM checks. The final run passed 37 tests, including SQLite catalogue opening, station attachments, the archive worker, mileage safeguards, navigation, Progress and What’s New. Android instrumentation also compiled. |
 | Packaged asset, ANR, memory, battery and upgrade | Awaiting Android runtime evidence and signed build. Pixel 10 acceptance remains open. |
 | Interchanges and route alternatives | Fail for release readiness. Dedicated transfer validation remains open, for separately recorded train legs. |
 

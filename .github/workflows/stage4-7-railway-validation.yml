@@ -57,3 +57,14 @@ jobs:
           arch: x86_64
           disable-animations: true
           script: bash scripts/check_railway_migration_android.sh navigation
+      - name: Retain the generated catalogue and test receipts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stage4-7-railway-validation
+          path: |
+            android-prototype/app/src/main/assets/railway/national.json
+            android-prototype/app/src/main/assets/railway/national.sqlite.gzip
+            android-prototype/app/build/test-results/testDebugUnitTest/
+          if-no-files-found: ignore
+          retention-days: 30
