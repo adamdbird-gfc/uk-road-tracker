@@ -155,6 +155,41 @@ public class RailwayTrialWorkerTest {
         }
     }
 
+    @Test public void historicalNetworkReceiptUsesExistingWorkerWithoutChangingJourney() throws Exception {
+        var app = org.robolectric.RuntimeEnvironment.getApplication();
+        var source = temp.newFile("railway_historical.json");
+        var output = temp.newFolder();
+        var samples = new org.json.JSONArray();
+        // The real archived journey is exercised in the private host replay.
+        // Use the existing reader and receipt path for cancellation and version reuse.
+        long start = 1794474000000L;
+        for (int i = 0; i < 30; i++) {
+            samples.put(new org.json.JSONArray().put(0.366990).put(51.441029)
+                    .put(8).put(start + i * 120_000).put(0).put("gps"));
+        }
+        samples.put(new org.json.JSONArray().put(-0.123689).put(51.507497)
+                .put(8).put(start + 3_600_000).put(0).put("gps"));
+        JSONObject journey = new JSONObject().put("journey_id", "historic").put("mode", "train")
+                .put("started_at", java.time.Instant.ofEpochMilli(start).toString())
+                .put("ended_at", java.time.Instant.ofEpochMilli(start + 3_600_000).toString())
+                .put("distance_meters", 42000).put("raw_capture_samples", samples);
+        Files.writeString(source.toPath(), journey.toString());
+        byte[] original = Files.readAllBytes(source.toPath());
+        var matcher = new RailwayMatcher(RailwayStage4Test.graph(false, false), () -> false);
+        assertThrows(CancellationException.class, () -> RailwayTrialWorker.assess(source, output, "historic",
+                () -> matcher, () -> false, (fixes, from, to) -> { throw new CancellationException(); }));
+        assertEquals(0, output.list().length);
+        JSONObject result = RailwayTrialWorker.assess(source, output, "historic", () -> matcher, () -> false,
+                (fixes, from, to) -> NetworkFirstRailway.open(
+                        app.getAssets().open("railway/network-first-r1.bin.gz"), () -> false));
+        assertEquals("unresolved", result.getString("confidence"));
+        assertEquals(42000, result.getDouble("proposed_m"), 0);
+        assertArrayEquals(original, Files.readAllBytes(source.toPath()));
+        assertEquals(1, output.list().length);
+        assertEquals(result.toString(), RailwayTrialWorker.assess(source, output, "historic",
+                () -> { throw new AssertionError("Receipt recomputed"); }, () -> false).toString());
+    }
+
     private static boolean hasText(android.view.View view, String text) {
         if (view instanceof android.widget.TextView label && text.contentEquals(label.getText())) return true;
         if (view instanceof android.view.ViewGroup group) {

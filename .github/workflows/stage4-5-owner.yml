@@ -1,0 +1,137 @@
+name: Roadprints Stage 4.5 owner trial
+on:
+  push:
+    branches: [feat/railway-stage4-5]
+permissions:
+  contents: write
+concurrency:
+  group: roadprints-stage4-5-owner
+  cancel-in-progress: false
+
+jobs:
+  owner-trial:
+    if: github.repository == 'adamdbird-gfc/uk-road-tracker' && github.ref == 'refs/heads/feat/railway-stage4-5'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: adamdbird-gfc/uk-road-tracker
+      BASELINE: 672b8b8fd43a3429fd4264c357cdd68533bdd8fc
+      SOURCE_SHA: ${{ github.sha }}
+      CATALOGUE_SHA256: 5409cf795b0ab58e4ef9911531b463c538c0a5e8c8555e3183ecb7d23c3dad5a
+      CATALOGUE_BYTES: '15183872'
+      CERT_SHA256: 5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031
+      APK: Roadprints-0.25.236-282.apk
+      TAG: roadprints-0.25.236-282-stage4.5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - name: Verify the pinned owner source
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$BASELINE" "$SOURCE_SHA"
+          git switch --detach "$SOURCE_SHA"
+      - name: Restore existing packaging reference cache
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: |
+            .cache/ncn/catalogue.db
+            android-prototype/app/src/main/assets/historic-counties/boundaries.bin
+          key: reference-pins-v2-${{ runner.os }}-${{ hashFiles('android-prototype/app/src/main/assets/ncn-national/manifest.json', 'android-prototype/app/src/main/assets/historic-counties/catalogue.json') }}
+          fail-on-cache-miss: true
+      - name: Verify the county reference and select Java 17
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, json, pathlib
+          folder = pathlib.Path('android-prototype/app/src/main/assets/historic-counties')
+          expected = json.loads((folder / 'catalogue.json').read_text())['data_sha256']
+          with (folder / 'boundaries.bin').open('rb') as source:
+              assert hashlib.file_digest(source, 'sha256').hexdigest() == expected
+          PY
+          test -n "$JAVA_HOME_17_X64"
+          test -f "$ANDROID_HOME/platforms/android-35/android.jar"
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.10'
+          cache-read-only: true
+      - name: Compile the app and validate railway matching and the owner flow
+        run: |
+          set -euo pipefail
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:testDebugUnitTest --tests '*RailwayStage4Test' --tests '*RailwayTrialWorkerTest' --tests '*RegionalRailwayCatalogueTest' --tests '*NetworkFirstRailwayTest'
+          python3 - <<'PY'
+          import pathlib, xml.etree.ElementTree as ET
+          root = pathlib.Path('android-prototype/app/build/test-results/testDebugUnitTest')
+          for name in ('RailwayStage4Test', 'RailwayTrialWorkerTest', 'RegionalRailwayCatalogueTest', 'NetworkFirstRailwayTest'):
+              report = ET.parse(root / f'TEST-com.roadprints.capture.{name}.xml').getroot()
+              counts = {key: int(report.attrib[key]) for key in ('tests', 'failures', 'errors', 'skipped')}
+              print(name, counts)
+              assert counts['tests'] > 0 and all(counts[key] == 0 for key in ('failures', 'errors', 'skipped'))
+          PY
+      - name: Assemble one APK with the established owner signing identity
+        env:
+          ROADPRINTS_DEBUG_KEYSTORE_B64: ${{ secrets.ROADPRINTS_DEBUG_KEYSTORE_B64 }}
+          ROADPRINTS_DEBUG_STORE_PASSWORD: ${{ secrets.ROADPRINTS_DEBUG_STORE_PASSWORD }}
+          ROADPRINTS_DEBUG_KEY_ALIAS: ${{ secrets.ROADPRINTS_DEBUG_KEY_ALIAS }}
+          ROADPRINTS_DEBUG_KEY_PASSWORD: ${{ secrets.ROADPRINTS_DEBUG_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$ROADPRINTS_DEBUG_KEYSTORE_B64"
+          test -n "$ROADPRINTS_DEBUG_STORE_PASSWORD"
+          test -n "$ROADPRINTS_DEBUG_KEY_ALIAS"
+          test -n "$ROADPRINTS_DEBUG_KEY_PASSWORD"
+          export ROADPRINTS_DEBUG_KEYSTORE="$RUNNER_TEMP/roadprints-debug.keystore"
+          trap 'rm -f "$ROADPRINTS_DEBUG_KEYSTORE"' EXIT
+          umask 077
+          printf '%s' "$ROADPRINTS_DEBUG_KEYSTORE_B64" | base64 --decode > "$ROADPRINTS_DEBUG_KEYSTORE"
+          unset ROADPRINTS_DEBUG_KEYSTORE_B64
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:assembleDebug
+          cp android-prototype/app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/$APK"
+      - name: Verify package, signer, and packaged catalogue
+        run: |
+          set -euo pipefail
+          apk="$RUNNER_TEMP/$APK"
+          signer=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -n 1)
+          "$signer" verify --verbose --print-certs "$apk" > "$RUNNER_TEMP/certificate.txt"
+          grep -E "certificate SHA-256 digest: $CERT_SHA256$" "$RUNNER_TEMP/certificate.txt"
+          "${signer%/*}/aapt" dump badging "$apk" > "$RUNNER_TEMP/package.txt"
+          grep -F "package: name='com.roadprints.capture' versionCode='282' versionName='0.25.236'" "$RUNNER_TEMP/package.txt"
+          grep -F "launchable-activity: name='com.roadprints.capture.OnboardingActivity'" "$RUNNER_TEMP/package.txt"
+          python3 scripts/verify_milepost_apk.py "$apk"
+          python3 - "$apk" <<'PY'
+          import gzip, hashlib, os, pathlib, sys, zipfile
+          apk = pathlib.Path(sys.argv[1])
+          with zipfile.ZipFile(apk) as package:
+              catalogue = gzip.decompress(package.read('assets/railway/regional.sqlite.gzip'))
+              assert len(catalogue) == int(os.environ['CATALOGUE_BYTES'])
+              assert hashlib.sha256(catalogue).hexdigest() == os.environ['CATALOGUE_SHA256']
+              paths = package.read('assets/railway/network-first-r1.bin.gz')
+              assert hashlib.sha256(paths).hexdigest() == '80f4486253e94658b7128411b9c52b29e07e7dddd04c4f8392ae8af6afc5d340'
+              dex = b''.join(package.read(name) for name in package.namelist() if name.endswith('.dex'))
+              for symbol in (b'JourneyOriginRecovery;', b'RailwayTrialWorker;', b'RegionalRailwayCatalogue;', b'NetworkFirstRailway;'):
+                  assert symbol in dex, symbol
+          PY
+          echo "APK_SHA256=$(sha256sum "$apk" | cut -d' ' -f1)" >> "$GITHUB_ENV"
+          echo "APK_BYTES=$(stat -c %s "$apk")" >> "$GITHUB_ENV"
+      - name: Publish and verify the direct owner-trial download
+        run: |
+          set -euo pipefail
+          if ! gh release view "$TAG" --json tagName >/dev/null 2>&1; then
+            gh release create "$TAG" "$RUNNER_TEMP/$APK" --target "$SOURCE_SHA" --prerelease --latest=false               --title 'Roadprints 0.25.236 (282) • Stage 4.5 owner trial'               --notes "Controlled Pixel 10 trial. Install over signed build 281. The existing Railway comparison can infer the reviewed Gravesend–Charing Cross route from saved evidence. Saved mileage and totals are preserved. Android compile and focused tests passed. Physical-device acceptance is pending. Source: $SOURCE_SHA. APK SHA-256: $APK_SHA256."
+          fi
+          test "$(gh api "repos/$GH_REPO/git/ref/tags/$TAG" --jq .object.sha)" = "$SOURCE_SHA"
+          asset_url=$(gh api "repos/$GH_REPO/releases/tags/$TAG" | jq -er --arg apk "$APK" --argjson size "$APK_BYTES"             'select(.draft == false and .prerelease == true) | .assets[] | select(.name == $apk and .size == $size and .state == "uploaded") | .browser_download_url')
+          test "$asset_url" = "https://github.com/$GH_REPO/releases/download/$TAG/$APK"
+          curl --fail --silent --show-error --location --retry 3 --retry-all-errors             --max-time 120 --output "$RUNNER_TEMP/downloaded.apk" "$asset_url"
+          cmp "$RUNNER_TEMP/$APK" "$RUNNER_TEMP/downloaded.apk"
+          printf 'Verified %s bytes with SHA-256 %s\n%s\n' "$APK_BYTES" "$APK_SHA256" "$asset_url"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: stage4-5-validation
+          path: android-prototype/app/build/test-results/testDebugUnitTest/
+          if-no-files-found: ignore
+          retention-days: 14
