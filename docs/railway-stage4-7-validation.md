@@ -76,5 +76,17 @@ The synthetic Cardiff fixture uses a journey time of approximately 2h 7m to Card
 | Parallel roads and ambiguous alternatives | Pass in the host controls. Genuine forced-Train Milton Road drive and nearby slices retained zero inferred mileage. Focused JVM tests also cover a parallel road, clipped endpoint and plausible alternate branch. |
 | Build 283 mileage | Acceptable limitation. Current archive reconciles, with exact historical inclusion of the older Sheffield rows unknown. |
 | Android workload, restart, responsiveness, receipt/totals reconciliation and memory | Pass. 38 focused JVM tests and four API 35 instrumentation invocations passed, covering the Cardiff replay, atomic migration across restart and rollback, and navigation and totals reconciliation across 1,652 journeys. The Cardiff cases met the 10-second per-case CPU ceiling. Repeated screen launch and return met the 5-second limit. API 35 results are emulator measurements. [GitHub Actions](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/43512255293) |
-| APK and upgrade compatibility | Owner distribution requires matching the Build 283 signing certificate, the original application ID and a verified GitHub Release download. |
+| APK and upgrade compatibility | Pass. Signed 0.25.238 (284) retains package com.roadprints.capture and the extracted Build 283 signing certificate. Release provenance and direct asset appear below. |
 | Pixel 10 and Firebase | Pixel 10 owner acceptance follows the GitHub release. Firebase remains on hold until that acceptance and explicit promotion approval. |
+
+## Owner-test release
+
+Build 0.25.238 (284) was packaged from `918af39e2813c7a00820f62fbf50c05b00666e52` in [packaging run 43513362469](https://github.com/adamdbird-gfc/uk-road-tracker/actions/runs/43513362469). Android validation was on `3a0d6870116163d377993b8306b80d3188066415`. The Android source and both runtime checks are identical across those commits.
+
+- [Roadprints-0.25.238-284.apk](https://github.com/adamdbird-gfc/uk-road-tracker/releases/download/roadprints-0.25.238-284-stage4.7/Roadprints-0.25.238-284.apk)
+- Size 103,034,384 bytes. SHA-256 `a21e0703ecd68f6fb1862c90a41980f3c5b64b2206090c3ed4386759a1c1c100`.
+- Signing certificate SHA-256 `5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031`. The packaging job verified the signed APK, published a prerelease and downloaded the direct asset to compare its bytes.
+
+Open the APK on the Pixel 10 and choose Update over Build 283, keeping app data. Open Roadprints with recording idle, browse Journeys and Progress while reassessment runs, and check the saved routes, totals and Utilities → What's New. Some older HS1 and Sheffield recordings can keep their existing distances when either end is missing. Monitor for a Wait / Close app dialog. Phone responsiveness and battery acceptance are still pending.
+
+Stage 4.7 passed the controlled owner-test gate. PR #315 remains a draft. Firebase promotion requires successful owner acceptance and explicit approval. No backend or Firebase deployment accompanied the release.
