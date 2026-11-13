@@ -52,11 +52,11 @@ jobs:
       - name: Compile the app and validate railway matching and the owner flow
         run: |
           set -euo pipefail
-          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:testDebugUnitTest --tests '*RailwayStage4Test' --tests '*RailwayTrialWorkerTest' --tests '*RegionalRailwayCatalogueTest' --tests '*NetworkFirstRailwayTest' --tests '*RailwayMileageTest'
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:testDebugUnitTest --tests '*RailwayStage4Test' --tests '*RailwayTrialWorkerTest' --tests '*RegionalRailwayCatalogueTest' --tests '*NetworkFirstRailwayTest' --tests '*RailwayMileageTest' --tests '*ProgressAvailabilityTest' --tests '*NavigationPerformanceTest'
           python3 - <<'PY'
           import pathlib, xml.etree.ElementTree as ET
           root = pathlib.Path('android-prototype/app/build/test-results/testDebugUnitTest')
-          for name in ('RailwayStage4Test', 'RailwayTrialWorkerTest', 'RegionalRailwayCatalogueTest', 'NetworkFirstRailwayTest', 'RailwayMileageTest'):
+          for name in ('RailwayStage4Test', 'RailwayTrialWorkerTest', 'RegionalRailwayCatalogueTest', 'NetworkFirstRailwayTest', 'RailwayMileageTest', 'ProgressAvailabilityTest', 'NavigationPerformanceTest'):
               report = ET.parse(root / f'TEST-com.roadprints.capture.{name}.xml').getroot()
               counts = {key: int(report.attrib[key]) for key in ('tests', 'failures', 'errors', 'skipped')}
               print(name, counts)

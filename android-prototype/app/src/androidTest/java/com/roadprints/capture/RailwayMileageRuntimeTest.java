@@ -94,7 +94,22 @@ public class RailwayMileageRuntimeTest {
                     .put("distance_meters", train ? 43_900 : 200)
                     .put("started_at", Instant.ofEpochMilli(START - (train ? 0 : index * 60000L)).toString())
                     .put("ended_at", Instant.ofEpochMilli(END).toString());
-            if (train) journey.put("raw_capture_samples", trace);
+            if (train) {
+                journey.put("raw_capture_samples", trace);
+            } else if (index % 3 == 0) {
+                var coordinates = new JSONArray();
+                for (int point = 0; point < 24; point++)
+                    coordinates.put(new JSONArray().put(0.36 + point * .0001).put(51.44));
+                var line = new JSONObject().put("type", "LineString").put("coordinates", coordinates);
+                var feature = new JSONObject().put("type", "Feature").put("geometry", line)
+                        .put("properties", new JSONObject().put("road_ref", "B" + (2000 + index))
+                                .put("highway", "secondary"));
+                var features = new JSONObject().put("type", "FeatureCollection")
+                        .put("features", new JSONArray().put(feature));
+                journey.put("mode", "driving").put("processing_status", "complete")
+                        .put("route_geometry", line).put("processing_result",
+                                new JSONObject().put("geojson", features).put("road_geojson", features));
+            }
             var source = JourneyStore.archiveFile(app, id);
             Files.write(source.toPath(), journey.toString().getBytes(StandardCharsets.UTF_8));
             if (train) assertTrue(source.setLastModified(System.currentTimeMillis() + 60000));
@@ -104,6 +119,10 @@ public class RailwayMileageRuntimeTest {
                 controls.edit().putBoolean("active", false).commit();
                 RailwayTrialWorker.captureEnded(app);
                 awaitOnMain(() -> RailwayTrialWorker.isChecking(), 12_000);
+                awaitOnMain(() -> {
+                    String message = RailwayTrialWorker.activityMessage();
+                    return message != null && message.equals("Checking past train journeys…");
+                }, 3000);
                 assertTrue("A first journey must commit", waitForDistance(app, "navigation-0", 15_000));
             }
             for (int i = 0; i < 2; i++) {
@@ -114,6 +133,29 @@ public class RailwayMileageRuntimeTest {
             try (var screen = androidx.test.core.app.ActivityScenario.launch(JourneyListActivity.class)) {
                 assertTrue("Railway history should resume and finish", waitForDistance(app, "navigation-23", 40_000));
                 awaitOnMain(() -> !RailwayTrialWorker.isChecking(), 120_000);
+            }
+            double expectedTrain = 0;
+            for (int i = 0; i < 24; i++) {
+                var saved = JourneyStore.readSummary(JourneyStore.archiveFile(app, "navigation-" + i));
+                double distance = saved.getDouble("distance_meters");
+                assertEquals(39_228, distance, 150);
+                expectedTrain += distance;
+            }
+            try (var screen = androidx.test.core.app.ActivityScenario.launch(ProgressActivity.class)) {
+                double total = expectedTrain;
+                awaitOnMain(() -> {
+                    try {
+                        var prefs = app.getSharedPreferences("roadprints_progress_snapshot", 0);
+                        var summary = new JSONObject(prefs.getString("summary", "{}"));
+                        if (summary.optLong("revision", -1) != JourneyStore.dataRevision(app)) return false;
+                        assertEquals(total, summary.getDouble("trainMetres"), .01);
+                        assertEquals(1628 * 200, summary.getDouble("drivingMetres")
+                                + summary.getDouble("unknownMetres"), .01);
+                        return true;
+                    } catch (org.json.JSONException unavailable) {
+                        return false;
+                    }
+                }, 45_000);
             }
             assertEquals(1652, JourneyStore.archiveFiles(app).stream()
                     .filter(file -> file.getName().startsWith("journey_navigation-")).count());
@@ -128,6 +170,7 @@ public class RailwayMileageRuntimeTest {
         long start = SystemClock.elapsedRealtime();
         try (var screen = androidx.test.core.app.ActivityScenario.launch(type)) {
             awaitOnMain(() -> true, 4000);
+            awaitOnMain(() -> RailwayTrialWorker.isChecking(), 4000);
         }
         long elapsed = SystemClock.elapsedRealtime() - start;
         android.util.Log.i("RoadprintsRailwayRuntime", "navigation=" + type.getSimpleName() + " elapsed_ms=" + elapsed);
