@@ -41,4 +41,20 @@ public class RailwayStage4Test {
         assertThrows(CancellationException.class,
                 () -> new RailwayMatcher(graph(false,false),()->true).match(fixes,0,20000));
     }
+
+    @Test public void boundariesRequireMeasuredBracketsAndDoNotCreditBeyondThem() {
+        var fixes = new ArrayList<RailwayMatcher.Fix>();
+        for (int i = 0; i < 9; i++) fixes.add(new RailwayMatcher.Fix(i * 50, 0, 8, i * 5000L));
+        var matcher = new RailwayMatcher(graph(false, false), () -> false);
+        var match = matcher.match(fixes, 2500, 37500);
+        assertTrue(match.toString(), match.complete());
+        assertEquals(350, match.supportedMetres(), .001);
+        assertEquals("partial", matcher.match(fixes.subList(1, 9), 2500, 37500).confidence());
+        var stale = new ArrayList<>(fixes);
+        stale.set(0, new RailwayMatcher.Fix(0, 0, 0, 0));
+        assertEquals("partial", matcher.match(stale, 2500, 37500).confidence());
+        assertFalse(matcher.match(fixes.subList(0, 4), 2500, 12500).complete());
+        assertEquals(0, new RailwayMatcher(graph(true, false), () -> false)
+                .match(fixes, 2500, 37500).supportedMetres(), .001);
+    }
 }

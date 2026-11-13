@@ -145,6 +145,7 @@ public class JourneyListActivity extends Activity {
     protected void onResume() {
         super.onResume();
         listActive = true;navigation.resume(this);
+        RailwayTrialWorker.resume(this);
         refreshJourneysAsync();
         mainHandler.removeCallbacks(observeJourneyChanges);
         mainHandler.postDelayed(observeJourneyChanges, 3000);
@@ -152,6 +153,7 @@ public class JourneyListActivity extends Activity {
 
     @Override
     protected void onPause() {
+        RailwayTrialWorker.pause();
         listActive = false;
         mainHandler.removeCallbacks(observeJourneyChanges);
         if (journeyScroll != null) savedJourneyScrollY = journeyScroll.getScrollY();
@@ -1071,6 +1073,42 @@ public class JourneyListActivity extends Activity {
                         ? View.VISIBLE : View.GONE);
     }
 
+    private void showRailwayComparison(LinearLayout panel, JSONObject result) {
+        panel.removeAllViews();
+        panel.addView(fieldLabel("Railway comparison"));
+        if (result == null) {
+            panel.addView(detailRow("Status", CaptureService.isActive(this)
+                    ? "Waiting for recording to finish" : "Waiting for assessment"));
+            return;
+        }
+        String confidence = result.optString("confidence");
+        String reason = result.optString("reason");
+        panel.addView(detailRow("Status", switch (confidence) {
+            case "full" -> "Full match";
+            case "partial" -> "Partial match";
+            default -> "Unresolved";
+        }));
+        if ("full".equals(confidence)) {
+            panel.addView(detailRow("Proposed distance", DistanceUnits.format(this, result.optDouble("proposed_m"))));
+            return;
+        }
+        if ("partial".equals(confidence)) {
+            panel.addView(detailRow("Supported distance", DistanceUnits.format(this, result.optDouble("supported_rail_m"))));
+        }
+        TextView explanation = new TextView(this);
+        explanation.setText(switch (reason) {
+            case "insufficient_fixes" -> "There are too few usable GPS fixes.";
+            case "incomplete_route" -> "GPS evidence supports only part of the recorded route.";
+            case "input_limit", "catalogue_query_limit" -> "This recording exceeded the assessment limits.";
+            case "malformed_input" -> "The saved recording could not be read for comparison.";
+            case "assessment_unavailable" -> "Assessment is unavailable. Reopen the journey to retry.";
+            default -> "No supported route was found in the regional rail data.";
+        });
+        explanation.setTextColor(0xFFD3DCED);
+        explanation.setPadding(0, dp(4), 0, dp(8));
+        panel.addView(explanation);
+    }
+
     private void showDetails(JSONObject journey) {
         JSONObject geometry = journey.optJSONObject("route_geometry");
         JSONArray coordinates = geometry == null ? null : geometry.optJSONArray("coordinates");
@@ -1153,11 +1191,21 @@ public class JourneyListActivity extends Activity {
         fields.addView(detailRow("Start", displayTime(journey.optString("started_at"))));
         fields.addView(detailRow("End", displayTime(journey.optString("ended_at"))));
         fields.addView(detailRow("Duration", journeyDuration(journey)));
-        fields.addView(detailRow("Distance", DistanceUnits.format(this, metres)));
+        boolean railwayEligible = BuildConfig.DEBUG && RailwayTrialWorker.eligible(journeyMode);
+        fields.addView(detailRow(railwayEligible ? "Recorded distance" : "Distance",
+                railwayEligible && journey.isNull("distance_meters") ? "Unavailable" : DistanceUnits.format(this, metres)));
         fields.addView(detailRow("GPS route points", DistanceUnits.formatPointCount(points)));
         if (journey.optJSONArray("raw_capture_samples") != null)
             fields.addView(detailRow("Original GPS samples", DistanceUnits.formatPointCount(JourneySizeGuard.rawCount(journey))));
         fields.addView(detailRow("Transport", displayMode(journey.optString("mode", "unknown"))));
+        LinearLayout railway = new LinearLayout(this);
+        railway.setOrientation(LinearLayout.VERTICAL);
+        java.util.function.Consumer<JSONObject> railwayObserver = result -> showRailwayComparison(railway, result);
+        railway.setTag("journey_railway_comparison");
+        if (railwayEligible) {
+            showRailwayComparison(railway, null);
+            fields.addView(railway);
+        }
         addPlaceReviewFields(fields,journey);
 
         fields.addView(fieldLabel("Journey name"));
@@ -1506,7 +1554,12 @@ public class JourneyListActivity extends Activity {
                 }));
         AlertDialog dialog = new RoadprintsDialog.Builder(this).setView(container).create();
         dialogRef[0] = dialog;
-        dialog.setOnDismissListener(d->{NavigationTrace back=new NavigationTrace("journey_return");back.resume(this);back.frame(journeyList,"first_list","cache=retained");});
+        dialog.setOnDismissListener(d -> {
+            if (railwayEligible) RailwayTrialWorker.removeObserver(railwayObserver);
+            NavigationTrace back = new NavigationTrace("journey_return");
+            back.resume(this);
+            back.frame(journeyList, "first_list", "cache=retained");
+        });
         dialog.setCanceledOnTouchOutside(false);
         dialog.setOnKeyListener((dialogInterface, keyCode, event) -> {
             if (keyCode == KeyEvent.KEYCODE_BACK) {
@@ -1534,6 +1587,7 @@ public class JourneyListActivity extends Activity {
             }
         });
         dialog.show();
+        if (railwayEligible) RailwayTrialWorker.observe(this, journey.optString("journey_id"), railwayObserver);
         if (matchJourney != null
                 && "processing".equals(journey.optString("processing_status"))) {
             watchSingleJourneyMatch(journey, matchJourney, status, dialogRef,
