@@ -40,6 +40,7 @@ import java.util.concurrent.Executors;
 public class ProgressActivity extends Activity {
     private static final Object STATS_CACHE_LOCK = new Object();
     private static DistanceStats processCachedStats;
+    private static long cachedGeometryRevision = Long.MIN_VALUE;
     private static long processCachedRevision = Long.MIN_VALUE;
     private static boolean statsLoadInFlight;
     private static java.util.concurrent.Executor statisticsExecutor = ScreenDataLoader::execute;
@@ -239,6 +240,7 @@ public class ProgressActivity extends Activity {
     private void loadStatistics() {
         final android.content.Context app = getApplicationContext();
         final long revision = JourneyStore.dataRevision(app);
+        final long geometryRevision = JourneyStore.geometryRevision(app);
         final int generation = statsLoadGeneration;
         DistanceStats cached; long cachedRevision;
         synchronized (STATS_CACHE_LOCK) { cached = processCachedStats; cachedRevision = processCachedRevision; }
@@ -254,19 +256,26 @@ public class ProgressActivity extends Activity {
             if (newlyLoaded) { enrichLocalRoadTowns(cached, generation); loadLocalTownInventoriesAsync(cached, generation); }
             return;
         }
+        // Coalesce distance-only updates while the archive worker is still committing.
+        if (cached != null && cachedGeometryRevision == JourneyStore.geometryRevision(app)
+                && RailwayTrialWorker.isChecking()) return;
         refreshStatus.setText(loadedStats == null || loadedStats.pending ? "Preparing your progress…" : "Updating progress · previous figures remain available");
         refreshStatus.setVisibility(View.VISIBLE);
         synchronized (STATS_CACHE_LOCK) { if (statsLoadInFlight) return; statsLoadInFlight = true; }
+        long queuedAt = android.os.SystemClock.elapsedRealtime();
         statisticsExecutor.execute(() -> {
+            long started = android.os.SystemClock.elapsedRealtime();
             DistanceStats result = null; Exception failure = null;
             try (BetaMeasurement.Operation measurement = BetaMeasurement.operation(app, "progress_data_load")) {
                 result = summarizeSavedJourneys(app, generation);
             } catch (Exception error) { failure = error; }
+            PerformanceDiagnostics.timing("progress_prepare", android.os.SystemClock.elapsedRealtime() - started,
+                    "queue_ms=" + (started - queuedAt) + " revision=" + revision);
             boolean current;
             synchronized (JourneyStore.class) {
                 current = failure == null && JourneyStore.dataRevision(app) == revision;
                 synchronized (STATS_CACHE_LOCK) {
-                    if (current) { processCachedStats = result; processCachedRevision = revision; writeStatisticsSnapshot(app, result, revision); }
+                    if (current) { processCachedStats = result; processCachedRevision = revision; cachedGeometryRevision = geometryRevision; writeStatisticsSnapshot(app, result, revision); }
                     statsLoadInFlight = false;
                 }
             }
@@ -329,7 +338,9 @@ public class ProgressActivity extends Activity {
         MotorwayProgressCalculator motorwayCalculator = new MotorwayProgressCalculator(
                 context, null, true, true);
         ARoadProgressCalculator aRoadCalculator = new ARoadProgressCalculator(context, true);
-        int[] checkedJourneys = {0};
+        int checkedJourneys = 0;
+        long cacheMs = 0;
+        long mergeMs = 0;
 
         long started=android.os.SystemClock.elapsedRealtime();
         JourneyStore.prepareArchive(context);
@@ -338,16 +349,19 @@ public class ProgressActivity extends Activity {
             for(java.io.File source:sources){
                 if(Thread.currentThread().isInterrupted())throw new java.util.concurrent.CancellationException();
                 CompactJourneyCache.Reader prepare=file->progressRow(context,JourneyStore.mapEvidence(context,file,true),motorwayCalculator,aRoadCalculator);
+                long rowStarted = android.os.SystemClock.elapsedRealtime();
                 JSONObject row=cache.get(source,prepare);
                 if(!motorwayCalculator.accepts(row.getJSONArray("motorway"))||!aRoadCalculator.accepts(row.getJSONArray("a_road"))){cache.invalidate(source);row=cache.get(source,prepare);}
-                stats.activities+=row.optInt("activities");
-                for(String field:SNAPSHOT_FIELDS)try{java.lang.reflect.Field f=DistanceStats.class.getDeclaredField(field);f.setAccessible(true);f.setDouble(stats,f.getDouble(stats)+row.optDouble(field,0));}catch(ReflectiveOperationException impossible){throw new IllegalStateException(impossible);}
+                long mergeStarted = android.os.SystemClock.elapsedRealtime();
+                cacheMs += mergeStarted - rowStarted;
+                stats.addDistances(row);
                 uniqueRoadEdges.addCompact(row.getJSONArray("driving_edges"));uniqueFootEdges.addCompact(row.getJSONArray("foot_edges"));
                 motorwayCalculator.addContribution(row.getString("id"),row.getJSONArray("motorway"));aRoadCalculator.addContribution(row.getString("id"),row.getJSONArray("a_road"));
                 mergeDiscovery(stats,row.getJSONArray("discovery"),row.getString("id"));
-                if(++checkedJourneys[0]%100==0)updateLoadingMessage(generation,"Preparing progress · "+checkedJourneys[0]+" journeys checked");
+                mergeMs += android.os.SystemClock.elapsedRealtime() - mergeStarted;
+                if(++checkedJourneys%100==0)updateLoadingMessage(generation,"Preparing progress · "+checkedJourneys+" journeys checked");
             }
-            PerformanceDiagnostics.timing("progress_archive",android.os.SystemClock.elapsedRealtime()-started,"rows="+sources.size()+" reads="+cache.reads+" reused="+cache.hits);
+            PerformanceDiagnostics.timing("progress_archive",android.os.SystemClock.elapsedRealtime()-started,"rows="+sources.size()+" reads="+cache.reads+" reused="+cache.hits+" cache_ms="+cacheMs+" merge_ms="+mergeMs);
         }catch(Exception failure){throw new IllegalStateException("Progress preparation failed",failure);}
 
         stats.uniqueDrivingMetres = uniqueRoadEdges.metres();
@@ -1880,6 +1894,17 @@ public class ProgressActivity extends Activity {
     }
 
     private static final class DistanceStats {
+        void addDistances(JSONObject row) {
+            activities += row.optInt("activities");
+            drivingMetres += row.optDouble("drivingMetres", 0);
+            footMetres += row.optDouble("footMetres", 0);
+            trainMetres += row.optDouble("trainMetres", 0);
+            ferryMetres += row.optDouble("ferryMetres", 0);
+            flightMetres += row.optDouble("flightMetres", 0);
+            transitMetres += row.optDouble("transitMetres", 0);
+            cyclingMetres += row.optDouble("cyclingMetres", 0);
+            unknownMetres += row.optDouble("unknownMetres", 0);
+        }
         boolean pending;
         boolean summaryOnly;
         double drivingMetres;

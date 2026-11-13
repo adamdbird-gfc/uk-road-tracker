@@ -37,6 +37,7 @@ public class RailwayMileageRuntimeTest {
         if ("verify".equals(InstrumentationRegistry.getArguments().getString("phase"))) {
             assertEquals(39_228, JourneyStore.readSummary(source).getDouble("distance_meters"), 150);
             long revision = preferences.getLong("journey_archive_revision", 0);
+            JourneyStore.recoverRailwayWrite(app);
             assertEquals(revision + 1, JourneyStore.dataRevision(app));
             assertFalse(preferences.contains("railway_distance_pending_id"));
             assertTrue(JourneyStore.restoreRailwayDistance(app, ID));

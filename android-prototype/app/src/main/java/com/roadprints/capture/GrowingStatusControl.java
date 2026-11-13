@@ -60,9 +60,14 @@ public final class GrowingStatusControl extends TextView {
             case COMPLETE: label=snapshot.failed>0?"Retry · "+snapshot.failed+" unmatched":"✓ Ready";break;
             default: label="✓ Ready";
         }
-        if(screenStatus!=null)label=screenStatus+(active?" · "+label:"");
-        setText(label+(active?" · View activity ›":""));
-        setContentDescription(label+(active?". Open activity details":""));
+        String railway = RailwayTrialWorker.activityMessage();
+        if (railway != null && !active) label = railway;
+        if(screenStatus!=null)label=screenStatus+(active||railway!=null?" · "+label:"");
+        String text = label+(active?" · View activity ›":"");
+        if (!text.contentEquals(getText())) {
+            setText(text);
+            setContentDescription(label+(active?". Open activity details":""));
+        }
         setClickable(active);setFocusable(active);
         int height=dp(active?52:28);
         if(targetHeight==height)return;
