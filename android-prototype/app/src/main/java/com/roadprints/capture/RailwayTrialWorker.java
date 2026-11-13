@@ -258,7 +258,6 @@ final class RailwayTrialWorker {
                             +" network_evidence_ms="+row.optLong("network_evidence_ms")
                             +" "+row.optString("work"));
         }
-        return row;
     }
 
     private static void closeCatalogue() {
