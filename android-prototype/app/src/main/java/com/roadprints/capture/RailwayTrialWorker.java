@@ -3,6 +3,7 @@ package com.roadprints.capture;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.util.AtomicFile;
 import android.util.JsonReader;
 import android.util.Log;
@@ -14,14 +15,15 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 import org.json.JSONObject;
 
-/** Controlled foreground-triggered reassessment. Reads staged copies and writes only its sidecar. */
+/** Foreground-triggered comparison of committed journeys. Only comparison receipts are written. */
 final class RailwayTrialWorker {
     private static final String TAG = "RoadprintsRailway";
-    private static final String SWITCH = "enabled";
     private static final int BATCH = 8;
-    private static final int MAX_INPUTS = 2048;
+    private static final long BATCH_MS = 180;
+    private static final long BATCH_DELAY_MS = 150;
     private static final int MAX_BYTES = 8*1024*1024;
     private static final ExecutorService WORK = Executors.newSingleThreadExecutor(task -> {
         Thread t = new Thread(() -> {
@@ -33,21 +35,29 @@ final class RailwayTrialWorker {
     private static final class MainThread {
         static final Handler HANDLER = new Handler(Looper.getMainLooper());
     }
+    // Scheduling and the detail observer live on the main thread. The archive
+    // cursor and SQLite connection belong exclusively to the worker.
     private static boolean queued;
     private static volatile long foregroundGeneration;
     private static volatile boolean foreground;
+    private static String observedId;
+    private static Consumer<JSONObject> observer;
+    private static boolean detailPending;
+    private static long completedRevision = -1;
+    private static long scanRevision = -1;
+    private static List<File> pending = Collections.emptyList();
     private static int nextIndex;
-    private static boolean finished;
+    private static RegionalRailwayCatalogue catalogue;
     private static final String KEY = RegionalRailwayCatalogue.SHA256+":"+RailwayMatcher.VERSION;
 
     private RailwayTrialWorker() {}
 
+    static boolean eligible(String mode) { return "train".equals(mode); }
+
     static void resume(Context activity) {
         if (!BuildConfig.DEBUG) return;
         foreground = true;
-        foregroundGeneration++;
-        nextIndex = 0;
-        finished = false;
+        detailPending = observedId != null;
         schedule(activity.getApplicationContext());
     }
 
@@ -55,95 +65,233 @@ final class RailwayTrialWorker {
         if (!BuildConfig.DEBUG) return;
         foreground = false;
         foregroundGeneration++;
+        // Release the SQLite cache when leaving the assessment screens.
+        WORK.execute(RailwayTrialWorker::closeCatalogue);
+    }
+
+    static void archiveChanged(Context context) {
+        if (!BuildConfig.DEBUG) return;
+        Context app = context.getApplicationContext();
+        MainThread.HANDLER.post(() -> {
+            detailPending = observedId != null;
+            schedule(app);
+        });
+    }
+
+    static void captureEnded(Context context) {
+        if (BuildConfig.DEBUG) schedule(context.getApplicationContext());
+    }
+
+    static void observe(Context context, String id, Consumer<JSONObject> callback) {
+        observedId = id;
+        observer = callback;
+        detailPending = true;
+        schedule(context.getApplicationContext());
+    }
+
+    static void removeObserver(Consumer<JSONObject> callback) {
+        if (observer != callback) return;
+        observedId = null;
+        observer = null;
+        detailPending = false;
     }
 
     private static void schedule(Context app) {
-        if (queued || !foreground || finished) return;
+        if (queued || !foreground || CaptureService.isActive(app)) return;
+        long revision = JourneyStore.dataRevision(app);
+        if (!detailPending && completedRevision == revision) return;
         queued = true;
+        String priority = detailPending ? observedId : null;
+        detailPending = false;
         long generation = foregroundGeneration;
-        int index = nextIndex;
         WORK.execute(() -> {
-            File root = new File(app.getFilesDir(),"railway-trial");
-            File marker = new File(root,SWITCH);
-            boolean enabled = marker.isFile();
             BooleanSupplier stop = () -> !foreground || generation != foregroundGeneration
                     || CaptureService.isActive(app);
-            int next = -1;
+            boolean more = false;
+            boolean failed = false;
+            boolean cancelled = false;
             try {
-                if (enabled && !stop.getAsBoolean()) next = batch(app,root,index,stop);
-            } catch (CancellationException ignored) {
-                // A resumed foreground session skips already committed evidence.
+                check(stop);
+                if (priority != null) {
+                    File source = JourneyStore.archiveFile(app, priority);
+                    JSONObject row = source.isFile() ? assess(app, source, priority, stop) : null;
+                    MainThread.HANDLER.post(() -> {
+                        if (observer != null && priority.equals(observedId) && foreground
+                                && generation == foregroundGeneration) observer.accept(row);
+                    });
+                }
+                more = batch(app, revision, stop);
+            } catch (CancellationException paused) {
+                cancelled = true;
             } catch (Exception error) {
-                Log.w(TAG,"Trial batch stopped: "+error.getClass().getSimpleName());
+                Log.w(TAG, "Railway assessment paused", error);
+                closeCatalogue();
+                failed = true;
+                if (priority != null) MainThread.HANDLER.post(() -> {
+                    if (observer != null && priority.equals(observedId) && foreground
+                            && generation == foregroundGeneration) observer.accept(new JSONObject(
+                            Collections.singletonMap("reason", "assessment_unavailable")));
+                });
             }
-            int resumeAt = next;
+            if (!more) closeCatalogue();
+            boolean remaining = more;
+            boolean retryOnNextVisit = failed;
+            boolean interrupted = cancelled;
             MainThread.HANDLER.post(() -> {
                 queued = false;
-                if (!foreground) return;
-                if (generation != foregroundGeneration) {
+                if (interrupted && priority != null && priority.equals(observedId)) detailPending = true;
+                if (generation != foregroundGeneration || interrupted) {
                     schedule(app);
-                } else if (resumeAt >= 0) {
-                    nextIndex = resumeAt;
-                    MainThread.HANDLER.postDelayed(() -> schedule(app),100);
+                } else if (retryOnNextVisit) {
+                    completedRevision = revision;
+                } else if (remaining) {
+                    MainThread.HANDLER.postDelayed(() -> schedule(app), BATCH_DELAY_MS);
                 } else {
-                    finished = true;
+                    completedRevision = revision;
+                    schedule(app);
                 }
             });
         });
     }
 
-    private static int batch(Context app, File root, int index, BooleanSupplier stop) throws Exception {
-        File[] files = new File(root,"input").listFiles(f -> f.isFile() && f.getName().endsWith(".json"));
-        if (files == null || files.length == 0 || index >= files.length) return -1;
-        if (files.length > MAX_INPUTS) throw new IOException("Trial input count");
-        Arrays.sort(files,Comparator.comparing(File::getName));
-        File output = new File(root,"results");
-        if (!output.isDirectory() && !output.mkdir()) throw new IOException("Trial output directory");
-        long opened = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
-        try (RegionalRailwayCatalogue catalogue = RegionalRailwayCatalogue.open(app,root,stop)) {
-            Log.i(TAG,"catalogue_open_or_install_ms="+(TimeUnit.NANOSECONDS.toMillis(System.nanoTime())-opened));
-            RailwayMatcher matcher = new RailwayMatcher(catalogue,stop);
-            int end = Math.min(index+BATCH,files.length);
-            for (int i = index; i < end; i++) {
+    private static boolean batch(Context app, long revision, BooleanSupplier stop) throws Exception {
+        long started = SystemClock.elapsedRealtime();
+        if (scanRevision != revision) {
+            List<File> archive = JourneyStore.archiveFiles(app);
+            Map<File, Long> modified = new HashMap<>();
+            for (File source : archive) {
                 check(stop);
-                if (!new File(root,SWITCH).isFile()) return -1;
-                evaluate(files[i],output,matcher,stop);
+                modified.put(source, source.lastModified());
             }
-            return end == files.length?-1:end;
+            archive.sort(Comparator.comparingLong((File source) -> modified.get(source)).reversed());
+            pending = archive;
+            nextIndex = 0;
+            scanRevision = revision;
         }
+        int count = 0;
+        try (CompactJourneyCache modes = new CompactJourneyCache(app, "railway-modes-v1")) {
+            while (nextIndex < pending.size() && count < BATCH) {
+                check(stop);
+                File source = pending.get(nextIndex);
+                JSONObject metadata = modes.get(source, file -> readMode(file, stop));
+                if (metadata != null && eligible(metadata.optString("mode"))) {
+                    assess(app, source, JourneyStore.archiveId(source), stop);
+                }
+                nextIndex++;
+                count++;
+                if (SystemClock.elapsedRealtime() - started >= BATCH_MS) break;
+            }
+        }
+        Log.i(TAG, "archive_batch_ms=" + (SystemClock.elapsedRealtime() - started) + " files=" + count);
+        if (nextIndex < pending.size()) return true;
+        pending = Collections.emptyList();
+        nextIndex = 0;
+        scanRevision = -1;
+        return false;
     }
 
-    static boolean evaluate(File source, File output, RailwayMatcher matcher, BooleanSupplier stop) throws Exception {
+    private static JSONObject readMode(File source, BooleanSupplier stop) throws IOException {
+        try (JsonReader json = reader(source, stop)) {
+            json.beginObject();
+            while (json.hasNext()) {
+                if ("mode".equals(json.nextName())) {
+                    return new JSONObject(Collections.singletonMap("mode", json.nextString()));
+                }
+                json.skipValue();
+            }
+        } catch (IOException | IllegalStateException malformed) {
+            // A truncated or oversized non-journey must not block the archive.
+        }
+        return new JSONObject();
+    }
+
+    private static File results(Context context) {
+        return new File(context.getFilesDir(), "railway-comparisons");
+    }
+
+    private static JSONObject assess(Context app, File source, String id, BooleanSupplier stop) throws Exception {
+        File output = results(app);
+        if (!output.isDirectory() && !output.mkdir()) throw new IOException("Railway comparison directory");
+        return assess(source, output, id, () -> {
+            if (catalogue == null) {
+                long opened = SystemClock.elapsedRealtime();
+                catalogue = RegionalRailwayCatalogue.open(app, app.getFilesDir(), stop);
+                Log.i(TAG, "catalogue_open_or_install_ms=" + (SystemClock.elapsedRealtime() - opened));
+            }
+            return new RailwayMatcher(catalogue, stop);
+        }, stop);
+    }
+
+    private static void closeCatalogue() {
+        if (catalogue == null) return;
+        catalogue.close();
+        catalogue = null;
+    }
+
+    interface MatcherProvider { RailwayMatcher open() throws Exception; }
+
+    static JSONObject assess(File source, File output, String id, MatcherProvider provider,
+                             BooleanSupplier stop) throws Exception {
+        check(stop);
+        if (!source.isFile()) return null;
         String token = JourneyStore.fileToken(source);
+        AtomicFile result = resultFile(output, id);
+        JSONObject previous = previous(result);
+        if (previous != null && token.equals(previous.optString("archive_token"))
+                && previous.optString("fingerprint").startsWith(KEY + ":")) {
+            return token.equals(JourneyStore.fileToken(source)) ? previous : null;
+        }
+        evaluate(source, output, id, token, previous, provider, stop);
+        JSONObject row = previous(result);
+        return source.isFile() && token.equals(JourneyStore.fileToken(source))
+                && row != null && token.equals(row.optString("archive_token")) ? row : null;
+    }
+
+    static void deleteResult(Context context, String id) {
+        File output = results(context);
+        WORK.execute(() -> {
+            try { resultFile(output, id).delete(); }
+            catch (Exception error) { Log.w(TAG, "Could not remove railway comparison", error); }
+        });
+    }
+
+    static void clearResults(Context context) {
+        File output = results(context);
+        WORK.execute(() -> {
+            File[] files = output.listFiles();
+            if (files != null) for (File file : files) file.delete();
+        });
+    }
+
+    private static void evaluate(File source, File output, String id, String token, JSONObject previous,
+                                 MatcherProvider provider, BooleanSupplier stop) throws Exception {
         Evidence evidence;
         try {
-            evidence = read(source,stop);
+            evidence = read(source, stop);
         } catch (CancellationException cancelled) {
             throw cancelled;
         } catch (IOException | IllegalStateException | IllegalArgumentException error) {
-            Log.i(TAG,"held_input="+error.getClass().getSimpleName());
-            // Oversized inputs have a durable receipt and are cheap to skip on retry.
-            return write(output,source.getName(),KEY+":"+token,
-                    new JSONObject().put("confidence","unresolved").put("reason",
-                            error instanceof Limit?"input_limit":"malformed_input"),source,token,stop);
+            write(output, id, KEY + ":" + token, new JSONObject()
+                    .put("journey_id", id).put("confidence", "unresolved")
+                    .put("reason", error instanceof Limit ? "input_limit" : "malformed_input"), source, token, stop);
+            return;
         }
-        String fingerprint = KEY+":"+evidence.fingerprint;
-        AtomicFile result = resultFile(output,evidence.id);
-        JSONObject previous = previous(result);
+        if (!eligible(evidence.mode) || !id.equals(evidence.id)) return;
+        String fingerprint = KEY + ":" + evidence.fingerprint;
         boolean unchanged = previous != null && fingerprint.equals(previous.optString("fingerprint"));
-        if (unchanged && (evidence.baseline == JSONObject.NULL
-                ? previous.isNull("baseline_m")
-                : Double.compare((double)evidence.baseline,previous.optDouble("baseline_m")) == 0)) return false;
-        long started = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
+        long started = SystemClock.elapsedRealtime();
+        long cpuStarted = SystemClock.currentThreadTimeMillis();
         RailwayMatcher.Result match = null;
         if (!unchanged) {
             try {
-                match = matcher.match(evidence.fixes,evidence.start,evidence.end);
+                match = evidence.fixes.size() < 4
+                        ? new RailwayMatcher.Result("unresolved", "insufficient_fixes", 0, 0, 0)
+                        : provider.open().match(evidence.fixes, evidence.start, evidence.end);
             } catch (RegionalRailwayCatalogue.QueryLimit limit) {
                 match = new RailwayMatcher.Result("unresolved","catalogue_query_limit",0,0,0);
             }
         }
-        long matchMs = unchanged?0:TimeUnit.NANOSECONDS.toMillis(System.nanoTime())-started;
+        long matchMs = unchanged ? 0 : SystemClock.elapsedRealtime() - started;
         JSONObject row = unchanged?previous:new JSONObject()
                 .put("journey_id",evidence.id)
                 .put("confidence",match.confidence())
@@ -160,9 +308,10 @@ final class RailwayTrialWorker {
         row.put("baseline_m",evidence.baseline);
         boolean complete = "full".equals(row.optString("confidence"));
         row.put("proposed_m",complete?row.get("supported_rail_m"):evidence.baseline);
-        if (!unchanged) Log.i(TAG,"match_ms="+matchMs+" fixes="+evidence.fixes.size()
-                +" confidence="+match.confidence());
-        return write(output,evidence.id,fingerprint,row,source,token,stop);
+        if (!unchanged) Log.i(TAG, "match_ms=" + matchMs + " cpu_ms="
+                + (SystemClock.currentThreadTimeMillis() - cpuStarted) + " fixes=" + evidence.fixes.size()
+                + " confidence=" + match.confidence());
+        write(output, id, fingerprint, row, source, token, stop);
     }
 
     private static JSONObject previous(AtomicFile file) {
@@ -175,14 +324,13 @@ final class RailwayTrialWorker {
                 .digest(id.getBytes(StandardCharsets.UTF_8)))+".json"));
     }
 
-    private static boolean write(File dir,String id,String fingerprint,JSONObject row,File source,
-                                 String token,BooleanSupplier stop) throws Exception {
+    private static void write(File dir, String id, String fingerprint, JSONObject row, File source,
+                              String token, BooleanSupplier stop) throws Exception {
         AtomicFile file = resultFile(dir,id);
-        JSONObject old = previous(file);
-        row.put("fingerprint",fingerprint).put("matcher",RailwayMatcher.VERSION)
-                .put("catalogue",RegionalRailwayCatalogue.VERSION)
-                .put("catalogue_sha256",RegionalRailwayCatalogue.SHA256);
-        if (old != null && row.toString().equals(old.toString())) return false;
+        row.put("fingerprint", fingerprint).put("matcher", RailwayMatcher.VERSION)
+                .put("catalogue", RegionalRailwayCatalogue.VERSION)
+                .put("catalogue_sha256", RegionalRailwayCatalogue.SHA256)
+                .put("archive_token", token);
         long started = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
         FileOutputStream output = file.startWrite();
         try {
@@ -191,8 +339,9 @@ final class RailwayTrialWorker {
             if (!source.isFile() || !token.equals(JourneyStore.fileToken(source)))
                 throw new CancellationException();
             file.finishWrite(output);
+            // The receipt carries the archive token and readers ignore it if a save
+            // or deletion won the race. Cleanup is serialised with receipt writes.
             Log.i(TAG,"receipt_ms="+(TimeUnit.NANOSECONDS.toMillis(System.nanoTime())-started));
-            return true;
         } catch (Exception failure) {
             file.failWrite(output);
             throw failure;
@@ -200,7 +349,7 @@ final class RailwayTrialWorker {
     }
 
     private record Raw(double lon,double lat,double accuracy,long time,String provider) {}
-    private record Evidence(String id,long start,long end,Object baseline,String provider,
+    private record Evidence(String id,String mode,long start,long end,Object baseline,String provider,
                             List<RailwayMatcher.Fix> fixes,String fingerprint) {}
     private static final class Limit extends IOException {}
 
@@ -209,15 +358,7 @@ final class RailwayTrialWorker {
         List<Raw> raw = new ArrayList<>();
         String id = "", mode = "", start = "", end = "";
         Object baseline = JSONObject.NULL;
-        try (JsonReader json = new JsonReader(new InputStreamReader(new FilterInputStream(new FileInputStream(file)) {
-            private int bytes;
-            @Override public int read(byte[] b,int off,int len) throws IOException {
-                check(stop);
-                int n = super.read(b,off,Math.min(8192,len));
-                if (n > 0 && (bytes += n) > MAX_BYTES) throw new Limit();
-                return n;
-            }
-        },StandardCharsets.UTF_8))) {
+        try (JsonReader json = reader(file, stop)) {
             json.beginObject();
             while (json.hasNext()) {
                 check(stop);
@@ -230,7 +371,10 @@ final class RailwayTrialWorker {
                         if (json.peek() == android.util.JsonToken.NUMBER) baseline = json.nextDouble();
                         else json.skipValue();
                         break;
-                    case "raw_capture_samples": readSamples(json,raw,stop); break;
+                    case "raw_capture_samples":
+                        if (json.peek() == android.util.JsonToken.BEGIN_ARRAY) readSamples(json, raw, stop);
+                        else json.skipValue();
+                        break;
                     default: json.skipValue();
                 }
             }
@@ -240,12 +384,21 @@ final class RailwayTrialWorker {
         long from, to;
         try { from = Instant.parse(start).toEpochMilli(); to = Instant.parse(end).toEpochMilli(); }
         catch (java.time.DateTimeException e) { throw new IOException("Journey time",e); }
-        String provider = raw.stream().anyMatch(p -> "gps".equals(p.provider))?"gps":"legacy";
+        String provider = "legacy";
+        for (Raw point : raw) {
+            if (point.time < from - RailwayMatcher.BOUNDARY_MS || point.time > to + RailwayMatcher.BOUNDARY_MS) continue;
+            if ("gps".equals(point.provider)) {
+                provider = "gps";
+                break;
+            }
+            if ("fused".equals(point.provider)) provider = "fused";
+        }
         TreeMap<Long,Raw> ordered = new TreeMap<>();
         Set<Long> conflicts = new HashSet<>();
-        if ("train".equals(mode) || "unknown".equals(mode)) {
+        if (eligible(mode)) {
             for (Raw p : raw) {
-                if (p.time < from || p.time > to || !provider.equals(p.provider)) continue;
+                if (p.time < from - RailwayMatcher.BOUNDARY_MS || p.time > to + RailwayMatcher.BOUNDARY_MS
+                        || !provider.equals(p.provider)) continue;
                 Raw old = ordered.putIfAbsent(p.time,p);
                 if (old != null && !p.equals(old)) conflicts.add(p.time);
             }
@@ -260,7 +413,19 @@ final class RailwayTrialWorker {
             // Conflicting observations remain a barrier, even if adjacent times fit.
             fixes.add(RailwayProjection.fix(p.lon,p.lat,conflict?0:p.accuracy,p.time));
         }
-        return new Evidence(id,from,to,baseline,provider,fixes,RegionalRailwayCatalogue.hex(digest.digest()));
+        return new Evidence(id,mode,from,to,baseline,provider,fixes,RegionalRailwayCatalogue.hex(digest.digest()));
+    }
+
+    private static JsonReader reader(File file, BooleanSupplier stop) throws IOException {
+        return new JsonReader(new InputStreamReader(new FilterInputStream(new FileInputStream(file)) {
+            private int bytes;
+            @Override public int read(byte[] b, int off, int len) throws IOException {
+                check(stop);
+                int n = super.read(b, off, Math.min(8192, len));
+                if (n > 0 && (bytes += n) > MAX_BYTES) throw new Limit();
+                return n;
+            }
+        }, StandardCharsets.UTF_8));
     }
 
     private static void readSamples(JsonReader json,List<Raw> raw,BooleanSupplier stop) throws IOException {
@@ -276,6 +441,10 @@ final class RailwayTrialWorker {
             if (json.hasNext()) {
                 if (json.peek() == android.util.JsonToken.STRING) provider = json.nextString();
                 else { json.skipValue(); provider = "unknown"; }
+            }
+            if (json.hasNext()) json.skipValue(); // elapsed realtime
+            if (json.hasNext() && json.peek() == android.util.JsonToken.NUMBER) {
+                if (json.nextLong() > 60_000) accuracy = 0; // Retain stale fixes as barriers.
             }
             while (json.hasNext()) json.skipValue();
             json.endArray();
