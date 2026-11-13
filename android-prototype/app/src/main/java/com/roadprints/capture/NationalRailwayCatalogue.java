@@ -133,8 +133,12 @@ final class NationalRailwayCatalogue implements NationalRailway.Graph, AutoClose
         int count = 0;
         try (Cursor cursor = db.rawQuery("SELECT DISTINCT r.id,ax,ay,bx,by FROM road_cell c"
                 +" JOIN road r ON r.id=c.id WHERE c.x BETWEEN CAST(? AS INTEGER) AND CAST(? AS INTEGER)"
-                +" AND c.y BETWEEN CAST(? AS INTEGER) AND CAST(? AS INTEGER) LIMIT 257",
-                new String[]{cell(fix.x()-24),cell(fix.x()+24),cell(fix.y()-24),cell(fix.y()+24)})) {
+                +" AND c.y BETWEEN CAST(? AS INTEGER) AND CAST(? AS INTEGER)"
+                +" AND min(ax,bx)<=CAST(? AS REAL) AND max(ax,bx)>=CAST(? AS REAL)"
+                +" AND min(ay,by)<=CAST(? AS REAL) AND max(ay,by)>=CAST(? AS REAL) LIMIT 257",
+                new String[]{cell(fix.x()-24),cell(fix.x()+24),cell(fix.y()-24),cell(fix.y()+24),
+                        String.valueOf(fix.x()+24),String.valueOf(fix.x()-24),
+                        String.valueOf(fix.y()+24),String.valueOf(fix.y()-24)})) {
             while (cursor.moveToNext()) {
                 if (++count > 256) throw new RegionalRailwayCatalogue.QueryLimit("national_road");
                 var edge = new RailwayMatcher.Edge(0,0,0,cursor.getDouble(1),cursor.getDouble(2),
