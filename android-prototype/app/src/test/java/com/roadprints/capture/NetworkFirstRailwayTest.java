@@ -15,7 +15,7 @@ import org.robolectric.annotation.Config;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk=35)
 public class NetworkFirstRailwayTest {
-    private static final String ASSET = "railway/network-first-r1.bin.gz";
+    private static final String ASSET = "railway/network-first-r1.bin.gzip";
     private static final long START = 1_790_000_000_000L;
     private static final long END = START + 60 * 60_000;
     private record Segment(double x, double y, double dx, double dy, double metres, boolean tunnel) {}

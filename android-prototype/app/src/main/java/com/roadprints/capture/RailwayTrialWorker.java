@@ -239,7 +239,7 @@ final class RailwayTrialWorker {
             if (!NetworkFirstRailway.supports(fixes, start, end)) return null;
             if (network == null) {
                 long opened = SystemClock.elapsedRealtime();
-                network = NetworkFirstRailway.open(app.getAssets().open("railway/network-first-r1.bin.gz"), stop);
+                network = NetworkFirstRailway.open(app.getAssets().open("railway/network-first-r1.bin.gzip"), stop);
                 PerformanceDiagnostics.timing("railway_network_catalogue", SystemClock.elapsedRealtime()-opened,
                         "version="+NetworkFirstRailway.VERSION);
             }

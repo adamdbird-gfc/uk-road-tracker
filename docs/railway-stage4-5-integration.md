@@ -12,7 +12,7 @@ The reference asset `stage1-osm-20261112-r1` is unchanged. The separate `north-k
 - Gravesend platform 0 uses OSM stop 501754791 and 307.83 m of the North Kent line on way 41117629. Its siding tag excluded it in Build 281. [Southeastern](https://www.southeasternrailway.co.uk/travel-information/station-information/stations/gravesend) lists it for westbound Charing Cross services via Sidcup. The overlay also carries Gravesend platforms 1 and 2 and two Charing Cross stops on the pinned XTD tracks. These are route hypotheses. The implementation does not write station visits.
 - The eastern direction, the other branches' held links, HS1 and unqualified tracks remain excluded from inferred mileage. Endpoints currently require credible near-boundary fixes within a two-minute window and a 550 m station catchment. Arbitrary intermediate stops, interchanges and other station pairs remain with the existing fallback. Additional archived context and station suggestions are outside this first comparison slice.
 
-Regenerate with the preserved Stage 4.4 module and NumPy using `scripts/build_stage45_railway_paths.py regional.sqlite network-first-r1.bin.gz --stage44-prototype /path/to/extracted/stage44`. The generator pins the source and checks every candidate join by OSM node ID.
+Regenerate with the preserved Stage 4.4 module and NumPy using `scripts/build_stage45_railway_paths.py regional.sqlite network-first-r1.bin.gzip --stage44-prototype /path/to/extracted/stage44`. The generator pins the source and checks every candidate join by OSM node ID.
 
 ## Replay results
 

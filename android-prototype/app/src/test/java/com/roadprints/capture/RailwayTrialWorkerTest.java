@@ -181,7 +181,7 @@ public class RailwayTrialWorkerTest {
         assertEquals(0, output.list().length);
         JSONObject result = RailwayTrialWorker.assess(source, output, "historic", () -> matcher, () -> false,
                 (fixes, from, to) -> NetworkFirstRailway.open(
-                        app.getAssets().open("railway/network-first-r1.bin.gz"), () -> false));
+                        app.getAssets().open("railway/network-first-r1.bin.gzip"), () -> false));
         assertEquals("unresolved", result.getString("confidence"));
         assertEquals(42000, result.getDouble("proposed_m"), 0);
         assertArrayEquals(original, Files.readAllBytes(source.toPath()));

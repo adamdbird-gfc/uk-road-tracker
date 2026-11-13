@@ -108,7 +108,7 @@ jobs:
               catalogue = gzip.decompress(package.read('assets/railway/regional.sqlite.gzip'))
               assert len(catalogue) == int(os.environ['CATALOGUE_BYTES'])
               assert hashlib.sha256(catalogue).hexdigest() == os.environ['CATALOGUE_SHA256']
-              paths = package.read('assets/railway/network-first-r1.bin.gz')
+              paths = package.read('assets/railway/network-first-r1.bin.gzip')
               assert hashlib.sha256(paths).hexdigest() == '80f4486253e94658b7128411b9c52b29e07e7dddd04c4f8392ae8af6afc5d340'
               dex = b''.join(package.read(name) for name in package.namelist() if name.endswith('.dex'))
               for symbol in (b'JourneyOriginRecovery;', b'RailwayTrialWorker;', b'RegionalRailwayCatalogue;', b'NetworkFirstRailway;'):
