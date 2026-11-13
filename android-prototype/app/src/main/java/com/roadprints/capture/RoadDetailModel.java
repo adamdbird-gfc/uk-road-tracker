@@ -79,10 +79,32 @@ final class RoadDetailModel {
         return output;
     }
     static void cachedRoadEvidence(Context context,JourneyStore.JourneyVisitor visitor)throws Exception {
-        long started=android.os.SystemClock.elapsedRealtime();JourneyStore.prepareArchive(context);try(CompactJourneyCache cache=new CompactJourneyCache(context,"road-evidence-v1")){
-            for(java.io.File source:JourneyStore.archiveFiles(context)){if(Thread.currentThread().isInterrupted())throw new java.util.concurrent.CancellationException();visitor.visit(cache.get(source,file->JourneyStore.mapEvidence(context,file,false)));}
-            PerformanceDiagnostics.timing("focused_archive",android.os.SystemClock.elapsedRealtime()-started,"reads="+cache.reads+" reused="+cache.hits);
+        long started = android.os.SystemClock.elapsedRealtime();
+        JourneyStore.prepareArchive(context);
+        long prepared = android.os.SystemClock.elapsedRealtime();
+        long rowNanos = 0, visitorNanos = 0;
+        int reads, reused;
+        long opened, finished;
+        try (CompactJourneyCache cache = new CompactJourneyCache(context, "road-evidence-v1")) {
+            opened = android.os.SystemClock.elapsedRealtime();
+            for (java.io.File source : JourneyStore.archiveFiles(context)) {
+                if (Thread.currentThread().isInterrupted()) throw new java.util.concurrent.CancellationException();
+                long rowStart = System.nanoTime();
+                JSONObject row = cache.get(source, file -> JourneyStore.mapEvidence(context, file, false));
+                long visitStart = System.nanoTime();
+                rowNanos += visitStart - rowStart;
+                visitor.visit(row);
+                visitorNanos += System.nanoTime() - visitStart;
+            }
+            reads = cache.reads;
+            reused = cache.hits;
+            finished = android.os.SystemClock.elapsedRealtime();
         }
+        long closed = android.os.SystemClock.elapsedRealtime();
+        PerformanceDiagnostics.timing("focused_archive", closed-started,
+                "reads="+reads+" reused="+reused+" prepare_ms="+(prepared-started)
+                        +" cache_open_ms="+(opened-prepared)+" row_ms="+rowNanos/1_000_000
+                        +" visitor_ms="+visitorNanos/1_000_000+" cache_close_ms="+(closed-finished));
     }
     List<Entry> journeysAt(Context context,RoadDetailSelection selection,double latitude,double longitude) throws Exception {
         if(ncn){List<Entry> related=new ArrayList<>();Section selected=sectionAt(latitude,longitude);if(selected==null||!selected.travelled)return related;for(Entry e:journeys)for(JSONArray line:e.lines)if(NcnGeometry.overlaps(line,selected.line)){related.add(e);break;}return related;}
