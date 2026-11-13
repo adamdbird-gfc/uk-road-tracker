@@ -18,7 +18,7 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import org.json.JSONObject;
 
-/** Foreground-triggered comparison of committed journeys. Only comparison receipts are written. */
+/** Reassesses saved Train journeys while the app is open and recording is idle. */
 final class RailwayTrialWorker {
     private static final String TAG = "RoadprintsRailway";
     private static final int BATCH = 8;
@@ -31,7 +31,7 @@ final class RailwayTrialWorker {
         Thread t = new Thread(() -> {
             android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
             task.run();
-        },"roadprints-railway-trial");
+        },"roadprints-railway");
         return t;
     });
     private static final class MainThread {
@@ -46,7 +46,7 @@ final class RailwayTrialWorker {
     private static Consumer<JSONObject> observer;
     private static volatile boolean detailPending;
     private static long completedRevision = -1;
-    private static long scanRevision = -1;
+    private static volatile long scanRevision = -1;
     private static List<File> pending = Collections.emptyList();
     private static int nextIndex;
     private static RegionalRailwayCatalogue catalogue;
@@ -58,14 +58,12 @@ final class RailwayTrialWorker {
     static boolean eligible(String mode) { return "train".equals(mode); }
 
     static void resume(Context activity) {
-        if (!BuildConfig.DEBUG) return;
         foreground = true;
         detailPending = observedId != null;
         schedule(activity.getApplicationContext());
     }
 
     static void pause() {
-        if (!BuildConfig.DEBUG) return;
         foreground = false;
         foregroundGeneration++;
         // Release the SQLite cache when leaving the assessment screens.
@@ -73,7 +71,6 @@ final class RailwayTrialWorker {
     }
 
     static void archiveChanged(Context context) {
-        if (!BuildConfig.DEBUG) return;
         Context app = context.getApplicationContext();
         MainThread.HANDLER.post(() -> {
             detailPending = observedId != null;
@@ -82,7 +79,7 @@ final class RailwayTrialWorker {
     }
 
     static void captureEnded(Context context) {
-        if (BuildConfig.DEBUG) schedule(context.getApplicationContext());
+        schedule(context.getApplicationContext());
     }
 
     static void observe(Context context, String id, Consumer<JSONObject> callback) {
@@ -101,7 +98,7 @@ final class RailwayTrialWorker {
 
     private static void schedule(Context app) {
         if (queued || !foreground || CaptureService.isActive(app)) return;
-        long revision = JourneyStore.dataRevision(app);
+        long revision = JourneyStore.railwayInputRevision(app);
         if (!detailPending && completedRevision == revision) return;
         queued = true;
         String priority = detailPending ? observedId : null;
@@ -120,7 +117,8 @@ final class RailwayTrialWorker {
                 check(stop);
                 if (priority != null) {
                     File source = JourneyStore.archiveFile(app, priority);
-                    JSONObject row = source.isFile() ? assess(app, source, priority, stop, true) : null;
+                    if (source.isFile()) reassess(app, source, priority, stop);
+                    JSONObject row = JourneyStore.readSummary(source);
                     MainThread.HANDLER.post(() -> {
                         if (observer != null && priority.equals(observedId) && foreground
                                 && generation == foregroundGeneration) observer.accept(row);
@@ -135,8 +133,7 @@ final class RailwayTrialWorker {
                 failed = true;
                 if (priority != null) MainThread.HANDLER.post(() -> {
                     if (observer != null && priority.equals(observedId) && foreground
-                            && generation == foregroundGeneration) observer.accept(new JSONObject(
-                            Collections.singletonMap("reason", "assessment_unavailable")));
+                            && generation == foregroundGeneration) observer.accept(null);
                 });
             }
             if (!more) closeCatalogue();
@@ -157,7 +154,7 @@ final class RailwayTrialWorker {
                 if (generation != foregroundGeneration || interrupted) {
                     schedule(app);
                 } else if (retryOnNextVisit) {
-                    completedRevision = revision;
+                    scanRevision = -1;
                 } else if (remaining) {
                     if (detailPending) schedule(app);
                     else MainThread.HANDLER.postDelayed(() -> schedule(app), BATCH_DELAY_MS);
@@ -190,7 +187,7 @@ final class RailwayTrialWorker {
                 File source = pending.get(nextIndex);
                 JSONObject metadata = modes.get(source, file -> readMode(file, stop));
                 if (metadata != null && eligible(metadata.optString("mode"))) {
-                    assess(app, source, JourneyStore.archiveId(source), stop, false);
+                    reassess(app, source, JourneyStore.archiveId(source), stop);
                 }
                 nextIndex++;
                 count++;
@@ -224,7 +221,7 @@ final class RailwayTrialWorker {
         return new File(context.getFilesDir(), "railway-comparisons");
     }
 
-    private static JSONObject assess(Context app, File source, String id, BooleanSupplier stop, boolean report) throws Exception {
+    private static void reassess(Context app, File source, String id, BooleanSupplier stop) throws Exception {
         File output = results(app);
         if (!output.isDirectory() && !output.mkdir()) throw new IOException("Railway comparison directory");
         JSONObject row = assess(source, output, id, () -> {
@@ -245,8 +242,11 @@ final class RailwayTrialWorker {
             }
             return network;
         });
-        if (report && row != null) {
-            PerformanceDiagnostics.timing("railway_comparison", row.optLong("match_ms"),
+        if (row != null && RailwayMileage.qualifies(row)) {
+            JourneyStore.applyRailwayDistance(app, id, row, stop);
+        }
+        if (row != null) {
+            PerformanceDiagnostics.timing("railway_assessment", row.optLong("match_ms"),
                     "reason="+row.optString("reason")+" limit="+row.optString("limit","none")
                             +" confidence="+row.optString("confidence")+" raw="+row.optInt("raw_samples")
                             +" fixes="+row.optInt("input_fixes")+" read_ms="+row.optLong("read_ms")
