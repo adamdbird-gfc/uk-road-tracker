@@ -37,6 +37,7 @@ public class RailwayMileageRuntimeTest {
         if ("verify".equals(InstrumentationRegistry.getArguments().getString("phase"))) {
             assertEquals(39_228, JourneyStore.readSummary(source).getDouble("distance_meters"), 150);
             long revision = preferences.getLong("journey_archive_revision", 0);
+            JourneyStore.recoverRailwayWrite(app);
             assertEquals(revision + 1, JourneyStore.dataRevision(app));
             assertFalse(preferences.contains("railway_distance_pending_id"));
             assertTrue(JourneyStore.restoreRailwayDistance(app, ID));
@@ -76,6 +77,126 @@ public class RailwayMileageRuntimeTest {
         assertTrue("Cold railway archive update exceeded 5 s CPU", cpuElapsed < 5_000);
         // Model a process ending after atomic archive replacement and before cache invalidation.
         assertTrue(preferences.edit().putString("railway_distance_pending_id", ID).commit());
+    }
+
+    @Test public void repeatedNavigationRemainsResponsiveDuringHistoricalChecks() throws Exception {
+        var instrumentation = InstrumentationRegistry.getInstrumentation();
+        Context app = instrumentation.getTargetContext();
+        assertTrue(app.getPackageName().endsWith(".milepostacceptance"));
+        var controls = app.getSharedPreferences("roadprints_capture_state", 0);
+        controls.edit().putBoolean("active", true).commit();
+        var trace = sample(publicRoute(app));
+        for (int index = 0; index < 1652; index++) {
+            boolean train = index < 24;
+            String id = "navigation-" + index;
+            var journey = new JSONObject().put("journey_id", id)
+                    .put("mode", train ? "train" : "unknown").put("title", "Saved journey " + index)
+                    .put("distance_meters", train ? 43_900 : 200)
+                    .put("started_at", Instant.ofEpochMilli(START - (train ? 0 : index * 60000L)).toString())
+                    .put("ended_at", Instant.ofEpochMilli(END).toString());
+            if (train) {
+                journey.put("raw_capture_samples", trace);
+            } else if (index % 3 == 0) {
+                var coordinates = new JSONArray();
+                for (int point = 0; point < 24; point++)
+                    coordinates.put(new JSONArray().put(0.36 + point * .0001).put(51.44));
+                var line = new JSONObject().put("type", "LineString").put("coordinates", coordinates);
+                var feature = new JSONObject().put("type", "Feature").put("geometry", line)
+                        .put("properties", new JSONObject().put("road_ref", "B" + (2000 + index))
+                                .put("highway", "secondary"));
+                var features = new JSONObject().put("type", "FeatureCollection")
+                        .put("features", new JSONArray().put(feature));
+                journey.put("mode", "driving").put("processing_status", "complete")
+                        .put("route_geometry", line).put("processing_result",
+                                new JSONObject().put("geojson", features).put("road_geojson", features));
+            }
+            var source = JourneyStore.archiveFile(app, id);
+            Files.write(source.toPath(), journey.toString().getBytes(StandardCharsets.UTF_8));
+            if (train) assertTrue(source.setLastModified(System.currentTimeMillis() + 120000 - index * 2000));
+        }
+        try {
+            try (var screen = androidx.test.core.app.ActivityScenario.launch(JourneyListActivity.class)) {
+                controls.edit().putBoolean("active", false).commit();
+                RailwayTrialWorker.captureEnded(app);
+                awaitOnMain(() -> RailwayTrialWorker.isChecking(), 12_000);
+                awaitOnMain(() -> {
+                    String message = RailwayTrialWorker.activityMessage();
+                    return message != null && message.equals("Checking past train journeys…");
+                }, 3000);
+                assertTrue("A first journey must commit", waitForDistance(app, "navigation-0", 30_000));
+            }
+            for (int i = 0; i < 2; i++) {
+                exerciseScreen(ProgressActivity.class);
+                exerciseScreen(MapActivity.class);
+                exerciseScreen(JourneyListActivity.class);
+            }
+            try (var screen = androidx.test.core.app.ActivityScenario.launch(JourneyListActivity.class)) {
+                assertTrue("Railway history should resume and finish", waitForDistance(app, "navigation-23", 70_000));
+                awaitOnMain(() -> !RailwayTrialWorker.isChecking(), 120_000);
+            }
+            double expectedTrain = 0;
+            for (int i = 0; i < 24; i++) {
+                var saved = JourneyStore.readSummary(JourneyStore.archiveFile(app, "navigation-" + i));
+                double distance = saved.getDouble("distance_meters");
+                assertEquals(39_228, distance, 150);
+                expectedTrain += distance;
+            }
+            try (var screen = androidx.test.core.app.ActivityScenario.launch(ProgressActivity.class)) {
+                double total = expectedTrain;
+                awaitOnMain(() -> {
+                    try {
+                        var prefs = app.getSharedPreferences("roadprints_progress_snapshot", 0);
+                        var summary = new JSONObject(prefs.getString("summary", "{}"));
+                        if (summary.optLong("revision", -1) != JourneyStore.dataRevision(app)) return false;
+                        assertEquals(total, summary.getDouble("trainMetres"), .01);
+                        assertEquals(1628 * 200, summary.getDouble("drivingMetres")
+                                + summary.getDouble("unknownMetres"), .01);
+                        return true;
+                    } catch (org.json.JSONException unavailable) {
+                        return false;
+                    }
+                }, 45_000);
+            }
+            assertEquals(1652, JourneyStore.archiveFiles(app).stream()
+                    .filter(file -> file.getName().startsWith("journey_navigation-")).count());
+        } finally {
+            controls.edit().remove("active").commit();
+            for (File file : JourneyStore.archiveFiles(app))
+                if (file.getName().startsWith("journey_navigation-")) Files.deleteIfExists(file.toPath());
+        }
+    }
+
+    private static <T extends android.app.Activity> void exerciseScreen(Class<T> type) throws Exception {
+        long start = SystemClock.elapsedRealtime();
+        try (var screen = androidx.test.core.app.ActivityScenario.launch(type)) {
+            awaitOnMain(() -> true, 4000);
+            awaitOnMain(() -> RailwayTrialWorker.isChecking(), 4000);
+        }
+        long elapsed = SystemClock.elapsedRealtime() - start;
+        android.util.Log.i("RoadprintsRailwayRuntime", "navigation=" + type.getSimpleName() + " elapsed_ms=" + elapsed);
+        assertTrue(type.getSimpleName() + " launch and return exceeded 5 seconds: " + elapsed, elapsed < 5000);
+    }
+
+    private static void awaitOnMain(java.util.function.BooleanSupplier condition, long timeout) throws Exception {
+        long deadline = SystemClock.elapsedRealtime() + timeout;
+        var handler = new android.os.Handler(android.os.Looper.getMainLooper());
+        do {
+            var check = new java.util.concurrent.FutureTask<Boolean>(condition::getAsBoolean);
+            handler.post(check);
+            if (check.get(4, java.util.concurrent.TimeUnit.SECONDS)) return;
+            Thread.sleep(75);
+        } while (SystemClock.elapsedRealtime() < deadline);
+        fail("Expected foreground state did not arrive");
+    }
+
+    private static boolean waitForDistance(Context app, String id, long timeout) throws Exception {
+        long deadline = SystemClock.elapsedRealtime() + timeout;
+        do {
+            var row = JourneyStore.readSummary(JourneyStore.archiveFile(app, id));
+            if (row != null && Math.abs(row.optDouble("distance_meters") - 39_228) < 150) return true;
+            Thread.sleep(100);
+        } while (SystemClock.elapsedRealtime() < deadline);
+        return false;
     }
 
     private static List<Edge> publicRoute(Context app) throws Exception {

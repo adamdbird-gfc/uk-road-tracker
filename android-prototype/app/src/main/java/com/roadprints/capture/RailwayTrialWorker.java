@@ -23,7 +23,15 @@ final class RailwayTrialWorker {
     private static final String TAG = "RoadprintsRailway";
     private static final int BATCH = 8;
     private static final long BATCH_MS = 180;
-    private static final long BATCH_DELAY_MS = 150;
+    private static final long BATCH_DELAY_MS = 350;
+    private static final long FOREGROUND_SETTLE_MS = 700;
+    private static volatile long resumeAt;
+    private static volatile String checkingId;
+    private static Consumer<String> detailStatus;
+    private static volatile String activityMessage;
+    private static long completionUntil;
+    private static boolean changed;
+    private static boolean delayed;
     // Bound mixed-provider parsing separately from the number of fixes sent to the graph.
     private static final int MAX_RAW_SAMPLES = 8192;
     private static final int MAX_BYTES = 8*1024*1024;
@@ -42,7 +50,7 @@ final class RailwayTrialWorker {
     private static boolean queued;
     private static volatile long foregroundGeneration;
     private static volatile boolean foreground;
-    private static String observedId;
+    private static volatile String observedId;
     private static Consumer<JSONObject> observer;
     private static volatile boolean detailPending;
     private static long completedRevision = -1;
@@ -59,6 +67,7 @@ final class RailwayTrialWorker {
 
     static void resume(Context activity) {
         foreground = true;
+        resumeAt = SystemClock.uptimeMillis() + FOREGROUND_SETTLE_MS;
         detailPending = observedId != null;
         schedule(activity.getApplicationContext());
     }
@@ -66,6 +75,8 @@ final class RailwayTrialWorker {
     static void pause() {
         foreground = false;
         foregroundGeneration++;
+        publishStatus(null);
+        completionUntil = 0;
         // Release the SQLite cache when leaving the assessment screens.
         WORK.execute(RailwayTrialWorker::closeCatalogue);
     }
@@ -79,12 +90,15 @@ final class RailwayTrialWorker {
     }
 
     static void captureEnded(Context context) {
-        schedule(context.getApplicationContext());
+        Context app = context.getApplicationContext();
+        MainThread.HANDLER.post(() -> schedule(app));
     }
 
-    static void observe(Context context, String id, Consumer<JSONObject> callback) {
+    static void observe(Context context, String id, Consumer<JSONObject> callback, Consumer<String> status) {
         observedId = id;
         observer = callback;
+        detailStatus = status;
+        updateDetailStatus();
         detailPending = true;
         schedule(context.getApplicationContext());
     }
@@ -93,14 +107,54 @@ final class RailwayTrialWorker {
         if (observer != callback) return;
         observedId = null;
         observer = null;
+        detailStatus = null;
         detailPending = false;
     }
 
+    static String activityMessage() {
+        return activityMessage != null ? activityMessage
+                : SystemClock.uptimeMillis() < completionUntil ? "Train journeys updated" : null;
+    }
+
+    static boolean isChecking() {
+        return activityMessage != null && activityMessage.startsWith("Checking");
+    }
+
+    private static void publishStatus(String message) {
+        if (Objects.equals(activityMessage, message)) return;
+        activityMessage = message;
+        updateDetailStatus();
+    }
+
+    private static void updateDetailStatus() {
+        if (detailStatus == null) return;
+        String message = foreground && observedId != null && observedId.equals(checkingId)
+                ? "Checking railway route…" : activityMessage;
+        detailStatus.accept(message);
+    }
+
     private static void schedule(Context app) {
-        if (queued || !foreground || CaptureService.isActive(app)) return;
-        long revision = JourneyStore.railwayInputRevision(app);
+        if (!foreground) return;
+        if (CaptureService.isActive(app)) {
+            if (queued || scanRevision >= 0) publishStatus("Train journey checks paused while recording");
+            return;
+        }
+        if (queued) return;
+        long delay = resumeAt - SystemClock.uptimeMillis();
+        if (delay > 0) {
+            if (!delayed) {
+                delayed = true;
+                MainThread.HANDLER.postDelayed(() -> {
+                    delayed = false;
+                    schedule(app);
+                }, delay);
+            }
+            return;
+        }
+        long revision = JourneyStore.geometryRevision(app);
         if (!detailPending && completedRevision == revision) return;
         queued = true;
+        completionUntil = 0;
         String priority = detailPending ? observedId : null;
         detailPending = false;
         long generation = foregroundGeneration;
@@ -115,14 +169,14 @@ final class RailwayTrialWorker {
             boolean cancelled = false;
             try {
                 check(stop);
+                MainThread.HANDLER.post(() -> {
+                    if (foreground && generation == foregroundGeneration)
+                        publishStatus("Checking past train journeys…");
+                });
+                JourneyStore.recoverRailwayWrite(app);
                 if (priority != null) {
                     File source = JourneyStore.archiveFile(app, priority);
                     if (source.isFile()) reassess(app, source, priority, stop);
-                    JSONObject row = JourneyStore.readSummary(source);
-                    MainThread.HANDLER.post(() -> {
-                        if (observer != null && priority.equals(observedId) && foreground
-                                && generation == foregroundGeneration) observer.accept(row);
-                    });
                 }
                 more = batch(app, revision, stop);
             } catch (CancellationException paused) {
@@ -131,10 +185,7 @@ final class RailwayTrialWorker {
                 Log.w(TAG, "Railway assessment paused", error);
                 closeCatalogue();
                 failed = true;
-                if (priority != null) MainThread.HANDLER.post(() -> {
-                    if (observer != null && priority.equals(observedId) && foreground
-                            && generation == foregroundGeneration) observer.accept(null);
-                });
+
             }
             if (!more) closeCatalogue();
             long elapsed = SystemClock.elapsedRealtime() - started;
@@ -155,11 +206,15 @@ final class RailwayTrialWorker {
                     schedule(app);
                 } else if (retryOnNextVisit) {
                     scanRevision = -1;
+                    publishStatus("Train journey checks couldn’t finish");
                 } else if (remaining) {
                     if (detailPending) schedule(app);
                     else MainThread.HANDLER.postDelayed(() -> schedule(app), BATCH_DELAY_MS);
                 } else {
                     completedRevision = revision;
+                    if (changed) completionUntil = SystemClock.uptimeMillis() + 3500;
+                    changed = false;
+                    publishStatus(null);
                     schedule(app);
                 }
             });
@@ -224,6 +279,23 @@ final class RailwayTrialWorker {
     private static void reassess(Context app, File source, String id, BooleanSupplier stop) throws Exception {
         File output = results(app);
         if (!output.isDirectory() && !output.mkdir()) throw new IOException("Railway comparison directory");
+        checkingId = id;
+        MainThread.HANDLER.post(RailwayTrialWorker::updateDetailStatus);
+        try {
+            boolean updated = reassessDistance(app, source, output, id, stop);
+            JSONObject summary = updated || id.equals(observedId) ? JourneyStore.readSummary(source) : null;
+            if (summary != null) MainThread.HANDLER.post(() -> {
+                changed |= updated;
+                if (observer != null && id.equals(observedId) && foreground) observer.accept(summary);
+            });
+        } finally {
+            checkingId = null;
+            MainThread.HANDLER.post(RailwayTrialWorker::updateDetailStatus);
+        }
+    }
+
+    private static boolean reassessDistance(Context app, File source, File output, String id,
+                                            BooleanSupplier stop) throws Exception {
         JSONObject row = assess(source, output, id, () -> {
             if (catalogue == null) {
                 long opened = SystemClock.elapsedRealtime();
@@ -241,23 +313,13 @@ final class RailwayTrialWorker {
                         "version="+NetworkFirstRailway.VERSION);
             }
             return network;
-        });
-        if (row != null && RailwayMileage.qualifies(row)) {
-            JourneyStore.applyRailwayDistance(app, id, row, stop);
-        }
-        if (row != null) {
-            PerformanceDiagnostics.timing("railway_assessment", row.optLong("match_ms"),
-                    "reason="+row.optString("reason")+" limit="+row.optString("limit","none")
-                            +" confidence="+row.optString("confidence")+" raw="+row.optInt("raw_samples")
-                            +" fixes="+row.optInt("input_fixes")+" read_ms="+row.optLong("read_ms")
-                            +" cpu_ms="+row.optLong("match_cpu_ms")+" window_ms="
-                            +(row.optLong("window_ended_ms")-row.optLong("window_started_ms"))
-                            +" supported_m="+Math.round(row.optDouble("supported_rail_m",0))
-                            +" network_candidates="+row.optInt("network_candidates")
-                            +" candidate_ms="+row.optLong("candidate_ms")
-                            +" network_evidence_ms="+row.optLong("network_evidence_ms")
-                            +" "+row.optString("work"));
-        }
+        }, true);
+        if (row == null || !RailwayMileage.qualifies(row)) return false;
+        long started = SystemClock.elapsedRealtime();
+        boolean committed = JourneyStore.applyRailwayDistance(app, id, row, stop);
+        if (committed) PerformanceDiagnostics.timing("railway_archive_commit",
+                SystemClock.elapsedRealtime() - started, "revision=" + JourneyStore.dataRevision(app));
+        return committed;
     }
 
     private static void closeCatalogue() {
@@ -280,6 +342,12 @@ final class RailwayTrialWorker {
 
     static JSONObject assess(File source, File output, String id, MatcherProvider provider,
                              BooleanSupplier stop, NetworkProvider networkProvider) throws Exception {
+        return assess(source, output, id, provider, stop, networkProvider, false);
+    }
+
+    private static JSONObject assess(File source, File output, String id, MatcherProvider provider,
+                                      BooleanSupplier stop, NetworkProvider networkProvider,
+                                      boolean networkOnly) throws Exception {
         check(stop);
         if (!source.isFile()) return null;
         String token = JourneyStore.fileToken(source);
@@ -289,7 +357,7 @@ final class RailwayTrialWorker {
                 && previous.optString("fingerprint").startsWith(KEY + ":")) {
             return token.equals(JourneyStore.fileToken(source)) ? previous : null;
         }
-        evaluate(source, output, id, token, previous, provider, stop, networkProvider);
+        evaluate(source, output, id, token, previous, provider, stop, networkProvider, networkOnly);
         JSONObject row = previous(result);
         return source.isFile() && token.equals(JourneyStore.fileToken(source))
                 && row != null && token.equals(row.optString("archive_token")) ? row : null;
@@ -312,7 +380,8 @@ final class RailwayTrialWorker {
     }
 
     private static void evaluate(File source, File output, String id, String token, JSONObject previous,
-                                 MatcherProvider provider, BooleanSupplier stop, NetworkProvider networkProvider) throws Exception {
+                                 MatcherProvider provider, BooleanSupplier stop, NetworkProvider networkProvider,
+                                 boolean networkOnly) throws Exception {
         long readStarted = SystemClock.elapsedRealtime();
         Evidence evidence;
         try {
@@ -343,11 +412,16 @@ final class RailwayTrialWorker {
                 if (evidence.fixes.size() < 4) {
                     match = new RailwayMatcher.Result("unresolved", "insufficient_fixes", 0, 0, 0);
                 } else {
-                    matcher = provider.open();
-                    started = SystemClock.elapsedRealtime();
-                    cpuStarted = SystemClock.currentThreadTimeMillis();
                     NetworkFirstRailway routes = networkProvider.open(evidence.fixes, evidence.start, evidence.end);
-                    match = matcher.compare(evidence.fixes, evidence.start, evidence.end, routes);
+                    if (networkOnly && routes == null) {
+                        match = new RailwayMatcher.Result("unresolved", "outside_reviewed_routes", 0, 0, 0);
+                    } else {
+                        matcher = provider.open();
+                        started = SystemClock.elapsedRealtime();
+                        cpuStarted = SystemClock.currentThreadTimeMillis();
+                        match = networkOnly ? matcher.inferNetwork(evidence.fixes, evidence.start, evidence.end, routes)
+                                : matcher.compare(evidence.fixes, evidence.start, evidence.end, routes);
+                    }
                 }
             } catch (RegionalRailwayCatalogue.QueryLimit limit) {
                 match = new RailwayMatcher.Result("unresolved","catalogue_query_limit",0,0,0);

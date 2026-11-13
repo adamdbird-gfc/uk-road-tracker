@@ -330,7 +330,7 @@ public class JourneyListActivity extends Activity {
         journeyList.setOrientation(LinearLayout.VERTICAL);
         journeyList.setPadding(0, dp(18), 0, dp(18));
         journeyList.addView(ScreenLoadingView.create(this, "Preparing your journeys",
-                "Reading compact journey details without loading route files into memory."));
+                "Your saved journeys will appear here."));
 
         ScrollView scroll = new ScrollView(this);
         journeyScroll = scroll;
@@ -456,25 +456,28 @@ public class JourneyListActivity extends Activity {
 
     private void render() {
         if (journeyList == null || journeys == null) return;
-        synchronized(SUMMARY_CACHE_LOCK){if(processDiscoveryRevision==displayedJourneyRevision)newRoadHighlights=processNewRoadHighlights;}
+        synchronized(SUMMARY_CACHE_LOCK){if(processDiscoveryRevision==JourneyStore.geometryRevision(this))newRoadHighlights=processNewRoadHighlights;}
         long bindStarted=android.os.SystemClock.elapsedRealtime(),bindCpu=android.os.Debug.threadCpuTimeNanos();
         sortJourneysNewestFirst();
         journeyList.removeAllViews();
         updateFilterStyles();
         int visible = 0;
         int rendered = 0;
+        Set<String> visibleIds = new HashSet<>();
         for (JSONObject journey : journeys) {
             if (!shouldShowJourney(journey) || !matchesActiveFilter(journey)) continue;
             visible++;
             if (rendered < journeyCardLimit) {
                 String id=journey.optString("journey_id"),token=journey.toString()+String.valueOf(newRoadHighlights.get(id));
+                visibleIds.add(id);
                 View card=cardViews.get(id);
                 if(card==null||!token.equals(cardTokens.get(id))){card=createCard(journey);cardViews.put(id,card);cardTokens.put(id,token);}
                 journeyList.addView(card);
                 rendered++;
             }
         }
-        cardViews.keySet().removeIf(id->!containsJourney(id));cardTokens.keySet().retainAll(cardViews.keySet());
+        cardViews.keySet().retainAll(visibleIds);
+        cardTokens.keySet().retainAll(visibleIds);
         PerformanceDiagnostics.timing("journeys_bind",android.os.SystemClock.elapsedRealtime()-bindStarted,"visible="+rendered+" total="+visible+" main_cpu_ms="+(android.os.Debug.threadCpuTimeNanos()-bindCpu)/1000000);
         navigation.frame(journeyList,"first_list","visible="+rendered+" total="+visible);
         if(!summariesPartial)navigation.frame(journeyList,"ready","summary_rows="+journeys.size());
@@ -500,7 +503,6 @@ public class JourneyListActivity extends Activity {
         }
     }
 
-    private boolean containsJourney(String id){for(JSONObject row:journeys)if(id.equals(row.optString("journey_id")))return true;return false;}
     /** Prepares only compact rows; Map uses these before scheduling route geometry. */
     static List<JSONObject> preloadSummaries(android.content.Context context, long revision) throws Exception {
         synchronized (SUMMARY_CACHE_LOCK) {
@@ -535,7 +537,7 @@ public class JourneyListActivity extends Activity {
         final android.content.Context appContext = getApplicationContext();
         final long initialRevision = JourneyStore.dataRevision(appContext);
         if(displayedJourneyRevision==initialRevision&&journeys!=null&&journeyList.getChildCount()>0){navigation.frame(journeyList,"first_list","cache=retained");navigation.frame(journeyList,"ready","cache=retained");return;}
-        if (loadingJourneyRevision == initialRevision) return;
+        if (loadingJourneyRevision != Long.MIN_VALUE) return;
         final int generation = ++refreshGeneration;
         loadingJourneyRevision = initialRevision;
         List<JSONObject> cached = null;
@@ -553,7 +555,7 @@ public class JourneyListActivity extends Activity {
                 startBatchMatch();
             } else {
                 render();
-                loadNewRoadHighlights(initialRevision, generation);
+                loadNewRoadHighlights(JourneyStore.geometryRevision(this), generation);
                 restoreJourneyScroll();
             }
             return;
@@ -563,7 +565,7 @@ public class JourneyListActivity extends Activity {
             List<JSONObject> loaded;
             try {
                 if(firstDisplay){List<JSONObject> first=JourneyStore.firstSummaries(appContext,12);sortForScreen(first);mainHandler.post(()->{
-                    if(!isFinishing()&&generation==refreshGeneration&&JourneyStore.dataRevision(appContext)==initialRevision){summariesPartial=true;journeys=first;render();}
+                    if(listActive&&!isFinishing()&&generation==refreshGeneration){summariesPartial=true;journeys=first;render();}
                 });}
                 loaded=preloadSummaries(appContext,initialRevision);
             } catch (Exception error) {
@@ -589,6 +591,7 @@ public class JourneyListActivity extends Activity {
             mainHandler.post(() -> {
                 if (isFinishing() || generation != refreshGeneration) return;
                 loadingJourneyRevision = Long.MIN_VALUE;
+                if (!listActive) return;
                 if (JourneyStore.dataRevision(appContext) != initialRevision) {
                     if (listActive) refreshJourneysAsync();
                     return;
@@ -600,7 +603,7 @@ public class JourneyListActivity extends Activity {
                     startBatchMatch();
                 } else {
                     render();
-                    loadNewRoadHighlights(resultRevision, generation);
+                    loadNewRoadHighlights(JourneyStore.geometryRevision(this), generation);
                     restoreJourneyScroll();
                 }
             });
@@ -719,7 +722,7 @@ public class JourneyListActivity extends Activity {
                     }
                 }
                 final Map<String, List<String>> result = highlights;
-                if (calculated && JourneyStore.dataRevision(getApplicationContext()) == revision) {
+                if (calculated && JourneyStore.geometryRevision(getApplicationContext()) == revision) {
                     synchronized (SUMMARY_CACHE_LOCK) {
                         processDiscoveryRevision = revision;
                         processNewRoadHighlights = result;
@@ -880,7 +883,12 @@ public class JourneyListActivity extends Activity {
         return card;
     }
 
+    private int detailRequest;
+    private AlertDialog detailsDialog;
+
     private void loadAndShowDetails(JSONObject summary) {
+        if (detailsDialog != null && detailsDialog.isShowing()) return;
+        final int request = ++detailRequest;
         final NavigationTrace detailsTrace=new NavigationTrace("journey_detail");detailsTrace.resume(this);
         final String journeyId = summary.optString("journey_id", "");
         if (journeyId.isEmpty()) return;
@@ -899,7 +907,8 @@ public class JourneyListActivity extends Activity {
             }
             JSONObject journey = loaded;
             mainHandler.post(() -> {
-                if (isFinishing()) return;
+                if (!listActive || isFinishing() || request != detailRequest
+                        || (detailsDialog != null && detailsDialog.isShowing())) return;
                 if (journey == null) {
                     Toast.makeText(this,
                             "This journey could not be loaded. Your saved data is unchanged.",
@@ -1258,7 +1267,10 @@ public class JourneyListActivity extends Activity {
         TextView status = new TextView(this);
         String statusText;
         int statusColor;
-        if ("unknown".equals(mode)
+        if ("train".equals(mode)) {
+            statusText = "";
+            statusColor = 0xFF67D5CC;
+        } else if ("unknown".equals(mode)
                 && "required".equals(journey.optString("transport_confirmation"))) {
             statusText = "Confirm the transport type before matching this journey";
             statusColor = 0xFFF7C450;
@@ -1309,6 +1321,7 @@ public class JourneyListActivity extends Activity {
         status.setTypeface(null, android.graphics.Typeface.BOLD);
         status.setTextColor(statusColor);
         status.setPadding(0, dp(18), 0, dp(8));
+        status.setVisibility(railwayEligible ? View.GONE : View.VISIBLE);
         fields.addView(status);
         body.addView(fields);
         scroll.addView(body);
@@ -1515,7 +1528,9 @@ public class JourneyListActivity extends Activity {
                 }));
         AlertDialog dialog = new RoadprintsDialog.Builder(this).setView(container).create();
         dialogRef[0] = dialog;
+        detailsDialog = dialog;
         dialog.setOnDismissListener(d -> {
+            if (detailsDialog == dialog) detailsDialog = null;
             if (railwayEligible) RailwayTrialWorker.removeObserver(railwayObserver);
             NavigationTrace back = new NavigationTrace("journey_return");
             back.resume(this);
@@ -1548,7 +1563,11 @@ public class JourneyListActivity extends Activity {
             }
         });
         dialog.show();
-        if (railwayEligible) RailwayTrialWorker.observe(this, journey.optString("journey_id"), railwayObserver);
+        if (railwayEligible) RailwayTrialWorker.observe(this, journey.optString("journey_id"), railwayObserver,
+                message -> {
+                    status.setText(message);
+                    status.setVisibility(message == null ? View.GONE : View.VISIBLE);
+                });
         if (matchJourney != null
                 && "processing".equals(journey.optString("processing_status"))) {
             watchSingleJourneyMatch(journey, matchJourney, status, dialogRef,

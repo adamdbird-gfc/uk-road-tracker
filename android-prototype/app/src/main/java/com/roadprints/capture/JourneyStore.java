@@ -95,7 +95,7 @@ public final class JourneyStore {
                 catch(Exception unreadable){/* Conservative invalidation for an unreadable predecessor. */}
             }
             replaceArchive(output, temporary, target, encoded,
-                    Math.max(System.currentTimeMillis(), previousModified + 1), false);
+                    Math.max(System.currentTimeMillis(), previousModified + 1));
             contentHashes.edit().putString(id,contentHash).apply();
             boolean ncnChanged=false;
             if (!titleOnly) {
@@ -119,10 +119,13 @@ public final class JourneyStore {
     }
 
     private static void replaceArchive(FileOutputStream output, File temporary, File target,
-                                       byte[] encoded, long modified, boolean durable) throws IOException {
+                                       byte[] encoded, long modified) throws IOException {
         output.write(encoded);
         output.flush();
-        if (durable) output.getFD().sync();
+        replaceArchiveFile(temporary, target, modified);
+    }
+
+    private static void replaceArchiveFile(File temporary, File target, long modified) throws IOException {
         java.nio.file.Files.setLastModifiedTime(temporary.toPath(),
                 java.nio.file.attribute.FileTime.fromMillis(modified));
         java.nio.file.Files.move(temporary.toPath(), target.toPath(),
@@ -130,7 +133,7 @@ public final class JourneyStore {
                 java.nio.file.StandardCopyOption.REPLACE_EXISTING);
     }
 
-    static synchronized boolean applyRailwayDistance(Context context, String id, JSONObject result,
+    static boolean applyRailwayDistance(Context context, String id, JSONObject result,
                                                         java.util.function.BooleanSupplier stop) throws Exception {
         File source = archiveFile(context, id);
         if (!source.isFile() || !fileToken(source).equals(result.optString("archive_token")))
@@ -138,46 +141,53 @@ public final class JourneyStore {
         JSONObject journey = read(source);
         if (journey == null || !id.equals(journey.optString("journey_id"))
                 || !RailwayMileage.apply(journey, result)) return false;
-        writeRailwayDistance(context, source, journey, stop);
+        writeRailwayDistance(context, source, journey, result.getString("archive_token"), stop);
         return true;
     }
 
-    static synchronized boolean restoreRailwayDistance(Context context, String id) throws Exception {
+    static boolean restoreRailwayDistance(Context context, String id) throws Exception {
         File source = archiveFile(context, id);
+        String token = fileToken(source);
         JSONObject journey = read(source);
         if (journey == null || !RailwayMileage.restore(journey)) return false;
-        writeRailwayDistance(context, source, journey, () -> false);
+        writeRailwayDistance(context, source, journey, token, () -> false);
         return true;
     }
 
     private static void writeRailwayDistance(Context context, File source, JSONObject journey,
-                                             java.util.function.BooleanSupplier stop) throws Exception {
+                                             String token, java.util.function.BooleanSupplier stop) throws Exception {
+        if (stop.getAsBoolean()) throw new java.util.concurrent.CancellationException();
         recoverRailwayWrite(context);
-        SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-        File temporary = new File(context.getFilesDir(), source.getName() + ".railway.tmp");
         byte[] encoded = journey.toString().getBytes(StandardCharsets.UTF_8);
-        String id = journey.getString("journey_id");
+        File temporary = File.createTempFile("railway-distance-", ".railway.tmp", context.getFilesDir());
         try {
-            if (stop.getAsBoolean()) throw new java.util.concurrent.CancellationException();
-            // Mark the transaction before touching the archive. After process death
-            // either complete file is usable, but cached totals must be refreshed.
-            if (!preferences.edit().putString(RAILWAY_WRITE_PENDING, id).commit())
-                throw new IOException("Could not prepare railway distance update");
             try (FileOutputStream output = new FileOutputStream(temporary)) {
-                // Preserve the journey's position in recency-ordered archive readers.
-                // Atomic replacement gives projection caches a new file identity.
-                replaceArchive(output, temporary, source, encoded, source.lastModified(), true);
+                output.write(encoded);
+                output.getFD().sync();
             }
-            completeRailwayWrite(context, preferences, id);
-        } catch (IOException failure) {
-            railwayWriteRecovered = false;
-            throw failure;
+            // Parse, encode and flush the new file before taking the archive lock.
+            // A concurrent edit or deletion wins if it changed the source meanwhile.
+            synchronized (JourneyStore.class) {
+                if (stop.getAsBoolean() || !source.isFile() || !token.equals(fileToken(source)))
+                    throw new java.util.concurrent.CancellationException();
+                SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+                String id = journey.getString("journey_id");
+                try {
+                    if (!preferences.edit().putString(RAILWAY_WRITE_PENDING, id).commit())
+                        throw new IOException("Could not prepare railway distance update");
+                    replaceArchiveFile(temporary, source, source.lastModified());
+                    completeRailwayWrite(context, preferences, id);
+                } catch (IOException failure) {
+                    railwayWriteRecovered = false;
+                    throw failure;
+                }
+            }
         } finally {
             temporary.delete();
         }
     }
 
-    private static void recoverRailwayWrite(Context context) {
+    static void recoverRailwayWrite(Context context) {
         if (railwayWriteRecovered) return;
         synchronized (JourneyStore.class) {
             if (railwayWriteRecovered) return;
@@ -185,16 +195,15 @@ public final class JourneyStore {
             String id = preferences.getString(RAILWAY_WRITE_PENDING, null);
             if (id != null) {
                 completeRailwayWrite(context, preferences, id);
-                File[] leftovers = context.getFilesDir().listFiles((dir, name) -> name.endsWith(".railway.tmp"));
-                if (leftovers != null) for (File leftover : leftovers) leftover.delete();
             }
+            File[] leftovers = context.getFilesDir().listFiles((dir, name) -> name.endsWith(".railway.tmp"));
+            if (leftovers != null) for (File leftover : leftovers) leftover.delete();
             railwayWriteRecovered = true;
         }
     }
 
     private static void completeRailwayWrite(Context context, SharedPreferences preferences, String id) {
         context.getSharedPreferences("roadprints_journey_content", 0).edit().remove(id).commit();
-        context.getSharedPreferences("roadprints_ncn_metadata", 0).edit().remove(id).apply();
         long revision = preferences.getLong(DATA_REVISION, 0);
         preferences.edit().putLong(DATA_REVISION, revision + 1)
                 .putLong(RAILWAY_INPUT_REVISION, preferences.getLong(RAILWAY_INPUT_REVISION, revision))
@@ -217,7 +226,6 @@ public final class JourneyStore {
 
     /** Cheap token for invalidating screen summaries when saved journey data changes. */
     public static long dataRevision(Context context) {
-        recoverRailwayWrite(context);
         return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
                 .getLong(DATA_REVISION, 0L);
     }
@@ -261,7 +269,7 @@ public final class JourneyStore {
         return summaries;
     }
 
-    static long railwayInputRevision(Context context) {
+    static long geometryRevision(Context context) {
         long archive = dataRevision(context);
         return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
                 .getLong(RAILWAY_INPUT_REVISION, archive);
@@ -1067,6 +1075,7 @@ public final class JourneyStore {
     }
 
     private static synchronized void migrateLegacy(Context context) {
+        recoverRailwayWrite(context);
         FerryJourneyRecovery.resume(context);
         SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         if (preferences.getBoolean(MIGRATED, false)) return;
