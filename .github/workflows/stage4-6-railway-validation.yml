@@ -62,3 +62,18 @@ jobs:
               print(name, counts)
               assert counts['tests'] > 0 and all(counts[key] == 0 for key in ('failures', 'errors', 'skipped'))
           PY
+      - name: Allow the hosted Android emulator to use KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Assemble the existing isolated Android test package
+        run: gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:assembleAcceptance :app:assembleAcceptanceAndroidTest
+      - name: Run migration and restart on Android API 35
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: bash scripts/check_railway_migration_android.sh
