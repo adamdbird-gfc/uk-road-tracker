@@ -15,3 +15,13 @@ The independent Network Rail engineering reference is a validation input only
 and is absent from this database asset.
 
 Android packaging preserves all three index tables' bounding boxes in indexed standard SQLite tables.
+
+Roadprints UK passenger railway reference
+Catalogue revision uk-osm-20261112-r2, schema 1, proximity in EPSG:32630.
+The national.json manifest pins the dated Geofabrik United Kingdom extract
+and the complete corresponding national.sqlite.gzip database.
+Source: https://download.geofabrik.de/europe/united-kingdom.html
+© OpenStreetMap contributors, Open Database Licence 1.0.
+Distances sum WGS84 geodesic lengths between consecutive track vertices.
+Coverage depends on mapped passenger route membership and stop attachments.
+The source and database contain no private journey data.

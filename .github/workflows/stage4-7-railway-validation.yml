@@ -1,0 +1,75 @@
+name: Validate Stage 4.7 railway reassessment
+on:
+  pull_request:
+    branches: [fix/railway-reassessment-stability]
+    paths:
+      - 'android-prototype/**'
+      - 'scripts/build_national_railway.py'
+      - '.github/workflows/stage4-7-railway-validation.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  android:
+    if: github.head_ref == 'feat/railway-stage4-7'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: |
+            .cache/ncn/catalogue.db
+            android-prototype/app/src/main/assets/historic-counties/boundaries.bin
+          key: reference-pins-v2-${{ runner.os }}-${{ hashFiles('android-prototype/app/src/main/assets/ncn-national/manifest.json', 'android-prototype/app/src/main/assets/historic-counties/catalogue.json') }}
+          fail-on-cache-miss: true
+      - name: Select Java 17
+        run: |
+          test -n "$JAVA_HOME_17_X64"
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.10'
+          cache-read-only: true
+      - name: Restore the exact validated railway catalogue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          bundle="$RUNNER_TEMP/railway.zip"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/14059854393/zip" > "$bundle"
+          echo "583dc9abb1d90ce341d214cd1bd280bbe8d62ab1fa4b9d1854097e47023fe4fa  $bundle" | sha256sum --check
+          assets=android-prototype/app/src/main/assets/railway
+          unzip -p "$bundle" src/main/assets/railway/national.json > "$assets/national.json"
+          unzip -p "$bundle" src/main/assets/railway/national.sqlite.gzip > "$assets/national.sqlite.gzip"
+          gzip -dc "$assets/national.sqlite.gzip" | sha256sum | grep -F 'cea7233a920bdc90130da19a4c2d5ac82e7e7001d4213c996d171c95abd4f48f'
+      - name: Run focused Android regressions
+        run: |
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:testDebugUnitTest --tests '*Railway*' --tests '*ProgressAvailabilityTest' --tests '*NavigationPerformanceTest' --tests '*WhatsNewActivityTest'
+      - name: Allow the hosted Android emulator to use KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Assemble the isolated instrumentation target
+        run: gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:assembleAcceptance :app:assembleAcceptanceAndroidTest
+      - name: Replay migration, restart and navigation on Android API 35
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: bash scripts/check_railway_migration_android.sh national
+      - name: Retain the generated catalogue and test receipts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stage4-7-railway-validation
+          path: |
+            android-prototype/app/src/main/assets/railway/national.json
+            android-prototype/app/src/main/assets/railway/national.sqlite.gzip
+            android-prototype/app/build/test-results/testDebugUnitTest/
+          if-no-files-found: ignore
+          retention-days: 30
