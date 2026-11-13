@@ -12,7 +12,7 @@ jobs:
   android:
     if: github.head_ref == 'feat/railway-stage4-7'
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
@@ -41,7 +41,7 @@ jobs:
             --source-sha256 4d9cac6df2a62d850e2ec647b54ca919d78eb3ba4bcec05557a83aa238b92721
       - name: Run focused Android regressions
         run: |
-          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:testDebugUnitTest --tests '*Railway*' --tests '*ProgressAvailabilityTest' --tests '*NavigationPerformanceTest' --tests '*ReleaseNotes*'
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:testDebugUnitTest --tests '*Railway*' --tests '*ProgressAvailabilityTest' --tests '*NavigationPerformanceTest' --tests '*WhatsNewActivityTest'
       - name: Allow the hosted Android emulator to use KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules

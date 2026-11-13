@@ -16,7 +16,7 @@ import org.json.JSONObject;
 /** Read-only, spatially indexed railway and nearby road geometry. */
 final class NationalRailwayCatalogue implements NationalRailway.Graph, AutoCloseable {
     static final String VERSION = "uk-osm-20261112-r2";
-    static final String SHA256 = "PENDING_CATALOGUE";
+    static final String SOURCE_SHA256 = "4d9cac6df2a62d850e2ec647b54ca919d78eb3ba4bcec05557a83aa238b92721";
     private static final long MAX_BYTES = 180_000_000;
     private final SQLiteDatabase db;
     final String sha256;
@@ -41,7 +41,8 @@ final class NationalRailwayCatalogue implements NationalRailway.Graph, AutoClose
         String sha = manifest.getString("sha256");
         long bytes = manifest.getLong("bytes");
         if (!VERSION.equals(manifest.getString("version")) || bytes < 1 || bytes > MAX_BYTES
-                || !SHA256.equals(sha)) throw new IOException("National railway manifest");
+                || !SOURCE_SHA256.equals(manifest.getString("source_sha256"))
+                || !sha.matches("[0-9a-f]{64}")) throw new IOException("National railway manifest");
         File target = new File(app.getFilesDir(), VERSION+"-"+sha+".sqlite");
         if (!target.isFile() || target.length() != bytes) {
             File temp = File.createTempFile("national-rail-", ".tmp", app.getFilesDir());

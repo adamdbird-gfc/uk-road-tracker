@@ -85,6 +85,8 @@ final class NationalRailway {
         var road = new HashMap<Integer,Double>();
         for (Path path : candidates) {
             check(stop);
+            if (!atAttachment(first,path.tracks().get(0).edge(),path.from().node())
+                    || !atAttachment(last,path.tracks().get(path.tracks().size()-1).edge(),path.to().node())) continue;
             var score = score(path,fixes,start,end,road,stop);
             if (score.plausible()) plausible.add(new Scored(path,score));
         }
@@ -98,6 +100,12 @@ final class NationalRailway {
         }
         return result("inferred","network_route_inferred",selected.path(),selected.evidence().witnesses(),
                 started,candidateMs,candidates.size());
+    }
+
+    private static boolean atAttachment(RailwayMatcher.Fix fix,RailwayMatcher.Edge edge,long node) {
+        double x = edge.a()==node ? edge.ax() : edge.bx();
+        double y = edge.a()==node ? edge.ay() : edge.by();
+        return Math.hypot(fix.x()-x,fix.y()-y) <= Math.max(85,3*fix.accuracy());
     }
 
     private static void add(List<Path> paths,Set<List<Long>> seen,Path path) {

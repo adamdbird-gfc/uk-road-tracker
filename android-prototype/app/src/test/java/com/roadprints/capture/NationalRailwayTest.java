@@ -36,6 +36,15 @@ public class NationalRailwayTest {
         assertEquals(0,result.metres(),0);
     }
 
+    @Test public void aMidJourneyCaptureBoundaryDoesNotInventAStationDeparture() throws Exception {
+        var matcher = new NationalRailway(new Fixture(false,false));
+        var clipped = new ArrayList<>(fixes(false,false));
+        clipped.remove(0);
+        var result = matcher.infer(clipped,START,END,()->false);
+        assertEquals("partial",result.confidence());
+        assertEquals(0,result.metres(),0);
+    }
+
     private static List<RailwayMatcher.Fix> fixes(boolean reverse,boolean road) {
         List<RailwayMatcher.Fix> out = new ArrayList<>();
         for (int i=0;i<=60;i++) {
@@ -68,8 +77,8 @@ public class NationalRailwayTest {
         }
 
         @Override public List<NationalRailway.Station> stations(RailwayMatcher.Fix fix,double radius) {
-            if (fix.x()==0) return List.of(new NationalRailway.Station(1,0,"West"));
-            if (fix.x()==6000) return List.of(new NationalRailway.Station(2,60,"East"));
+            if (fix.x()<=550) return List.of(new NationalRailway.Station(1,0,"West"));
+            if (fix.x()>=5450) return List.of(new NationalRailway.Station(2,60,"East"));
             return List.of();
         }
 

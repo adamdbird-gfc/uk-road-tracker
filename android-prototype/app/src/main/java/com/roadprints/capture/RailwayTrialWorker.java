@@ -61,7 +61,7 @@ final class RailwayTrialWorker {
     private static NetworkFirstRailway network;
     private static NationalRailwayCatalogue national;
     private static final String KEY = RegionalRailwayCatalogue.SHA256+":"+NetworkFirstRailway.SHA256+":"
-            +NationalRailwayCatalogue.SHA256+":"+RailwayMatcher.VERSION;
+            +NationalRailwayCatalogue.VERSION+":"+NationalRailwayCatalogue.SOURCE_SHA256+":"+RailwayMatcher.VERSION;
 
     private RailwayTrialWorker() {}
 
@@ -317,7 +317,7 @@ final class RailwayTrialWorker {
             return network;
         }, true, (fixes, start, end) -> {
             if (!NationalRailway.supports(fixes,start,end))
-                return new NationalResult(NationalRailway.unavailableEndpoints(),NationalRailwayCatalogue.SHA256);
+                return new NationalResult(NationalRailway.unavailableEndpoints(),"");
             if (national == null) {
                 long opened = SystemClock.elapsedRealtime();
                 national = NationalRailwayCatalogue.open(app, stop);
@@ -480,6 +480,7 @@ final class RailwayTrialWorker {
         if (!unchanged && inference != null) {
             row.put("network_catalogue", nationalResult == null ? NetworkFirstRailway.VERSION : NationalRailwayCatalogue.VERSION)
                     .put("network_catalogue_sha256", nationalResult == null ? NetworkFirstRailway.SHA256 : nationalResult.sha256())
+                    .put("network_source_sha256", nationalResult == null ? "" : NationalRailwayCatalogue.SOURCE_SHA256)
                     .put("network_branch", inference.branch())
                     .put("network_alternatives", inference.alternatives())
                     .put("inferred_endpoints", inference.endpoints())

@@ -26,7 +26,8 @@ final class RailwayMileage {
         String sha = receipt.optString("network_catalogue_sha256");
         return NetworkFirstRailway.SHA256.equals(sha)
                 || NationalRailwayCatalogue.VERSION.equals(receipt.optString("network_catalogue"))
-                && NationalRailwayCatalogue.SHA256.equals(sha);
+                && sha.matches("[0-9a-f]{64}")
+                && receipt.optString("network_source_sha256").equals(NationalRailwayCatalogue.SOURCE_SHA256);
     }
 
     static boolean apply(JSONObject journey, JSONObject receipt) throws JSONException {
@@ -42,7 +43,7 @@ final class RailwayMileage {
         }
         JSONObject provenance = new JSONObject();
         for (String field : new String[]{"fingerprint", "matcher", "catalogue", "catalogue_sha256",
-                "network_catalogue", "network_catalogue_sha256", "network_path_sha256",
+                "network_catalogue", "network_catalogue_sha256", "network_source_sha256", "network_path_sha256",
                 "network_branch", "inferred_endpoints"}) {
             provenance.put(field, receipt.opt(field));
         }
