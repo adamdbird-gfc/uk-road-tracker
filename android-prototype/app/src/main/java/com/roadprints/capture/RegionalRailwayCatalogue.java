@@ -22,7 +22,11 @@ final class RegionalRailwayCatalogue implements RailwayMatcher.Graph, AutoClosea
                 }
             };
     private record NodeKey(String ref, long id) {}
-    static final class QueryLimit extends RuntimeException {}
+    static final String COVERAGE = "london_north_kent(-0.16,51.41,0.39,51.55)";
+    static final class QueryLimit extends RuntimeException {
+        final String query;
+        QueryLimit(String query) { this.query = query; }
+    }
 
     static RegionalRailwayCatalogue open(Context context, File dir, BooleanSupplier stop) throws Exception {
         File file = new File(dir,VERSION+"-portable.sqlite");
@@ -74,7 +78,7 @@ final class RegionalRailwayCatalogue implements RailwayMatcher.Graph, AutoClosea
         String fields = road?"e.id,0,0,ax,ay,bx,by,length,'',0"
                 :"e.id,a,b,ax,ay,bx,by,length,ref,eligible AND NOT tunnel";
         return edges("SELECT "+fields+" FROM "+table+"_index s JOIN "+table+" e ON e.id=s.id"
-                +" WHERE xmin BETWEEN CAST(? AS REAL)-1280 AND CAST(? AS REAL) AND xmax>=CAST(? AS REAL) AND ymin<=CAST(? AS REAL) AND ymax>=CAST(? AS REAL) LIMIT 257", bounds(p.x(),p.y(),radius));
+                +" WHERE xmin BETWEEN CAST(? AS REAL)-1280 AND CAST(? AS REAL) AND xmax>=CAST(? AS REAL) AND ymin<=CAST(? AS REAL) AND ymax>=CAST(? AS REAL) LIMIT 257", bounds(p.x(),p.y(),radius), table);
     }
 
     private static String[] bounds(double x,double y,double r) {
@@ -85,15 +89,15 @@ final class RegionalRailwayCatalogue implements RailwayMatcher.Graph, AutoClosea
         return adjacency.computeIfAbsent(new NodeKey(ref,node), key -> {
             String id = String.valueOf(node);
             return edges("SELECT id,a,b,ax,ay,bx,by,length,ref,1 FROM rail WHERE (a=? OR b=?)"
-                    +" AND ref=? AND eligible=1 AND tunnel=0 LIMIT 257",new String[]{id,id,ref});
+                    +" AND ref=? AND eligible=1 AND tunnel=0 LIMIT 257",new String[]{id,id,ref}, "adjacency");
         });
     }
 
-    private List<RailwayMatcher.Edge> edges(String query,String[] args) {
+    private List<RailwayMatcher.Edge> edges(String query,String[] args,String name) {
         List<RailwayMatcher.Edge> out = new ArrayList<>();
         try (Cursor c = db.rawQuery(query,args)) {
             while (c.moveToNext()) {
-                if (out.size() == 256) throw new QueryLimit();
+                if (out.size() == 256) throw new QueryLimit(name);
                 out.add(new RailwayMatcher.Edge(c.getLong(0),c.getLong(1),c.getLong(2),c.getDouble(3),
                         c.getDouble(4),c.getDouble(5),c.getDouble(6),c.getDouble(7),c.getString(8),c.getInt(9)!=0));
             }
@@ -111,7 +115,7 @@ final class RegionalRailwayCatalogue implements RailwayMatcher.Graph, AutoClosea
                 +" WHERE xmin BETWEEN CAST(? AS REAL)-1280 AND CAST(? AS REAL) AND xmax>=CAST(? AS REAL) AND ymin<=CAST(? AS REAL) AND ymax>=CAST(? AS REAL) AND ref=? ORDER BY e.id LIMIT 257",args)) {
             int count = 0;
             while (c.moveToNext()) {
-                if (++count > 256) throw new QueryLimit();
+                if (++count > 256) throw new QueryLimit("axis");
                 var edge = new RailwayMatcher.Edge(c.getLong(0),0,0,c.getDouble(1),c.getDouble(2),
                         c.getDouble(3),c.getDouble(4),c.getDouble(5),ref,true);
                 var hit = edge.hit(new RailwayMatcher.Fix(x,y,0,0));

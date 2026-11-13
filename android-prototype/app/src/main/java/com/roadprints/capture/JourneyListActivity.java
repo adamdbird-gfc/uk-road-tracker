@@ -1192,8 +1192,12 @@ public class JourneyListActivity extends Activity {
         fields.addView(detailRow("End", displayTime(journey.optString("ended_at"))));
         fields.addView(detailRow("Duration", journeyDuration(journey)));
         boolean railwayEligible = BuildConfig.DEBUG && RailwayTrialWorker.eligible(journeyMode);
-        fields.addView(detailRow(railwayEligible ? "Recorded distance" : "Distance",
-                railwayEligible && journey.isNull("distance_meters") ? "Unavailable" : DistanceUnits.format(this, metres)));
+        JSONObject quality = journey.optJSONObject("recording_quality");
+        boolean withheld = "train".equals(journeyMode) && metres == 0 && quality != null
+                && !quality.optBoolean("resolved", true);
+        String recordedDistance = withheld ? "Unavailable · incomplete GPS recording"
+                : railwayEligible && journey.isNull("distance_meters") ? "Unavailable" : DistanceUnits.format(this, metres);
+        fields.addView(detailRow(railwayEligible ? "Recorded distance" : "Distance", recordedDistance));
         fields.addView(detailRow("GPS route points", DistanceUnits.formatPointCount(points)));
         if (journey.optJSONArray("raw_capture_samples") != null)
             fields.addView(detailRow("Original GPS samples", DistanceUnits.formatPointCount(JourneySizeGuard.rawCount(journey))));
