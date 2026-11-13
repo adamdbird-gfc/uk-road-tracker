@@ -179,6 +179,57 @@ public class RailwayMileageRuntimeTest {
         }
     }
 
+    @Test public void reconstructsCardiffInterchangeInBothDirections() throws Exception {
+        var instrumentation = InstrumentationRegistry.getInstrumentation();
+        Context app = instrumentation.getTargetContext();
+        assertTrue(app.getPackageName().endsWith(".milepostacceptance"));
+        var trace = new ArrayList<RailwayMatcher.Fix>();
+        try (var input = new BufferedReader(new InputStreamReader(new GZIPInputStream(instrumentation.getContext()
+                .getAssets().open("railway/paddington-swansea.csv.gz")), StandardCharsets.UTF_8))) {
+            for (String line; (line = input.readLine()) != null;) {
+                var fields = line.split(",");
+                trace.add(new RailwayMatcher.Fix(Double.parseDouble(fields[0]), Double.parseDouble(fields[1]),
+                        8, START + Long.parseLong(fields[2])));
+            }
+        }
+        long interchange = START + 10_610_000;
+        var platform = trace.stream().filter(fix -> fix.time() == interchange).findFirst().orElseThrow();
+        try (var graph = NationalRailwayCatalogue.open(app, () -> false)) {
+            var matcher = new NationalRailway(graph);
+            for (boolean timed : new boolean[]{false, true}) {
+                var fixes = new ArrayList<RailwayMatcher.Fix>();
+                for (var fix : trace) {
+                    long time = fix.time();
+                    fixes.add(new RailwayMatcher.Fix(fix.x(), fix.y(), fix.accuracy(),
+                            timed && time > interchange ? time + 600_000 : time));
+                    if (timed && time == interchange) {
+                        // Same-platform interchange with intermittent GPS while waiting.
+                        for (int seconds : new int[]{30, 80, 150, 310, 550})
+                            fixes.add(new RailwayMatcher.Fix(platform.x() + seconds % 7,
+                                    platform.y() - seconds % 5, 8, time + seconds * 1000L));
+                    }
+                }
+                long end = fixes.get(fixes.size() - 1).time();
+                for (boolean reverse : new boolean[]{false, true}) {
+                    long cpu = SystemClock.currentThreadTimeMillis();
+                    var result = matcher.infer(fixes, START, end, () -> false);
+                    long elapsed = SystemClock.currentThreadTimeMillis() - cpu;
+                    String label = "Cardiff interchange timed=" + timed + " reverse=" + reverse;
+                    android.util.Log.i("RoadprintsRailwayRuntime", label + " cpu_ms=" + elapsed
+                            + " candidates_ms=" + result.candidateMs() + " evidence_ms=" + result.evidenceMs());
+                    assertEquals(label + " " + result.reason(), "inferred", result.confidence());
+                    assertEquals(label, reverse ? "Swansea → London Paddington" : "London Paddington → Swansea",
+                            result.endpoints());
+                    assertEquals(label, 307_009, result.metres(), 40);
+                    assertTrue(label + " exceeded 10 s CPU: " + elapsed, elapsed < 10_000);
+                    java.util.Collections.reverse(fixes);
+                    fixes.replaceAll(fix -> new RailwayMatcher.Fix(fix.x(), fix.y(), fix.accuracy(),
+                            START + end - fix.time()));
+                }
+            }
+        }
+    }
+
     private static <T extends android.app.Activity> void exerciseScreen(Class<T> type) throws Exception {
         long start = SystemClock.elapsedRealtime();
         try (var screen = androidx.test.core.app.ActivityScenario.launch(type)) {

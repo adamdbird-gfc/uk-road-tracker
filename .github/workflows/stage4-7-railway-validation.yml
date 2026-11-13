@@ -56,7 +56,7 @@ jobs:
           target: google_apis
           arch: x86_64
           disable-animations: true
-          script: bash scripts/check_railway_migration_android.sh navigation
+          script: bash scripts/check_railway_migration_android.sh national
       - name: Retain the generated catalogue and test receipts
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

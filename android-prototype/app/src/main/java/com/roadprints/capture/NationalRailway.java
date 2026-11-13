@@ -23,7 +23,9 @@ final class NationalRailway {
     private record Segment(Track track, double offset, boolean forward) {}
     private record Point(double residual, double offset, boolean tunnel) {}
     private record Scored(Path path, NetworkFirstRailway.EvidenceScore evidence) {}
-    private static final int MAX_NODES = 60_000;
+    // A national diversion around a tunnel can settle more than 60,000 nodes.
+    // Keep the discovery and whole-journey budgets independent of this cap.
+    private static final int MAX_NODES = 70_000;
     private static final int MAX_SEARCHES = 12;
     private static final int GRID = 256;
 
