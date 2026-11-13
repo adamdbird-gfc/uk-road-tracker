@@ -121,6 +121,7 @@ final class RailwayTrialWorker {
     }
 
     private static void publishStatus(String message) {
+        if (Objects.equals(activityMessage, message)) return;
         activityMessage = message;
         updateDetailStatus();
     }
@@ -154,7 +155,6 @@ final class RailwayTrialWorker {
         if (!detailPending && completedRevision == revision) return;
         queued = true;
         completionUntil = 0;
-        publishStatus("Checking past train journeys…");
         String priority = detailPending ? observedId : null;
         detailPending = false;
         long generation = foregroundGeneration;
@@ -169,6 +169,10 @@ final class RailwayTrialWorker {
             boolean cancelled = false;
             try {
                 check(stop);
+                MainThread.HANDLER.post(() -> {
+                    if (foreground && generation == foregroundGeneration)
+                        publishStatus("Checking past train journeys…");
+                });
                 JourneyStore.recoverRailwayWrite(app);
                 if (priority != null) {
                     File source = JourneyStore.archiveFile(app, priority);

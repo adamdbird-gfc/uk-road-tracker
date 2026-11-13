@@ -79,6 +79,83 @@ public class RailwayMileageRuntimeTest {
         assertTrue(preferences.edit().putString("railway_distance_pending_id", ID).commit());
     }
 
+    @Test public void repeatedNavigationRemainsResponsiveDuringHistoricalChecks() throws Exception {
+        var instrumentation = InstrumentationRegistry.getInstrumentation();
+        Context app = instrumentation.getTargetContext();
+        assertTrue(app.getPackageName().endsWith(".milepostacceptance"));
+        var controls = app.getSharedPreferences("roadprints_capture_state", 0);
+        controls.edit().putBoolean("active", true).commit();
+        var trace = sample(publicRoute(app));
+        for (int index = 0; index < 1652; index++) {
+            boolean train = index < 24;
+            String id = "navigation-" + index;
+            var journey = new JSONObject().put("journey_id", id)
+                    .put("mode", train ? "train" : "unknown").put("title", "Saved journey " + index)
+                    .put("distance_meters", train ? 43_900 : 200)
+                    .put("started_at", Instant.ofEpochMilli(START - (train ? 0 : index * 60000L)).toString())
+                    .put("ended_at", Instant.ofEpochMilli(END).toString());
+            if (train) journey.put("raw_capture_samples", trace);
+            var source = JourneyStore.archiveFile(app, id);
+            Files.write(source.toPath(), journey.toString().getBytes(StandardCharsets.UTF_8));
+            if (train) assertTrue(source.setLastModified(System.currentTimeMillis() + 60000));
+        }
+        try {
+            try (var screen = androidx.test.core.app.ActivityScenario.launch(JourneyListActivity.class)) {
+                controls.edit().putBoolean("active", false).commit();
+                RailwayTrialWorker.captureEnded(app);
+                awaitOnMain(() -> RailwayTrialWorker.isChecking(), 12_000);
+                assertTrue("A first journey must commit", waitForDistance(app, "navigation-0", 15_000));
+            }
+            for (int i = 0; i < 2; i++) {
+                exerciseScreen(ProgressActivity.class);
+                exerciseScreen(MapActivity.class);
+                exerciseScreen(JourneyListActivity.class);
+            }
+            try (var screen = androidx.test.core.app.ActivityScenario.launch(JourneyListActivity.class)) {
+                assertTrue("Railway history should resume and finish", waitForDistance(app, "navigation-23", 40_000));
+                awaitOnMain(() -> !RailwayTrialWorker.isChecking(), 120_000);
+            }
+            assertEquals(1652, JourneyStore.archiveFiles(app).stream()
+                    .filter(file -> file.getName().startsWith("journey_navigation-")).count());
+        } finally {
+            controls.edit().remove("active").commit();
+            for (File file : JourneyStore.archiveFiles(app))
+                if (file.getName().startsWith("journey_navigation-")) Files.deleteIfExists(file.toPath());
+        }
+    }
+
+    private static <T extends android.app.Activity> void exerciseScreen(Class<T> type) throws Exception {
+        long start = SystemClock.elapsedRealtime();
+        try (var screen = androidx.test.core.app.ActivityScenario.launch(type)) {
+            awaitOnMain(() -> true, 4000);
+        }
+        long elapsed = SystemClock.elapsedRealtime() - start;
+        android.util.Log.i("RoadprintsRailwayRuntime", "navigation=" + type.getSimpleName() + " elapsed_ms=" + elapsed);
+        assertTrue(type.getSimpleName() + " launch and return exceeded 5 seconds: " + elapsed, elapsed < 5000);
+    }
+
+    private static void awaitOnMain(java.util.function.BooleanSupplier condition, long timeout) throws Exception {
+        long deadline = SystemClock.elapsedRealtime() + timeout;
+        var handler = new android.os.Handler(android.os.Looper.getMainLooper());
+        do {
+            var check = new java.util.concurrent.FutureTask<Boolean>(condition::getAsBoolean);
+            handler.post(check);
+            if (check.get(4, java.util.concurrent.TimeUnit.SECONDS)) return;
+            Thread.sleep(75);
+        } while (SystemClock.elapsedRealtime() < deadline);
+        fail("Expected foreground state did not arrive");
+    }
+
+    private static boolean waitForDistance(Context app, String id, long timeout) throws Exception {
+        long deadline = SystemClock.elapsedRealtime() + timeout;
+        do {
+            var row = JourneyStore.readSummary(JourneyStore.archiveFile(app, id));
+            if (row != null && Math.abs(row.optDouble("distance_meters") - 39_228) < 150) return true;
+            Thread.sleep(100);
+        } while (SystemClock.elapsedRealtime() < deadline);
+        return false;
+    }
+
     private static List<Edge> publicRoute(Context app) throws Exception {
         try (var input = new DataInputStream(new GZIPInputStream(app.getAssets().open(ASSET)))) {
             assertEquals(0x52504e31, input.readInt());

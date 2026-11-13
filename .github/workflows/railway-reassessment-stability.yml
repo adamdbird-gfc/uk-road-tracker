@@ -76,4 +76,4 @@ jobs:
           target: google_apis
           arch: x86_64
           disable-animations: true
-          script: bash scripts/check_railway_migration_android.sh
+          script: bash scripts/check_railway_migration_android.sh navigation

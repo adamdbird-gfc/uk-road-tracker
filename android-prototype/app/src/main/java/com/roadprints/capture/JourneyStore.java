@@ -159,7 +159,7 @@ public final class JourneyStore {
         if (stop.getAsBoolean()) throw new java.util.concurrent.CancellationException();
         recoverRailwayWrite(context);
         byte[] encoded = journey.toString().getBytes(StandardCharsets.UTF_8);
-        File temporary = File.createTempFile(source.getName() + ".", ".railway.tmp", context.getFilesDir());
+        File temporary = File.createTempFile("railway-distance-", ".railway.tmp", context.getFilesDir());
         try {
             try (FileOutputStream output = new FileOutputStream(temporary)) {
                 output.write(encoded);

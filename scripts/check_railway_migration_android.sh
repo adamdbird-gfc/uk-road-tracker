@@ -7,8 +7,14 @@ adb install "$apk_root/acceptance/app-acceptance.apk"
 adb install "$apk_root/androidTest/acceptance/app-acceptance-androidTest.apk"
 for phase in prepare verify; do
   adb shell am force-stop "$package"
-  output=$(adb shell am instrument -w -e class "$test_class" -e phase "$phase" "$package.test/androidx.test.runner.AndroidJUnitRunner")
+  output=$(adb shell am instrument -w -e class "$test_class#upgradeDistanceAndReopenArchiveOnAndroid" -e phase "$phase" "$package.test/androidx.test.runner.AndroidJUnitRunner")
   printf '%s\n' "$output"
   grep -F 'OK (1 test)' <<< "$output"
 done
+if [[ "${1:-}" == navigation ]]; then
+  adb shell pm clear "$package"
+  output=$(adb shell am instrument -w -e class "$test_class#repeatedNavigationRemainsResponsiveDuringHistoricalChecks" "$package.test/androidx.test.runner.AndroidJUnitRunner")
+  printf '%s\n' "$output"
+  grep -F 'OK (1 test)' <<< "$output"
+fi
 adb logcat -d -s RoadprintsRailwayRuntime:I
