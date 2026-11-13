@@ -44,16 +44,20 @@ final class RailwayMileage {
         JSONObject provenance = new JSONObject();
         for (String field : new String[]{"fingerprint", "matcher", "catalogue", "catalogue_sha256",
                 "network_catalogue", "network_catalogue_sha256", "network_source_sha256", "network_path_sha256",
-                "network_branch", "inferred_endpoints"}) {
+                "network_branch", "inferred_endpoints", "network_inference_version"}) {
             provenance.put(field, receipt.opt(field));
         }
         Object original = previous == null ? journey.opt(DISTANCE) : previous.opt(ORIGINAL);
         double priorMetres = journey.optDouble(DISTANCE);
+        double delta = metres - (Double.isFinite(priorMetres) && priorMetres > 0 ? priorMetres : 0);
         provenance.put("journey_id", journey.getString("journey_id"))
                 .put("method", "inferred_physical_rail_path").put(DISTANCE, metres)
                 .put(ORIGINAL, original)
                 .put("superseded_distance_meters", Double.isFinite(priorMetres) ? priorMetres : JSONObject.NULL)
                 .put("distance_change_meters", Double.isFinite(priorMetres) ? metres-priorMetres : JSONObject.NULL)
+                .put("train_total_change_meters", delta)
+                .put("overall_total_change_meters", delta)
+                .put("migration_committed_at_ms", System.currentTimeMillis())
                 .put("migration_status", "committed").put("reason", receipt.getString("reason"));
         journey.put(PROVENANCE, provenance).put(DISTANCE, metres);
         return true;

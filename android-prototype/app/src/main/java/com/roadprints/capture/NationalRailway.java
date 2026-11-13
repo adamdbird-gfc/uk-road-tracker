@@ -23,6 +23,7 @@ final class NationalRailway {
     private record Segment(Track track, double offset, boolean forward) {}
     private record Point(double residual, double offset, boolean tunnel) {}
     private record Scored(Path path, NetworkFirstRailway.EvidenceScore evidence) {}
+    static final String INFERENCE_VERSION = "national-search-r2";
     private static final int MAX_NODES = 60_000;
     private static final int MAX_SEARCHES = 12;
     private static final int GRID = 256;
@@ -98,8 +99,21 @@ final class NationalRailway {
                 return result("ambiguous","multiple_rail_routes",null,0,started,candidateMs,candidates.size());
             if (alternative.evidence().compareTo(selected.evidence()) < 0) selected = alternative;
         }
+        if (requiresDistanceVerification(selected.path()))
+            return result("partial","independent_distance_pending",null,0,started,candidateMs,candidates.size());
         return result("inferred","network_route_inferred",selected.path(),selected.evidence().witnesses(),
                 started,candidateMs,candidates.size());
+    }
+
+    // The independent references use a historical Belfast terminal. Keep the
+    // reviewed platform-to-platform comparisons with a material gap out of mileage.
+    private static boolean requiresDistanceVerification(Path path) {
+        long from = path.from().id();
+        long to = path.to().id();
+        long grandCentral = 12248421687L;
+        if (from != grandCentral && to != grandCentral) return false;
+        long other = from == grandCentral ? to : from;
+        return other == 4038479296L || other == 4060626936L || other == 5525053199L;
     }
 
     private static Path reverse(Path path) {

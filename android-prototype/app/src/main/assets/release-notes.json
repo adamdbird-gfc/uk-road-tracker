@@ -13,7 +13,7 @@
         },
         {
           "title": "Saved train journeys are checked automatically",
-          "description": "You can keep browsing your journeys while Roadprints checks saved train trips. The saved distance stays visible until the check finds a route it can measure."
+          "description": "You can keep browsing your journeys while Roadprints checks saved train trips. When there is enough evidence to measure the route, Roadprints updates the saved distance. Otherwise your saved distance stays as it is."
         }
       ]
     },

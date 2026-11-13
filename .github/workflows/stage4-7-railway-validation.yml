@@ -8,6 +8,7 @@ on:
       - '.github/workflows/stage4-7-railway-validation.yml'
 permissions:
   contents: read
+  actions: read
 jobs:
   android:
     if: github.head_ref == 'feat/railway-stage4-7'
@@ -31,14 +32,18 @@ jobs:
         with:
           gradle-version: '8.10'
           cache-read-only: true
-      - name: Prepare the pinned offline railway catalogue
+      - name: Restore the exact validated railway catalogue
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          python3 -m pip install 'osmium==4.3.2' 'pyproj==3.8.0'
-          curl --fail --location --retry 2 --output "$RUNNER_TEMP/uk-261112.osm.pbf" \
-            https://download.geofabrik.de/europe/united-kingdom-261112.osm.pbf
-          python3 scripts/build_national_railway.py "$RUNNER_TEMP/uk-261112.osm.pbf" \
-            android-prototype/app/src/main/assets/railway \
-            --source-sha256 4d9cac6df2a62d850e2ec647b54ca919d78eb3ba4bcec05557a83aa238b92721
+          set -euo pipefail
+          bundle="$RUNNER_TEMP/railway.zip"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/14059854393/zip" > "$bundle"
+          echo "583dc9abb1d90ce341d214cd1bd280bbe8d62ab1fa4b9d1854097e47023fe4fa  $bundle" | sha256sum --check
+          assets=android-prototype/app/src/main/assets/railway
+          unzip -p "$bundle" src/main/assets/railway/national.json > "$assets/national.json"
+          unzip -p "$bundle" src/main/assets/railway/national.sqlite.gzip > "$assets/national.sqlite.gzip"
+          gzip -dc "$assets/national.sqlite.gzip" | sha256sum | grep -F 'cea7233a920bdc90130da19a4c2d5ac82e7e7001d4213c996d171c95abd4f48f'
       - name: Run focused Android regressions
         run: |
           gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:testDebugUnitTest --tests '*Railway*' --tests '*ProgressAvailabilityTest' --tests '*NavigationPerformanceTest' --tests '*WhatsNewActivityTest'

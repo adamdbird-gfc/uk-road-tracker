@@ -61,7 +61,8 @@ final class RailwayTrialWorker {
     private static NetworkFirstRailway network;
     private static NationalRailwayCatalogue national;
     private static final String KEY = RegionalRailwayCatalogue.SHA256+":"+NetworkFirstRailway.SHA256+":"
-            +NationalRailwayCatalogue.VERSION+":"+NationalRailwayCatalogue.SOURCE_SHA256+":"+RailwayMatcher.VERSION;
+            +NationalRailwayCatalogue.VERSION+":"+NationalRailwayCatalogue.SOURCE_SHA256+":"
+            +NationalRailway.INFERENCE_VERSION+":"+RailwayMatcher.VERSION;
 
     private RailwayTrialWorker() {}
 
@@ -478,7 +479,8 @@ final class RailwayTrialWorker {
         NetworkFirstRailway.Outcome inference = nationalResult != null ? nationalResult.outcome()
                 : matcher == null ? null : matcher.inference;
         if (!unchanged && inference != null) {
-            row.put("network_catalogue", nationalResult == null ? NetworkFirstRailway.VERSION : NationalRailwayCatalogue.VERSION)
+            row.put("network_inference_version", nationalResult == null ? NetworkFirstRailway.VERSION : NationalRailway.INFERENCE_VERSION)
+                    .put("network_catalogue", nationalResult == null ? NetworkFirstRailway.VERSION : NationalRailwayCatalogue.VERSION)
                     .put("network_catalogue_sha256", nationalResult == null ? NetworkFirstRailway.SHA256 : nationalResult.sha256())
                     .put("network_source_sha256", nationalResult == null ? "" : NationalRailwayCatalogue.SOURCE_SHA256)
                     .put("network_branch", inference.branch())
