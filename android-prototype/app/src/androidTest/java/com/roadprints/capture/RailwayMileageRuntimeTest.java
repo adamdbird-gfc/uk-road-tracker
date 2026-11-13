@@ -39,7 +39,7 @@ public class RailwayMileageRuntimeTest {
         if ("verify".equals(InstrumentationRegistry.getArguments().getString("phase"))) {
             double distance = JourneyStore.readSummary(source).getDouble("distance_meters");
             assertEquals(39_228, distance, 150);
-            var receipt = new JSONObject(Files.readString(source.toPath())).getJSONObject("railway_distance");
+            var receipt = new JSONObject(new String(Files.readAllBytes(source.toPath()), StandardCharsets.UTF_8)).getJSONObject("railway_distance");
             assertTrue(receipt.getLong("migration_committed_at_ms") > 0);
             assertEquals("committed", receipt.getString("migration_status"));
             assertEquals(distance - 43_900, receipt.getDouble("train_total_change_meters"), 0);
@@ -164,7 +164,7 @@ public class RailwayMileageRuntimeTest {
                             .digest(id.getBytes(StandardCharsets.UTF_8));
                     var comparison = new File(app.getFilesDir(), "railway-comparisons/"
                             + RegionalRailwayCatalogue.hex(digest) + ".json");
-                    var receipt = new JSONObject(Files.readString(comparison.toPath()));
+                    var receipt = new JSONObject(new String(Files.readAllBytes(comparison.toPath()), StandardCharsets.UTF_8));
                     assertEquals("independent_distance_pending", receipt.getString("reason"));
                 }
                 expectedTrain += distance;
