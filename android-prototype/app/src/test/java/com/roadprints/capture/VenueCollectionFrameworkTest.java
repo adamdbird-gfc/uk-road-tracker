@@ -42,6 +42,28 @@ public class VenueCollectionFrameworkTest {
         return new JSONObject().put("journey_id","framework-test").put("source",new JSONObject().put("type","android_activity_capture"))
                 .put("raw_capture_samples",samples).put("stops",new JSONArray().put(arrival));
     }
+    @Test public void pendingVisitLookupSuppressesOnlyOverlappingConfirmedSessions() throws Exception {
+        Context app = org.robolectric.RuntimeEnvironment.getApplication();
+        String collection = CollectionAccessStore.SPOONS;
+        JSONObject saved = new JSONObject();
+        for (int i = 0; i < 1500; i++) {
+            saved.put("other-" + i, new JSONObject().put("venue_id", "other-" + i)
+                    .put("visited_at", "2026-11-14T10:00:00Z"));
+        }
+        saved.put("confirmed", new JSONObject().put("venue_id", "test").put("visited_at", "2026-11-14T10:00:00Z")
+                .put("evidence", new JSONObject().put("to_ms",
+                        java.time.Instant.parse("2026-11-14T10:30:00Z").toEpochMilli())));
+        saved.put("overlap", new JSONObject().put("venue_id", "test").put("pending", true)
+                .put("visited_at", "2026-11-14T10:43:00Z"));
+        saved.put("separate", new JSONObject().put("venue_id", "test").put("pending", true)
+                .put("visited_at", "2026-11-14T10:46:00Z"));
+        app.getSharedPreferences(VenueVisitStore.PREFS, 0).edit()
+                .putString(collection + ":records", saved.toString()).commit();
+        JSONArray result = VenueVisitStore.nativePending(app, collection);
+        assertEquals(1, result.length());
+        assertEquals("separate", result.getJSONObject(0).getString("record_key"));
+    }
+
     @Test public void manualCheckinUsesIdenticalFreshLocationPolicyForBothCollections()throws Exception{
         for(String id:new String[]{"services","wetherspoons"}){
             JSONObject row="services".equals(id)?service:pub;Location location=fix(row);

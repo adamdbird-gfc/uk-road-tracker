@@ -175,7 +175,7 @@ public class RoutePreviewView extends View {
     private volatile boolean renderingActive=true;
     void setRenderingActive(boolean active){
         renderingActive=active;
-        if(!active){tileBitmaps.evictAll();renderGeometry.clear();}else invalidate();
+        if(!active){tileBitmaps.evictAll();}else invalidate();
     }
     private final LruCache<String, Bitmap> tileBitmaps = new LruCache<>(48);
     private final Set<String> loadingTiles =

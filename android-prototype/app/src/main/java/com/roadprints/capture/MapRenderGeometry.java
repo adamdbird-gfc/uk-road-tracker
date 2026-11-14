@@ -57,9 +57,11 @@ final class MapRenderGeometry {
     private static int preparedPoints;
     private static int cost(Line line){return line.path==null?0:line.count;}
     private static Line prepared(JSONArray points){synchronized(prepared){return prepared.get(points);}}
-    static void prepare(java.util.List<JSONArray> rows){
+    static void prepare(java.util.List<JSONArray> rows) { prepare(rows, true); }
+    static void prepareBounds(java.util.List<JSONArray> rows) { prepare(rows, false); }
+    private static void prepare(java.util.List<JSONArray> rows, boolean allowPaths){
         for(JSONArray points:rows){if(Thread.currentThread().isInterrupted())return;if(prepared(points)!=null)continue;
-            boolean build;synchronized(prepared){build=preparedPoints+points.length()<=200000;}
+            boolean build;synchronized(prepared){build=allowPaths&&preparedPoints+points.length()<=200000;}
             Line line=new Line(points,build);
             synchronized(prepared){
                 if(prepared.get(points)!=null)continue;
@@ -93,9 +95,9 @@ final class MapRenderGeometry {
         float tx=(float)(width/2.0+(line.originX-centreX)*scale),ty=(float)(height/2.0-(line.originY-centreY)*scale);
         visible.set((float)(line.bounds.left*scale+tx),(float)(-line.bounds.bottom*scale+ty),(float)(line.bounds.right*scale+tx),(float)(-line.bounds.top*scale+ty));
         float padding=Math.max(16,halo==null?paint.getStrokeWidth():halo.getStrokeWidth());
-        if(visible.right< -padding||visible.left>width+padding||visible.bottom< -padding||visible.top>height+padding){culled++;if(immutable)put(points,line);return false;}
+        if(visible.right< -padding||visible.left>width+padding||visible.bottom< -padding||visible.top>height+padding){culled++;if(immutable && lines.get(points)!=line)put(points,line);return false;}
         if(line.path==null){line=new Line(points,true);builds++;}
-        if(immutable)put(points,line);
+        if(immutable && lines.get(points)!=line)put(points,line);
         transformValues[0]=(float)scale;transformValues[2]=tx;
         transformValues[4]=(float)-scale;transformValues[5]=ty;
         transform.setValues(transformValues);line.path.transform(transform,screen);

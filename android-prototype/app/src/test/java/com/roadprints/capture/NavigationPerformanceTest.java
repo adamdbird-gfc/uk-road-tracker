@@ -123,6 +123,29 @@ public class NavigationPerformanceTest {
         assertEquals(0,cache.builds);assertTrue(cache.vertices<=100000);
         System.out.println("NAV_BENCHMARK road_sections=3565 legacy_project_draw_ms="+legacy/1e6+" worker_path_preparation_ms="+preparation/1e6+" first_cached_draw_ms="+current/1e6+" warm_cached_draw_ms="+warm/1e6+" ui_path_builds="+cache.builds+" offscreen_culled="+cache.culled+" environment=Robolectric_not_phone");MapRenderGeometry.clearPrepared();
     }
+    @Test public void boundsOnlyOverviewRetainsVisiblePathsAcrossRepeatedFrames() throws Exception {
+        List<JSONArray> rows = new ArrayList<>();
+        for (int i = 0; i < 4853; i++) {
+            rows.add(i < 60 ? new JSONArray("[[0,0],[0.01,0.01]]")
+                    : new JSONArray("[[10,10],[10.01,10.01]]"));
+        }
+        MapRenderGeometry.clearPrepared();
+        try {
+            MapRenderGeometry.prepareBounds(rows);
+            MapRenderGeometry geometry = new MapRenderGeometry();
+            Canvas canvas = new Canvas(Bitmap.createBitmap(120, 120, Bitmap.Config.ARGB_8888));
+            Paint paint = new Paint();
+            for (JSONArray row : rows) geometry.draw(canvas, row, paint, null, .01, 0, 0, 120, 120);
+            assertEquals(60, geometry.builds);
+            for (JSONArray row : rows) geometry.draw(canvas, row, paint, null, .01, 0, 0, 120, 120);
+            assertEquals(60, geometry.builds);
+            assertEquals(4853, geometry.hits);
+            assertEquals(120, geometry.vertices);
+        } finally {
+            MapRenderGeometry.clearPrepared();
+        }
+    }
+
     @Test public void mutableEditingDoesNotReuseImmutableGeometry()throws Exception {
         MapRenderGeometry cache=new MapRenderGeometry();JSONArray row=new JSONArray("[[0,0],[0.0001,0]]");Paint paint=new Paint();Canvas canvas=new Canvas(Bitmap.createBitmap(100,100,Bitmap.Config.ARGB_8888));
         cache.draw(canvas,row,paint,null,1,0,0,100,100,false);row.getJSONArray(1).put(0,.0002);cache.draw(canvas,row,paint,null,1,0,0,100,100,false);

@@ -185,39 +185,78 @@ public class JourneyListActivity extends Activity {
         super.onSaveInstanceState(state);
     }
 
-    private void checkSavedEvidence(String id, TextView action) {
-        action.setEnabled(false);
-        action.setText("Checking saved evidence…");
-        Context app = getApplicationContext();
-        ScreenDataLoader.execute(() -> {
-            String message;
-            try (JourneyReconciliation reconciliation = new JourneyReconciliation(app)) {
-                JourneyReconciliation.Rule rule = JourneyReconciliation.BASELINE;
-                reconciliation.enqueue(rule, java.util.Collections.singletonList(id));
-                reconciliation.runBatch(rule, () -> isDestroyed());
-                JSONObject receipt = reconciliation.receipt(rule, id);
-                if (receipt == null) {
-                    message = "Evidence check pending. Open this journey and select Check saved evidence again.";
-                } else {
-                    message = switch (JourneyReconciliation.Outcome.valueOf(receipt.getString("outcome"))) {
-                        case UNCHANGED -> "Saved evidence checked. The journey and its mileage are unchanged.";
-                        case EVIDENCE_UNAVAILABLE -> "This journey has limited saved evidence. No mileage changed.";
-                        case TOO_LARGE -> "This recording exceeds the size limit for this evidence check. No mileage changed.";
-                        default -> "The comparison is saved for review. No mileage changed.";
-                    };
+    private void verifySavedJourney(String id, TextView action, TextView status, boolean start) {
+        long queued = android.os.SystemClock.elapsedRealtime();
+        Object request = new Object();
+        if (start) {
+            status.setTag(request);
+            action.setEnabled(false);
+            status.setText("Verifying saved journey data…");
+        }
+        final Runnable timeout = () -> {
+            if (!status.isShown() || status.getTag() != request || action.isEnabled()) return;
+            action.setEnabled(true);
+            status.setText("Verification paused. Tap Verify saved journey data to resume.");
+        };
+        if (start) mainHandler.postDelayed(timeout, 8000);
+        ScreenDataLoader.evidence(() -> {
+            long started = android.os.SystemClock.elapsedRealtime();
+            String message = null;
+            String outcome = "no_receipt";
+            try (JourneyReconciliation reconciliation = new JourneyReconciliation(getApplicationContext())) {
+                if (start && started - queued >= 8000) throw new java.util.concurrent.CancellationException();
+                JSONObject result = start
+                        ? reconciliation.verifySelected(id, () -> isDestroyed() || !action.isAttachedToWindow()
+                                || android.os.SystemClock.elapsedRealtime() - queued >= 8000)
+                        : reconciliation.latestVerification(id);
+                if (result != null) {
+                    outcome = result.getString("outcome");
+                    message = evidenceMessage(result);
+                } else if (start) {
+                    outcome = "source_changed";
+                    message = "Saved data changed during verification. Try again.";
                 }
+            } catch (java.util.concurrent.CancellationException stopped) {
+                outcome = "paused";
+                message = CaptureService.isActive(getApplicationContext())
+                        ? "Verification paused while Roadprints is recording. Try again after recording."
+                        : "Verification paused. Tap Verify saved journey data to resume.";
             } catch (Exception failure) {
-                android.util.Log.w("Roadprints", "Journey evidence check failed", failure);
-                message = "Could not check saved evidence. Try again.";
+                outcome = "failed";
+                if (start) message = "Saved journey data could not be verified. Try again.";
             }
-            String result = message;
+            if (start) PerformanceDiagnostics.timing("journey_evidence_verify",
+                    android.os.SystemClock.elapsedRealtime() - started,
+                    "queue_ms=" + (started - queued) + " outcome=" + outcome);
+            final String feedback = message;
             mainHandler.post(() -> {
-                if (isDestroyed()) return;
+                if (start) mainHandler.removeCallbacks(timeout);
+                if (isDestroyed() || !status.isAttachedToWindow()) return;
+                if (start && status.getTag() != request) return;
+                if (!start && status.getTag() != null) return;
                 action.setEnabled(true);
-                action.setText("Check saved evidence");
-                Toast.makeText(this, result, Toast.LENGTH_LONG).show();
+                if (feedback != null) status.setText(feedback);
             });
         });
+    }
+
+    private static String evidenceMessage(JSONObject receipt) throws org.json.JSONException {
+        String outcome = receipt.optString("outcome");
+        String unchanged = "\nJourney, mileage and collection progress unchanged.";
+        if ("TOO_LARGE".equals(outcome)) return "Verification reached its size limit for this recording." + unchanged;
+        if ("EVIDENCE_UNAVAILABLE".equals(outcome)) return "Verification complete. The saved record has too little route evidence to assess." + unchanged;
+        JSONObject interpretation = new JSONObject(receipt.optString("interpretation", "{}"));
+        boolean raw = interpretation.optBoolean("has_raw_samples");
+        String timing = interpretation.optString("raw_timing", "unknown");
+        String evidence = raw ? "Original GPS samples are available." : "Original GPS samples are unavailable.";
+        if (raw) evidence += switch (timing) {
+            case "present" -> " Sample timestamps are available. Future analysis must still check gaps and fix quality.";
+            case "partial" -> " Some sample timestamps are missing.";
+            case "missing" -> " Sample timestamps are missing.";
+            default -> " Tap Verify to refresh timing details.";
+        };
+        return "Verification complete. " + evidence
+                + "\nUse Debug Journey to export the saved evidence." + unchanged;
     }
 
     private void exportJourneyDebug(String journeyId) {
@@ -707,41 +746,34 @@ public class JourneyListActivity extends Activity {
         }
         try {
             processor.execute(() -> {
+                if (isDestroyed() || revision != JourneyStore.geometryRevision(getApplicationContext())) return;
+                synchronized (SUMMARY_CACHE_LOCK) {
+                    if (processDiscoveryRevision == revision) return;
+                }
                 Map<String, List<String>> highlights = readDiscoveryCache(revision);
                 boolean calculated = highlights != null;
                 if (highlights == null) {
                     highlights = new LinkedHashMap<>();
                     try {
                         List<JourneyDiscoveryRecord> records = new ArrayList<>();
-                        RoadDetailModel.cachedRoadEvidence(getApplicationContext(), journey -> {
-                            if (!"complete".equals(journey.optString("processing_status"))) return;
-                            String mode = journey.optString("mode", "unknown").toLowerCase();
-                            if (!(isRoadMode(mode) || isFootMode(mode) || MatchingCoordinator.isCycle(mode))) return;
-                            Map<String, String> roads = new LinkedHashMap<>();
-                            for (JSONObject feature : discoveryFeatures(journey)) {
-                                JSONObject properties = feature.optJSONObject("properties");
-                                if (properties == null) continue;
-                                String rawRef = properties.optString("road_ref",
-                                        properties.optString("ref", ""));
-                                String name = properties.optString("name",
-                                        properties.optString("road_name", "")).trim();
-                                String[] refs = rawRef.trim().isEmpty() ? new String[]{""}
-                                        : rawRef.trim().split("[;,/]");
-                                for (String value : refs) {
-                                    String ref = value.trim().toUpperCase();
-                                    boolean usableRef = !ref.isEmpty()
-                                            && !ref.matches("\\d+(?:[.,]\\d+)?");
-                                    String label = usableRef ? ref : name;
-                                    if (label.isEmpty()
-                                            || label.matches("\\d+(?:[.,]\\d+)?")) continue;
-                                    roads.putIfAbsent(usableRef ? "ref:" + ref
-                                            : "name:" + label.toLowerCase(), label);
-                                }
+                        Context app = getApplicationContext();
+                        long started = android.os.SystemClock.elapsedRealtime();
+                        JourneyStore.prepareArchive(app);
+                        try (CompactJourneyCache cache = new CompactJourneyCache(app, "road-discovery-v1")) {
+                            for (java.io.File source : JourneyStore.archiveFiles(app)) {
+                                if (Thread.currentThread().isInterrupted() || isDestroyed()) return;
+                                JSONObject row = cache.get(source, file -> discoveryRow(JourneyStore.mapEvidence(app, file, false)));
+                                if (row == null) continue;
+                                JSONObject labels = row.getJSONObject("roads");
+                                if (labels.length() == 0) continue;
+                                Map<String, String> roads = new LinkedHashMap<>();
+                                labels.keys().forEachRemaining(key -> roads.put(key, labels.optString(key)));
+                                records.add(new JourneyDiscoveryRecord(row.getString("id"), row.getLong("started"), roads));
                             }
-                            if (!roads.isEmpty()) records.add(new JourneyDiscoveryRecord(
-                                    journey.optString("journey_id", ""),
-                                    journeyStartMillis(journey), roads));
-                        });
+                            PerformanceDiagnostics.timing("journey_discovery_archive",
+                                    android.os.SystemClock.elapsedRealtime() - started,
+                                    "reads=" + cache.reads + " reused=" + cache.hits + " contributors=" + records.size());
+                        }
                         records.sort(Comparator.comparingLong(record -> record.startedAt));
                         Set<String> seen = new HashSet<>();
                         for (JourneyDiscoveryRecord record : records) {
@@ -767,8 +799,10 @@ public class JourneyListActivity extends Activity {
                 }
                 mainHandler.post(() -> {
                     if (isFinishing() || generation != refreshGeneration) return;
-                    newRoadHighlights = result;
-                    render();
+                    if (!newRoadHighlights.equals(result)) {
+                        newRoadHighlights = result;
+                        render();
+                    }
                 });
             });
         } catch (RejectedExecutionException ignored) {
@@ -807,6 +841,30 @@ public class JourneyListActivity extends Activity {
         } catch (Exception error) {
             android.util.Log.w("Roadprints", "Journey highlight cache could not be saved", error);
         }
+    }
+
+    private JSONObject discoveryRow(JSONObject journey) throws org.json.JSONException {
+        JSONObject roads = new JSONObject();
+        String mode = journey.optString("mode", "unknown").toLowerCase(java.util.Locale.ROOT);
+        if ("complete".equals(journey.optString("processing_status"))
+                && (isRoadMode(mode) || isFootMode(mode) || MatchingCoordinator.isCycle(mode))) {
+            for (JSONObject feature : discoveryFeatures(journey)) {
+                JSONObject props = feature.optJSONObject("properties");
+                if (props == null) continue;
+                String refs = props.optString("road_ref", props.optString("ref", ""));
+                String name = props.optString("name", props.optString("road_name", "")).trim();
+                for (String value : (refs.trim().isEmpty() ? new String[]{""} : refs.split("[;,/]"))) {
+                    String ref = value.trim().toUpperCase(java.util.Locale.ROOT);
+                    boolean numbered = !ref.isEmpty() && !ref.matches("\\d+(?:[.,]\\d+)?");
+                    String label = numbered ? ref : name;
+                    if (label.isEmpty() || label.matches("\\d+(?:[.,]\\d+)?")) continue;
+                    String key = numbered ? "ref:" + ref : "name:" + label.toLowerCase(java.util.Locale.ROOT);
+                    if (!roads.has(key)) roads.put(key, label);
+                }
+            }
+        }
+        return new JSONObject().put("id", journey.optString("journey_id"))
+                .put("started", journeyStartMillis(journey)).put("roads", roads);
     }
 
     private List<JSONObject> discoveryFeatures(JSONObject journey) {
@@ -1554,12 +1612,21 @@ public class JourneyListActivity extends Activity {
         debug.setOnClickListener(v -> exportJourneyDebug(journey.optString("journey_id")));
         supplemental.addView(debug);
         TextView evidence = new TextView(this);
-        evidence.setText("Check saved evidence");
+        evidence.setText("Verify saved journey data");
+        TextView evidenceStatus = new TextView(this);
+        evidenceStatus.setTextColor(0xFFD3DCED);
+        evidenceStatus.setTextSize(14);
+        evidenceStatus.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
+        evidenceStatus.setText("Checks the evidence already saved for this journey.");
+        body.addView(evidenceStatus);
         evidence.setTextSize(14);
         evidence.setTextColor(0xFFD3DCED);
         evidence.setGravity(Gravity.CENTER);
         evidence.setPadding(dp(12), dp(14), dp(12), dp(8));
-        evidence.setOnClickListener(v -> checkSavedEvidence(journey.optString("journey_id"), evidence));
+        evidence.setOnClickListener(v -> {
+            verifySavedJourney(journey.optString("journey_id"), evidence, evidenceStatus, true);
+            scroll.post(() -> scroll.smoothScrollTo(0, evidenceStatus.getTop()));
+        });
         supplemental.addView(evidence);
         actions.addView(supplemental, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
@@ -1609,6 +1676,7 @@ public class JourneyListActivity extends Activity {
             }
         });
         dialog.show();
+        evidenceStatus.post(() -> verifySavedJourney(journey.optString("journey_id"), evidence, evidenceStatus, false));
         if (railwayEligible) RailwayTrialWorker.observe(this, journey.optString("journey_id"), railwayObserver,
                 message -> {
                     status.setText(message);

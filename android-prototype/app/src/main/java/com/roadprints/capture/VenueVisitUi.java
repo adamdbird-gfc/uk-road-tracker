@@ -232,28 +232,90 @@ final class VenueVisitUi {
         holder[0].setOnDismissListener(dialog->{attempt[0]++;if(request[0]!=null)request[0].cancel();if(timeout[0]!=null)handler.removeCallbacks(timeout[0]);if(closed!=null)closed.run();});
         return holder[0];
     }
-    private static final java.util.WeakHashMap<Activity,Boolean> offered=new java.util.WeakHashMap<>();
-    static void offerPending(Activity activity,Runnable changed){
-        if(activity.isFinishing()||activity.isDestroyed()||offered.containsKey(activity))return;
-        for(VenueCollection.Definition definition:VenueCollection.all()){
-            if(!CollectionAccessStore.installed(activity,definition.id))continue;
-            JSONArray pending=VenueVisitStore.nativePending(activity,definition.id);
-            if(pending.length()==0)continue;
-            offered.put(activity,true);showNative(activity,definition.id,pending,0,changed);return;
+    private static final java.util.WeakHashMap<Activity, String> checked = new java.util.WeakHashMap<>();
+    private static final java.util.Set<Activity> checking =
+            java.util.Collections.newSetFromMap(new java.util.WeakHashMap<>());
+    private static final java.util.Set<String> showing = new java.util.HashSet<>();
+
+    private static String pendingRevision(Activity activity) {
+        StringBuilder revision = new StringBuilder();
+        for (VenueCollection.Definition definition : VenueCollection.all()) {
+            if (CollectionAccessStore.installed(activity, definition.id)) {
+                revision.append(definition.id).append(':')
+                        .append(VenueVisitStore.revision(activity, definition.id)).append('|');
+            }
         }
+        return revision.toString();
     }
+
+    static void offerPending(Activity activity, java.util.function.BooleanSupplier active, Runnable changed) {
+        if (!active.getAsBoolean() || activity.isDestroyed() || activity.isFinishing() || checking.contains(activity)) return;
+        String revision = pendingRevision(activity);
+        if (revision.isEmpty() || revision.equals(checked.get(activity))) return;
+        checking.add(activity);
+        ScreenDataLoader.venues(() -> {
+            long started = SystemClock.elapsedRealtime();
+            JSONArray pending = null;
+            String collection = null;
+            try {
+                for (VenueCollection.Definition definition : VenueCollection.all()) {
+                    if (!CollectionAccessStore.installed(activity, definition.id)) continue;
+                    JSONArray rows = VenueVisitStore.nativePending(activity, definition.id);
+                    if (rows.length() == 0) continue;
+                    collection = definition.id;
+                    pending = rows;
+                    break;
+                }
+            } catch (RuntimeException failure) {
+                android.util.Log.w("Roadprints", "Pending visits unavailable", failure);
+                activity.runOnUiThread(() -> checking.remove(activity));
+                return;
+            }
+            JSONArray result = pending;
+            String id = collection;
+            PerformanceDiagnostics.timing("venue_pending", SystemClock.elapsedRealtime() - started,
+                    "offers=" + (result == null ? 0 : result.length()));
+            activity.runOnUiThread(() -> {
+                checking.remove(activity);
+                if (!active.getAsBoolean() || activity.isFinishing() || activity.isDestroyed()) return;
+                if (!revision.equals(pendingRevision(activity))) {
+                    offerPending(activity, active, changed);
+                    return;
+                }
+                checked.put(activity, revision);
+                if (result != null) showNative(activity, id, result, 0, changed);
+            });
+        });
+    }
+
     static void reviewNative(Activity activity,String collection,Runnable changed){
-        JSONArray pending=VenueVisitStore.nativePending(activity,collection);
-        if(pending.length()==0)review(activity,collection,changed);
-        else showNative(activity,collection,pending,0,changed);
+        ScreenDataLoader.venues(() -> {
+            JSONArray pending;
+            try { pending = VenueVisitStore.nativePending(activity, collection); }
+            catch (RuntimeException error) {
+                activity.runOnUiThread(() -> {
+                    if (!activity.isDestroyed() && !activity.isFinishing()) RoadprintsDialog.show(activity,
+                            "Manual check", "Saved visits could not be read. Try again.", null, "Close", null, null, null);
+                });
+                return;
+            }
+            activity.runOnUiThread(() -> {
+                if (activity.isDestroyed() || activity.isFinishing()) return;
+                if (pending.length() == 0) review(activity, collection, changed);
+                else showNative(activity, collection, pending, 0, changed);
+            });
+        });
     }
     private static void showNative(Activity activity,String collection,JSONArray rows,int index,Runnable changed){
         if(index>=rows.length()||activity.isFinishing()||activity.isDestroyed())return;
         JSONObject proof=rows.optJSONObject(index);
-        RoadprintsDialog.show(activity,"Did you visit "+proof.optString("name")+"?",
+        String key = collection + ":" + proof.optString("record_key");
+        if (!showing.add(key)) return;
+        AlertDialog dialog = RoadprintsDialog.show(activity,"Did you visit "+proof.optString("name")+"?",
                 date(proof.optString("visited_at"))+"\nRoadprints recorded a stop nearby. Confirm only if you visited this named venue.",null,
                 "Confirm visit",()->saveNative(activity,collection,rows,index,true,changed),
                 "Not a visit",()->saveNative(activity,collection,rows,index,false,changed));
+        dialog.setOnDismissListener(ignored -> showing.remove(key));
     }
     private static void saveNative(Activity activity,String collection,JSONArray rows,int index,boolean confirm,Runnable changed){
         ScreenDataLoader.execute(()->{
@@ -263,7 +325,20 @@ final class VenueVisitUi {
             final String error=problem;
             activity.runOnUiThread(()->{if(activity.isFinishing()||activity.isDestroyed())return;
                 if(error!=null)Toast.makeText(activity,error,Toast.LENGTH_LONG).show();
-                else {if(changed!=null)changed.run();showNative(activity,collection,rows,index+1,changed);}
+                else {
+                    if(checked.containsKey(activity)) checked.put(activity, pendingRevision(activity));
+                    if(changed!=null)changed.run();
+                    ScreenDataLoader.venues(() -> {
+                        try {
+                            JSONArray remaining = VenueVisitStore.nativePending(activity, collection);
+                            activity.runOnUiThread(() -> {
+                                if (activity.hasWindowFocus()) showNative(activity, collection, remaining, 0, changed);
+                            });
+                        } catch (RuntimeException unavailable) {
+                            android.util.Log.w("Roadprints", "Pending visits unavailable", unavailable);
+                        }
+                    });
+                }
             });
         });
     }

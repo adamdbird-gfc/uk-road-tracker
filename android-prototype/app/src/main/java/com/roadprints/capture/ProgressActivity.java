@@ -172,7 +172,7 @@ public class ProgressActivity extends Activity {
             JSONObject pub=PubVisitStore.find(CollectionMapCatalog.spoons(this),checkinId);
             if(pub!=null)PubVisitUi.live(this,pub,this::refreshPubProgress,null);
         }
-        for(VenueCollection.Definition collection:VenueCollection.all())VenueVisitStore.ensureHistory(this,collection.id,()->{if(!isFinishing()&&!isDestroyed()){refreshPubProgress();VenueVisitUi.offerPending(this,this::refreshPubProgress);}});
+        for(VenueCollection.Definition collection:VenueCollection.all())VenueVisitStore.ensureHistory(this,collection.id,()->{if(!isFinishing()&&!isDestroyed()){refreshPubProgress();VenueVisitUi.offerPending(this, () -> hasWindowFocus(), this::refreshPubProgress);}});
         String requestedSection=getIntent().getStringExtra("progress_section");
         if(requestedSection!=null){
             getIntent().removeExtra("progress_section");

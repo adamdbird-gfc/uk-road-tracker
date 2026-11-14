@@ -279,7 +279,7 @@ final class ARoadProgressCalculator {
         references.clear();
         referenceInfo.clear();
         retainedAnchors = 0;
-        index.clear();
+        if (includeMapSections) index.clear();
         completedSummary=result;
         return result;
     }

@@ -79,10 +79,6 @@ final class RoadDetailModel {
         output.journeys.sort((a,b)->b.date.compareTo(a.date));
         return output;
     }
-    static void cachedRoadEvidence(Context context,JourneyStore.JourneyVisitor visitor)throws Exception {
-        cachedRoadEvidence(context, null, null, visitor);
-    }
-
     private static void cachedRoadEvidence(Context context, RoadDetailSelection selection,
                                            Set<String> onlyIds, JourneyStore.JourneyVisitor visitor) throws Exception {
         long started = android.os.SystemClock.elapsedRealtime();
@@ -94,9 +90,18 @@ final class RoadDetailModel {
         long opened, finished;
         try (CompactJourneyCache cache = new CompactJourneyCache(context, "road-evidence-v1")) {
             opened = android.os.SystemClock.elapsedRealtime();
-            for (java.io.File source : JourneyStore.archiveFiles(context)) {
+            java.util.Map<String, String> excluded = selection == null || onlyIds != null
+                    ? java.util.Collections.emptyMap() : cache.excludedSources(selection::mayMatch);
+            Iterable<java.io.File> sources = onlyIds == null ? JourneyStore.archiveFiles(context)
+                    : () -> onlyIds.stream().map(id -> JourneyStore.archiveFile(context, id)).iterator();
+            for (java.io.File source : sources) {
                 if (Thread.currentThread().isInterrupted()) throw new java.util.concurrent.CancellationException();
-                if (onlyIds != null && !onlyIds.contains(JourneyStore.archiveId(source))) continue;
+                if (onlyIds != null && !source.isFile()) continue;
+                String excludedToken = excluded.get(source.getName());
+                if (excludedToken != null && excludedToken.equals(JourneyStore.fileToken(source))) {
+                    cache.skipped++;
+                    continue;
+                }
                 long rowStart = System.nanoTime();
                 JSONObject row = cache.get(source, file -> JourneyStore.mapEvidence(context, file, false),
                         selection == null ? null : selection::mayMatch, RoadDetailSelection::index);
@@ -114,7 +119,7 @@ final class RoadDetailModel {
         }
         long closed = android.os.SystemClock.elapsedRealtime();
         PerformanceDiagnostics.timing("focused_archive", closed-started,
-                "reads="+reads+" reused="+reused+" indexed_out="+skipped+" visited="+decoded+" "+heap.description()+" prepare_ms="+(prepared-started)
+                "query="+(onlyIds!=null?"contributors":selection==null?"all":"road")+" reads="+reads+" reused="+reused+" indexed_out="+skipped+" visited="+decoded+" "+heap.description()+" prepare_ms="+(prepared-started)
                         +" cache_open_ms="+(opened-prepared)+" row_ms="+rowNanos/1_000_000
                         +" visitor_ms="+visitorNanos/1_000_000+" cache_close_ms="+(closed-finished));
     }

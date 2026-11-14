@@ -97,16 +97,21 @@ final class MapJourneyStore implements AutoCloseable {
     }
     void forEach(BooleanSupplier cancelled,Visitor visitor) throws Exception {
         JourneyStore.prepareArchive(context);
-        for(File source:JourneyStore.archiveFiles(context)) {
-            if(cancelled.getAsBoolean()||Thread.currentThread().isInterrupted())throw new java.util.concurrent.CancellationException();
-            String token=JourneyStore.fileToken(source);JSONObject head=null;
-            if(!bypass)try(Cursor cursor=db.rawQuery("SELECT header,header_sha FROM entries WHERE source=? AND token=? AND format=?",
-                    new String[]{source.getName(),token,Integer.toString(FORMAT)})) {
-                if(cursor.moveToFirst()) {
-                    byte[] bytes=cursor.getBlob(0);
-                    if(NcnJson.hash(bytes).equals(cursor.getString(1)))head=new JSONObject(new String(bytes,StandardCharsets.UTF_8));
-                }
-            } catch(org.json.JSONException corrupt) {head=null;}
+        java.util.List<File> files = JourneyStore.archiveFiles(context);
+        // Headers are small. Keep their order from the archive enumeration,
+        // which also determines which lines fit the existing display budget.
+        java.util.Map<String, CachedHeader> headers = bypass
+                ? java.util.Collections.emptyMap() : readHeaders(cancelled);
+        for (File source : files) {
+            checkCancelled(cancelled);
+            String token = JourneyStore.fileToken(source);
+            CachedHeader known = bypass ? null : headers.remove(source.getName());
+            JSONObject head = null;
+            if (known != null && token.equals(known.token)) {
+                try { head = new JSONObject(known.data); }
+                catch (org.json.JSONException invalid) { /* Rebuild this record. */ }
+            }
+            if (!bypass && known == null) head = readHeader(source, token);
             JSONObject raw=null;
             if(head==null) {
                 raw=bypass?null:JourneyProjectionCache.read(context,source,"map-v1");
@@ -120,6 +125,47 @@ final class MapJourneyStore implements AutoCloseable {
             visitor.visit(record);
         }
     }
+    private record CachedHeader(String token, String data) {}
+
+    private java.util.Map<String, CachedHeader> readHeaders(BooleanSupplier cancelled) {
+        java.util.Map<String, CachedHeader> headers = new java.util.HashMap<>();
+        try (Cursor cursor = db.rawQuery("SELECT source,token,header,header_sha FROM entries WHERE format=?",
+                new String[]{Integer.toString(FORMAT)})) {
+            while (headers.size() < 4096 && cursor.moveToNext()) {
+                checkCancelled(cancelled);
+                byte[] bytes = cursor.getBlob(2);
+                if (bytes.length <= 4096 && NcnJson.hash(bytes).equals(cursor.getString(3))) {
+                    headers.put(cursor.getString(0), new CachedHeader(cursor.getString(1),
+                            new String(bytes, StandardCharsets.UTF_8)));
+                }
+            }
+        } catch (android.database.sqlite.SQLiteException invalid) {
+            headers.clear();
+        }
+        return headers;
+    }
+
+    private JSONObject readHeader(File source, String token) {
+        try (Cursor cursor = db.rawQuery("SELECT header,header_sha FROM entries WHERE source=? AND token=? AND format=?",
+                new String[]{source.getName(), token, Integer.toString(FORMAT)})) {
+            if (cursor.moveToFirst()) {
+                byte[] bytes = cursor.getBlob(0);
+                if (NcnJson.hash(bytes).equals(cursor.getString(1))) {
+                    return new JSONObject(new String(bytes, StandardCharsets.UTF_8));
+                }
+            }
+        } catch (org.json.JSONException | android.database.sqlite.SQLiteException invalid) {
+            // Fallback to the source if the disposable record cannot be read.
+        }
+        return null;
+    }
+
+    private static void checkCancelled(BooleanSupplier cancelled) {
+        if (cancelled.getAsBoolean() || Thread.currentThread().isInterrupted()) {
+            throw new java.util.concurrent.CancellationException();
+        }
+    }
+
     @Override public void close() {
         if(db!=null){if(db.inTransaction()){db.setTransactionSuccessful();db.endTransaction();}db.close();db=null;}
     }

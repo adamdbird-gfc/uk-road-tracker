@@ -55,8 +55,6 @@ public class MapActivity extends Activity {
     private static MapRoutes processMapCache;
     private static long processMapCacheRevision = Long.MIN_VALUE;
     private TextView mapSubtitle, legendButton;
-    private JSONArray collectionServiceVenues=new JSONArray();
-    private Set<String> collectionServiceVisits=java.util.Collections.emptySet();
     private MapLoadingView loadingCard;
     private GrowingStatusControl mapStatus;
     private boolean skipDiskMapCache,forceMapReload;
@@ -253,6 +251,12 @@ public class MapActivity extends Activity {
         locationRequest.cancel();
         if(locateControl!=null)locateControl.setEnabled(true);
         if(mapView!=null)mapView.setRenderingActive(false);
+        synchronized (MAP_CACHE_LOCK) {
+            if (processMapCache != null && processMapCache.snapshotPoints() > 360_000) {
+                processMapCache = null;
+                processMapCacheRevision = Long.MIN_VALUE;
+            }
+        }
         if (filterDialog != null) filterDialog.dismiss();
         if (loadingCard != null) loadingCard.stop();
         mainHandler.removeCallbacks(observeChanges);
@@ -375,18 +379,67 @@ public class MapActivity extends Activity {
         boolean townMap=getIntent().hasExtra("settlement_code");
         if(townMap)return;
         loadMileposts();
-        double[] camera=mapView.cameraState();
-        JSONArray pins=CollectionAccessStore.known(selected)?VenueCollection.catalogue(this,selected):new JSONArray();
-        Set<String> visited=CollectionAccessStore.known(selected)?VenueCollection.completed(this,selected):java.util.Collections.emptySet();
-        mapView.setCollectionVenues(selected,pins,visited);
+        refreshVenuePins(selected);
         NcnMapOverlay.apply(this,mapView);
-        VenueVisitUi.offerPending(this,this::applyCollectionLayer);
+        VenueVisitUi.offerPending(this, () -> active, this::applyCollectionLayer);
         mapView.setServiceStationTapListener(venue->{
             if(CollectionAccessStore.SERVICES.equals(CollectionAccessStore.selected(this)))
-                showServiceStationCard(venue,ServiceStationStore.completed(this).contains(venue.optString("id")));
+                showServiceStationCard(venue,displayedVenueVisits.contains(venue.optString("id")));
             else if(CollectionAccessStore.known(CollectionAccessStore.selected(this)))showPubCard(venue);
         });
-        if(camera!=null)mapView.restoreCameraState(camera[0],camera[1],camera[2]);
+    }
+
+    private boolean venuePinsLoading;
+    private String displayedVenueKey;
+    private RoutePreviewView displayedVenueView;
+    private Set<String> displayedVenueVisits = java.util.Collections.emptySet();
+
+    private String venueKey(String selection) {
+        if (!CollectionAccessStore.known(selection)) return "";
+        return selection + ":" + VenueCollection.revision(this, selection) + ":"
+                + CollectionCatalogueUpdates.revision();
+    }
+
+    private void refreshVenuePins(String selection) {
+        RoutePreviewView target = mapView;
+        String key = venueKey(selection);
+        if (venuePinsLoading || (target == displayedVenueView && key.equals(displayedVenueKey))) return;
+        if (key.isEmpty()) {
+            displayedVenueView = target;
+            displayedVenueKey = key;
+            displayedVenueVisits = java.util.Collections.emptySet();
+            target.setCollectionVenues(selection, new JSONArray(), displayedVenueVisits);
+            return;
+        }
+        Context app = getApplicationContext();
+        venuePinsLoading = true;
+        ScreenDataLoader.venues(() -> {
+            JSONArray pins;
+            Set<String> visits;
+            try {
+                pins = VenueCollection.catalogue(app, selection);
+                visits = VenueCollection.completed(app, selection);
+            } catch (RuntimeException error) {
+                android.util.Log.w("Roadprints", "Venue overlay unavailable", error);
+                mainHandler.post(() -> venuePinsLoading = false);
+                return;
+            }
+            mainHandler.post(() -> {
+                venuePinsLoading = false;
+                if (isFinishing() || isDestroyed() || !active || mapView == null) return;
+                String current = CollectionAccessStore.selected(this);
+                if (target != mapView || !key.equals(venueKey(current))) {
+                    refreshVenuePins(current);
+                    return;
+                }
+                displayedVenueView = target;
+                displayedVenueKey = key;
+                displayedVenueVisits = visits;
+                double[] camera = target.cameraState();
+                target.setCollectionVenues(selection, pins, visits);
+                if (camera != null) target.restoreCameraState(camera[0], camera[1], camera[2]);
+            });
+        });
     }
 
     private void loadMileposts(){
@@ -551,7 +604,9 @@ public class MapActivity extends Activity {
                         mapRoutes==null?"miss_or_bypass":"hit");
                 archivePrepared = mapRoutes == null;
                 if (archivePrepared) {
-                    mapRoutes = mapRouteLoader.load(this,selection, today, zone);
+                    preparingArchive = true;
+                    try { mapRoutes = mapRouteLoader.load(this,selection, today, zone); }
+                    finally { preparingArchive = false; }
                     if(Thread.currentThread().isInterrupted()||generation!=mapLoadGeneration)return;
 
                 }
@@ -564,14 +619,14 @@ public class MapActivity extends Activity {
             Runtime runtime = Runtime.getRuntime();
             long freeHeadroom = runtime.maxMemory()
                     - (runtime.totalMemory() - runtime.freeMemory());
-            if (selection.isAll() && generation == mapLoadGeneration && currentRevision == revision && freeHeadroom >= 64L * 1024L * 1024L) {
+            if (selection.isAll() && generation == mapLoadGeneration && currentRevision == revision) {
                 synchronized (MAP_CACHE_LOCK) {
                     processMapCache = mapRoutes;
                     processMapCacheRevision = revision;
                 }
             }
             long pathStarted=android.os.SystemClock.elapsedRealtime();
-            for(java.util.List<JSONArray> lines:java.util.Arrays.asList(mapRoutes.sections,mapRoutes.motorwaySections,mapRoutes.incompleteMotorwaySections,mapRoutes.coveredMotorwaySections,mapRoutes.incompleteARoadSections,mapRoutes.coveredARoadSections,mapRoutes.ferrySections))MapRenderGeometry.prepare(lines);
+            for(java.util.List<JSONArray> lines:java.util.Arrays.asList(mapRoutes.sections,mapRoutes.motorwaySections,mapRoutes.incompleteMotorwaySections,mapRoutes.coveredMotorwaySections,mapRoutes.incompleteARoadSections,mapRoutes.coveredARoadSections,mapRoutes.ferrySections))MapRenderGeometry.prepareBounds(lines);
             PerformanceDiagnostics.timing("map_paths_worker",android.os.SystemClock.elapsedRealtime()-pathStarted,"");
             displayMapRoutes(mapRoutes, generation);
             // Publish usable geometry before optional JSON serialization/fsync. Cache work
@@ -580,7 +635,7 @@ public class MapActivity extends Activity {
             PerformanceDiagnostics.timing("map_navigation", android.os.SystemClock.elapsedRealtime()-queuedAt,
                     "source="+(archivePrepared?"archive":"disk_snapshot")+" "+heap.description());
             if(archivePrepared&&generation==mapLoadGeneration&&selection.isAll()
-                    &&prepared.snapshotPoints()<=180000&&freeHeadroom>=96L*1024L*1024L)
+                    &&prepared.snapshotPoints()<=240000&&freeHeadroom>=96L*1024L*1024L)
                 ScreenDataLoader.cache(()->{
                     Runtime cacheRuntime = Runtime.getRuntime();
                     long headroom = cacheRuntime.maxMemory() - (cacheRuntime.totalMemory() - cacheRuntime.freeMemory());
@@ -630,8 +685,6 @@ public class MapActivity extends Activity {
                     mapRoutes.coveredMotorwaySections);
             map.setARoadCoverageSegments(mapRoutes.incompleteARoadSections,
                     mapRoutes.coveredARoadSections);
-            collectionServiceVenues=mapRoutes.serviceStations;
-            collectionServiceVisits=mapRoutes.visitedServiceStationIds;
             mapView=map;
             applyCollectionLayer();
             roadPercentages = new HashMap<>(mapRoutes.roadPercentages);
@@ -843,16 +896,15 @@ public class MapActivity extends Activity {
         return revision;
     }
 
+    private static volatile boolean preparingArchive;
+    static boolean preparingArchive() { return preparingArchive; }
+
     private MapRoutes readMapRoutes(JourneyFilters selection, java.time.LocalDate today, java.time.ZoneId zone) throws Exception {
         MapRoutes output = new MapRoutes();
-        if (ServiceStationStore.unlocked(getApplicationContext())) {
-            output.serviceStations = ServiceStationStore.stations(getApplicationContext());
-            output.visitedServiceStationIds = ServiceStationStore.completed(getApplicationContext());
-        }
         long initialiseStarted=System.nanoTime();
         MotorwayProgressCalculator motorwayCalculator =
                 new MotorwayProgressCalculator(getApplicationContext());
-        ARoadProgressCalculator aRoadCalculator = new ARoadProgressCalculator(getApplicationContext());
+        ARoadProgressCalculator aRoadCalculator = new ARoadProgressCalculator(getApplicationContext(), false);
         PerformanceDiagnostics.timing("map_reference_init",(System.nanoTime()-initialiseStarted)/1_000_000,"");
         long evidenceStarted=System.nanoTime();
         long[] work=new long[3];int[] counts=new int[6];int[] unprocessedModes=new int[4];
@@ -939,10 +991,14 @@ public class MapActivity extends Activity {
         for (ARoadProgressCalculator.Road road : aSummary.roads) {
             if (!road.referenceAvailable) continue;
             output.roadPercentages.put(road.ref.toUpperCase(java.util.Locale.ROOT), road.percent());
+            aRoadCalculator.populateMapSections(road);
             if (selection.isAll()) appendARoadSections(output, road.incompleteMapSections, false);
             appendARoadSections(output, road.coveredMapSections, true);
             if (selection.isAll()) addIncompleteRoadSegments(output, road.ref, road.region, road.percent(),
                     road.matchedMetres, road.journeyIds.size(), road.incompleteMapSections);
+            road.incompleteMapSections.clear();
+            road.coveredMapSections.clear();
+            heap.sample();
         }
         PerformanceDiagnostics.timing("map_coverage_finish",(System.nanoTime()-finishStarted)/1_000_000,
                 "peak_a_road_anchors="+aRoadCalculator.peakRetainedAnchors()+" "+heap.description());
@@ -1454,7 +1510,7 @@ public class MapActivity extends Activity {
         return 6_371_000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
-    private double pointSegmentDistanceMetres(double lng, double lat,
+    private static double pointSegmentDistanceMetres(double lng, double lat,
             double ax, double ay, double bx, double by) {
         double metresX = 111320.0 * Math.cos(Math.toRadians(lat));
         double px = (lng - ax) * metresX, py = (lat - ay) * 111320.0;
@@ -1573,7 +1629,8 @@ public class MapActivity extends Activity {
             }
             List<RoadFeatureMatch> candidates = new ArrayList<>();
             try {
-                JourneyStore.forEach(getApplicationContext(), journey -> {
+                JourneyStore.forEachRoadEvidence(getApplicationContext(),
+                        () -> Thread.currentThread().isInterrupted(), journey -> {
                     if (!selection.matches(journey, java.time.LocalDate.now(), java.time.ZoneId.systemDefault())) return;
                     if (!"complete".equals(journey.optString("processing_status", ""))) return;
                     String mode = journey.optString("mode", "").toLowerCase(java.util.Locale.ROOT);
@@ -1603,7 +1660,7 @@ public class MapActivity extends Activity {
                         double travelled = properties.optDouble("distance_m", 0);
                         if (travelled <= 0) travelled = featureLengthMetres(feature);
                         candidates.add(new RoadFeatureMatch(
-                                journey, key, label, distance, travelled));
+                                tapJourneySummary(journey), key, label, distance, travelled));
                     }
                 });
             } catch (Exception error) {
@@ -1650,12 +1707,23 @@ public class MapActivity extends Activity {
         });
     }
 
+    private static JSONObject tapJourneySummary(JSONObject journey) {
+        JSONObject row = new JSONObject();
+        try {
+            for (String field : new String[]{"journey_id", "title", "name", "started_at", "ended_at",
+                    "mode", "distance_meters"}) if (journey.has(field)) row.put(field, journey.get(field));
+        } catch (org.json.JSONException invalid) {
+            throw new IllegalArgumentException(invalid);
+        }
+        return row;
+    }
+
     private RoadCoverageSegment nearestIncompleteRoad(double latitude, double longitude) {
         if(!MapLayerPreferences.visible(this,MapLayerPreferences.Layer.REMAINING))return null;
         RoadCoverageSegment nearest = null;
         double nearestDistance = Double.MAX_VALUE;
         for (RoadCoverageSegment segment : incompleteRoadSegments) {
-            double distance = lineDistanceMetres(segment.coordinates, latitude, longitude);
+            double distance = segment.distanceTo(latitude, longitude);
             if (distance < nearestDistance) {
                 nearestDistance = distance;
                 nearest = segment;
@@ -2251,7 +2319,7 @@ public class MapActivity extends Activity {
         JSONArray incomplete = new JSONArray();
         for (RoadCoverageSegment segment : routes.incompleteRoadSegments) {
             incomplete.put(new JSONObject().put("label", segment.label)
-                    .put("coordinates", segment.coordinates)
+                    .put("coordinates", segment.toJson())
                     .put("completedPercent", segment.completedPercent)
                     .put("travelledMetres", segment.travelledMetres)
                     .put("journeyCount", segment.journeyCount)
@@ -2341,7 +2409,7 @@ public class MapActivity extends Activity {
             long points = (long) retainedPoints + motorwayRetainedPoints + incompleteMotorwayPoints
                     + coveredMotorwayPoints + incompleteARoadPoints + coveredARoadPoints + ferryPoints;
             // The disk snapshot encodes tappable coverage lines separately.
-            for (RoadCoverageSegment segment : incompleteRoadSegments) points += segment.coordinates.length();
+            for (RoadCoverageSegment segment : incompleteRoadSegments) points += segment.points.length / 2;
             return points;
         }
         int retainedPoints;
@@ -2357,7 +2425,7 @@ public class MapActivity extends Activity {
 
     private static final class RoadCoverageSegment {
         final String label;
-        final JSONArray coordinates;
+        final double[] points;
         final double completedPercent;
         final double travelledMetres;
         final int journeyCount;
@@ -2366,11 +2434,38 @@ public class MapActivity extends Activity {
         RoadCoverageSegment(String label, JSONArray coordinates, double completedPercent,
                             double travelledMetres, int journeyCount) {
             this.label = label;
-            this.coordinates = coordinates;
+            this.points = new double[coordinates.length() * 2];
+            for (int i = 0; i < coordinates.length(); i++) {
+                JSONArray point = coordinates.optJSONArray(i);
+                points[i * 2] = point == null ? Double.NaN : point.optDouble(0);
+                points[i * 2 + 1] = point == null ? Double.NaN : point.optDouble(1);
+            }
             this.completedPercent = completedPercent;
             this.travelledMetres = travelledMetres;
             this.journeyCount = journeyCount;
         }
+
+        double distanceTo(double latitude, double longitude) {
+            double nearest = Double.MAX_VALUE;
+            for (int point = 2; point < points.length; point += 2) {
+                double distance = pointSegmentDistanceMetres(longitude, latitude,
+                        points[point - 2], points[point - 1], points[point], points[point + 1]);
+                if (distance < nearest) nearest = distance;
+            }
+            return nearest;
+        }
+
+        JSONArray toJson() throws org.json.JSONException {
+            JSONArray coordinates = new JSONArray();
+            for (int point = 0; point < points.length; point += 2) {
+                JSONArray pair = new JSONArray();
+                pair.put(Double.isFinite(points[point]) ? points[point] : JSONObject.NULL);
+                pair.put(Double.isFinite(points[point + 1]) ? points[point + 1] : JSONObject.NULL);
+                coordinates.put(pair);
+            }
+            return coordinates;
+        }
+
     }
 }
 

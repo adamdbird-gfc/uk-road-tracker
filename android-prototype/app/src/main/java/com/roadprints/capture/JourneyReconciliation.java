@@ -50,8 +50,12 @@ final class JourneyReconciliation implements AutoCloseable {
 
     // The observed record is a baseline. Raw fields, when present, keep their own
     // provenance and may cover just the observations retained by capture.
-    static final Rule BASELINE = new Rule() {
-        public String version() { return "baseline-v1"; }
+    static final Rule BASELINE = baselineRule("baseline-v2");
+    private static final Rule LEGACY_BASELINE = baselineRule("baseline-v1");
+
+    private static Rule baselineRule(String version) {
+        return new Rule() {
+        public String version() { return version; }
 
         public Comparison compare(JSONObject source, JSONObject userDecisions) throws Exception {
             JSONObject current = new JSONObject();
@@ -75,6 +79,12 @@ final class JourneyReconciliation implements AutoCloseable {
                     ferry == null ? source.getString("journey_id")
                             : ferry.optString("source_id", source.getString("journey_id"))));
             JSONArray samples = source.optJSONArray("raw_capture_samples");
+            int timed = 0;
+            for (int i = 0; samples != null && i < samples.length(); i++) {
+                JSONArray fix = samples.optJSONArray(i);
+                if (fix != null && fix.optLong(3, 0) > 0) timed++;
+            }
+            current.put("raw_timing", timed == 0 ? "missing" : timed == samples.length() ? "present" : "partial");
             JSONObject rawGeometry = source.optJSONObject("raw_capture_geometry");
             JSONObject route = source.optJSONObject("route_geometry");
             if ((samples == null || samples.length() < 2) && !hasRoute(rawGeometry) && !hasRoute(route)) {
@@ -82,7 +92,8 @@ final class JourneyReconciliation implements AutoCloseable {
             }
             return new Comparison(Outcome.UNCHANGED, current);
         }
-    };
+        };
+    }
 
     private static boolean hasRoute(JSONObject geometry) {
         JSONArray points = geometry == null ? null : geometry.optJSONArray("coordinates");
@@ -159,6 +170,20 @@ final class JourneyReconciliation implements AutoCloseable {
             }
         }
         return done;
+    }
+
+    JSONObject latestVerification(String id) throws Exception {
+        JSONObject result = receipt(BASELINE, id);
+        return result == null ? receipt(LEGACY_BASELINE, id) : result;
+    }
+
+    /** Prioritize the explicitly selected record over queued historical work. */
+    synchronized JSONObject verifySelected(String id, BooleanSupplier cancelled) throws Exception {
+        JSONObject existing = receipt(BASELINE, id);
+        if (existing != null) return existing;
+        enqueue(BASELINE, java.util.Collections.singletonList(id));
+        checkRunning(cancelled);
+        return reconcile(BASELINE, id, cancelled) ? receipt(BASELINE, id) : null;
     }
 
     private boolean reconcile(Rule rule, String id, BooleanSupplier cancelled) throws Exception {

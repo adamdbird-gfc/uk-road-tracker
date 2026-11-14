@@ -230,7 +230,7 @@ public class MapPerformanceTest {
         }
     }
 
-    @Test public void progressRetainsBoundedARoadIndexesWith1661Journeys() throws Exception {
+    @Test public void progressRetainsBoundedARoadIndexesWith1663Journeys() throws Exception {
         JSONObject master = trip("volume");
         JSONObject roads = asset("index.json").getJSONObject("roads");
         List<JSONObject> templates = new ArrayList<>();
@@ -251,7 +251,7 @@ public class MapPerformanceTest {
             if (templates.size() == 56) break;
         }
         assertEquals(56, templates.size());
-        for (int i = 0; i < 1661; i++) {
+        for (int i = 0; i < 1663; i++) {
             String id = "progress-volume-" + i;
             JSONObject journey = templates.get(i % templates.size()).put("journey_id", id);
             java.nio.file.Files.write(JourneyStore.archiveFile(app, id).toPath(),
@@ -269,7 +269,7 @@ public class MapPerformanceTest {
             field.setAccessible(true);
             ARoadProgressCalculator.Summary summary = (ARoadProgressCalculator.Summary) field.get(stats);
             assertEquals(56, summary.roads.size());
-            assertEquals(1661000, summary.matchedMetres, 0);
+            assertEquals(1663000, summary.matchedMetres, 0);
             for (ARoadProgressCalculator.Road road : summary.roads) {
                 assertTrue(road.id, road.referenceAvailable);
                 assertTrue(road.coveredMapSections.isEmpty());
@@ -280,6 +280,17 @@ public class MapPerformanceTest {
                 }
             }
         }
+    }
+
+    @Test public void staleFocusedExclusionIsRecheckedAfterFileReplacement() throws Exception {
+        JSONObject journey = trip("stale-index");
+        JSONObject original = new JSONObject(journey.toString());
+        journey.getJSONObject("processing_result").remove("a_road_geojson");
+        JourneyStore.save(app, journey);
+        RoadDetailSelection road = new RoadDetailSelection(RoadDetailSelection.A_ROAD, "A2", "GB", "", "");
+        assertTrue(RoadDetailModel.load(app, road, true).journeys.isEmpty());
+        JourneyStore.save(app, original);
+        assertEquals(1, RoadDetailModel.load(app, road, true).journeys.size());
     }
 
     private void stageLogs(String label) {

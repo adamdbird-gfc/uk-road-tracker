@@ -36,6 +36,27 @@ final class CompactJourneyCache implements AutoCloseable {
         return db;
     }
 
+    /** Bulk scan of compact indexes. Only confirmed exclusions need to be kept. */
+    java.util.Map<String, String> excludedSources(java.util.function.Predicate<JSONArray> wanted) {
+        java.util.Map<String, String> excluded = new java.util.HashMap<>();
+        try (Cursor cursor = db.rawQuery("SELECT source,token,data,sha FROM row_index WHERE kind=?",
+                new String[]{kind})) {
+            while (cursor.moveToNext()) {
+                if (Thread.currentThread().isInterrupted()) throw new java.util.concurrent.CancellationException();
+                try {
+                    String data = cursor.getString(2);
+                    if (NcnJson.hash(data.getBytes(StandardCharsets.UTF_8)).equals(cursor.getString(3))
+                            && !wanted.test(new JSONArray(data))) {
+                        excluded.put(cursor.getString(0), cursor.getString(1));
+                    }
+                } catch (org.json.JSONException invalid) { /* Validate from the original payload. */ }
+            }
+        } catch (android.database.sqlite.SQLiteException invalid) {
+            excluded.clear();
+        }
+        return excluded;
+    }
+
     JSONObject get(File file, Reader reader) throws Exception {
         return get(file, reader, null, null);
     }

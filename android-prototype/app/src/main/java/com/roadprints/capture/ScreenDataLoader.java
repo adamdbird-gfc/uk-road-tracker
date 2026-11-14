@@ -33,6 +33,14 @@ final class ScreenDataLoader {
 
     private static final ExecutorService SUMMARIES=Executors.newSingleThreadExecutor(task->new Thread(task,"roadprints-journey-summaries"));
     static void summaries(Runnable task){SUMMARIES.execute(task);}
+    private static final ExecutorService VENUES = Executors.newSingleThreadExecutor(
+            task -> new Thread(task, "roadprints-venue-ui"));
+    static void venues(Runnable task) { VENUES.execute(task); }
+
+    private static final ExecutorService EVIDENCE = Executors.newSingleThreadExecutor(
+            task -> new Thread(task, "roadprints-evidence-check"));
+    static java.util.concurrent.Future<?> evidence(Runnable task) { return EVIDENCE.submit(task); }
+
     private ScreenDataLoader() {}
 
     static java.util.concurrent.Future<?> submit(Runnable task) { return WORKER.submit(task); }

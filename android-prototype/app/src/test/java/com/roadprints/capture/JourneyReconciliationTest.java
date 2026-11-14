@@ -144,6 +144,25 @@ public class JourneyReconciliationTest {
         assertEquals(collectionRevision, JourneyStore.ncnDataRevision(app));
     }
 
+    @Test public void selectedVerificationDoesNotDrainOlderPendingJobs() throws Exception {
+        byte[] original = write(new JSONObject().put("journey_id", "z-selected")
+                .put("mode", "driving").put("transport_confirmation", "confirmed")
+                .put("raw_capture_samples", new JSONArray("[[0,51,5,123],[0,51,5]]")));
+        JourneyReconciliation.Rule rule = JourneyReconciliation.BASELINE;
+        try (JourneyReconciliation run = new JourneyReconciliation(app)) {
+            run.enqueue(rule, List.of("a-first"));
+            JSONObject result = run.verifySelected("z-selected", () -> false);
+            assertEquals("partial", new JSONObject(result.getString("interpretation")).getString("raw_timing"));
+            assertEquals(NcnJson.hash(original), result.getString("source_sha"));
+            assertNull(run.receipt(rule, "a-first"));
+            assertEquals(result.toString(), run.verifySelected("z-selected", () -> false).toString());
+            assertThrows(java.util.concurrent.CancellationException.class,
+                    () -> run.verifySelected("b-stopped", () -> true));
+            assertNull(run.receipt(rule, "b-stopped"));
+        }
+        assertArrayEquals(original, Files.readAllBytes(JourneyStore.archiveFile(app, "z-selected").toPath()));
+    }
+
     @Test public void explicitlyRequestedWorkYieldsToCaptureAndRecordsOversizedEvidence() throws Exception {
         File file = JourneyStore.archiveFile(app, "large");
         try (java.io.RandomAccessFile output = new java.io.RandomAccessFile(file, "rw")) {

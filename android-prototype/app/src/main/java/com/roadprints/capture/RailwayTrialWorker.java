@@ -136,6 +136,12 @@ final class RailwayTrialWorker {
         detailStatus.accept(message);
     }
 
+    private static boolean mapNeedsHeadroom() {
+        Runtime runtime = Runtime.getRuntime();
+        long headroom = runtime.maxMemory() - (runtime.totalMemory() - runtime.freeMemory());
+        return MapActivity.preparingArchive() && headroom < 48L * 1024 * 1024;
+    }
+
     private static void schedule(Context app) {
         if (!foreground) return;
         if (CaptureService.isActive(app)) {
@@ -143,7 +149,7 @@ final class RailwayTrialWorker {
             return;
         }
         if (queued) return;
-        long delay = resumeAt - SystemClock.uptimeMillis();
+        long delay = Math.max(resumeAt - SystemClock.uptimeMillis(), mapNeedsHeadroom() ? 500L : 0L);
         if (delay > 0) {
             if (!delayed) {
                 delayed = true;
@@ -166,7 +172,7 @@ final class RailwayTrialWorker {
             long started = SystemClock.elapsedRealtime();
             boolean ncnAtStart = NcnProgressStore.isAssessing();
             BooleanSupplier stop = () -> !foreground || generation != foregroundGeneration
-                    || CaptureService.isActive(app);
+                    || CaptureService.isActive(app) || mapNeedsHeadroom();
             boolean more = false;
             boolean failed = false;
             boolean cancelled = false;
