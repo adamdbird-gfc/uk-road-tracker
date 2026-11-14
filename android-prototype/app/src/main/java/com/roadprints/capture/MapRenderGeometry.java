@@ -77,6 +77,7 @@ final class MapRenderGeometry {
     static double x(double lon){return lon*111319.49079327358;}
     static double y(double lat){return 6378137*Math.log(Math.tan(Math.PI/4+Math.toRadians(Math.max(-85.05112878,Math.min(85.05112878,lat)))/2));}
     private final Path screen=new Path();private final Matrix transform=new Matrix();private final RectF visible=new RectF();
+    private final float[] transformValues = new float[]{1,0,0,0,-1,0,0,0,1};
     private void put(JSONArray points,Line line){
         if(lines.size()>=8192&&lines.get(points)==null){JSONArray oldest=lines.oldest();if(oldest!=null){lines.remove(oldest);Line discarded=retained.remove(oldest);if(discarded!=null)vertices-=cost(discarded);}}lines.put(points,line);
         Line previous=retained.remove(points);if(previous!=null)vertices-=cost(previous);
@@ -95,7 +96,9 @@ final class MapRenderGeometry {
         if(visible.right< -padding||visible.left>width+padding||visible.bottom< -padding||visible.top>height+padding){culled++;if(immutable)put(points,line);return false;}
         if(line.path==null){line=new Line(points,true);builds++;}
         if(immutable)put(points,line);
-        transform.reset();transform.setValues(new float[]{(float)scale,0,tx,0,(float)-scale,ty,0,0,1});line.path.transform(transform,screen);
+        transformValues[0]=(float)scale;transformValues[2]=tx;
+        transformValues[4]=(float)-scale;transformValues[5]=ty;
+        transform.setValues(transformValues);line.path.transform(transform,screen);
         if(halo!=null)canvas.drawPath(screen,halo);canvas.drawPath(screen,paint);return true;
     }
     void clear(){lines.clear();retained.clear();vertices=0;}

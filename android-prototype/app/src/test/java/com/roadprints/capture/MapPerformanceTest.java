@@ -203,6 +203,85 @@ public class MapPerformanceTest {
         try {assertEquals(1,read(controller.get(),JourneyFilters.all()).matchedJourneys);assertEquals(3,JourneyStore.count(app));}
         finally {controller.destroy();}
     }
+    @Test public void focusedRoadIndexSkipsGeometryForUnrelatedRecords() throws Exception {
+        JSONObject template = trip("focused");
+        byte[] selected = template.put("journey_id", "focused-selected").toString().getBytes(StandardCharsets.UTF_8);
+        java.nio.file.Files.write(JourneyStore.archiveFile(app, "focused-selected").toPath(), selected);
+        JSONObject unrelated = new JSONObject(template.toString());
+        unrelated.getJSONObject("processing_result").remove("a_road_geojson");
+        for (int i = 0; i < 120; i++) {
+            String id = "focused-other-" + i;
+            java.nio.file.Files.write(JourneyStore.archiveFile(app, id).toPath(),
+                    unrelated.put("journey_id", id).toString().getBytes(StandardCharsets.UTF_8));
+        }
+        RoadDetailSelection road = new RoadDetailSelection(RoadDetailSelection.A_ROAD, "A2", "GB", "", "");
+        String[] modes = {"cold", "warm"};
+        for (String mode : modes) {
+            org.robolectric.shadows.ShadowLog.clear();
+            RoadDetailModel result = RoadDetailModel.load(app, road, true);
+            assertEquals(1, result.journeys.size());
+            assertEquals("focused-selected", result.journeys.get(0).id);
+            String timing = org.robolectric.shadows.ShadowLog.getLogsForTag("RoadprintsTiming").stream()
+                    .map(entry -> entry.msg).filter(line -> line.startsWith("focused_archive ")).findFirst().orElseThrow();
+            System.out.println("FOCUSED " + mode + " " + timing);
+            if ("warm".equals(mode)) {
+                assertTrue(timing, timing.contains("reads=0 reused=1 indexed_out=120 visited=1"));
+            }
+        }
+    }
+
+    @Test public void progressRetainsBoundedARoadIndexesWith1661Journeys() throws Exception {
+        JSONObject master = trip("volume");
+        JSONObject roads = asset("index.json").getJSONObject("roads");
+        List<JSONObject> templates = new ArrayList<>();
+        List<String> ids = new ArrayList<>();
+        roads.keys().forEachRemaining(ids::add);
+        ids.sort(Comparator.comparingDouble((String id) -> roads.optJSONObject(id).optDouble("total_km", 0)).reversed());
+        for (String id : ids) {
+            if (!id.startsWith("GB:")) continue;
+            JSONObject entry = roads.getJSONObject(id);
+            JSONArray paths = asset(entry.getString("file")).getJSONArray("paths");
+            if (paths.length() == 0 || paths.getJSONArray(0).length() < 2) continue;
+            JSONArray first = paths.getJSONArray(0).getJSONArray(0);
+            if (first.getDouble(0) < -5.3 && first.getDouble(1) > 53.9 && first.getDouble(1) < 55.6) continue;
+            JSONObject journey = new JSONObject(master.toString());
+            journey.getJSONObject("processing_result").put("a_road_geojson",
+                    collection(feature(id.substring(3), line(paths.getJSONArray(0), 12))));
+            templates.add(journey);
+            if (templates.size() == 56) break;
+        }
+        assertEquals(56, templates.size());
+        for (int i = 0; i < 1661; i++) {
+            String id = "progress-volume-" + i;
+            JSONObject journey = templates.get(i % templates.size()).put("journey_id", id);
+            java.nio.file.Files.write(JourneyStore.archiveFile(app, id).toPath(),
+                    journey.toString().getBytes(StandardCharsets.UTF_8));
+        }
+        var controller = Robolectric.buildActivity(ProgressActivity.class);
+        Method summarize = ProgressActivity.class.getDeclaredMethod("summarizeSavedJourneys", Context.class, int.class);
+        summarize.setAccessible(true);
+        for (int i = 0; i < 2; i++) {
+            org.robolectric.shadows.ShadowLog.clear();
+            long start = System.nanoTime();
+            Object stats = summarize.invoke(controller.get(), app, 0);
+            System.out.println("PROGRESS_WALL pass=" + i + " ms=" + (System.nanoTime() - start) / 1e6);
+            Field field = stats.getClass().getDeclaredField("aRoadProgress");
+            field.setAccessible(true);
+            ARoadProgressCalculator.Summary summary = (ARoadProgressCalculator.Summary) field.get(stats);
+            assertEquals(56, summary.roads.size());
+            assertEquals(1661000, summary.matchedMetres, 0);
+            for (ARoadProgressCalculator.Road road : summary.roads) {
+                assertTrue(road.id, road.referenceAvailable);
+                assertTrue(road.coveredMapSections.isEmpty());
+            }
+            for (var log : org.robolectric.shadows.ShadowLog.getLogsForTag("RoadprintsTiming")) {
+                if (log.msg.startsWith("progress_archive") || log.msg.startsWith("progress_geometry")) {
+                    System.out.println("PROGRESS_VOLUME pass=" + i + " " + log.msg);
+                }
+            }
+        }
+    }
+
     private void stageLogs(String label) {
         for(org.robolectric.shadows.ShadowLog.LogItem item:org.robolectric.shadows.ShadowLog.getLogsForTag("RoadprintsTiming"))
             if(item.msg.startsWith("map_"))System.out.println("MAP_STAGE "+label+" "+item.msg);

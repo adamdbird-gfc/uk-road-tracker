@@ -104,7 +104,7 @@ public class RailwayMileageRuntimeTest {
                         .put(0).put("gps"));
             }
         }
-        for (int index = 0; index < 1652; index++) {
+        for (int index = 0; index < 1661; index++) {
             boolean train = index < 24;
             boolean national = train && index%2!=0;
             String id = "navigation-" + index;
@@ -148,6 +148,7 @@ public class RailwayMileageRuntimeTest {
                 exerciseScreen(ProgressActivity.class);
                 exerciseScreen(MapActivity.class);
                 exerciseScreen(JourneyListActivity.class);
+                exerciseScreen(AchievementsActivity.class);
             }
             try (var screen = androidx.test.core.app.ActivityScenario.launch(JourneyListActivity.class)) {
                 assertTrue("Railway history should resume and finish", waitForDistance(app, "navigation-22", 39_228, 90_000));
@@ -181,14 +182,14 @@ public class RailwayMileageRuntimeTest {
                         for (String field : List.of("drivingMetres", "footMetres", "trainMetres",
                                 "ferryMetres", "flightMetres", "transitMetres", "cyclingMetres", "unknownMetres"))
                             overall += summary.getDouble(field);
-                        assertEquals(total + 1628 * 200, overall, .01);
+                        assertEquals(total + 1637 * 200, overall, .01);
                         return true;
                     } catch (org.json.JSONException unavailable) {
                         return false;
                     }
                 }, 45_000);
             }
-            assertEquals(1652, JourneyStore.archiveFiles(app).stream()
+            assertEquals(1661, JourneyStore.archiveFiles(app).stream()
                     .filter(file -> file.getName().startsWith("journey_navigation-")).count());
         } finally {
             controls.edit().remove("active").commit();
@@ -259,7 +260,7 @@ public class RailwayMileageRuntimeTest {
         long start = SystemClock.elapsedRealtime();
         try (var screen = androidx.test.core.app.ActivityScenario.launch(type)) {
             awaitOnMain(() -> true, 4000);
-            awaitOnMain(() -> RailwayTrialWorker.isChecking(), 4000);
+            if (type != AchievementsActivity.class) awaitOnMain(() -> RailwayTrialWorker.isChecking(), 4000);
         }
         long elapsed = SystemClock.elapsedRealtime() - start;
         android.util.Log.i("RoadprintsRailwayRuntime", "navigation=" + type.getSimpleName() + " elapsed_ms=" + elapsed);

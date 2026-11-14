@@ -10,7 +10,7 @@ import java.util.zip.GZIPOutputStream;
 
 /** Revision is checked before decompression; checksum covers encoded bytes without reserialisation. */
 final class MapSnapshotCache {
-    private static final int LIMIT=48*1024*1024,MAGIC=0x52504d32;
+    private static final int LIMIT=12*1024*1024,MAGIC=0x52504d32;
     private static AtomicFile file(Context c) {
         return new AtomicFile(new File(c.getFilesDir(),"screen-cache/map-routes.bin"));
     }
@@ -21,12 +21,11 @@ final class MapSnapshotCache {
             if(header.readInt()!=MAGIC||header.readLong()!=revision)return null;
             String expected=header.readUTF();int length=header.readInt();
             if(length<0||length>LIMIT)return null;
-            try(InputStream in=new GZIPInputStream(header);ByteArrayOutputStream out=new ByteArrayOutputStream(Math.min(length,1024*1024))) {
-                byte[] buffer=new byte[8192];int count;
-                while((count=in.read(buffer))!=-1){if(out.size()+count>length)return null;out.write(buffer,0,count);}
-                byte[] payload=out.toByteArray();
-                if(payload.length!=length||!NcnJson.hash(payload).equals(expected))return null;
-                return new JSONObject(new String(payload,StandardCharsets.UTF_8));
+            try (DataInputStream in = new DataInputStream(new GZIPInputStream(header))) {
+                byte[] payload = new byte[length];
+                in.readFully(payload);
+                if (in.read() != -1 || !NcnJson.hash(payload).equals(expected)) return null;
+                return new JSONObject(new String(payload, StandardCharsets.UTF_8));
             }
         } catch(Exception invalid) {return null;}
     }

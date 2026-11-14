@@ -30,10 +30,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Comparator;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -337,10 +336,11 @@ public class ProgressActivity extends Activity {
         CoreAchievementEvidence.Coverage uniqueFootEdges = new CoreAchievementEvidence.Coverage();
         MotorwayProgressCalculator motorwayCalculator = new MotorwayProgressCalculator(
                 context, null, true, true);
-        ARoadProgressCalculator aRoadCalculator = new ARoadProgressCalculator(context, true);
+        ARoadProgressCalculator aRoadCalculator = new ARoadProgressCalculator(context, false);
         int checkedJourneys = 0;
         long cacheMs = 0;
         long mergeMs = 0;
+        PerformanceDiagnostics.HeapSample heap = new PerformanceDiagnostics.HeapSample();
 
         long started=android.os.SystemClock.elapsedRealtime();
         JourneyStore.prepareArchive(context);
@@ -359,9 +359,12 @@ public class ProgressActivity extends Activity {
                 motorwayCalculator.addContribution(row.getString("id"),row.getJSONArray("motorway"));aRoadCalculator.addContribution(row.getString("id"),row.getJSONArray("a_road"));
                 mergeDiscovery(stats,row.getJSONArray("discovery"),row.getString("id"));
                 mergeMs += android.os.SystemClock.elapsedRealtime() - mergeStarted;
-                if(++checkedJourneys%100==0)updateLoadingMessage(generation,"Preparing progress · "+checkedJourneys+" journeys checked");
+                if (++checkedJourneys % 25 == 0) heap.sample();
+                if (checkedJourneys % 100 == 0) {
+                    updateLoadingMessage(generation,"Preparing progress · "+checkedJourneys+" journeys checked");
+                }
             }
-            PerformanceDiagnostics.timing("progress_archive",android.os.SystemClock.elapsedRealtime()-started,"rows="+sources.size()+" reads="+cache.reads+" reused="+cache.hits+" cache_ms="+cacheMs+" merge_ms="+mergeMs);
+            PerformanceDiagnostics.timing("progress_archive",android.os.SystemClock.elapsedRealtime()-started,"rows="+sources.size()+" reads="+cache.reads+" reused="+cache.hits+" cache_ms="+cacheMs+" merge_ms="+mergeMs+" "+heap.description());
         }catch(Exception failure){throw new IllegalStateException("Progress preparation failed",failure);}
 
         stats.uniqueDrivingMetres = uniqueRoadEdges.metres();
@@ -372,7 +375,7 @@ public class ProgressActivity extends Activity {
         long geometryStarted=android.os.SystemClock.elapsedRealtime();
         stats.motorwayProgress = motorwayCalculator.finish();
         stats.aRoadProgress = aRoadCalculator.finish();
-        PerformanceDiagnostics.timing("progress_geometry",android.os.SystemClock.elapsedRealtime()-geometryStarted,"roads="+stats.discoveredRoads.size());
+        PerformanceDiagnostics.timing("progress_geometry",android.os.SystemClock.elapsedRealtime()-geometryStarted,"roads="+stats.discoveredRoads.size()+" peak_a_road_anchors="+aRoadCalculator.peakRetainedAnchors()+" "+heap.description());
         return stats;
     }
 
@@ -387,7 +390,7 @@ public class ProgressActivity extends Activity {
         CoreAchievementEvidence.Coverage drive=new CoreAchievementEvidence.Coverage(),foot=new CoreAchievementEvidence.Coverage();
         if("complete".equals(journey.optString("processing_status"))){if(isRoadModeForProgress(mode))drive.addJourney(journey);else if(MatchingCoordinator.isFoot(mode))foot.addJourney(journey);collectRoadDiscovery(journey,mini,mode);}
         JSONArray discovery=new JSONArray();for(RoadDiscoveryItem item:mini.discoveredRoads.values()){
-            JSONArray geometry=new JSONArray();for(JSONObject g:item.geometryEvidence)geometry.put(g);
+            JSONArray geometry=new JSONArray();for(String g:item.geometryEvidence)geometry.put(new JSONObject(g));
             discovery.put(new JSONObject().put("id",item.id).put("label",item.label).put("category",item.category).put("region",item.region).put("driven",item.driven).put("foot",item.onFoot).put("geometry",geometry));
         }
         JSONObject row=new JSONObject().put("id",journey.optString("journey_id")).put("activities",mini.activities)
@@ -400,7 +403,7 @@ public class ProgressActivity extends Activity {
     private static void mergeDiscovery(DistanceStats stats,JSONArray rows,String journey)throws Exception {
         for(int i=0;i<rows.length();i++){JSONObject row=rows.getJSONObject(i);RoadDiscoveryItem item=stats.discoveredRoads.computeIfAbsent(row.getString("id"),id->new RoadDiscoveryItem(id,row.optString("label"),row.optString("category")));
             item.region=row.optString("region");item.driven|=row.optBoolean("driven");item.onFoot|=row.optBoolean("foot");if(!journey.isEmpty())item.journeyIds.add(journey);
-            JSONArray geometry=row.getJSONArray("geometry");for(int k=0;k<geometry.length();k++){JSONObject g=geometry.getJSONObject(k);String key=NcnJson.digest(g);if(item.geometryEvidenceKeys.add(key))item.geometryEvidence.add(g);}
+            JSONArray geometry=row.getJSONArray("geometry");for(int k=0;"Local roads".equals(item.category)&&k<geometry.length();k++){String g=geometry.getJSONObject(k).toString();item.geometryEvidence.add(g);}
         }
     }
     /** A current immutable Progress snapshot can provide real geometry before contributor lookup. */
@@ -409,9 +412,18 @@ public class ProgressActivity extends Activity {
         if(stats==null)return null;RoadDetailModel out=new RoadDetailModel();
         if(RoadDetailSelection.MOTORWAY.equals(selection.kind)&&stats.motorwayProgress!=null)for(MotorwayProgressCalculator.Road road:stats.motorwayProgress.roads)
             if(road.ref.equals(selection.label)&&(selection.region.isEmpty()||road.region.equals(selection.region))&&road.referenceAvailable){out.setReference(road.referenceKm*1000,road.estimatedUniqueKm()*1000,road.percent(),road.coveredMapSections,road.incompleteMapSections);return out;}
-        if(RoadDetailSelection.A_ROAD.equals(selection.kind)&&stats.aRoadProgress!=null)for(ARoadProgressCalculator.Road road:stats.aRoadProgress.roads)
-            if(road.ref.equals(selection.label)&&(selection.region.isEmpty()||road.region.equals(selection.region))&&road.referenceAvailable){out.setReference(road.totalKm*1000,road.uniqueKm()*1000,road.percent(),road.coveredMapSections,road.incompleteMapSections);return out;}
-        if(RoadDetailSelection.B_ROAD.equals(selection.kind))for(RoadDiscoveryItem item:stats.discoveredRoads.values())if(item.label.equals(selection.label)&&(selection.region.isEmpty()||selection.region.equals(item.region)))try{for(JSONObject g:item.geometryEvidence)out.covered.addAll(RoadDetailGeometry.lines(g,null));return out;}catch(Exception invalid){return null;}
+        if (RoadDetailSelection.A_ROAD.equals(selection.kind) && stats.aRoadProgress != null) {
+            for (ARoadProgressCalculator.Road road : stats.aRoadProgress.roads) {
+                if (!road.ref.equals(selection.label) || !road.referenceAvailable
+                        || (!selection.region.isEmpty() && !road.region.equals(selection.region))) continue;
+                ARoadProgressCalculator.Road detail = new ARoadProgressCalculator.Road(road.id, road.ref, road.region);
+                detail.covered.addAll(road.covered);
+                if (!new ARoadProgressCalculator(context, false).populateMapSections(detail)) return null;
+                out.setReference(road.totalKm * 1000, road.uniqueKm() * 1000, road.percent(),
+                        detail.coveredMapSections, detail.incompleteMapSections);
+                return out;
+            }
+        }
         return null;
     }
 
@@ -493,11 +505,8 @@ public class ProgressActivity extends Activity {
                         ignored -> new RoadDiscoveryItem(id, label, category));
                 road.region = region;
                 JSONObject geometry = feature.optJSONObject("geometry");
-                if (geometry != null && ("Local roads".equals(category)||"B roads".equals(category))) {
-                    String geometryKey = geometryEvidenceKey(geometry);
-                    if (road.geometryEvidenceKeys.add(geometryKey)) {
-                        road.geometryEvidence.add(geometry);
-                    }
+                if (geometry != null && "Local roads".equals(category)) {
+                    road.geometryEvidence.add(geometry.toString());
                 }
                 if (foot) road.onFoot = true;
                 else road.driven = true;
@@ -510,23 +519,6 @@ public class ProgressActivity extends Activity {
         JSONArray features = geojson == null ? null : geojson.optJSONArray("features");
         if (features == null) return;
         for (int index = 0; index < features.length(); index++) target.put(features.opt(index));
-    }
-
-    private String geometryEvidenceKey(JSONObject geometry) {
-        try {
-            byte[] digest = MessageDigest.getInstance("SHA-256").digest(
-                    geometry.toString().getBytes(StandardCharsets.UTF_8));
-            char[] hex = "0123456789abcdef".toCharArray();
-            char[] key = new char[digest.length * 2];
-            for (int index = 0; index < digest.length; index++) {
-                int value = digest[index] & 0xff;
-                key[index * 2] = hex[value >>> 4];
-                key[index * 2 + 1] = hex[value & 0x0f];
-            }
-            return new String(key);
-        } catch (NoSuchAlgorithmException impossible) {
-            throw new IllegalStateException("SHA-256 is not available", impossible);
-        }
     }
 
     private String roadLabel(String ref, String name) {
@@ -1229,7 +1221,7 @@ public class ProgressActivity extends Activity {
                 try {
                     List<LocalRoadSettlementMatcher.Settlement> cached =
                             LocalRoadSettlementMatcher.cached(getApplicationContext(),
-                                    road.id, road.geometryEvidence);
+                                    road.id, road.readGeometry());
                     if (cached != null) {
                         cachedByRoad.put(road.id, cached);
                         for (LocalRoadSettlementMatcher.Settlement settlement : cached) {
@@ -1271,7 +1263,7 @@ public class ProgressActivity extends Activity {
                     }
                     try {
                         LocalRoadSettlementMatcher.saveCached(getApplicationContext(), road.id,
-                                road.geometryEvidence, cached);
+                                road.readGeometry(), cached);
                     } catch (Exception error) {
                         android.util.Log.w("Roadprints", "Hydrated settlement cache could not be saved", error);
                     }
@@ -1306,7 +1298,7 @@ public class ProgressActivity extends Activity {
             for (RoadDiscoveryItem road : roadsToResolve) {
                 synchronized (stats) { stats.localRoadCurrentLabel = road.label; }
                 try {
-                    List<JSONObject> evidence = new ArrayList<>(road.geometryEvidence);
+                    List<JSONObject> evidence = road.readGeometry();
                     List<LocalRoadSettlementMatcher.Settlement> matches =
                             LocalRoadSettlementMatcher.resolve(getApplicationContext(), road.id, evidence);
                     AchievementStore.recordRoadSettlements(
@@ -1945,8 +1937,13 @@ public class ProgressActivity extends Activity {
         final String category;
         String region = "";
         final Set<String> journeyIds = new HashSet<>();
-        final List<JSONObject> geometryEvidence = new ArrayList<>();
-        final Set<String> geometryEvidenceKeys = new HashSet<>();
+        final Set<String> geometryEvidence = new LinkedHashSet<>();
+
+        List<JSONObject> readGeometry() throws org.json.JSONException {
+            List<JSONObject> result = new ArrayList<>(geometryEvidence.size());
+            for (String geometry : geometryEvidence) result.add(new JSONObject(geometry));
+            return result;
+        }
         boolean driven;
         boolean onFoot;
         RoadDiscoveryItem(String id, String label, String category) {

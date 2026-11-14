@@ -67,6 +67,22 @@ final class PerformanceDiagnostics {
         }
     }
 
+    /** Sampled Java heap usage, including concurrent work in the app process. */
+    static final class HeapSample {
+        private long peak;
+        HeapSample() { sample(); }
+        void sample() {
+            Runtime runtime = Runtime.getRuntime();
+            peak = Math.max(peak, runtime.totalMemory() - runtime.freeMemory());
+        }
+        String description() {
+            sample();
+            return "sampled_heap_peak_mib=" + peak / (1024 * 1024)
+                    + " heap_limit_mib=" + Runtime.getRuntime().maxMemory() / (1024 * 1024)
+                    + " railway_worker_active=" + RailwayTrialWorker.isChecking();
+        }
+    }
+
     static void timing(String operation,long ms,String counts){
         String value=operation+" ms="+ms+(counts.isEmpty()?"":" "+counts);
         android.util.Log.i("RoadprintsTiming",value);

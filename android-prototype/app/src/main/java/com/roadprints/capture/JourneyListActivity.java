@@ -3,6 +3,7 @@ package com.roadprints.capture;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
@@ -182,6 +183,41 @@ public class JourneyListActivity extends Activity {
         state.putString("filter_from", activeDateFilter.from == null ? null : activeDateFilter.from.toString());
         state.putString("filter_to", activeDateFilter.to == null ? null : activeDateFilter.to.toString());
         super.onSaveInstanceState(state);
+    }
+
+    private void checkSavedEvidence(String id, TextView action) {
+        action.setEnabled(false);
+        action.setText("Checking saved evidence…");
+        Context app = getApplicationContext();
+        ScreenDataLoader.execute(() -> {
+            String message;
+            try (JourneyReconciliation reconciliation = new JourneyReconciliation(app)) {
+                JourneyReconciliation.Rule rule = JourneyReconciliation.BASELINE;
+                reconciliation.enqueue(rule, java.util.Collections.singletonList(id));
+                reconciliation.runBatch(rule, () -> isDestroyed());
+                JSONObject receipt = reconciliation.receipt(rule, id);
+                if (receipt == null) {
+                    message = "Evidence check pending. Open this journey and select Check saved evidence again.";
+                } else {
+                    message = switch (JourneyReconciliation.Outcome.valueOf(receipt.getString("outcome"))) {
+                        case UNCHANGED -> "Saved evidence checked. The journey and its mileage are unchanged.";
+                        case EVIDENCE_UNAVAILABLE -> "This journey has limited saved evidence. No mileage changed.";
+                        case TOO_LARGE -> "This recording exceeds the size limit for this evidence check. No mileage changed.";
+                        default -> "The comparison is saved for review. No mileage changed.";
+                    };
+                }
+            } catch (Exception failure) {
+                android.util.Log.w("Roadprints", "Journey evidence check failed", failure);
+                message = "Could not check saved evidence. Try again.";
+            }
+            String result = message;
+            mainHandler.post(() -> {
+                if (isDestroyed()) return;
+                action.setEnabled(true);
+                action.setText("Check saved evidence");
+                Toast.makeText(this, result, Toast.LENGTH_LONG).show();
+            });
+        });
     }
 
     private void exportJourneyDebug(String journeyId) {
@@ -1517,6 +1553,14 @@ public class JourneyListActivity extends Activity {
         debug.setPadding(dp(12), dp(14), dp(12), dp(8));
         debug.setOnClickListener(v -> exportJourneyDebug(journey.optString("journey_id")));
         supplemental.addView(debug);
+        TextView evidence = new TextView(this);
+        evidence.setText("Check saved evidence");
+        evidence.setTextSize(14);
+        evidence.setTextColor(0xFFD3DCED);
+        evidence.setGravity(Gravity.CENTER);
+        evidence.setPadding(dp(12), dp(14), dp(12), dp(8));
+        evidence.setOnClickListener(v -> checkSavedEvidence(journey.optString("journey_id"), evidence));
+        supplemental.addView(evidence);
         actions.addView(supplemental, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
         actions.addView(delete,new LinearLayout.LayoutParams(-1,-2));

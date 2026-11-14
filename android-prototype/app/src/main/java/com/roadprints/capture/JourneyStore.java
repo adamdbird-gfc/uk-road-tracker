@@ -784,6 +784,7 @@ public final class JourneyStore {
         if (file.exists()) {
             if (!file.delete()) throw new IllegalStateException("Could not delete journey archive");
             bumpDataRevision(context);
+            JourneyReconciliation.forget(context, journeyId);
             RailwayTrialWorker.deleteResult(context, journeyId);
             ServiceStationStore.forgetJourney(context,journeyId);
             VenueVisitStore.forgetJourney(context,journeyId);
@@ -848,6 +849,7 @@ public final class JourneyStore {
         if (!preferences.edit().clear().putBoolean(MIGRATED, true)
                 .putBoolean(LOW_QUALITY_PRUNED, true).putLong(DATA_REVISION, revision + 1).commit())
             throw new IllegalStateException("Could not clear legacy journey data");
+        JourneyReconciliation.forget(context, null);
         RailwayTrialWorker.clearResults(context);
         ServiceStationStore.clearOnDeleteAll(context);
         PlaceAnchorStore.clear(context);

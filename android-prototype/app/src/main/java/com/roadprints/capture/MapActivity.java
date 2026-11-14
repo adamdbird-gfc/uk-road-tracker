@@ -499,7 +499,8 @@ public class MapActivity extends Activity {
         String settlementCode = getIntent().getStringExtra("settlement_code");
         if (!forceMapReload && mapView != null && displayedMapRevision == mapDataRevision() && sameFilters(mapFilters,displayedFilters)) {
             if(hasDisplayedMap){hideMapLoading();setMapReady(true);}
-            android.util.Log.i("RoadprintsTiming", "map_revisit=reused");return;
+            PerformanceDiagnostics.timing("map_navigation", 0, "source=retained_view");
+            return;
         }
         final long requestedRevision = mapDataRevision();
         if (loadingMapRevision != Long.MIN_VALUE || mapLoadFailed) return;
@@ -518,14 +519,15 @@ public class MapActivity extends Activity {
         MapRoutes cached = null;
         synchronized (MAP_CACHE_LOCK) {
             if (selection.isAll() && processMapCacheRevision == revision) cached = processMapCache;
-            else {
+            else if (selection.isAll() && processMapCacheRevision != revision) {
                 processMapCache = null;
-                processMapCacheRevision = revision;
+                processMapCacheRevision = Long.MIN_VALUE;
             }
         }
         mapStartedAt=android.os.SystemClock.elapsedRealtime();
         loadingMapRevision = revision;
         if (cached != null) {
+            PerformanceDiagnostics.timing("map_navigation", 0, "source=process_snapshot");
             displayMapRoutes(cached, generation);
             return;
         }
@@ -537,6 +539,8 @@ public class MapActivity extends Activity {
         mapPending=ScreenDataLoader.map(() -> {
             android.util.Log.i("RoadprintsTiming", "map_queue_ms="+(android.os.SystemClock.elapsedRealtime()-queuedAt));
             MapRoutes mapRoutes;
+            boolean archivePrepared;
+            PerformanceDiagnostics.HeapSample heap = new PerformanceDiagnostics.HeapSample();
             try (BetaMeasurement.Operation measurement = BetaMeasurement.operation(this, "map_data_load")) {
                 long cacheStarted=android.os.SystemClock.elapsedRealtime();
                 JSONObject saved = selection.isAll()&&!skipDiskMapCache ? PersistentScreenCache.read(getApplicationContext(),
@@ -545,7 +549,8 @@ public class MapActivity extends Activity {
                 catch(Exception malformedCache){mapRoutes=null;}
                 PerformanceDiagnostics.timing("map_cache",android.os.SystemClock.elapsedRealtime()-cacheStarted,
                         mapRoutes==null?"miss_or_bypass":"hit");
-                if (mapRoutes == null) {
+                archivePrepared = mapRoutes == null;
+                if (archivePrepared) {
                     mapRoutes = mapRouteLoader.load(this,selection, today, zone);
                     if(Thread.currentThread().isInterrupted()||generation!=mapLoadGeneration)return;
 
@@ -572,9 +577,14 @@ public class MapActivity extends Activity {
             // Publish usable geometry before optional JSON serialization/fsync. Cache work
             // must not hold the interactive map lane or delay the readiness transition.
             final MapRoutes prepared=mapRoutes;
-            if(selection.isAll()&&prepared.retainedPoints<=180000&&freeHeadroom>=96L*1024L*1024L)
+            PerformanceDiagnostics.timing("map_navigation", android.os.SystemClock.elapsedRealtime()-queuedAt,
+                    "source="+(archivePrepared?"archive":"disk_snapshot")+" "+heap.description());
+            if(archivePrepared&&generation==mapLoadGeneration&&selection.isAll()
+                    &&prepared.snapshotPoints()<=180000&&freeHeadroom>=96L*1024L*1024L)
                 ScreenDataLoader.cache(()->{
-                    if(generation!=mapLoadGeneration||mapDataRevision()!=revision)return;
+                    Runtime cacheRuntime = Runtime.getRuntime();
+                    long headroom = cacheRuntime.maxMemory() - (cacheRuntime.totalMemory() - cacheRuntime.freeMemory());
+                    if(generation!=mapLoadGeneration||mapDataRevision()!=revision||headroom<96L*1024L*1024L)return;
                     try{PersistentScreenCache.write(getApplicationContext(),"map-routes",revision,mapRoutesToCache(prepared));}
                     catch(Exception ignored){android.util.Log.w("RoadprintsTiming","map_cache_write=skipped");}
                 });
@@ -846,10 +856,11 @@ public class MapActivity extends Activity {
         PerformanceDiagnostics.timing("map_reference_init",(System.nanoTime()-initialiseStarted)/1_000_000,"");
         long evidenceStarted=System.nanoTime();
         long[] work=new long[3];int[] counts=new int[6];int[] unprocessedModes=new int[4];
-        try(MapJourneyStore records=new MapJourneyStore(getApplicationContext(),skipDiskMapCache)) {
+        PerformanceDiagnostics.HeapSample heap = new PerformanceDiagnostics.HeapSample();
+        try(MapJourneyStore records=new MapJourneyStore(getApplicationContext())) {
         records.forEach(() -> isDestroyed() || Thread.currentThread().isInterrupted(), record -> {
             JSONObject journey=record.header;
-            counts[0]++;
+            if (++counts[0] % 25 == 0) heap.sample();
             long filterStarted=System.nanoTime();
             boolean selected=selection.matches(journey,today,zone);
             work[0]+=System.nanoTime()-filterStarted;
@@ -906,8 +917,8 @@ public class MapActivity extends Activity {
             output.matchedJourneys++;counts[5]++;
             work[2]+=System.nanoTime()-geometryStarted;
         });
-        PerformanceDiagnostics.timing("map_records",0,"reused="+records.reused+" rebuilt="+records.rebuilt
-                +" source_reads="+records.sourceReads+" legacy_reads="+records.legacyReads+" oversized="+records.oversized);
+        PerformanceDiagnostics.timing("map_records",(System.nanoTime()-evidenceStarted)/1_000_000,"reused="+records.reused+" rebuilt="+records.rebuilt
+                +" source_reads="+records.sourceReads+" legacy_reads="+records.legacyReads+" oversized="+records.oversized+" "+heap.description());
         }
         long evidenceDuration=System.nanoTime()-evidenceStarted;
         PerformanceDiagnostics.timing("map_evidence",Math.max(0,evidenceDuration-work[0]-work[1]-work[2])/1_000_000,"compact_records_or_archive");
@@ -933,7 +944,8 @@ public class MapActivity extends Activity {
             if (selection.isAll()) addIncompleteRoadSegments(output, road.ref, road.region, road.percent(),
                     road.matchedMetres, road.journeyIds.size(), road.incompleteMapSections);
         }
-        PerformanceDiagnostics.timing("map_coverage_finish",(System.nanoTime()-finishStarted)/1_000_000,"");
+        PerformanceDiagnostics.timing("map_coverage_finish",(System.nanoTime()-finishStarted)/1_000_000,
+                "peak_a_road_anchors="+aRoadCalculator.peakRetainedAnchors()+" "+heap.description());
         return output;
     }
 
@@ -2325,6 +2337,13 @@ public class MapActivity extends Activity {
         JSONArray serviceStations = new JSONArray();
         Set<String> visitedServiceStationIds = new HashSet<>();
         int matchedJourneys;
+        long snapshotPoints() {
+            long points = (long) retainedPoints + motorwayRetainedPoints + incompleteMotorwayPoints
+                    + coveredMotorwayPoints + incompleteARoadPoints + coveredARoadPoints + ferryPoints;
+            // The disk snapshot encodes tappable coverage lines separately.
+            for (RoadCoverageSegment segment : incompleteRoadSegments) points += segment.coordinates.length();
+            return points;
+        }
         int retainedPoints;
         int motorwayRetainedPoints;
         int incompleteMotorwayPoints;
