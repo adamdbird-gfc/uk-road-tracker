@@ -58,7 +58,7 @@ public class VenueCollectionFrameworkTest {
         saved.put("separate", new JSONObject().put("venue_id", "test").put("pending", true)
                 .put("visited_at", "2026-11-14T10:46:00Z"));
         app.getSharedPreferences(VenueVisitStore.PREFS, 0).edit()
-                .putString(collection + ":records", saved.toString()).commit();
+                .putString(collection + ":records", saved.toString()).putBoolean(collection + ":migrated", true).commit();
         JSONArray result = VenueVisitStore.nativePending(app, collection);
         assertEquals(1, result.length());
         assertEquals("separate", result.getJSONObject(0).getString("record_key"));
