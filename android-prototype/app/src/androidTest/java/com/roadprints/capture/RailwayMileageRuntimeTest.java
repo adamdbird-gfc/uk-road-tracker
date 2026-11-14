@@ -42,6 +42,14 @@ public class RailwayMileageRuntimeTest {
             var receipt = new JSONObject(new String(Files.readAllBytes(source.toPath()), StandardCharsets.UTF_8)).getJSONObject("railway_distance");
             assertTrue(receipt.getLong("migration_committed_at_ms") > 0);
             assertEquals("committed", receipt.getString("migration_status"));
+            byte[] committed = Files.readAllBytes(source.toPath());
+            try (JourneyReconciliation reconciliation = new JourneyReconciliation(app)) {
+                var rule = JourneyReconciliation.BASELINE;
+                assertNull(reconciliation.receipt(rule, ID));
+                assertEquals(1, reconciliation.runBatch(rule, () -> false));
+                assertEquals(NcnJson.hash(committed), reconciliation.receipt(rule, ID).getString("source_sha"));
+            }
+            assertArrayEquals(committed, Files.readAllBytes(source.toPath()));
             assertEquals(distance - 43_900, receipt.getDouble("train_total_change_meters"), 0);
             assertEquals(distance - 43_900, receipt.getDouble("overall_total_change_meters"), 0);
             long revision = preferences.getLong("journey_archive_revision", 0);
@@ -83,6 +91,11 @@ public class RailwayMileageRuntimeTest {
         android.util.Log.i("RoadprintsRailwayRuntime", "cold_assess_and_write_ms=" + elapsed + " cpu_ms=" + cpuElapsed);
         // Catch runaway cold processing on the CI emulator. This budget is not a Pixel 10 benchmark.
         assertTrue("Cold railway archive update exceeded 5 s CPU", cpuElapsed < 5_000);
+        try (JourneyReconciliation reconciliation = new JourneyReconciliation(app)) {
+            var rule = JourneyReconciliation.BASELINE;
+            reconciliation.enqueue(rule, List.of(ID));
+            assertEquals(0, reconciliation.runBatch(rule, () -> true));
+        }
         // Model a process ending after atomic archive replacement and before cache invalidation.
         assertTrue(preferences.edit().putString("railway_distance_pending_id", ID).commit());
     }
