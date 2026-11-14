@@ -21,6 +21,9 @@ final class MapSnapshotCache {
             if(header.readInt()!=MAGIC||header.readLong()!=revision)return null;
             String expected=header.readUTF();int length=header.readInt();
             if(length<0||length>LIMIT)return null;
+            Runtime runtime = Runtime.getRuntime();
+            long headroom = runtime.maxMemory() - (runtime.totalMemory() - runtime.freeMemory());
+            if (headroom < 4L * length) return null;
             try (DataInputStream in = new DataInputStream(new GZIPInputStream(header))) {
                 byte[] payload = new byte[length];
                 in.readFully(payload);

@@ -45,7 +45,8 @@ public class JourneyReconciliationTest {
                 .put("title", "User title").put("mode", "driving").put("distance_meters", 1234)
                 .put("transport_confirmation", "confirmed")
                 .put("journey_corrections", new JSONObject().put("removed_road_ids", new JSONArray().put("A2")))
-                .put("raw_capture_samples", new JSONArray().put(new JSONArray().put(0.4).put(51.4).put(4).put(100))));
+                .put("raw_capture_samples", new JSONArray().put(new JSONArray().put(0.4).put(51.4).put(4).put(100))
+                        .put(new JSONArray().put(0.41).put(51.41).put(4).put(200))));
         write(new JSONObject().put("journey_id", "second").put("mode", "walking"));
         long revision = JourneyStore.dataRevision(app);
         long collection = JourneyStore.ncnDataRevision(app);
@@ -58,6 +59,7 @@ public class JourneyReconciliationTest {
             assertEquals(2, run.runBatch(JourneyReconciliation.BASELINE, () -> false));
             JSONObject receipt = run.receipt(JourneyReconciliation.BASELINE, "first");
             assertEquals("7", receipt.getString("source_revision"));
+            assertEquals("UNCHANGED", receipt.getString("outcome"));
             assertEquals(NcnJson.hash(original), receipt.getString("source_sha"));
             assertEquals("User title", new JSONObject(receipt.getString("decisions")).getString("title"));
             assertEquals("EVIDENCE_UNAVAILABLE",

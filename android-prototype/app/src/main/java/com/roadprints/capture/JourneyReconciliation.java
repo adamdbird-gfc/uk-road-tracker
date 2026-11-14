@@ -74,13 +74,20 @@ final class JourneyReconciliation implements AutoCloseable {
             current.put("source_journeys", new JSONArray().put(
                     ferry == null ? source.getString("journey_id")
                             : ferry.optString("source_id", source.getString("journey_id"))));
-            if (!source.has("route_geometry") && !source.has("raw_capture_geometry")
-                    && !source.has("raw_capture_samples")) {
+            JSONArray samples = source.optJSONArray("raw_capture_samples");
+            JSONObject rawGeometry = source.optJSONObject("raw_capture_geometry");
+            JSONObject route = source.optJSONObject("route_geometry");
+            if ((samples == null || samples.length() < 2) && !hasRoute(rawGeometry) && !hasRoute(route)) {
                 return new Comparison(Outcome.EVIDENCE_UNAVAILABLE, current);
             }
             return new Comparison(Outcome.UNCHANGED, current);
         }
     };
+
+    private static boolean hasRoute(JSONObject geometry) {
+        JSONArray points = geometry == null ? null : geometry.optJSONArray("coordinates");
+        return points != null && points.length() >= 2;
+    }
 
     private static final java.util.concurrent.atomic.AtomicBoolean cleanupNeeded =
             new java.util.concurrent.atomic.AtomicBoolean(true);
@@ -99,12 +106,19 @@ final class JourneyReconciliation implements AutoCloseable {
             if (abandoned != null) for (File file : abandoned) file.delete();
         }
         db = this.context.openOrCreateDatabase(DATABASE, Context.MODE_PRIVATE, null);
-        db.execSQL("CREATE TABLE IF NOT EXISTS pending (version TEXT NOT NULL, journey TEXT NOT NULL,"
-                + " PRIMARY KEY (version, journey))");
-        db.execSQL("CREATE TABLE IF NOT EXISTS receipts (version TEXT NOT NULL, journey TEXT NOT NULL,"
-                + " token TEXT NOT NULL, source_revision INTEGER, source_sha TEXT, decisions_sha TEXT,"
-                + " interpretation_sha TEXT, outcome TEXT NOT NULL, interpretation TEXT, decisions TEXT,"
-                + " PRIMARY KEY (version, journey, token))");
+        db.beginTransaction();
+        try {
+            db.execSQL("CREATE TABLE IF NOT EXISTS pending (version TEXT NOT NULL, journey TEXT NOT NULL,"
+                    + " PRIMARY KEY (version, journey))");
+            db.execSQL("CREATE TABLE IF NOT EXISTS receipts (version TEXT NOT NULL, journey TEXT NOT NULL,"
+                    + " token TEXT NOT NULL, source_revision INTEGER, source_sha TEXT, decisions_sha TEXT,"
+                    + " interpretation_sha TEXT, outcome TEXT NOT NULL, interpretation TEXT, decisions TEXT,"
+                    + " PRIMARY KEY (version, journey, token))");
+            db.setVersion(1);
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
     }
 
     /** Queue only the requested IDs. A caller can enqueue revised files or a new rule version. */
@@ -305,12 +319,14 @@ final class JourneyReconciliation implements AutoCloseable {
     /** Keep copies under the existing journey deletion lifecycle. Caller holds JourneyStore's lock. */
     static void forget(Context context, String id) {
         File directory = new File(context.getFilesDir(), STORE);
-        File[] copies = directory.listFiles((dir, name) -> id == null || name.startsWith(baselinePrefix(id)));
+        String prefix = id == null ? null : baselinePrefix(id);
+        File[] copies = directory.listFiles((dir, name) -> prefix == null || name.startsWith(prefix));
         if (copies != null) for (File copy : copies) {
             if (!copy.delete() && copy.exists()) throw new IllegalStateException("Could not delete journey baseline");
         }
         if (!context.getDatabasePath(DATABASE).isFile()) return;
         try (SQLiteDatabase database = context.openOrCreateDatabase(DATABASE, Context.MODE_PRIVATE, null)) {
+            if (database.getVersion() == 0) return; // Interrupted before any receipt could be written.
             database.beginTransaction();
             try {
                 String where = id == null ? null : "journey=?";

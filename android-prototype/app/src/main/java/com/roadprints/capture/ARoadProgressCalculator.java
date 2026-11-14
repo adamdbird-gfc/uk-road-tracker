@@ -72,7 +72,7 @@ final class ARoadProgressCalculator {
     private static final int MAX_CACHED_ANCHORS = 16_384;
     private static final class Reference {
         final List<Anchor> anchors = new ArrayList<>();
-        final android.util.LongSparseArray<List<Anchor>> grid = new android.util.LongSparseArray<>();
+        android.util.LongSparseArray<List<Anchor>> grid;
         double totalKm;
     }
     private static final class ReferenceInfo {
@@ -378,18 +378,27 @@ final class ARoadProgressCalculator {
     }
 
     private void addAnchor(Reference reference, double lon, double lat, int component) {
-        Anchor anchor = new Anchor(reference.anchors.size(), lon, lat, component);
-        reference.anchors.add(anchor);
-        long key = spatialKey((long)Math.floor(anchor.x / GRID_M), (long)Math.floor(anchor.y / GRID_M));
-        List<Anchor> bucket = reference.grid.get(key);
-        if (bucket == null) {
-            bucket = new ArrayList<>();
-            reference.grid.put(key, bucket);
+        reference.anchors.add(new Anchor(reference.anchors.size(), lon, lat, component));
+    }
+
+    private void prepareGrid(Reference reference) {
+        if (reference.grid != null) return;
+        android.util.LongSparseArray<List<Anchor>> grid = new android.util.LongSparseArray<>();
+        for (Anchor anchor : reference.anchors) {
+            checkInterrupted();
+            long key = spatialKey((long)Math.floor(anchor.x / GRID_M), (long)Math.floor(anchor.y / GRID_M));
+            List<Anchor> bucket = grid.get(key);
+            if (bucket == null) {
+                bucket = new ArrayList<>();
+                grid.put(key, bucket);
+            }
+            bucket.add(anchor);
         }
-        bucket.add(anchor);
+        reference.grid = grid;
     }
     private void matchFeature(Reference reference, Road road,JSONObject geometry){
         if(geometry==null)return;JSONArray coords=geometry.optJSONArray("coordinates");if(coords==null)return;
+        prepareGrid(reference);
         String type=geometry.optString("type","");
         if("LineString".equals(type))matchLine(reference, road,coords);
         else if("MultiLineString".equals(type))for(int i=0;i<coords.length();i++){JSONArray line=coords.optJSONArray(i);if(line!=null)matchLine(reference, road,line);}

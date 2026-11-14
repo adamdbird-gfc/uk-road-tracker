@@ -252,7 +252,11 @@ public class ProgressActivity extends Activity {
             boolean newlyLoaded = loadedRevision != revision;
             loadedRevision = revision; refreshStatus.setVisibility(View.GONE);
             navigation.frame(statisticsContent,"first_content","cache=process");navigation.frame(statisticsContent,"ready","roads="+cached.discoveredRoads.size()+" secondary_settlements="+(cached.localRoadEnrichmentComplete?"ready":"pending"));
-            if (newlyLoaded) { enrichLocalRoadTowns(cached, generation); loadLocalTownInventoriesAsync(cached, generation); }
+            if (newlyLoaded) {
+                PerformanceDiagnostics.timing("progress_navigation", 0, "source=process_snapshot");
+                enrichLocalRoadTowns(cached, generation);
+                loadLocalTownInventoriesAsync(cached, generation);
+            }
             return;
         }
         // Coalesce distance-only updates while the archive worker is still committing.
@@ -261,6 +265,7 @@ public class ProgressActivity extends Activity {
         refreshStatus.setText(loadedStats == null || loadedStats.pending ? "Preparing your progress…" : "Updating progress · previous figures remain available");
         refreshStatus.setVisibility(View.VISIBLE);
         synchronized (STATS_CACHE_LOCK) { if (statsLoadInFlight) return; statsLoadInFlight = true; }
+        PerformanceDiagnostics.timing("progress_navigation", 0, "source=archive");
         long queuedAt = android.os.SystemClock.elapsedRealtime();
         statisticsExecutor.execute(() -> {
             long started = android.os.SystemClock.elapsedRealtime();
