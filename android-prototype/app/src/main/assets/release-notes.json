@@ -2,6 +2,34 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.240",
+      "version_code": 286,
+      "release_date": "2026-11-14",
+      "since": "0.25.239",
+      "changes": [
+        {
+          "title": "Verify your saved journey data",
+          "description": "Journey details show whether GPS samples and timestamps are available. Verification leaves your route, mileage and progress unchanged."
+        },
+        {
+          "title": "Less work when opening Map and Journeys",
+          "description": "Map reuses prepared road information. Saved venue checks run in the background so you can keep using the map."
+        }
+      ]
+    },
+    {
+      "version_name": "0.25.239",
+      "version_code": 285,
+      "release_date": "2026-11-14",
+      "since": "0.25.238",
+      "changes": [
+        {
+          "title": "Progress and saved evidence",
+          "description": "Progress uses less memory when calculating road coverage. A journey evidence check can preserve a copy of the saved recording for later analysis."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.238",
       "version_code": 284,
       "release_date": "2026-11-13",

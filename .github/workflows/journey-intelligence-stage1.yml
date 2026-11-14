@@ -46,9 +46,9 @@ jobs:
           unzip -p "$bundle" src/main/assets/railway/national.json > "$assets/national.json"
           unzip -p "$bundle" src/main/assets/railway/national.sqlite.gzip > "$assets/national.sqlite.gzip"
           gzip -dc "$assets/national.sqlite.gzip" | sha256sum | grep -F 'cea7233a920bdc90130da19a4c2d5ac82e7e7001d4213c996d171c95abd4f48f'
-      - name: Run focused Android regressions
+      - name: Run the complete Android JVM suite
         run: |
-          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:testDebugUnitTest --tests '*Railway*' --tests '*ProgressAvailabilityTest' --tests '*NavigationPerformanceTest' --tests '*ARoadProgressCalculatorTest' --tests '*MapPerformanceTest' --tests '*JourneyReconciliationTest' --tests '*AchievementArchiveVolumeTest' --tests '*TimelineSourceArchiveTest' --tests '*JourneyStore*' --tests '*Ncn*' --tests '*Capture*' --tests '*Venue*' --tests '*MapRenderIdentityTest'
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:testDebugUnitTest
       - name: Allow the hosted Android emulator to use KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
