@@ -41,7 +41,7 @@ to known contributing IDs. The first cold index fill still traverses the archive
 The full Map refresh now preserves a valid all-journeys memory snapshot when
 changing filters, keeps validated per-source rows on retry, and skips rewriting a
 disk snapshot that was just read. Snapshot headroom checks include coverage
-and tappable lines. Snapshot decode has a 12 MiB encoded cap and uses one payload
+and tappable lines. Snapshot decode preserves the existing encoded size cap and uses one payload
 buffer. The renderer reuses its transformation buffer per visible line.
 Instrumentation records the navigation path, rows read, rebuilt or reused,
 and sampled JVM heap high water with railway activity. Allocations between

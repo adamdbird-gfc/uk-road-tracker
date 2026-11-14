@@ -10,7 +10,7 @@ import java.util.zip.GZIPOutputStream;
 
 /** Revision is checked before decompression; checksum covers encoded bytes without reserialisation. */
 final class MapSnapshotCache {
-    private static final int LIMIT=12*1024*1024,MAGIC=0x52504d32;
+    private static final int LIMIT=48*1024*1024,MAGIC=0x52504d32;
     private static AtomicFile file(Context c) {
         return new AtomicFile(new File(c.getFilesDir(),"screen-cache/map-routes.bin"));
     }
