@@ -110,6 +110,40 @@ public class JourneyReconciliationTest {
                 JourneyStore.archiveFile(app, "edited").toPath()), StandardCharsets.UTF_8)).getString("title"));
     }
 
+    @Test public void ownerExportsReplayWithoutChangingEvidenceOrCredit() throws Exception {
+        String fixtureDir = System.getenv("ROADPRINTS_OWNER_FIXTURES");
+        org.junit.Assume.assumeTrue("Optional private owner fixtures", fixtureDir != null);
+        String[][] fixtures = {
+                {"roadprints-journey-20261114-155438.json", "8b4d82ef610365da6058bf1824c2945b1d8f80172862c86fa7dd9f0f27ef641d", "1621"},
+                {"roadprints-journey-20261114-160155.json", "ca6b33c832d32f4889d96066f7856f0da22fb9420a49dc80a5bd4e1ff1ea60c8", "623"},
+                {"roadprints-journey-20261113-224131.json", "27fa8fe3c044470619684a1a580f543cd63d4a582fe5e8e1084f54c550315895", "444"}
+        };
+        List<String> ids = new java.util.ArrayList<>();
+        List<byte[]> baselines = new java.util.ArrayList<>();
+        for (String[] fixture : fixtures) {
+            byte[] bytes = Files.readAllBytes(new File(fixtureDir, fixture[0]).toPath());
+            assertEquals(fixture[1], NcnJson.hash(bytes));
+            JSONObject journey = new JSONObject(new String(bytes, StandardCharsets.UTF_8)).getJSONObject("journey");
+            assertEquals(Integer.parseInt(fixture[2]), journey.getJSONArray("raw_capture_samples").length());
+            ids.add(journey.getString("journey_id"));
+            baselines.add(write(journey));
+        }
+        long revision = JourneyStore.dataRevision(app);
+        long collectionRevision = JourneyStore.ncnDataRevision(app);
+        try (JourneyReconciliation run = new JourneyReconciliation(app)) {
+            run.enqueue(JourneyReconciliation.BASELINE, ids);
+            assertEquals(3, run.runBatch(JourneyReconciliation.BASELINE, () -> false));
+            for (int i = 0; i < ids.size(); i++) {
+                String id = ids.get(i);
+                JSONObject receipt = run.receipt(JourneyReconciliation.BASELINE, id);
+                assertEquals(NcnJson.hash(baselines.get(i)), receipt.getString("source_sha"));
+                assertArrayEquals(baselines.get(i), Files.readAllBytes(JourneyStore.archiveFile(app, id).toPath()));
+            }
+        }
+        assertEquals(revision, JourneyStore.dataRevision(app));
+        assertEquals(collectionRevision, JourneyStore.ncnDataRevision(app));
+    }
+
     @Test public void explicitlyRequestedWorkYieldsToCaptureAndRecordsOversizedEvidence() throws Exception {
         File file = JourneyStore.archiveFile(app, "large");
         try (java.io.RandomAccessFile output = new java.io.RandomAccessFile(file, "rw")) {

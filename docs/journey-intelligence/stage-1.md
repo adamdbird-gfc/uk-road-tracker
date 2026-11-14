@@ -123,3 +123,30 @@ checksum before replaying, and keep the real and synthetic fixtures distinct.
   First replay A and B privately, then test transition and tunnel contracts.
   A future accepted interpretation must bind to the analyzed source version
   and its user decisions before any collection reconciliation is allowed.
+
+## Local replay measurements
+
+Both runs used Java 17, Robolectric API 28 and a 256 MiB test JVM with
+generated journeys and the existing road assets. Wall-clock samples are from
+single local runs. They measure preparation only, with no physical map frames.
+They should not be compared directly to the owner-reported Pixel timings.
+
+| Operation | Build 284 source | Stage 1 |
+|---|---:|---:|
+| Progress, 1,661 rows, cold | 1,056 ms | 829 ms |
+| Progress, 1,661 rows, warm | 710 ms | 394 ms |
+| Map, 1,547 rows, cold | 478 ms | 355 ms |
+| Map, 1,547 rows, warm | 99 ms | 87 ms |
+| Map after one added row | 67 ms | 74 ms |
+| Focused warm payloads decoded and visited, 121 rows | 121 | 1 |
+
+Warm Progress reused all 1,661 rows, with no original source reads. Sampled
+Java heap peaked at 202 MiB cold and 211 MiB warm, including Robolectric
+overhead. Cached A-road anchors peaked at 16,310. Warm Map read no originals.
+The one-row Map case read one original, and test coverage totals and canonical
+display lines were equal across cold, warm and added-row runs. No material
+latency improvement is claimed for the one-row case.
+
+One pre-existing Milepost presentation assertion also reproduced on the
+build 284 tag. A withdrawn award now says its credit was withdrawn while
+retaining its previous recognition ordinal and leaving the award rule intact.

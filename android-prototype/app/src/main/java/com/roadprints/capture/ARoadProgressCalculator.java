@@ -90,6 +90,9 @@ final class ARoadProgressCalculator {
     private final Map<String, ReferenceInfo> referenceInfo = new HashMap<>();
     private int retainedAnchors;
     private int peakRetainedAnchors;
+    // Identical matched geometry can recur on daily journeys. Retain only small
+    // index arrays, keyed by geometry and canonical road, for this scan.
+    private final LinkedHashMap<String, int[]> projectedFeatures = new LinkedHashMap<>(64, .75f, true);
 
     int peakRetainedAnchors() { return peakRetainedAnchors; }
 
@@ -139,8 +142,43 @@ final class ARoadProgressCalculator {
             if(road==null){road=new Road(id,ref,region);roads.put(id,road);}
             road.matchedMetres+=Math.max(0,props.optDouble("distance_m",0));
             if(!jid.isEmpty()) road.journeyIds.add(jid);
-            Reference reference = reference(road);
-            if (reference != null) matchFeature(reference, road, feature.optJSONObject("geometry"));
+            addFeatureCoverage(road, feature.optJSONObject("geometry"));
+        }
+    }
+
+    private void addFeatureCoverage(Road road, JSONObject geometry) {
+        if (geometry == null) return;
+        // Cache only compact features. Large features still use the canonical matcher.
+        JSONArray coordinates = geometry.optJSONArray("coordinates");
+        String key = null;
+        if ("LineString".equals(geometry.optString("type"))
+                && coordinates != null && coordinates.length() <= 256) {
+            key = road.id + ":" + NcnJson.hash(geometry.toString().getBytes(StandardCharsets.UTF_8));
+            int[] cached = projectedFeatures.get(key);
+            if (cached != null) {
+                for (int index : cached) road.covered.add(index);
+                return;
+            }
+        }
+        Reference reference = reference(road);
+        if (reference == null) return;
+        if (key == null) {
+            matchFeature(reference, road, geometry);
+            return;
+        }
+        Road contribution = new Road(road.id, road.ref, road.region);
+        matchFeature(reference, contribution, geometry);
+        road.covered.addAll(contribution.covered);
+        if (contribution.covered.size() <= 256) {
+            int[] indices = new int[contribution.covered.size()];
+            int offset = 0;
+            for (int index : contribution.covered) indices[offset++] = index;
+            if (projectedFeatures.size() == 512) {
+                java.util.Iterator<String> oldest = projectedFeatures.keySet().iterator();
+                oldest.next();
+                oldest.remove();
+            }
+            projectedFeatures.put(key, indices);
         }
     }
 
@@ -237,6 +275,7 @@ final class ARoadProgressCalculator {
         sorted.sort((a,b)->Double.compare(b.matchedMetres,a.matchedMetres));
         Summary result=new Summary(sorted,missing);
         for(Road road:sorted) result.matchedMetres+=road.matchedMetres;
+        projectedFeatures.clear();
         references.clear();
         referenceInfo.clear();
         retainedAnchors = 0;
