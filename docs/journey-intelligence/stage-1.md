@@ -150,3 +150,10 @@ latency improvement is claimed for the one-row case.
 One pre-existing Milepost presentation assertion also reproduced on the
 build 284 tag. A withdrawn award now says its credit was withdrawn while
 retaining its previous recognition ordinal and leaving the award rule intact.
+
+The complete local Android JVM suite ran with the exact pinned NCN database
+and Milepost candidate inventory. Of 1,063 tests, 1,053 passed and 10 were skipped.
+The private replay of Colchester, Frimley Lodge and the 12 November evening
+journey preserved source bytes, archive revision and NCN evidence revision.
+Android instrumentation compiled. CI supplies separate runtime evidence for
+process restart, railway reassessment and navigation.
