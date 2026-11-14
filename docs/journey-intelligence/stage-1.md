@@ -157,3 +157,12 @@ The private replay of Colchester, Frimley Lodge and the 12 November evening
 journey preserved source bytes, archive revision and NCN evidence revision.
 Android instrumentation compiled. CI supplies separate runtime evidence for
 process restart, railway reassessment and navigation.
+
+GitHub Actions run 43634656064 passed the focused Android checks and four
+API 35 instrumentation invocations, including process restart with pending
+dry-run work, Cardiff rail reconstruction in both directions and repeated
+navigation across the 1,661-journey archive. A Progress refresh after railway
+reassessment took 318 ms in that run, with 11 source reads, 1,650 reused rows
+and a 31 MiB sampled Java peak on that synthetic archive. The signed APK
+workflow verifies installation over the distributed build 284 and preserves
+synthetic journey, NCN and achievement records before publication.
