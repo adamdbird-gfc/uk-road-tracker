@@ -17,14 +17,16 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: adamdbird-gfc/uk-road-tracker
-      BASELINE: f86e5c7e53a55bd848d802bb02ea4b46c63805e4
-      VALIDATION_RUN: '43690695343'
+      BASELINE: 03ef0eeb43f6196545f5095e59fe8f9c4c872115
+      VALIDATION_RUN: '43702760250'
       SOURCE_SHA: ${{ github.sha }}
       CATALOGUE_SHA256: 5409cf795b0ab58e4ef9911531b463c538c0a5e8c8555e3183ecb7d23c3dad5a
       CATALOGUE_BYTES: '15183872'
       CERT_SHA256: 5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031
-      APK: Roadprints-0.25.240-286.apk
-      TAG: roadprints-0.25.240-286-journey-stage1.1
+      VERSION_NAME: '0.25.241'
+      VERSION_CODE: '287'
+      APK: Roadprints-0.25.241-287.apk
+      TAG: roadprints-0.25.241-287-journey-stage1.1
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -33,8 +35,9 @@ jobs:
         run: |
           set -euo pipefail
           git merge-base --is-ancestor "$BASELINE" "$SOURCE_SHA"
-          git diff --exit-code "$BASELINE" "$SOURCE_SHA" -- android-prototype
-          git diff --exit-code "$BASELINE" "$SOURCE_SHA" -- scripts/check_railway_migration_android.sh .github/workflows/journey-intelligence-stage1.yml
+          git diff --exit-code "$BASELINE" "$SOURCE_SHA" -- . \
+            ':(exclude).github/workflows/journey-intelligence-stage1.1-owner.yml' \
+            ':(exclude)scripts/check_journey_stage11_upgrade.sh'
           gh api "repos/$GH_REPO/actions/runs/$VALIDATION_RUN" | jq -e --arg sha "$BASELINE" '
             .head_sha == $sha and .conclusion == "success"
             and .path == ".github/workflows/journey-intelligence-stage1.yml"' >/dev/null
@@ -73,6 +76,21 @@ jobs:
           assets=android-prototype/app/src/main/assets/railway
           unzip -p "$bundle" src/main/assets/railway/national.json > "$assets/national.json"
           unzip -p "$bundle" src/main/assets/railway/national.sqlite.gzip > "$assets/national.sqlite.gzip"
+      - name: Set only the owner release version in the build checkout
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          gradle = Path('android-prototype/app/build.gradle.kts')
+          source = gradle.read_text()
+          for previous, candidate in (
+              ('versionCode = 286', 'versionCode = ' + os.environ['VERSION_CODE']),
+              ('versionName = "0.25.240"', 'versionName = "' + os.environ['VERSION_NAME'] + '"'),
+          ):
+              assert source.count(previous) == 1, previous
+              source = source.replace(previous, candidate)
+          gradle.write_text(source)
+          PY
       - name: Assemble one APK with the established owner signing identity
         env:
           ROADPRINTS_DEBUG_KEYSTORE_B64: ${{ secrets.ROADPRINTS_DEBUG_KEYSTORE_B64 }}
@@ -100,7 +118,7 @@ jobs:
           "$signer" verify --verbose --print-certs "$apk" > "$RUNNER_TEMP/certificate.txt"
           grep -E "certificate SHA-256 digest: $CERT_SHA256$" "$RUNNER_TEMP/certificate.txt"
           "${signer%/*}/aapt" dump badging "$apk" > "$RUNNER_TEMP/package.txt"
-          grep -F "package: name='com.roadprints.capture' versionCode='286' versionName='0.25.240'" "$RUNNER_TEMP/package.txt"
+          grep -F "package: name='com.roadprints.capture' versionCode='$VERSION_CODE' versionName='$VERSION_NAME'" "$RUNNER_TEMP/package.txt"
           grep -F "launchable-activity: name='com.roadprints.capture.OnboardingActivity'" "$RUNNER_TEMP/package.txt"
           python3 scripts/verify_milepost_apk.py "$apk"
           python3 - "$apk" <<'PY'
@@ -125,7 +143,7 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-      - name: Verify upgrade from the distributed Build 285
+      - name: Verify upgrade from the distributed Build 286
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
@@ -139,8 +157,8 @@ jobs:
           apk="$RUNNER_TEMP/$APK"
           if ! gh release view "$TAG" --json tagName >/dev/null 2>&1; then
             gh release create "$TAG" "$apk" --target "$SOURCE_SHA" --prerelease --latest=false \
-              --title 'Roadprints 0.25.240 (286) • Journey Intelligence Stage 1.1' \
-              --notes "Controlled Pixel 10 owner test. Install over signed Build 285. Includes Map and archive responsiveness corrections and an in-app verification result for saved journey data. Source: $SOURCE_SHA. APK SHA-256: $APK_SHA256."
+              --title "Roadprints $VERSION_NAME ($VERSION_CODE) • Journey Intelligence Stage 1.1" \
+              --notes "Controlled Pixel 10 owner test. Install over signed build 286. Includes Map and Progress memory and archive reuse corrections, improved map rendering, and removal of manual verification from journey details. Validated app source: $BASELINE. Release workflow commit: $SOURCE_SHA. APK SHA-256: $APK_SHA256."
           fi
           test "$(gh api "repos/$GH_REPO/git/ref/tags/$TAG" --jq .object.sha)" = "$SOURCE_SHA"
           asset_url=$(gh api "repos/$GH_REPO/releases/tags/$TAG" | jq -er --arg apk "$APK" --argjson size "$APK_BYTES" \
@@ -149,5 +167,5 @@ jobs:
           curl --fail --silent --show-error --location --retry 3 --retry-all-errors \
             --max-time 120 --output "$RUNNER_TEMP/downloaded.apk" "$asset_url"
           cmp "$apk" "$RUNNER_TEMP/downloaded.apk"
-          printf '%s\n' "Source: $SOURCE_SHA" "Build: 0.25.240 (286)" "Bytes: $APK_BYTES" \
+          printf '%s\n' "App source: $BASELINE" "Release workflow: $SOURCE_SHA" "Build: $VERSION_NAME ($VERSION_CODE)" "Bytes: $APK_BYTES" \
             "APK SHA-256: $APK_SHA256" "Signing certificate SHA-256: $CERT_SHA256" "$asset_url" | tee -a "$GITHUB_STEP_SUMMARY"
