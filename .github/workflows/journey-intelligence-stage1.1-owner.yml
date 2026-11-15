@@ -19,28 +19,30 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: adamdbird-gfc/uk-road-tracker
-      BASELINE: 03ef0eeb43f6196545f5095e59fe8f9c4c872115
+      BASELINE: 620db84dbcedb7b65e87db7c8bf1422c60aad65d
+      VALIDATION_SHA: 03ef0eeb43f6196545f5095e59fe8f9c4c872115
       VALIDATION_RUN: '43702760250'
       SOURCE_SHA: ${{ github.sha }}
       CATALOGUE_SHA256: 5409cf795b0ab58e4ef9911531b463c538c0a5e8c8555e3183ecb7d23c3dad5a
       CATALOGUE_BYTES: '15183872'
       CERT_SHA256: 5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031
-      VERSION_NAME: '0.25.241'
-      VERSION_CODE: '287'
-      APK: Roadprints-0.25.241-287.apk
-      TAG: roadprints-0.25.241-287-journey-stage1.1
+      VERSION_NAME: '0.25.242'
+      VERSION_CODE: '288'
+      APK: Roadprints-0.25.242-288.apk
+      TAG: roadprints-0.25.242-288-journey-stage1.1
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
-      - name: Verify the reviewed source and the successful Android validation
+      - name: Verify the reviewed source and the reusable baseline Android validation
         run: |
           set -euo pipefail
+          git merge-base --is-ancestor "$VALIDATION_SHA" "$BASELINE"
           git merge-base --is-ancestor "$BASELINE" "$SOURCE_SHA"
           git diff --exit-code "$BASELINE" "$SOURCE_SHA" -- . \
             ':(exclude).github/workflows/journey-intelligence-stage1.1-owner.yml' \
             ':(exclude)scripts/check_journey_stage11_upgrade.sh'
-          gh api "repos/$GH_REPO/actions/runs/$VALIDATION_RUN" | jq -e --arg sha "$BASELINE" '
+          gh api "repos/$GH_REPO/actions/runs/$VALIDATION_RUN" | jq -e --arg sha "$VALIDATION_SHA" '
             .head_sha == $sha and .conclusion == "success"
             and .path == ".github/workflows/journey-intelligence-stage1.yml"' >/dev/null
       - name: Restore existing packaging reference cache
@@ -135,7 +137,7 @@ jobs:
               paths = package.read('assets/railway/network-first-r1.bin.gzip')
               assert hashlib.sha256(paths).hexdigest() == '80f4486253e94658b7128411b9c52b29e07e7dddd04c4f8392ae8af6afc5d340'
               dex = b''.join(package.read(name) for name in package.namelist() if name.endswith('.dex'))
-              for symbol in (b'JourneyOriginRecovery;', b'RailwayTrialWorker;', b'RegionalRailwayCatalogue;', b'NetworkFirstRailway;', b'RailwayMileage;', b'NationalRailway;', b'NationalRailwayCatalogue;', b'JourneyReconciliation;'):
+              for symbol in (b'JourneyOriginRecovery;', b'RailwayTrialWorker;', b'RegionalRailwayCatalogue;', b'NetworkFirstRailway;', b'RailwayMileage;', b'NationalRailway;', b'NationalRailwayCatalogue;', b'JourneyReconciliation;', b'PerformanceDiagnostics$ArchiveHeapSample;', b'payload_decode_ms=', b'art.gc.bytes-freed'):
                   assert symbol in dex, symbol
           PY
           echo "APK_SHA256=$(sha256sum "$apk" | cut -d' ' -f1)" >> "$GITHUB_ENV"
@@ -145,7 +147,7 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-      - name: Verify upgrade from the distributed Build 286
+      - name: Verify upgrade from the distributed Build 287
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
@@ -160,7 +162,7 @@ jobs:
           if ! gh release view "$TAG" --json tagName >/dev/null 2>&1; then
             gh release create "$TAG" "$apk" --target "$SOURCE_SHA" --prerelease --latest=false \
               --title "Roadprints $VERSION_NAME ($VERSION_CODE) • Journey Intelligence Stage 1.1" \
-              --notes "Controlled Pixel 10 owner test. Install over signed build 286. Includes Map and Progress memory and archive reuse corrections, improved map rendering, and removal of manual verification from journey details. Validated app source: $BASELINE. Release workflow commit: $SOURCE_SHA. APK SHA-256: $APK_SHA256."
+              --notes "Controlled Pixel 10 owner test. Install over signed build 287. Includes Map and Progress cache reuse and phase-specific heap and garbage collection diagnostics for Pixel 10 testing. Reviewed app source: $BASELINE. Release workflow commit: $SOURCE_SHA. APK SHA-256: $APK_SHA256."
           fi
           test "$(gh api "repos/$GH_REPO/git/ref/tags/$TAG" --jq .object.sha)" = "$SOURCE_SHA"
           asset_url=$(gh api "repos/$GH_REPO/releases/tags/$TAG" | jq -er --arg apk "$APK" --argjson size "$APK_BYTES" \
