@@ -83,3 +83,80 @@ run of the same fixture sampled 74 MiB and reported ready at 12,524 and 73 ms.
 Runner scheduling varied, so these samples do not isolate a causal speedup
 for cold preparation. A 118 ms road frame remained in the final run. Pixel
 memory headroom, venue-overlay behaviour and frame-time acceptance are open.
+
+## Build 287 cache and memory follow-up
+
+The Pixel 10 (Android 17) reported process-wide Java heap samples of 247–255
+MiB against a 256 MiB limit with railway reassessment inactive. The original
+sampler reports allocated occupancy and carries its maximum from the
+archive scan into geometry or coverage finalisation. Those samples establish
+little instantaneous headroom. Live bytes, garbage collected bytes, native
+paths and headroom after collection require separate measurements.
+
+- Progress recorded 9,835 ms for 1,663 journeys with zero source decodes.
+  Its 8,609 ms cache interval includes SQLite row queries and BLOB copies,
+  checksum verification, UTF-8/JSON conversion and road-reference validation.
+  The 1,028 ms merge accumulated distances, coverage and discovery evidence.
+  A current process snapshot already bypasses this work. After a process
+  restart the disk snapshot supplies headline totals only, so full coverage
+  and discovery still require aggregation.
+- Map recorded 4,237 ms for 1,447 cached payloads with zero rebuilds or source
+  reads. That interval also includes bulk header preparation, individual
+  payload queries, validation, filtering, coverage merge and geometry append.
+  The 10,538 ms navigation figure additionally spans executor and lock wait,
+  snapshot restore attempt, reference setup, canonical section construction
+  and path preparation. The current view, process snapshot or disk snapshot
+  can bypass the archive. A large snapshot can be dropped on pause or skipped
+  on disk for its size or available heap headroom.
+- Map and Progress archive scans share an exclusive lock. Their models can
+  coexist with retained view geometry and with path preparation, optional
+  Map snapshot serialisation or Progress settlement enrichment outside the lock.
+  Progress keeps aggregate coverage, journey IDs and local-road geometry strings.
+  Map keeps route JSON, precise tap coordinates and bounded path buffers.
+  Per-row cache BLOBs and parsed records largely create temporary allocation,
+  with Map retaining selected lines in its rendered model.
+- Successful bundled A-road signature and length metadata now survives
+  across calculators in the same process, capped at 512 entries of signatures,
+  anchor counts and lengths. File tokens, payload
+  digests, per-row signature and index validation stay in place.
+- Diagnostics now separate payload access, checksum and decoding, reference
+  validation, merge, wait and geometry work. Independent phase samples log
+  heap entry and exit and ART collection and reclaimed-byte deltas. If
+  occupancy remains high after natural collections, capture one targeted
+  heap profile at the implicated screen transition to identify retaining
+  owners.
+- The 105–111 ms road frames occurred with the path cache working
+  (25,745 hits). The slow-frame log is rate-limited to one entry per five
+  seconds and has no frame denominator, so frequency remains unknown.
+
+Stage 1.1 physical-device memory and latency acceptance remains open. Build
+287 source provenance is `03ef0ee`. The branch head before this follow-up
+was `69604f8` and differs only in owner release tooling. Live backend commit
+and active Pixel reference revision remain unverified.
+
+### Focused validation
+
+Two matched, sequential Robolectric/JVM runs used the same 1,663-journey
+fixtures and C1-only JIT settings after the initial baseline JVM hit a C2
+compiler crash. These are individual host timings.
+
+| Warm preparation | Build 287 source | Corrected source | A-road asset opens during validation |
+| --- | ---: | ---: | ---: |
+| Progress, 56 A roads | 1,058 ms | 210 ms | 56 → 0 |
+| Map, one A road | 243 ms | 164 ms | 1 → 0 |
+
+Both warm passes reused 1,663 cached payloads and read zero originals.
+The Map finish stage still opens the reference for exact geometry. The
+corrected sample spent 114 ms in Map records and continued to produce
+identical mapped coverage. Cold Map (3,190 → 3,393 ms) and one-new-journey
+Map (157 → 200 ms) were slower in this single comparison. These figures
+establish the avoided asset work and provide no physical-device timing
+or heap-retention estimate.
+
+All 30 focused JVM tests passed. The Progress fixture changed the distance
+of one saved journey and verified a new archive revision, one rebuilt row,
+1,662 reused rows and the exact revised total. Map verified changed-source
+rebuilds, filter behavior and unchanged rendered coverage. The navigation
+suite checked cache invalidation, path reuse and source evidence preservation.
+The previous 1,058 JVM passes and four Android API 35 invocations remain
+baseline evidence. ART collection deltas require a physical-device test.

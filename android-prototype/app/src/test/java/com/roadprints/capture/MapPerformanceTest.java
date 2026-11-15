@@ -231,7 +231,7 @@ public class MapPerformanceTest {
     }
 
     @Test public void progressRetainsBoundedARoadIndexesWith1663Journeys() throws Exception {
-        JSONObject master = trip("volume");
+        JSONObject master = trip("volume").put("distance_meters", 1000);
         JSONObject roads = asset("index.json").getJSONObject("roads");
         List<JSONObject> templates = new ArrayList<>();
         List<String> ids = new ArrayList<>();
@@ -265,6 +265,9 @@ public class MapPerformanceTest {
             long start = System.nanoTime();
             Object stats = summarize.invoke(controller.get(), app, 0);
             System.out.println("PROGRESS_WALL pass=" + i + " ms=" + (System.nanoTime() - start) / 1e6);
+            Field drivingMetres = stats.getClass().getDeclaredField("drivingMetres");
+            drivingMetres.setAccessible(true);
+            assertEquals(1663000, drivingMetres.getDouble(stats), 0);
             Field field = stats.getClass().getDeclaredField("aRoadProgress");
             field.setAccessible(true);
             ARoadProgressCalculator.Summary summary = (ARoadProgressCalculator.Summary) field.get(stats);
@@ -285,6 +288,18 @@ public class MapPerformanceTest {
                 }
             }
         }
+        long revision = JourneyStore.progressRevision(app);
+        JSONObject changed = JourneyStore.get(app, "progress-volume-0");
+        JourneyStore.save(app, changed.put("distance_meters", 1234));
+        assertTrue(JourneyStore.progressRevision(app) > revision);
+        org.robolectric.shadows.ShadowLog.clear();
+        Object updated = summarize.invoke(controller.get(), app, 0);
+        Field drivingMetres = updated.getClass().getDeclaredField("drivingMetres");
+        drivingMetres.setAccessible(true);
+        assertEquals(1663234, drivingMetres.getDouble(updated), 0);
+        assertTrue(org.robolectric.shadows.ShadowLog.getLogsForTag("RoadprintsTiming").stream()
+                .anyMatch(log -> log.msg.startsWith("progress_archive")
+                        && log.msg.contains("rows=1663 reads=1 reused=1662")));
     }
 
     @Test public void staleFocusedExclusionIsRecheckedAfterFileReplacement() throws Exception {
