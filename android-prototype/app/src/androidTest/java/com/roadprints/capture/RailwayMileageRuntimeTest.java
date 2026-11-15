@@ -165,8 +165,10 @@ public class RailwayMileageRuntimeTest {
                 assertTrue("A first journey must commit", waitForDistance(app, "navigation-0", 39_228, 30_000));
             }
             for (int i = 0; i < 2; i++) {
-                exerciseScreen(ProgressActivity.class);
+                // Measure cold Map preparation on its own, then exercise Progress
+                // and retained navigation while railway history is still pending.
                 exerciseCompletedMap();
+                exerciseScreen(ProgressActivity.class);
                 exerciseScreen(JourneyListActivity.class);
                 exerciseScreen(AchievementsActivity.class);
             }
@@ -298,7 +300,6 @@ public class RailwayMileageRuntimeTest {
         long start = SystemClock.elapsedRealtime();
         try (var screen = androidx.test.core.app.ActivityScenario.launch(type)) {
             awaitOnMain(() -> true, 4000);
-            if (type != AchievementsActivity.class) awaitOnMain(() -> RailwayTrialWorker.isChecking(), 4000);
         }
         long elapsed = SystemClock.elapsedRealtime() - start;
         android.util.Log.i("RoadprintsRailwayRuntime", "navigation=" + type.getSimpleName() + " elapsed_ms=" + elapsed);
