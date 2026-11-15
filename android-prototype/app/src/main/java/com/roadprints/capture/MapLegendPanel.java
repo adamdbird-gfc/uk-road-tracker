@@ -45,6 +45,15 @@ final class MapLegendPanel {
             toggle.setOnCheckedChangeListener((button,on)->{state.setText(on?"On":"Off");MapLayerPreferences.set(activity,layer,on);changed.run();});
             row.addView(control,new LinearLayout.LayoutParams(dp(activity,60),-2));lines.addView(row);
         }
+        if (!townMap) {
+            LinearLayout coverage = new LinearLayout(activity);
+            coverage.setGravity(Gravity.CENTER_VERTICAL);
+            coverage.addView(new Sample(activity, MapLayerPreferences.LOCAL_ROAD_COLOR, null, false),
+                    new LinearLayout.LayoutParams(dp(activity, 40), dp(activity, 36)));
+            coverage.addView(text(activity, "Covered local roads in central Gravesend. Tap a line for journeys.",
+                    12, 0xFF43516A, false), new LinearLayout.LayoutParams(0, -2, 1));
+            lines.addView(coverage);
+        }
         body.addView(text(activity,"These colours describe Roadprints overlays. Recorded travel can overlap the coloured coverage lines. The background map uses its own colours.",12,0xFFB9C5D8,false));
         if(!townMap){
             body.addView(text(activity,"COLLECTIONS ON THE MAP",14,0xFF67D5CC,true));

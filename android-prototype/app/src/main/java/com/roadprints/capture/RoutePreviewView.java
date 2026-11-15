@@ -351,8 +351,24 @@ public class RoutePreviewView extends View {
         routeFitPending = false;
     }
 
+    private final List<JSONArray> localRoadLines = new ArrayList<>();
+    private final Paint localRoadPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final List<JSONArray> ferrySegments=new ArrayList<>();
     private final Paint ferryPaint=new Paint(Paint.ANTI_ALIAS_FLAG);
+    void setLocalRoadLines(List<JSONArray> routes) {
+        replaceSegments(localRoadLines, routes);
+        localRoadPaint.setColor(MapLayerPreferences.LOCAL_ROAD_COLOR);
+        localRoadPaint.setStyle(Paint.Style.STROKE);
+        localRoadPaint.setStrokeWidth(dp(4));
+        localRoadPaint.setStrokeCap(Paint.Cap.BUTT);
+        if (!localRoadLines.isEmpty()) {
+            coordinatesValid = true;
+            routeFitPending = true;
+            fitRouteIfReady();
+        }
+        invalidate();
+    }
+
     public void setFerrySegments(List<JSONArray> routes) {
         renderGeometry.invalidateLayer(ferrySegments);
         ferrySegments.clear();
@@ -391,6 +407,16 @@ public class RoutePreviewView extends View {
 
     public interface OnMapRoadTapListener {
         void onMapRoadTap(double latitude, double longitude);
+    }
+
+    interface OnLocalRoadTapListener {
+        void onLocalRoadTap(JSONArray line, double fraction);
+    }
+
+    private OnLocalRoadTapListener localRoadTapListener;
+
+    void setLocalRoadTapListener(OnLocalRoadTapListener listener) {
+        localRoadTapListener = listener;
     }
 
     private OnMapRoadTapListener mapRoadTapListener;
@@ -732,6 +758,7 @@ public class RoutePreviewView extends View {
                 drawRoute(canvas, coordinates, routePaint,
                         flatRoadMapStyle ? null : routeHaloPaint);
             }
+            if (travelVisible) drawRoadLayer(canvas, localRoadLines, localRoadPaint);
             if (remainingVisible) {
                 drawRoadLayer(canvas, incompleteMotorwaySegments, motorwayIncompletePaint);
                 drawRoadLayer(canvas, incompleteARoadSegments, aRoadIncompletePaint);
@@ -892,6 +919,7 @@ public class RoutePreviewView extends View {
             } else {
                 fitRoutes.addAll(ferrySegments);
                 fitRoutes.addAll(matchedSegments);
+                fitRoutes.addAll(localRoadLines);
                 fitRoutes.addAll(routeExtensions);
                 if (hasRoutePoints(coordinates)) fitRoutes.add(coordinates);
                 fitRoutes.addAll(motorwaySegments);
@@ -1139,7 +1167,10 @@ public class RoutePreviewView extends View {
         float nearest = Float.MAX_VALUE;
         double selectedLongitude = Double.NaN;
         double selectedLatitude = Double.NaN;
+        JSONArray selectedLocalRoad = null;
+        float selectedFraction = 0;
         List<List<JSONArray>> groups = new ArrayList<>();
+        if (travelVisible && localRoadTapListener != null) groups.add(localRoadLines);
         if(travelVisible) groups.add(matchedSegments);
         if(travelVisible) groups.add(routeExtensions);
         if(motorwayVisible) groups.add(motorwaySegments);
@@ -1163,6 +1194,8 @@ public class RoutePreviewView extends View {
                     float distance = (float) Math.hypot(x - projectedX, y - projectedY);
                     if (distance >= nearest) continue;
                     nearest = distance;
+                    selectedLocalRoad = group == localRoadLines ? route : null;
+                    selectedFraction = amount;
                     double ax = longitudeToUnitX(a.optDouble(0));
                     double bx = longitudeToUnitX(b.optDouble(0));
                     double ay = latitudeToUnitY(clampLatitude(a.optDouble(1)));
@@ -1176,7 +1209,8 @@ public class RoutePreviewView extends View {
         // coordinate. This compensates for thick strokes and low zoom levels.
         if (nearest > dp(42) || !Double.isFinite(selectedLatitude)
                 || !Double.isFinite(selectedLongitude)) return false;
-        mapRoadTapListener.onMapRoadTap(selectedLatitude, selectedLongitude);
+        if (selectedLocalRoad != null) localRoadTapListener.onLocalRoadTap(selectedLocalRoad, selectedFraction);
+        else mapRoadTapListener.onMapRoadTap(selectedLatitude, selectedLongitude);
         return true;
     }
 

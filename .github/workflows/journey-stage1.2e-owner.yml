@@ -1,0 +1,145 @@
+name: Roadprints Stage 1.2E owner APK
+on:
+  push:
+    branches: [codex/all-road-coverage-stage1-2e]
+    paths:
+      - .github/workflows/journey-stage1.2e-owner.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: roadprints-stage1-2e-owner
+  cancel-in-progress: false
+jobs:
+  owner-apk:
+    if: github.repository == 'adamdbird-gfc/uk-road-tracker' && github.ref == 'refs/heads/codex/all-road-coverage-stage1-2e'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 42
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: adamdbird-gfc/uk-road-tracker
+      BASELINE_SHA: a10a9619204e89ab70d1424091217f5b12f11ae76fa72a118041f7b2da6c3248
+      CERT_SHA256: 5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031
+      APK: Roadprints-0.25.243-289.apk
+      TAG: roadprints-0.25.243-289-stage1.2e
+      JAVA_TOOL_OPTIONS: -XX:TieredStopAtLevel=1
+      NCN_TEST_DATABASE: ${{ github.workspace }}/.cache/ncn/catalogue.db
+      MILEPOST_CANDIDATE_CATALOGUE: ${{ github.workspace }}/reference-data/millennium-mileposts/revision-1/catalogue.jsonl
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - name: Verify lineage and restore the exact 288 packaged reference assets
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 7d54df3f42cbfee2d8dd1ed3327f3e33e9904cd8 "$GITHUB_SHA"
+          git merge-base --is-ancestor 31e6bdd64c1aaa3393d959bcfccdf7772c6b0b32 "$GITHUB_SHA"
+          baseline="$RUNNER_TEMP/build288.apk"
+          gh release download roadprints-0.25.242-288-journey-stage1.1 --pattern Roadprints-0.25.242-288.apk --output "$baseline"
+          echo "$BASELINE_SHA  $baseline" | sha256sum --check
+          assets=android-prototype/app/src/main/assets
+          for asset in historic-counties/boundaries.bin railway/national.json railway/national.sqlite.gzip; do
+            unzip -p "$baseline" "assets/$asset" > "$assets/$asset"
+          done
+          test -n "$JAVA_HOME_17_X64"
+          test -f "$ANDROID_HOME/platforms/android-35/android.jar"
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+      - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: .cache/ncn/catalogue.db
+          key: reference-pins-v2-${{ runner.os }}-${{ hashFiles('android-prototype/app/src/main/assets/ncn-national/manifest.json', 'android-prototype/app/src/main/assets/historic-counties/catalogue.json') }}
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.10'
+          cache-read-only: true
+      - name: Run coverage, map, archive and established progression regressions
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s scripts -p 'test_*all_road_coverage.py'
+          python -m unittest discover -s scripts -p 'test_audit_native_road_coverage.py'
+          if [[ ! -s "$NCN_TEST_DATABASE" ]]; then unset NCN_TEST_DATABASE; fi
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false \
+            :app:testDebugUnitTest --tests '*LocalRoadCoverageTest' --tests '*Map*Test' \
+            --tests '*JourneyStore*Test' --tests '*CaptureRecoveryIntegrationTest' \
+            --tests '*MotorwayProgressCalculatorTest' --tests '*ARoadProgressCalculatorTest' \
+            --tests '*NcnAndroidTest' --tests '*NcnPresentationTest' --tests '*MultimodalFerryTest'
+      - name: Assemble with the established owner signing certificate
+        env:
+          ROADPRINTS_DEBUG_KEYSTORE_B64: ${{ secrets.ROADPRINTS_DEBUG_KEYSTORE_B64 }}
+          ROADPRINTS_DEBUG_STORE_PASSWORD: ${{ secrets.ROADPRINTS_DEBUG_STORE_PASSWORD }}
+          ROADPRINTS_DEBUG_KEY_ALIAS: ${{ secrets.ROADPRINTS_DEBUG_KEY_ALIAS }}
+          ROADPRINTS_DEBUG_KEY_PASSWORD: ${{ secrets.ROADPRINTS_DEBUG_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$ROADPRINTS_DEBUG_KEYSTORE_B64"
+          test -n "$ROADPRINTS_DEBUG_STORE_PASSWORD"
+          test -n "$ROADPRINTS_DEBUG_KEY_ALIAS"
+          test -n "$ROADPRINTS_DEBUG_KEY_PASSWORD"
+          export ROADPRINTS_DEBUG_KEYSTORE="$RUNNER_TEMP/roadprints-debug.keystore"
+          trap 'rm -f "$ROADPRINTS_DEBUG_KEYSTORE"' EXIT
+          umask 077
+          printf '%s' "$ROADPRINTS_DEBUG_KEYSTORE_B64" | base64 --decode > "$ROADPRINTS_DEBUG_KEYSTORE"
+          unset ROADPRINTS_DEBUG_KEYSTORE_B64
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:assembleDebug
+          cp android-prototype/app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/$APK"
+      - name: Verify both APK identities and exact bundled reference data
+        run: |
+          set -euo pipefail
+          signer=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -n 1)
+          "$signer" verify --print-certs "$RUNNER_TEMP/build288.apk" | grep -F "certificate SHA-256 digest: $CERT_SHA256"
+          "$signer" verify --print-certs "$RUNNER_TEMP/$APK" | grep -F "certificate SHA-256 digest: $CERT_SHA256"
+          "${signer%/*}/aapt" dump badging "$RUNNER_TEMP/build288.apk" > "$RUNNER_TEMP/baseline-package.txt"
+          "${signer%/*}/aapt" dump badging "$RUNNER_TEMP/$APK" > "$RUNNER_TEMP/package.txt"
+          grep -F "package: name='com.roadprints.capture' versionCode='288' versionName='0.25.242'" "$RUNNER_TEMP/baseline-package.txt"
+          grep -F "package: name='com.roadprints.capture' versionCode='289' versionName='0.25.243'" "$RUNNER_TEMP/package.txt"
+          python scripts/verify_milepost_apk.py "$RUNNER_TEMP/$APK"
+          python - "$RUNNER_TEMP/$APK" "$RUNNER_TEMP/build288.apk" <<'PY'
+          import hashlib, sys, zipfile
+          with zipfile.ZipFile(sys.argv[1]) as update, zipfile.ZipFile(sys.argv[2]) as baseline:
+              for old in baseline.infolist():
+                  if not old.filename.startswith('assets/') or old.is_dir():
+                      continue
+                  with baseline.open(old) as source, update.open(old.filename) as packaged:
+                      assert hashlib.file_digest(source, 'sha256').digest() == hashlib.file_digest(packaged, 'sha256').digest(), old.filename
+              local = update.read('assets/gravesend-tagged-v1.json')
+              assert hashlib.sha256(local).hexdigest() == '9c3ce6b58789df13f2019b69be50cb95aa56eacdf612b1606973cfaf08fe4aba'
+          PY
+          echo "APK_SHA256=$(sha256sum "$RUNNER_TEMP/$APK" | cut -d' ' -f1)" >> "$GITHUB_ENV"
+      - name: Enable the Android emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Upgrade build 288 and exercise the regular Map on Android
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: bash scripts/check_stage12e_android.sh
+      - name: Retain validation receipts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stage1.2e-validation
+          path: |
+            android-prototype/app/build/test-results/testDebugUnitTest/
+            ${{ runner.temp }}/stage12e-android*.log
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Publish and verify the signed direct-download asset
+        run: |
+          set -euo pipefail
+          apk="$RUNNER_TEMP/$APK"
+          gh release create "$TAG" "$apk" --target "$GITHUB_SHA" --prerelease --latest=false \
+            --title "Roadprints 0.25.243 (289) • Gravesend road coverage" \
+            --notes "Owner test. Install over signed build 288. Gravesend’s locally supported streets appear as cumulative coverage in the normal Map. Accuracy in everyday driving and Pixel 10 performance are pending owner testing. Source: $GITHUB_SHA. APK SHA-256: $APK_SHA256."
+          test "$(gh api "repos/$GH_REPO/git/ref/tags/$TAG" --jq .object.sha)" = "$GITHUB_SHA"
+          asset_url=$(gh api "repos/$GH_REPO/releases/tags/$TAG" | jq -er --arg apk "$APK" \
+            'select(.draft == false and .prerelease == true) | .assets[] | select(.name == $apk and .state == "uploaded") | .browser_download_url')
+          test "$asset_url" = "https://github.com/$GH_REPO/releases/download/$TAG/$APK"
+          curl --fail --silent --show-error --location --retry 3 --max-time 120 --output "$RUNNER_TEMP/downloaded.apk" "$asset_url"
+          cmp "$apk" "$RUNNER_TEMP/downloaded.apk"
+          printf '%s\n' "Source $GITHUB_SHA" "APK SHA-256 $APK_SHA256" "$asset_url" | tee -a "$GITHUB_STEP_SUMMARY"
