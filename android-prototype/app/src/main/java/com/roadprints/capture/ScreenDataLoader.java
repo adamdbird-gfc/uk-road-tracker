@@ -37,10 +37,6 @@ final class ScreenDataLoader {
             task -> new Thread(task, "roadprints-venue-ui"));
     static void venues(Runnable task) { VENUES.execute(task); }
 
-    private static final ExecutorService EVIDENCE = Executors.newSingleThreadExecutor(
-            task -> new Thread(task, "roadprints-evidence-check"));
-    static java.util.concurrent.Future<?> evidence(Runnable task) { return EVIDENCE.submit(task); }
-
     private static final java.util.concurrent.locks.ReentrantLock ARCHIVE_PREPARATION =
             new java.util.concurrent.locks.ReentrantLock(true);
     private static volatile boolean preparingArchive;

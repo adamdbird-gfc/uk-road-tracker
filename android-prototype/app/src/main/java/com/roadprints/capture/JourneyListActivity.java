@@ -185,80 +185,6 @@ public class JourneyListActivity extends Activity {
         super.onSaveInstanceState(state);
     }
 
-    private void verifySavedJourney(String id, TextView action, TextView status, boolean start) {
-        long queued = android.os.SystemClock.elapsedRealtime();
-        Object request = new Object();
-        if (start) {
-            status.setTag(request);
-            action.setEnabled(false);
-            status.setText("Verifying saved journey data…");
-        }
-        final Runnable timeout = () -> {
-            if (!status.isShown() || status.getTag() != request || action.isEnabled()) return;
-            action.setEnabled(true);
-            status.setText("Verification paused. Tap Verify saved journey data to resume.");
-        };
-        if (start) mainHandler.postDelayed(timeout, 8000);
-        ScreenDataLoader.evidence(() -> {
-            long started = android.os.SystemClock.elapsedRealtime();
-            String message = null;
-            String outcome = "no_receipt";
-            try (JourneyReconciliation reconciliation = new JourneyReconciliation(getApplicationContext())) {
-                if (start && started - queued >= 8000) throw new java.util.concurrent.CancellationException();
-                JSONObject result = start
-                        ? reconciliation.verifySelected(id, () -> isDestroyed() || !action.isAttachedToWindow()
-                                || android.os.SystemClock.elapsedRealtime() - queued >= 8000)
-                        : reconciliation.latestVerification(id);
-                if (result != null) {
-                    outcome = result.getString("outcome");
-                    message = evidenceMessage(result);
-                } else if (start) {
-                    outcome = "source_changed";
-                    message = "Saved data changed during verification. Try again.";
-                }
-            } catch (java.util.concurrent.CancellationException stopped) {
-                outcome = "paused";
-                message = CaptureService.isActive(getApplicationContext())
-                        ? "Verification paused while Roadprints is recording. Try again after recording."
-                        : "Verification paused. Tap Verify saved journey data to resume.";
-            } catch (Exception failure) {
-                outcome = "failed";
-                if (start) message = "Saved journey data could not be verified. Try again.";
-            }
-            if (start) PerformanceDiagnostics.timing("journey_evidence_verify",
-                    android.os.SystemClock.elapsedRealtime() - started,
-                    "queue_ms=" + (started - queued) + " outcome=" + outcome);
-            final String feedback = message;
-            mainHandler.post(() -> {
-                if (start) mainHandler.removeCallbacks(timeout);
-                if (isDestroyed() || !status.isAttachedToWindow()) return;
-                if (start && status.getTag() != request) return;
-                if (!start && status.getTag() != null) return;
-                action.setEnabled(true);
-                if (feedback != null) status.setText(feedback);
-            });
-        });
-    }
-
-    private static String evidenceMessage(JSONObject receipt) throws org.json.JSONException {
-        String outcome = receipt.optString("outcome");
-        String unchanged = "\nJourney, mileage and collection progress unchanged.";
-        if ("TOO_LARGE".equals(outcome)) return "Verification reached its size limit for this recording." + unchanged;
-        if ("EVIDENCE_UNAVAILABLE".equals(outcome)) return "Verification complete. The saved record has too little route evidence to assess." + unchanged;
-        JSONObject interpretation = new JSONObject(receipt.optString("interpretation", "{}"));
-        boolean raw = interpretation.optBoolean("has_raw_samples");
-        String timing = interpretation.optString("raw_timing", "unknown");
-        String evidence = raw ? "Original GPS samples are available." : "Original GPS samples are unavailable.";
-        if (raw) evidence += switch (timing) {
-            case "present" -> " Sample timestamps are available. Future analysis must still check gaps and fix quality.";
-            case "partial" -> " Some sample timestamps are missing.";
-            case "missing" -> " Sample timestamps are missing.";
-            default -> " Tap Verify to refresh timing details.";
-        };
-        return "Verification complete. " + evidence
-                + "\nUse Debug Journey to export the saved evidence." + unchanged;
-    }
-
     private void exportJourneyDebug(String journeyId) {
         if (pendingDebugJourneyId != null) return;
         pendingDebugJourneyId = journeyId;
@@ -1611,23 +1537,6 @@ public class JourneyListActivity extends Activity {
         debug.setPadding(dp(12), dp(14), dp(12), dp(8));
         debug.setOnClickListener(v -> exportJourneyDebug(journey.optString("journey_id")));
         supplemental.addView(debug);
-        TextView evidence = new TextView(this);
-        evidence.setText("Verify saved journey data");
-        TextView evidenceStatus = new TextView(this);
-        evidenceStatus.setTextColor(0xFFD3DCED);
-        evidenceStatus.setTextSize(14);
-        evidenceStatus.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
-        evidenceStatus.setText("Checks the evidence already saved for this journey.");
-        body.addView(evidenceStatus);
-        evidence.setTextSize(14);
-        evidence.setTextColor(0xFFD3DCED);
-        evidence.setGravity(Gravity.CENTER);
-        evidence.setPadding(dp(12), dp(14), dp(12), dp(8));
-        evidence.setOnClickListener(v -> {
-            verifySavedJourney(journey.optString("journey_id"), evidence, evidenceStatus, true);
-            scroll.post(() -> scroll.smoothScrollTo(0, evidenceStatus.getTop()));
-        });
-        supplemental.addView(evidence);
         actions.addView(supplemental, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
         actions.addView(delete,new LinearLayout.LayoutParams(-1,-2));
@@ -1676,7 +1585,6 @@ public class JourneyListActivity extends Activity {
             }
         });
         dialog.show();
-        evidenceStatus.post(() -> verifySavedJourney(journey.optString("journey_id"), evidence, evidenceStatus, false));
         if (railwayEligible) RailwayTrialWorker.observe(this, journey.optString("journey_id"), railwayObserver,
                 message -> {
                     status.setText(message);
