@@ -121,8 +121,10 @@ final class MapJourneyStore implements AutoCloseable {
                 head=header(raw);
             }
             Record record=new Record(source,token,head,raw,raw==null);
-            if(raw!=null)save(record,null);
             visitor.visit(record);
+            // A prepared payload commits its header in the same write. Save a
+            // header separately only for rows that did not need a payload.
+            if (raw != null && !record.cached) save(record, null);
         }
     }
     private record CachedHeader(String token, String data) {}

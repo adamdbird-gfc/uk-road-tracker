@@ -164,7 +164,7 @@ public class ProgressActivity extends Activity {
 
     @Override
     protected void onResume() {
-        super.onResume();navigation.resume(this);if(loadedStats!=null&&!loadedStats.pending){navigation.frame(statisticsContent,"first_content", "cache=retained");if(!loadedStats.summaryOnly&&loadedRevision==JourneyStore.dataRevision(this))navigation.frame(statisticsContent,"ready","cache=retained");}
+        super.onResume();navigation.resume(this);if(loadedStats!=null&&!loadedStats.pending){navigation.frame(statisticsContent,"first_content", "cache=retained");if(!loadedStats.summaryOnly&&loadedRevision==JourneyStore.progressRevision(this))navigation.frame(statisticsContent,"ready","cache=retained");}
         RailwayTrialWorker.resume(this);
         String checkinId=getIntent().getStringExtra("pub_checkin_id");
         if(checkinId!=null){
@@ -238,7 +238,7 @@ public class ProgressActivity extends Activity {
 
     private void loadStatistics() {
         final android.content.Context app = getApplicationContext();
-        final long revision = JourneyStore.dataRevision(app);
+        final long revision = JourneyStore.progressRevision(app);
         final long geometryRevision = JourneyStore.geometryRevision(app);
         final int generation = statsLoadGeneration;
         DistanceStats cached; long cachedRevision;
@@ -277,7 +277,7 @@ public class ProgressActivity extends Activity {
                     "queue_ms=" + (started - queuedAt) + " revision=" + revision);
             boolean current;
             synchronized (JourneyStore.class) {
-                current = failure == null && JourneyStore.dataRevision(app) == revision;
+                current = failure == null && JourneyStore.progressRevision(app) == revision;
                 synchronized (STATS_CACHE_LOCK) {
                     if (current) { processCachedStats = result; processCachedRevision = revision; cachedGeometryRevision = geometryRevision; writeStatisticsSnapshot(app, result, revision); }
                     statsLoadInFlight = false;
@@ -413,7 +413,7 @@ public class ProgressActivity extends Activity {
     }
     /** A current immutable Progress snapshot can provide real geometry before contributor lookup. */
     static RoadDetailModel focusedPreview(android.content.Context context,RoadDetailSelection selection) {
-        DistanceStats stats; synchronized(STATS_CACHE_LOCK){if(processCachedRevision!=JourneyStore.dataRevision(context))return null;stats=processCachedStats;}
+        DistanceStats stats; synchronized(STATS_CACHE_LOCK){if(processCachedRevision!=JourneyStore.progressRevision(context))return null;stats=processCachedStats;}
         if(stats==null)return null;RoadDetailModel out=new RoadDetailModel();
         if(RoadDetailSelection.MOTORWAY.equals(selection.kind)&&stats.motorwayProgress!=null)for(MotorwayProgressCalculator.Road road:stats.motorwayProgress.roads)
             if(road.ref.equals(selection.label)&&(selection.region.isEmpty()||road.region.equals(selection.region))&&road.referenceAvailable){out.setReference(road.referenceKm*1000,road.estimatedUniqueKm()*1000,road.percent(),road.coveredMapSections,road.incompleteMapSections);return out;}

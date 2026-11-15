@@ -71,6 +71,21 @@ public class NavigationPerformanceTest {
         assertEquals(raw,JourneyStore.get(app,"nav-0").getJSONArray("raw_capture_samples").toString());System.out.println("NAV_BENCHMARK changed_one_progress_ms="+changed/1e6+" full_history_invalidations=0");
         list.finish();paged.finish();progress.finish();
     }
+    @Test public void titleOnlyEditLeavesScreenPreparationRevisionsCurrent() throws Exception {
+        JourneyStore.save(app, trip("rename-only"));
+        long archive = JourneyStore.dataRevision(app);
+        long progress = JourneyStore.progressRevision(app);
+        long geometry = JourneyStore.geometryRevision(app);
+        JourneyStore.updateTitle(app, "rename-only", "Retitled");
+        assertTrue(JourneyStore.dataRevision(app) > archive);
+        assertEquals(progress, JourneyStore.progressRevision(app));
+        assertEquals(geometry, JourneyStore.geometryRevision(app));
+        assertEquals("Retitled", JourneyStore.get(app, "rename-only").optString("title"));
+        JourneyStore.delete(app, "rename-only");
+        assertTrue(JourneyStore.progressRevision(app) > progress);
+        assertTrue(JourneyStore.geometryRevision(app) > geometry);
+    }
+
     @Test public void compactCacheInvalidatesOnlyChangedSourcesAndIgnoresDeletedRows()throws Exception {
         JourneyStore.save(app,trip("small-0"));JourneyStore.save(app,trip("small-1"));
         try(CompactJourneyCache cache=new CompactJourneyCache(app,"test")){for(File file:JourneyStore.archiveFiles(app))cache.get(file,JourneyStore::readSummary);assertEquals(2,cache.reads);}
