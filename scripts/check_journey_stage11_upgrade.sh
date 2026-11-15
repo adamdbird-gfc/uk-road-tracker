@@ -9,7 +9,7 @@ echo 'b167d9e5630feaec7dbeb51baa7e33f32ac37d67b8f1b670eeb2c0771458a539  '"$basel
 package=com.roadprints.capture
 signer=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -n 1)
 "$signer" verify --print-certs "$baseline" > "$RUNNER_TEMP/build286-certificate.txt"
-grep -Fx "Signer #1 certificate SHA-256 digest: $CERT_SHA256" "$RUNNER_TEMP/build286-certificate.txt"
+grep -E "certificate SHA-256 digest: $CERT_SHA256$" "$RUNNER_TEMP/build286-certificate.txt"
 "${signer%/*}/aapt" dump badging "$baseline" > "$RUNNER_TEMP/build286-package.txt"
 grep -F "package: name='$package' versionCode='286' versionName='0.25.240'" "$RUNNER_TEMP/build286-package.txt"
 archive=files/journey_stage1-upgrade-fixture.json

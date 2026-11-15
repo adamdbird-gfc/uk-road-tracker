@@ -2,7 +2,9 @@ name: Publish verified Journey Intelligence Stage 1.1 owner APK
 on:
   push:
     branches: [codex/journey-intelligence-stage1]
-    paths: [.github/workflows/journey-intelligence-stage1.1-owner.yml]
+    paths:
+      - .github/workflows/journey-intelligence-stage1.1-owner.yml
+      - scripts/check_journey_stage11_upgrade.sh
 permissions:
   contents: write
   actions: read
