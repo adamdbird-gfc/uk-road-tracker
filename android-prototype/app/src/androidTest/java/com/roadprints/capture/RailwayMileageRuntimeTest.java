@@ -129,18 +129,25 @@ public class RailwayMileageRuntimeTest {
             if (train) {
                 journey.put("raw_capture_samples", national ? nationalTrace : trace);
             } else if (index % 3 == 0) {
-                var coordinates = new JSONArray();
-                for (int point = 0; point < 24; point++)
-                    coordinates.put(new JSONArray().put(0.36 + point * .0001).put(51.44));
-                var line = new JSONObject().put("type", "LineString").put("coordinates", coordinates);
-                var feature = new JSONObject().put("type", "Feature").put("geometry", line)
-                        .put("properties", new JSONObject().put("road_ref", "B" + (2000 + index))
-                                .put("highway", "secondary"));
-                var features = new JSONObject().put("type", "FeatureCollection")
-                        .put("features", new JSONArray().put(feature));
+                var features = new JSONArray();
+                JSONObject recorded = null;
+                // 547 completed drives with nine sections each, close to the owner's 4,853 map sections.
+                for (int section = 0; section < 9; section++) {
+                    var coordinates = new JSONArray();
+                    for (int point = 0; point < 24; point++) {
+                        coordinates.put(new JSONArray().put(0.36 + section * .003 + point * .0001)
+                                .put(51.44 + (index % 80) * .001 + (point % 2) * .0002));
+                    }
+                    var line = new JSONObject().put("type", "LineString").put("coordinates", coordinates);
+                    if (recorded == null) recorded = line;
+                    features.put(new JSONObject().put("type", "Feature").put("geometry", line)
+                            .put("properties", new JSONObject().put("road_ref", "B" + (2000 + index))
+                                    .put("highway", "secondary")));
+                }
+                var collection = new JSONObject().put("type", "FeatureCollection").put("features", features);
                 journey.put("mode", "driving").put("processing_status", "complete")
-                        .put("route_geometry", line).put("processing_result",
-                                new JSONObject().put("geojson", features).put("road_geojson", features));
+                        .put("route_geometry", recorded).put("processing_result",
+                                new JSONObject().put("geojson", collection).put("road_geojson", collection));
             }
             var source = JourneyStore.archiveFile(app, id);
             Files.write(source.toPath(), journey.toString().getBytes(StandardCharsets.UTF_8));
@@ -159,7 +166,7 @@ public class RailwayMileageRuntimeTest {
             }
             for (int i = 0; i < 2; i++) {
                 exerciseScreen(ProgressActivity.class);
-                exerciseScreen(MapActivity.class);
+                exerciseCompletedMap();
                 exerciseScreen(JourneyListActivity.class);
                 exerciseScreen(AchievementsActivity.class);
             }
@@ -266,6 +273,24 @@ public class RailwayMileageRuntimeTest {
                             START + end - fix.time()));
                 }
             }
+        }
+    }
+
+    private static void exerciseCompletedMap() throws Exception {
+        long start = SystemClock.elapsedRealtime();
+        var ready = MapActivity.class.getDeclaredField("mapReady");
+        ready.setAccessible(true);
+        var displayed = MapActivity.class.getDeclaredField("hasDisplayedMap");
+        displayed.setAccessible(true);
+        try (var screen = androidx.test.core.app.ActivityScenario.launch(MapActivity.class)) {
+            var target = new java.util.concurrent.atomic.AtomicReference<MapActivity>();
+            screen.onActivity(target::set);
+            awaitOnMain(() -> {
+                try { return ready.getBoolean(target.get()) && displayed.getBoolean(target.get()); }
+                catch (IllegalAccessException error) { throw new AssertionError(error); }
+            }, 15_000);
+            android.util.Log.i("RoadprintsRailwayRuntime",
+                    "overview_ready_ms=" + (SystemClock.elapsedRealtime() - start));
         }
     }
 
