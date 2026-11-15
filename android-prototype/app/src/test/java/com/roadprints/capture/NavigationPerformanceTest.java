@@ -72,16 +72,16 @@ public class NavigationPerformanceTest {
         list.finish();paged.finish();progress.finish();
     }
     @Test public void titleOnlyEditLeavesScreenPreparationRevisionsCurrent() throws Exception {
-        JourneyStore.save(app, trip("rename-only"));
+        JourneyStore.save(app, trip("rename-0"));
         long archive = JourneyStore.dataRevision(app);
         long progress = JourneyStore.progressRevision(app);
         long geometry = JourneyStore.geometryRevision(app);
-        JourneyStore.updateTitle(app, "rename-only", "Retitled");
+        JourneyStore.updateTitle(app, "rename-0", "Retitled");
         assertTrue(JourneyStore.dataRevision(app) > archive);
         assertEquals(progress, JourneyStore.progressRevision(app));
         assertEquals(geometry, JourneyStore.geometryRevision(app));
-        assertEquals("Retitled", JourneyStore.get(app, "rename-only").optString("title"));
-        JourneyStore.delete(app, "rename-only");
+        assertEquals("Retitled", JourneyStore.get(app, "rename-0").optString("title"));
+        JourneyStore.delete(app, "rename-0");
         assertTrue(JourneyStore.progressRevision(app) > progress);
         assertTrue(JourneyStore.geometryRevision(app) > geometry);
     }
@@ -154,7 +154,8 @@ public class NavigationPerformanceTest {
             assertEquals(60, geometry.builds);
             for (JSONArray row : rows) geometry.draw(canvas, row, paint, null, .01, 0, 0, 120, 120);
             assertEquals(60, geometry.builds);
-            assertEquals(4853, geometry.hits);
+            assertEquals(60, geometry.hits);
+        assertEquals(2 * (4853 - 60), geometry.culled);
             assertEquals(120, geometry.vertices);
         } finally {
             MapRenderGeometry.clearPrepared();

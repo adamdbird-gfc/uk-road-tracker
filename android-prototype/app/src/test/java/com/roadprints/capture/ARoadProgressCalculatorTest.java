@@ -92,6 +92,13 @@ public class ARoadProgressCalculatorTest {
         assertTrue(visible.anchors.isEmpty());assertTrue(visible.grid.size()==0);
         assertTrue(detail.coveredMapSections.isEmpty());assertTrue(detail.incompleteMapSections.isEmpty());
         assertFalse(visible.coveredMapSections.isEmpty());
+        JSONArray contribution = new ARoadProgressCalculator(app, false).contribution(journey);
+        ARoadProgressCalculator cached = new ARoadProgressCalculator(app, false);
+        assertTrue(cached.accepts(contribution));
+        cached.addContribution("a1-1", contribution);
+        cached.addContribution("a1-repeat", contribution);
+        assertEquals(detail.percent(), cached.finish().roads.get(0).percent(), 0.000001);
+        assertEquals(0, cached.peakRetainedAnchors());
         assertSame(counted,stats.finish());assertSame(mapped,map.finish());
     }
 }
