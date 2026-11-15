@@ -20,7 +20,8 @@ ALIGN_RADIUS_M = 7
 GRID_M = 40
 METRES_PER_LATITUDE_DEGREE = 111_195.08
 SEAM_M = 0.5
-POLICY = "gravesend-observed-pairs-v1"
+POLICY = "gravesend-observed-pairs-v2"
+TAGGED_FORMAT = "roadprints-gravesend-tagged-v1"
 COMPACT_FORMAT = "roadprints-gravesend-reference-v1"
 
 Point = tuple[float, float]
@@ -45,6 +46,7 @@ class Edge:
     label: str | None
     a: Point
     b: Point
+    direction: int | None = 0
 
     @property
     def length(self):
@@ -135,9 +137,10 @@ def cells(a, b, margin=0):
 
 
 class Network:
-    def __init__(self, revision, edges, bounds=None):
+    def __init__(self, revision, edges, bounds=None, tagged=False):
         self.revision = revision
         self.bounds = bounds
+        self.tagged = tagged
         self.edges = {}
         self.grid = defaultdict(list)
         self.degree = Counter()
@@ -157,17 +160,34 @@ class Network:
     def gravesend(cls, path: Path):
         raw = gzip.decompress(path.read_bytes())
         source = json.loads(raw)
+        if source.get("format") == TAGGED_FORMAT:
+            box = source["bounds"]
+            bounds = {"west": box["minlon"], "east": box["maxlon"],
+                      "south": box["minlat"], "north": box["maxlat"]}
+            nodes = {key: local_point(bounds, [coord / 1e7 for coord in xy])
+                     for key, xy in source["nodes"].items()}
+            catalogue = []
+            excluded = set()
+            for way, start, end, label, _, direction, eligible in source["edges"]:
+                a, b = str(start), str(end)
+                edge_id = f"osm:{way}:{min(start, end)}:{max(start, end)}"
+                catalogue.append(Edge(edge_id, (a, b), label, nodes[a], nodes[b], direction))
+                if not eligible:
+                    excluded.add(edge_id)
+            return cls("osm-gravesend-tagged:" + hashlib.sha256(raw).hexdigest(),
+                       catalogue, bounds, tagged=True), excluded
+
         if source.get("format") == COMPACT_FORMAT:
             catalogue = []
             excluded = set()
-            for edge_id, label, a, b, eligible in source["sections"]:
-                nodes = tuple(edge_id.split(":")[-2:])
+            for edge_id, label, a, b, eligible, *tags in source["sections"]:
+                nodes = tuple(tags[0]) if tags else tuple(edge_id.split(":")[-2:])
                 first = local_point(source["bounds"], [coord / 1e7 for coord in a])
                 last = local_point(source["bounds"], [coord / 1e7 for coord in b])
-                catalogue.append(Edge(edge_id, nodes, label, first, last))
+                catalogue.append(Edge(edge_id, nodes, label, first, last, tags[1] if tags else 0))
                 if not eligible:
                     excluded.add(edge_id)
-            return cls(source["revision"], catalogue, source["bounds"]), excluded
+            return cls(source["revision"], catalogue, source["bounds"], source.get("tagged", False)), excluded
 
         bounds = source["metadata"]["bounds"]
         edges = []
@@ -214,16 +234,30 @@ class Network:
         def e7(point):
             return [round(value * 1e7) for value in geographic_point(self.bounds, point)]
 
-        sections = [[edge.id, edge.label, e7(edge.a), e7(edge.b), edge.id not in excluded]
-                    for edge in sorted(self.edges.values(), key=lambda row: row.id)]
+        sections = []
+        for edge in sorted(self.edges.values(), key=lambda row: row.id):
+            row = [edge.id, edge.label, e7(edge.a), e7(edge.b), edge.id not in excluded]
+            if self.tagged:
+                row.extend([edge.nodes, edge.direction])
+            sections.append(row)
         document = {"format": COMPACT_FORMAT, "revision": self.revision,
                     "bounds": self.bounds, "sections": sections}
+        if self.tagged:
+            document["tagged"] = True
         return gzip.compress(json.dumps(document, separators=(",", ":")).encode(), mtime=0)
 
-    def align(self, a, b, uncertainty_m=0):
+    def inside_extract(self, point, margin):
+        east, north = local_point(self.bounds, (self.bounds["east"], self.bounds["north"]))
+        x, y = point
+        return margin <= x <= east - margin and margin <= y <= north - margin
+
+    def align(self, a, b, uncertainty_m=0, *, driving=False):
         length = hypot(*delta(a, b))
         if not 0 < length <= DENSITY_LIMIT_M:
             return (), "distance_gap"
+        if (driving and self.tagged and
+                not all(self.inside_extract(fix, ALIGN_RADIUS_M + uncertainty_m) for fix in (a, b))):
+            return (), "catalogue_boundary"
         nearby = {edge_id for cell in cells(a, b, ALIGN_RADIUS_M + uncertainty_m)
                   for edge_id in self.grid.get(cell, ())}
         candidates = []
@@ -249,6 +283,12 @@ class Network:
             previous = current
         if max(candidates[0].start, 1 - candidates[-1].end) * length > SEAM_M:
             return (), "incomplete_alignment"
+        # Check after resolving geometric uniqueness. A wrong-way candidate
+        # can still make a nearby legal carriageway ambiguous.
+        if driving and any(candidate.edge.direction not in
+                           (0, 1 if candidate.entry < candidate.exit else -1)
+                           for candidate in candidates):
+            return (), "unsupported_direction"
         spans = tuple(span for candidate in candidates
                       if (span := candidate.span()).start_mm < span.end_mm)
         return spans, None if spans else "no_alignment"
@@ -292,14 +332,19 @@ def observed_coverage(network, fixes, excluded=()):
         if not all(0 < fix.accuracy_m <= 5 for fix in (first, last)):
             holds["fix_accuracy"] += 1
             continue
-        if not 0 < last.time_ms - first.time_ms <= 8_000:
+        elapsed = last.time_ms - first.time_ms
+        if not 0 < elapsed <= 8_000:
             holds["time_gap"] += 1
             continue
-        if hypot(*delta(first.point, last.point)) < 2:
+        motion = hypot(*delta(first.point, last.point))
+        if motion < 2 or motion <= first.accuracy_m + last.accuracy_m:
             holds["insufficient_motion"] += 1
             continue
+        if motion / elapsed > .06:
+            holds["implausible_speed"] += 1
+            continue
         spans, reason = network.align(first.point, last.point,
-                                      max(first.accuracy_m, last.accuracy_m))
+                                      max(first.accuracy_m, last.accuracy_m), driving=True)
         if reason:
             holds[reason] += 1
         elif any(span.edge_id in excluded for span in spans):

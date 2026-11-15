@@ -40,7 +40,9 @@ label and eligibility decision. Data © OpenStreetMap contributors under ODbL.
 ## Evidence, selection and incrementality
 
 - **Covered** requires consecutive original Driving fixes with reported
-  accuracy at most 5 m, time separation up to 8 s and motion of 2–35 m. The
+  accuracy at most 5 m, time separation up to 8 s and motion of 2–35 m
+  exceeding the sum of the two accuracy radii. Pairs implying speeds above
+  60 m/s are held. The
   pair must align within a 7 m corridor and 20° of the road axis, maintain
   connected topology and lack a competing section within the corridor plus
   fix uncertainty. These are prototype thresholds. The result supports the
@@ -99,10 +101,50 @@ an original per-fix accuracy stream. The reference snapshot does not establish
 historic road conditions. Both original files passed byte-for-byte preservation
 checks and are excluded from the branch.
 
-Eleven Stage 1.2C tests, three Stage 1.2A contract tests, eight road-distance
+Fourteen Stage 1.2C tests, three Stage 1.2A contract tests, eight road-distance
 tests and fifteen driving recovery tests passed locally. Tests cover filtered
 selection, unnamed roads, invalid update handling, replacement/removal, version
 changes, weak historical evidence, and the compact reference round trip.
+
+## Tagged central Gravesend validation
+
+The optional `reference-data/all-road-coverage/gravesend-tagged-v1.json.gz`
+enhances the central trial around all three streets. It comes from one
+OpenStreetMap map API response retrieved on 15 November 2026, covering
+0.3715–0.3845° E and 51.4370–51.4445° N. It contains 1,505 deduplicated nodes,
+1,540 edges, 985 eligible edges and 222 edges with a known one-way
+direction. It is 28,503 gzip bytes. The interpreted network revision is a
+SHA-256 of the decoded extract and the source response hash is stored inside
+it. The gzip SHA-256 is
+`a6d6863fe3d89209fbc9d619fbea2147130749cff80dbbdc32668e355995b537`.
+The builder reproduced it byte-for-byte from the same source response.
+
+Tagged sections use actual OSM way order for offsets and preserve endpoint
+identity and direction through compact compilation. Explicit motor access is
+checked before eligibility. Conditional, private, construction and other
+out-of-scope roads can compete in alignment without adding covered distance.
+Wrong-way or unknown-direction observations are held after uniqueness is
+tested, so a prohibited lane can still make a nearby legal lane ambiguous.
+Observation pairs within the search radius of the extract's edge are held
+because nearby competitors may be missing. The default broader snapshot is
+retained for comparison and lacks these source tags.
+
+The tagged replay retains the two Ordnance Road legacy paths and produces
+three unresolved paths representing 144.244 m of candidate alignment, with
+zero covered metres. The tagged sweep applies three controlled lateral
+offsets to 198 eligible real sections of at least 18 m. Of 594 simulated
+pairs, 536 aligned to the intended section, 58 were held and zero aligned
+to a different section. Of the 198 pairs with zero offset, 184 aligned.
+At +4 m, 178 aligned. At −4 m, 174 aligned. These straight traces do not
+test low-speed turns, severely biased location estimates or temporal
+correspondence with historical roads.
+
+```sh
+python -B scripts/replay_all_road_coverage.py \
+  --reference reference-data/all-road-coverage/gravesend-tagged-v1.json.gz --sweep
+python -B scripts/build_gravesend_coverage.py source.osm rebuilt.json.gz \
+  --retrieved-utc 2026-11-15
+```
 
 ## Performance and integration gate
 
@@ -133,7 +175,7 @@ these Python measurements would be misleading.
 
 Defer the Android layer and owner APK at this gate. Both real Ordnance Road
 journeys are weak historical matches. Positive controls use generated fixes,
-and the local source lacks complete access, direction and grade tags. The
+and only the smaller central trial has explicit access and direction tags. The
 observations therefore cannot quantify real coverage recall, false attribution
 or map responsiveness. The production app, backend, Firebase, railway and
 NCN datasets receive no changes. Build 288 owner exports confirm the

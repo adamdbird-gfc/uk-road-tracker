@@ -8,9 +8,11 @@ from tempfile import TemporaryDirectory
 import unittest
 
 from all_road_coverage import Edge, Fix, Ledger, Network, Span, observed_coverage
-from replay_all_road_coverage import REFERENCE, coverage_features, replay_legacy
+from build_gravesend_coverage import direction, eligible
+from replay_all_road_coverage import REFERENCE, coverage_features, labelled_sweep, replay_legacy
 
 MILE_MM = 1_609_344
+TAGGED = REFERENCE.parent / "reference-data/all-road-coverage/gravesend-tagged-v1.json.gz"
 BOUNDS = {"west": 0.35, "south": 51.425, "north": 51.445}
 
 
@@ -121,6 +123,16 @@ class CoverageTests(unittest.TestCase):
         disconnected = Network("disconnected", [a, Edge(b.id, ("x", "c"), b.label, b.a, b.b)])
         self.assertEqual(((), "disconnected_sections"), disconnected.align((0, 0), (20, 0)))
 
+    def test_oneway_uses_original_node_order_and_remains_an_ambiguity_competitor(self):
+        one_way = Edge("restricted", ("z", "a"), None, (0, 0), (100, 0), -1)
+        network = Network("oneway", [one_way])
+        self.assertEqual(([], {"unsupported_direction": 3}),
+                         observed_coverage(network, observations(10, 90)))
+        self.assertEqual({}, observed_coverage(network, observations(90, 10))[1])
+        parallel = Edge("parallel", ("x", "y"), None, (0, 6), (100, 6))
+        self.assertEqual(([], {"competing_sections": 3}), observed_coverage(
+            Network("parallel", [one_way, parallel]), observations(10, 90, 3)))
+
     def test_sparse_gps_low_accuracy_and_out_of_scope_held(self):
         edge_id = self.edge.id
         cases = [
@@ -129,6 +141,8 @@ class CoverageTests(unittest.TestCase):
             ([Fix((0, 0), 0, 2), Fix((100, 0), 2_000, 2)], (), "distance_gap"),
             (observations(0, 25), {edge_id}, "out_of_scope_road"),
             (observations(0, 25, 15), (), "no_alignment"),
+            ([Fix((0, 0), 0, 4), Fix((7, 0), 2000, 4)], (), "insufficient_motion"),
+            ([Fix((0, 0), 0, 2), Fix((20, 0), 100, 2)], (), "implausible_speed"),
             ([], (), "missing_original_fixes"),
         ]
         for fixes, excluded, reason in cases:
@@ -181,6 +195,32 @@ class GravesendTests(unittest.TestCase):
                 else:
                     wrong += 1
         self.assertEqual((57, 0, 0), (correct, held, wrong))
+
+    def test_tagged_extract_keeps_direction_eligibility_and_seams(self):
+        network, excluded = Network.gravesend(TAGGED)
+        self.assertEqual((1540, 985), (len(network.edges), len(network.edges) - len(excluded)))
+        self.assertEqual(222, sum(edge.direction in (-1, 1) for edge in network.edges.values()))
+        boundary = [Fix((0, 40), 0, 2), Fix((25, 40), 2000, 2)]
+        self.assertEqual(([], {"catalogue_boundary": 1}), observed_coverage(network, boundary))
+        self.assertEqual(-1, direction({"highway": "secondary_link", "oneway": "-1"}))
+        self.assertIsNone(direction({"highway": "tertiary", "oneway": "reversible"}))
+        self.assertFalse(eligible({"highway": "residential", "access": "private"}))
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "tagged-compact.json.gz"
+            path.write_bytes(network.compact_gravesend(excluded))
+            compact, compact_excluded = Network.gravesend(path)
+        self.assertTrue(compact.tagged)
+        self.assertEqual(network.revision, compact.revision)
+        self.assertEqual(network.edges, compact.edges)
+        self.assertEqual(excluded, compact_excluded)
+
+    def test_wider_tagged_sweep_holds_uncertain_fixes(self):
+        network, excluded = Network.gravesend(TAGGED)
+        for result in labelled_sweep(network, excluded).values():
+            self.assertEqual(198, sum(result.values()))
+            self.assertEqual(0, result["false_alignment"])
+            self.assertGreater(result["correct"], 170)
+            self.assertGreater(result["unresolved"], 0)
 
     def test_private_ordnance_exports_remain_unresolved(self):
         root = os.environ.get("ROADPRINTS_ORDNANCE_FIXTURE_DIR")

@@ -141,12 +141,42 @@ def geometry_counts(features):
                                                 for row in features)}
 
 
+def labelled_sweep(network, excluded):
+    """Simulate observations with known section IDs and controlled lateral error."""
+    if not network.tagged:
+        raise ValueError("Use the tagged extract for the labelled sweep")
+    report = {}
+    for offset, accuracy in ((0, 2), (4, 5), (-4, 5)):
+        outcomes = dict.fromkeys(("correct", "unresolved", "false_alignment"), 0)
+        for edge in network.edges.values():
+            if edge.id in excluded or edge.direction is None or edge.length < 18:
+                continue
+            fraction = min(27, edge.length * .7) / edge.length
+            endpoints = [(1 - fraction) / 2, (1 + fraction) / 2]
+            if edge.direction == -1:
+                endpoints.reverse()
+            dx = (edge.a[1] - edge.b[1]) * offset / edge.length
+            dy = (edge.b[0] - edge.a[0]) * offset / edge.length
+            fixes = [Fix((x + dx, y + dy), i * 1000, accuracy)
+                     for i, (x, y) in enumerate(edge.at(t) for t in endpoints)]
+            spans, _ = observed_coverage(network, fixes, excluded)
+            if not spans:
+                outcomes["unresolved"] += 1
+            elif {span.edge_id for span in spans} == {edge.id}:
+                outcomes["correct"] += 1
+            else:
+                outcomes["false_alignment"] += 1
+        report[f"offset_{offset:+d}m"] = outcomes
+    return report
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("exports", type=Path, nargs="*")
     parser.add_argument("--reference", type=Path, default=REFERENCE)
     parser.add_argument("--compile-reference", type=Path,
                         help="Write a compact, deterministic Gravesend reference file")
+    parser.add_argument("--sweep", action="store_true", help="Test simulated fixes on the tagged extract")
     parser.add_argument("--step-name", help="Limit legacy inspection to named source steps")
     parser.add_argument("--original-fixes", type=Path, action="append", default=[])
     parser.add_argument("--journey-id", action="append", help="Filter display by exact journey ID")
@@ -186,6 +216,7 @@ def main():
         }
 
     print(json.dumps({
+        **({"labelled_sweep": labelled_sweep(network, excluded)} if args.sweep else {}),
         "dataset_revision": network.revision, "policy": coverage.cache_version[1],
         "eligible_sections": len(network.edges) - len(excluded),
         "eligible_network_m": round(sum(edge.length for edge in network.edges.values()
