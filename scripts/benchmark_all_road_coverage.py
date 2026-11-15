@@ -1,6 +1,8 @@
 """Measure repeat-heavy desktop projection and geometry preparation, without owner data."""
 
+from pathlib import Path
 from statistics import median
+from tempfile import TemporaryDirectory
 import json
 from time import perf_counter
 import tracemalloc
@@ -46,24 +48,33 @@ def repeated_corridor():
     }
 
 
+def catalogue_cost(path):
+    times = []
+    for _ in range(5):
+        started = perf_counter()
+        network = Network.gravesend(path)
+        times.append((perf_counter() - started) * 1000)
+        del network
+
+    tracemalloc.start()
+    catalogue = Network.gravesend(path)
+    current, peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    assert catalogue[0].edges
+    return {"load_ms": median(times), "retained_bytes": current, "peak_bytes": peak,
+            "gzip_bytes": path.stat().st_size}
+
+
 def main():
     repetitions = [repeated_corridor() for _ in range(5)]
     report = {key: median(result[key] for result in repetitions) if key.endswith("_ms")
               else value for key, value in repetitions[0].items()}
-    times = []
-    for _ in range(5):
-        started = perf_counter()
-        network = Network.gravesend(REFERENCE)
-        times.append((perf_counter() - started) * 1000)
-        del network
-    report["gravesend_catalogue_ms"] = median(times)
-
-    tracemalloc.start()
-    catalogue = Network.gravesend(REFERENCE)
-    current, peak = tracemalloc.get_traced_memory()
-    tracemalloc.stop()
-    assert catalogue[0].edges
-    report.update(gravesend_catalogue_retained_bytes=current, gravesend_catalogue_peak_bytes=peak)
+    report["original_catalogue"] = catalogue_cost(REFERENCE)
+    network, excluded = Network.gravesend(REFERENCE)
+    with TemporaryDirectory() as directory:
+        path = Path(directory) / "gravesend-compact.json.gz"
+        path.write_bytes(network.compact_gravesend(excluded))
+        report["compact_catalogue"] = catalogue_cost(path)
     print(json.dumps(report, indent=2))
 
 

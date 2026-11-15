@@ -18,8 +18,10 @@ ROAD_CLASSES = frozenset({
 DENSITY_LIMIT_M = 35
 ALIGN_RADIUS_M = 7
 GRID_M = 40
+METRES_PER_LATITUDE_DEGREE = 111_195.08
 SEAM_M = 0.5
 POLICY = "gravesend-observed-pairs-v1"
+COMPACT_FORMAT = "roadprints-gravesend-reference-v1"
 
 Point = tuple[float, float]
 Interval = tuple[int, int]
@@ -155,6 +157,18 @@ class Network:
     def gravesend(cls, path: Path):
         raw = gzip.decompress(path.read_bytes())
         source = json.loads(raw)
+        if source.get("format") == COMPACT_FORMAT:
+            catalogue = []
+            excluded = set()
+            for edge_id, label, a, b, eligible in source["sections"]:
+                nodes = tuple(edge_id.split(":")[-2:])
+                first = local_point(source["bounds"], [coord / 1e7 for coord in a])
+                last = local_point(source["bounds"], [coord / 1e7 for coord in b])
+                catalogue.append(Edge(edge_id, nodes, label, first, last))
+                if not eligible:
+                    excluded.add(edge_id)
+            return cls(source["revision"], catalogue, source["bounds"]), excluded
+
         bounds = source["metadata"]["bounds"]
         edges = []
         for feature in source["features"]:
@@ -194,6 +208,17 @@ class Network:
             if not eligible:
                 excluded.add(edge_id)
         return cls("osm-gravesend-v1:" + hashlib.sha256(raw).hexdigest(), catalogue, bounds), excluded
+
+    def compact_gravesend(self, excluded):
+        """Build a small deterministic trial asset from this resolved catalogue."""
+        def e7(point):
+            return [round(value * 1e7) for value in geographic_point(self.bounds, point)]
+
+        sections = [[edge.id, edge.label, e7(edge.a), e7(edge.b), edge.id not in excluded]
+                    for edge in sorted(self.edges.values(), key=lambda row: row.id)]
+        document = {"format": COMPACT_FORMAT, "revision": self.revision,
+                    "bounds": self.bounds, "sections": sections}
+        return gzip.compress(json.dumps(document, separators=(",", ":")).encode(), mtime=0)
 
     def align(self, a, b, uncertainty_m=0):
         length = hypot(*delta(a, b))
@@ -236,11 +261,16 @@ def to_label(label):
 def local_point(bounds, coordinates):
     lon, lat = coordinates
     offset_lon, offset_lat = bounds["west"], bounds["south"]
-    return ((lon - offset_lon) * longitude_scale(bounds), (lat - offset_lat) * 111_195.08)
+    return ((lon - offset_lon) * longitude_scale(bounds), (lat - offset_lat) * METRES_PER_LATITUDE_DEGREE)
+
+
+def geographic_point(bounds, point):
+    return (bounds["west"] + point[0] / longitude_scale(bounds),
+            bounds["south"] + point[1] / METRES_PER_LATITUDE_DEGREE)
 
 
 def longitude_scale(bounds):
-    return 111_195.08 * cos(radians((bounds["south"] + bounds["north"]) / 2))
+    return METRES_PER_LATITUDE_DEGREE * cos(radians((bounds["south"] + bounds["north"]) / 2))
 
 
 @dataclass(frozen=True)

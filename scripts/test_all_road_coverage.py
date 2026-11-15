@@ -4,6 +4,7 @@ from collections import Counter
 import json
 import os
 from pathlib import Path
+from tempfile import TemporaryDirectory
 import unittest
 
 from all_road_coverage import Edge, Fix, Ledger, Network, Span, observed_coverage
@@ -148,6 +149,16 @@ class GravesendTests(unittest.TestCase):
         self.assertEqual((16, 16, 21),
                          tuple(counts[name] for name in ("Ordnance Road", "Albion Terrace", "Milton Place")))
 
+    def test_compact_reference_preserves_identity_geometry_and_eligibility(self):
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "reference.json.gz"
+            path.write_bytes(self.network.compact_gravesend(self.excluded))
+            compact, excluded = Network.gravesend(path)
+        self.assertEqual(self.network.revision, compact.revision)
+        self.assertEqual(self.network.bounds, compact.bounds)
+        self.assertEqual(self.network.edges, compact.edges)
+        self.assertEqual(self.excluded, excluded)
+
     def test_pinned_street_geometry_with_controlled_position_noise(self):
         # Synthetic fixes on actual local reference edges. Positive controls,
         # withholds and wrong sections counted separately.
@@ -190,7 +201,12 @@ class GravesendTests(unittest.TestCase):
             # The export contains positions, no raw per-fix accuracy envelope.
             self.assertNotIn("fixes", data)
         self.assertEqual(original, [path.read_bytes() for path in paths])
-        self.assertTrue(any(len(approx.by_edge[section]) == 2 for section in approx.aggregate))
+        self.assertEqual(7, sum(len(rows) == 2 for rows in approx.by_edge.values()))
+        shared = "osm:4973303:32041399:32951605"
+        self.assertEqual(sorted(row["properties"]["journey_id"] for row in legacy),
+                         approx.contributors_at(shared, 5000))
+        self.assertEqual([legacy[0]["properties"]["journey_id"]],
+                         approx.contributors_at(shared, 5000, {legacy[0]["properties"]["journey_id"]}))
 
 
 if __name__ == "__main__":

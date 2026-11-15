@@ -12,7 +12,7 @@ from pathlib import Path
 from time import perf_counter
 
 from all_road_coverage import (
-    Fix, Ledger, Network, Span, local_point, longitude_scale,
+    Fix, Ledger, Network, Span, geographic_point, local_point,
     observed_coverage,
 )
 
@@ -82,8 +82,7 @@ def coverage_features(ledger, state, journey_ids=None):
                     neighbours[way, node].append((span, index))
 
     def lonlat(point):
-        return [round(bounds["west"] + point[0] / longitude_scale(bounds), 8),
-                round(bounds["south"] + point[1] / 111_195.08, 8)]
+        return [round(value, 8) for value in geographic_point(bounds, point)]
 
     def linked(span, side):
         node = paths[span][1][side]
@@ -146,6 +145,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("exports", type=Path, nargs="*")
     parser.add_argument("--reference", type=Path, default=REFERENCE)
+    parser.add_argument("--compile-reference", type=Path,
+                        help="Write a compact, deterministic Gravesend reference file")
     parser.add_argument("--step-name", help="Limit legacy inspection to named source steps")
     parser.add_argument("--original-fixes", type=Path, action="append", default=[])
     parser.add_argument("--journey-id", action="append", help="Filter display by exact journey ID")
@@ -157,6 +158,8 @@ def main():
     started = perf_counter()
     network, excluded = Network.gravesend(args.reference)
     network_ms = (perf_counter() - started) * 1000
+    if args.compile_reference:
+        args.compile_reference.write_bytes(network.compact_gravesend(excluded))
     started = perf_counter()
     approximation, legacy, exact, legacy_holds = replay_legacy(
         network, excluded, args.exports, args.step_name)
