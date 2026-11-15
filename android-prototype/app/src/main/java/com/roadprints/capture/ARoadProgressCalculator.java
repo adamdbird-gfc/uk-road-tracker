@@ -1,6 +1,7 @@
 package com.roadprints.capture;
 
 import android.content.Context;
+import android.content.res.AssetManager;
 import android.util.JsonReader;
 import android.util.JsonToken;
 
@@ -10,6 +11,7 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.ref.WeakReference;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -62,7 +64,7 @@ final class ARoadProgressCalculator {
         final int id; final double lng,lat,x,y; final int component;
         Anchor(int id,double lng,double lat,int component) { this.id=id;this.lng=lng;this.lat=lat;this.component=component;double[] xy=mercator(lng,lat);x=xy[0];y=xy[1]; }
     }
-    private final Context context;
+    private final AssetManager assets;
     private final boolean includeMapSections;
     private Summary completedSummary;
     private Map<String,Road> roads=new TreeMap<>();
@@ -85,23 +87,57 @@ final class ARoadProgressCalculator {
             this.totalKm = totalKm;
         }
     }
+    // These references are bundled assets. Share signatures and counts across scans
+    // of the same assets without keeping any geometry or spatial indexes alive.
+    private static final int MAX_SHARED_REFERENCES = 512;
+    private record ReferenceKey(String id, String ref) {}
+    private static final Map<ReferenceKey, ReferenceInfo> SHARED_INFO = new LinkedHashMap<>(16, .75f, true);
+    private static WeakReference<AssetManager> sharedAssets = new WeakReference<>(null);
+
+    private static synchronized ReferenceInfo sharedInfo(AssetManager assets, ReferenceKey key) {
+        return sharedAssets.get() == assets ? SHARED_INFO.get(key) : null;
+    }
+
+    private static synchronized void rememberInfo(AssetManager assets, ReferenceKey key, ReferenceInfo info) {
+        if (sharedAssets.get() != assets) {
+            SHARED_INFO.clear();
+            sharedAssets = new WeakReference<>(assets);
+        }
+        SHARED_INFO.put(key, info);
+        if (SHARED_INFO.size() > MAX_SHARED_REFERENCES) {
+            var oldest = SHARED_INFO.keySet().iterator();
+            oldest.next();
+            oldest.remove();
+        }
+    }
+
     private static final ReferenceInfo MISSING = new ReferenceInfo("missing", 0, 0);
     private final LinkedHashMap<String, Reference> references = new LinkedHashMap<>(16, .75f, true);
     private final Map<String, ReferenceInfo> referenceInfo = new HashMap<>();
     private int retainedAnchors;
     private int peakRetainedAnchors;
+    private int referenceReads;
     // Identical matched geometry can recur on daily journeys. Retain only small
     // index arrays, keyed by geometry and canonical road, for this scan.
     private final LinkedHashMap<String, int[]> projectedFeatures = new LinkedHashMap<>(64, .75f, true);
 
     int peakRetainedAnchors() { return peakRetainedAnchors; }
 
+    int referenceReads() { return referenceReads; }
+
     private ReferenceInfo info(Road road) {
-        ReferenceInfo info = referenceInfo.get(road.id);
+        return info(road.id, road.ref);
+    }
+
+    private ReferenceInfo info(String id, String ref) {
+        ReferenceInfo info = referenceInfo.get(id);
+        if (info != null) return info;
+        info = sharedInfo(assets, new ReferenceKey(id, ref));
         if (info == null) {
-            reference(road, false);
-            info = referenceInfo.get(road.id);
+            Reference reference = readReference(id, ref);
+            info = reference == null ? MISSING : describeReference(id, ref, reference);
         }
+        referenceInfo.put(id, info);
         return info;
     }
 
@@ -113,7 +149,7 @@ final class ARoadProgressCalculator {
     }
     ARoadProgressCalculator(Context context) { this(context,true); }
     ARoadProgressCalculator(Context context, boolean includeMapSections) {
-        this.context=context.getApplicationContext(); this.includeMapSections=includeMapSections; loadIndex();
+        this.assets=context.getApplicationContext().getAssets(); this.includeMapSections=includeMapSections; loadIndex();
     }
 
     void addJourney(JSONObject journey) { addJourney(journey, null); }
@@ -160,7 +196,7 @@ final class ARoadProgressCalculator {
                 return;
             }
         }
-        Reference reference = reference(road, true);
+        Reference reference = reference(road);
         if (reference == null) return;
         if (key == null) {
             matchFeature(reference, road, geometry);
@@ -201,8 +237,10 @@ final class ARoadProgressCalculator {
     boolean accepts(JSONArray rows) throws Exception {
         for(int i=0;i<rows.length();i++) {
             JSONObject row=rows.getJSONObject(i);
-            Road probe=new Road(row.getString("id"),row.getString("ref"),row.getString("region"));
-            ReferenceInfo info = info(probe);
+            String id = row.getString("id");
+            String ref = row.getString("ref");
+            row.getString("region"); // Required by the contribution merge.
+            ReferenceInfo info = info(id, ref);
             int count = info.sections;
             if (!info.signature.equals(row.getString("reference"))) return false;
             JSONArray indices=row.getJSONArray("indices");
@@ -228,7 +266,7 @@ final class ARoadProgressCalculator {
             Set<Integer> before = previous.getOrDefault(road.id, java.util.Collections.emptySet());
             List<JSONArray> lines = new ArrayList<>();
             JSONArray current = null;
-            Reference reference = reference(road, true);
+            Reference reference = reference(road);
             if (reference == null) continue;
             List<Anchor> anchors = reference.anchors;
             for (int i = 1; i < anchors.size(); i++) {
@@ -284,14 +322,14 @@ final class ARoadProgressCalculator {
         return result;
     }
     private void loadIndex() {
-        try(InputStream in=context.getAssets().open("index.json");
+        try(InputStream in=assets.open("index.json");
             BufferedReader reader=new BufferedReader(new InputStreamReader(in,StandardCharsets.UTF_8))) {
             StringBuilder s=new StringBuilder();String line;while((line=reader.readLine())!=null)s.append(line);
             JSONObject root=new JSONObject(s.toString()).optJSONObject("roads"); if(root==null)return;
             java.util.Iterator<String> it=root.keys();while(it.hasNext()){String key=it.next();index.put(key,root.optJSONObject(key));}
         } catch(Exception ignored) { }
     }
-    private Reference reference(Road road, boolean retain) {
+    private Reference reference(Road road) {
         if (referenceInfo.get(road.id) == MISSING) return null;
         Reference reference = references.get(road.id);
         if (reference != null) return reference;
@@ -301,18 +339,10 @@ final class ARoadProgressCalculator {
             return null;
         }
         if (!referenceInfo.containsKey(road.id)) {
-            // Keep the existing signature format so validated build 284 rows are reusable.
-            StringBuilder text = new StringBuilder().append(reference.totalKm).append('|');
-            for (Anchor point : reference.anchors) {
-                text.append(point.lng).append(',').append(point.lat).append(',')
-                        .append(point.component).append(';');
-            }
-            referenceInfo.put(road.id, new ReferenceInfo(
-                    NcnJson.hash(text.toString().getBytes(StandardCharsets.UTF_8)),
-                    reference.anchors.size(), reference.totalKm));
+            referenceInfo.put(road.id, describeReference(road.id, road.ref, reference));
         }
         int count = reference.anchors.size();
-        if (retain && count <= MAX_CACHED_ANCHORS) {
+        if (count <= MAX_CACHED_ANCHORS) {
             while (retainedAnchors + count > MAX_CACHED_ANCHORS) {
                 java.util.Iterator<Reference> oldest = references.values().iterator();
                 retainedAnchors -= oldest.next().anchors.size();
@@ -325,13 +355,32 @@ final class ARoadProgressCalculator {
         return reference;
     }
 
+    private ReferenceInfo describeReference(String id, String ref, Reference reference) {
+        // Keep the signature format used by existing compact rows.
+        StringBuilder text = new StringBuilder().append(reference.totalKm).append('|');
+        for (Anchor point : reference.anchors) {
+            text.append(point.lng).append(',').append(point.lat).append(',')
+                    .append(point.component).append(';');
+        }
+        ReferenceInfo info = new ReferenceInfo(
+                NcnJson.hash(text.toString().getBytes(StandardCharsets.UTF_8)),
+                reference.anchors.size(), reference.totalKm);
+        rememberInfo(assets, new ReferenceKey(id, ref), info);
+        return info;
+    }
+
     private Reference readReference(Road road) {
-        JSONObject entry = index.get(road.id);
+        return readReference(road.id, road.ref);
+    }
+
+    private Reference readReference(String id, String ref) {
+        JSONObject entry = index.get(id);
         String file = entry == null ? null : entry.optString("file", null);
         if (file == null) return null;
+        referenceReads++;
         Reference reference = new Reference();
         double totalKm = entry.optDouble("total_km", 0);
-        try (InputStream in = context.getAssets().open(file);
+        try (InputStream in = assets.open(file);
              JsonReader reader = new JsonReader(new BufferedReader(
                      new InputStreamReader(in, StandardCharsets.UTF_8)))) {
             reader.beginObject();
@@ -357,7 +406,7 @@ final class ARoadProgressCalculator {
         } catch (Exception invalid) {
             return null;
         }
-        reference.totalKm = VERIFIED_LENGTH_KM.getOrDefault(road.ref, totalKm);
+        reference.totalKm = VERIFIED_LENGTH_KM.getOrDefault(ref, totalKm);
         return reference.anchors.isEmpty() || reference.totalKm <= 0 ? null : reference;
     }
 

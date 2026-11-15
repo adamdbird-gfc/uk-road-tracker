@@ -95,9 +95,21 @@ public class ARoadProgressCalculatorTest {
         JSONArray contribution = new ARoadProgressCalculator(app, false).contribution(journey);
         ARoadProgressCalculator cached = new ARoadProgressCalculator(app, false);
         assertTrue(cached.accepts(contribution));
+        assertEquals(0, cached.referenceReads());
+        JSONObject row = contribution.getJSONObject(0);
+        String signature = row.getString("reference");
+        row.put("reference", "changed");
+        assertFalse(cached.accepts(contribution));
+        row.put("reference", signature);
         cached.addContribution("a1-1", contribution);
         cached.addContribution("a1-repeat", contribution);
-        assertEquals(detail.percent(), cached.finish().roads.get(0).percent(), 0.000001);
+        ARoadProgressCalculator.Road restored = cached.finish().roads.get(0);
+        assertEquals(detail.percent(), restored.percent(), 0.000001);
+        assertEquals(0, cached.referenceReads());
+        assertTrue(cached.populateMapSections(restored));
+        assertEquals(1, cached.referenceReads());
+        assertEquals(visible.coveredMapSections.toString(), restored.coveredMapSections.toString());
+        assertEquals(visible.incompleteMapSections.toString(), restored.incompleteMapSections.toString());
         assertEquals(0, cached.peakRetainedAnchors());
         assertSame(counted,stats.finish());assertSame(mapped,map.finish());
     }
