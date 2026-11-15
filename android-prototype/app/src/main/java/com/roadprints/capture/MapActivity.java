@@ -626,7 +626,12 @@ public class MapActivity extends Activity {
                 }
             }
             long pathStarted=android.os.SystemClock.elapsedRealtime();
-            for(java.util.List<JSONArray> lines:java.util.Arrays.asList(mapRoutes.sections,mapRoutes.motorwaySections,mapRoutes.incompleteMotorwaySections,mapRoutes.coveredMotorwaySections,mapRoutes.incompleteARoadSections,mapRoutes.coveredARoadSections,mapRoutes.ferrySections))MapRenderGeometry.prepareBounds(lines);
+            for (java.util.List<JSONArray> lines : java.util.Arrays.asList(mapRoutes.sections,
+                    mapRoutes.motorwaySections, mapRoutes.incompleteMotorwaySections, mapRoutes.coveredMotorwaySections,
+                    mapRoutes.incompleteARoadSections, mapRoutes.coveredARoadSections, mapRoutes.ferrySections)) {
+                if (freeHeadroom >= 64L * 1024 * 1024) MapRenderGeometry.prepare(lines);
+                else MapRenderGeometry.prepareBounds(lines);
+            }
             PerformanceDiagnostics.timing("map_paths_worker",android.os.SystemClock.elapsedRealtime()-pathStarted,"");
             displayMapRoutes(mapRoutes, generation);
             // Publish usable geometry before optional JSON serialization/fsync. Cache work

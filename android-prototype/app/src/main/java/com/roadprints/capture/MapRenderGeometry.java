@@ -53,26 +53,61 @@ final class MapRenderGeometry {
         void clear(){values.clear();}
     }
     private static final WeakIdentityLines prepared=new WeakIdentityLines();
-    private static final RetainedLines preparedPaths=new RetainedLines();
+    // Keep the worker's paths bounded, and never keep a JSON geometry alive via its cache key.
+    private static final int MAX_PREPARED_POINTS = 120_000;
     private static int preparedPoints;
     private static int cost(Line line){return line.path==null?0:line.count;}
-    private static Line prepared(JSONArray points){synchronized(prepared){return prepared.get(points);}}
+    private static void prunePrepared() {
+        WeakKey key;
+        while ((key = (WeakKey) prepared.queue.poll()) != null) {
+            Line removed = prepared.values.remove(key);
+            if (removed != null) preparedPoints -= cost(removed);
+        }
+    }
+    private static Line prepared(JSONArray points) {
+        synchronized (prepared) {
+            prunePrepared();
+            return prepared.values.get(new WeakKey(points, null));
+        }
+    }
     static void prepare(java.util.List<JSONArray> rows) { prepare(rows, true); }
     static void prepareBounds(java.util.List<JSONArray> rows) { prepare(rows, false); }
-    private static void prepare(java.util.List<JSONArray> rows, boolean allowPaths){
-        for(JSONArray points:rows){if(Thread.currentThread().isInterrupted())return;if(prepared(points)!=null)continue;
-            boolean build;synchronized(prepared){build=allowPaths&&preparedPoints+points.length()<=200000;}
-            Line line=new Line(points,build);
-            synchronized(prepared){
-                if(prepared.get(points)!=null)continue;
-                while(prepared.size()>=8192){JSONArray oldest=prepared.oldest();if(oldest==null)break;prepared.remove(oldest);Line removed=preparedPaths.remove(oldest);if(removed!=null)preparedPoints-=cost(removed);}
-                if(line.path!=null&&preparedPoints+cost(line)>200000)line=new Line(line);
-                prepared.put(points,line);if(line.path!=null){preparedPaths.put(points,line);preparedPoints+=cost(line);}
+    private static void prepare(java.util.List<JSONArray> rows, boolean allowPaths) {
+        for (JSONArray points : rows) {
+            if (Thread.currentThread().isInterrupted()) return;
+            if (prepared(points) != null) continue;
+            boolean build;
+            synchronized (prepared) {
+                build = allowPaths && preparedPoints + points.length() <= MAX_PREPARED_POINTS;
+            }
+            Line line = new Line(points, build);
+            synchronized (prepared) {
+                prunePrepared();
+                if (prepared.values.containsKey(new WeakKey(points, null))) continue;
+                if (prepared.values.size() >= 8192) {
+                    var oldest = prepared.values.entrySet().iterator();
+                    preparedPoints -= cost(oldest.next().getValue());
+                    oldest.remove();
+                }
+                if (preparedPoints + cost(line) > MAX_PREPARED_POINTS) line = new Line(line);
+                prepared.values.put(new WeakKey(points, prepared.queue), line);
+                preparedPoints += cost(line);
             }
         }
     }
-    static void invalidatePrepared(JSONArray points){synchronized(prepared){prepared.remove(points);Line removed=preparedPaths.remove(points);if(removed!=null)preparedPoints-=cost(removed);}}
-    static void clearPrepared(){synchronized(prepared){prepared.clear();preparedPaths.clear();preparedPoints=0;}}
+    static void invalidatePrepared(JSONArray points) {
+        synchronized (prepared) {
+            prunePrepared();
+            Line removed = prepared.values.remove(new WeakKey(points, null));
+            if (removed != null) preparedPoints -= cost(removed);
+        }
+    }
+    static void clearPrepared() {
+        synchronized (prepared) {
+            prepared.clear();
+            preparedPoints = 0;
+        }
+    }
     private final WeakIdentityLines lines=new WeakIdentityLines();
     private final RetainedLines retained=new RetainedLines();
     int vertices,builds,hits,culled;
