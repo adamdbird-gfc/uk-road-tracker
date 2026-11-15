@@ -271,7 +271,7 @@ public class ProgressActivity extends Activity {
             long started = android.os.SystemClock.elapsedRealtime();
             DistanceStats result = null; Exception failure = null;
             try (BetaMeasurement.Operation measurement = BetaMeasurement.operation(app, "progress_data_load")) {
-                result = summarizeSavedJourneys(app, generation);
+                result = ScreenDataLoader.prepareArchive(() -> summarizeSavedJourneys(app, generation));
             } catch (Exception error) { failure = error; }
             PerformanceDiagnostics.timing("progress_prepare", android.os.SystemClock.elapsedRealtime() - started,
                     "queue_ms=" + (started - queuedAt) + " revision=" + revision);

@@ -41,6 +41,24 @@ final class ScreenDataLoader {
             task -> new Thread(task, "roadprints-evidence-check"));
     static java.util.concurrent.Future<?> evidence(Runnable task) { return EVIDENCE.submit(task); }
 
+    private static final java.util.concurrent.locks.ReentrantLock ARCHIVE_PREPARATION =
+            new java.util.concurrent.locks.ReentrantLock(true);
+    private static volatile boolean preparingArchive;
+
+    static boolean preparingArchive() { return preparingArchive; }
+
+    static <T> T prepareArchive(java.util.concurrent.Callable<T> prepare) throws Exception {
+        ARCHIVE_PREPARATION.lockInterruptibly();
+        preparingArchive = true;
+        try {
+            RailwayTrialWorker.releaseCatalogueForScreen();
+            return prepare.call();
+        } finally {
+            preparingArchive = false;
+            ARCHIVE_PREPARATION.unlock();
+        }
+    }
+
     private ScreenDataLoader() {}
 
     static java.util.concurrent.Future<?> submit(Runnable task) { return WORKER.submit(task); }

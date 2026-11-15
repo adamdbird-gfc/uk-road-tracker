@@ -136,10 +136,10 @@ final class RailwayTrialWorker {
         detailStatus.accept(message);
     }
 
-    private static boolean mapNeedsHeadroom() {
-        Runtime runtime = Runtime.getRuntime();
-        long headroom = runtime.maxMemory() - (runtime.totalMemory() - runtime.freeMemory());
-        return MapActivity.preparingArchive() && headroom < 48L * 1024 * 1024;
+    // Runs before a foreground archive allocation. Any running batch sees the
+    // preparation flag and yields at its normal cancellation checkpoints.
+    static void releaseCatalogueForScreen() throws Exception {
+        WORK.submit(RailwayTrialWorker::closeCatalogue).get();
     }
 
     private static void schedule(Context app) {
@@ -149,7 +149,7 @@ final class RailwayTrialWorker {
             return;
         }
         if (queued) return;
-        long delay = Math.max(resumeAt - SystemClock.uptimeMillis(), mapNeedsHeadroom() ? 500L : 0L);
+        long delay = Math.max(resumeAt - SystemClock.uptimeMillis(), ScreenDataLoader.preparingArchive() ? 500L : 0L);
         if (delay > 0) {
             if (!delayed) {
                 delayed = true;
@@ -172,7 +172,7 @@ final class RailwayTrialWorker {
             long started = SystemClock.elapsedRealtime();
             boolean ncnAtStart = NcnProgressStore.isAssessing();
             BooleanSupplier stop = () -> !foreground || generation != foregroundGeneration
-                    || CaptureService.isActive(app) || mapNeedsHeadroom();
+                    || CaptureService.isActive(app) || ScreenDataLoader.preparingArchive();
             boolean more = false;
             boolean failed = false;
             boolean cancelled = false;

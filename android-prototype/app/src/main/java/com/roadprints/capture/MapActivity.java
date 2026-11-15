@@ -595,21 +595,23 @@ public class MapActivity extends Activity {
             boolean archivePrepared;
             PerformanceDiagnostics.HeapSample heap = new PerformanceDiagnostics.HeapSample();
             try (BetaMeasurement.Operation measurement = BetaMeasurement.operation(this, "map_data_load")) {
-                long cacheStarted=android.os.SystemClock.elapsedRealtime();
-                JSONObject saved = selection.isAll()&&!skipDiskMapCache ? PersistentScreenCache.read(getApplicationContext(),
-                        "map-routes", revision) : null;
-                try {mapRoutes = saved == null ? null : mapRoutesFromCache(saved);}
-                catch(Exception malformedCache){mapRoutes=null;}
-                PerformanceDiagnostics.timing("map_cache",android.os.SystemClock.elapsedRealtime()-cacheStarted,
-                        mapRoutes==null?"miss_or_bypass":"hit");
-                archivePrepared = mapRoutes == null;
-                if (archivePrepared) {
-                    preparingArchive = true;
-                    try { mapRoutes = mapRouteLoader.load(this,selection, today, zone); }
-                    finally { preparingArchive = false; }
-                    if(Thread.currentThread().isInterrupted()||generation!=mapLoadGeneration)return;
-
-                }
+                boolean[] fromArchive = {false};
+                mapRoutes = ScreenDataLoader.prepareArchive(() -> {
+                    long cacheStarted = android.os.SystemClock.elapsedRealtime();
+                    JSONObject saved = selection.isAll() && !skipDiskMapCache
+                            ? PersistentScreenCache.read(getApplicationContext(), "map-routes", revision) : null;
+                    MapRoutes restored = null;
+                    try { if (saved != null) restored = mapRoutesFromCache(saved); }
+                    catch (Exception malformedCache) { /* Rebuild from the compact records. */ }
+                    PerformanceDiagnostics.timing("map_cache",
+                            android.os.SystemClock.elapsedRealtime() - cacheStarted,
+                            restored == null ? "miss_or_bypass" : "hit");
+                    if (restored != null) return restored;
+                    fromArchive[0] = true;
+                    return mapRouteLoader.load(this, selection, today, zone);
+                });
+                archivePrepared = fromArchive[0];
+                if (Thread.currentThread().isInterrupted() || generation != mapLoadGeneration) return;
                 android.util.Log.i("RoadprintsTiming", "map_prepare_ms="+measurement.duration());
             } catch (Exception error) {
                 mainHandler.post(() -> mapFailure(generation,"Your roads could not be loaded. Retry or Reset your filters."));
@@ -901,9 +903,6 @@ public class MapActivity extends Activity {
         return revision;
     }
 
-    private static volatile boolean preparingArchive;
-    static boolean preparingArchive() { return preparingArchive; }
-
     private MapRoutes readMapRoutes(JourneyFilters selection, java.time.LocalDate today, java.time.ZoneId zone) throws Exception {
         MapRoutes output = new MapRoutes();
         long initialiseStarted=System.nanoTime();
@@ -983,15 +982,15 @@ public class MapActivity extends Activity {
         PerformanceDiagnostics.timing("map_coverage_add",work[1]/1_000_000,"");
         PerformanceDiagnostics.timing("map_geometry",work[2]/1_000_000,"");
         long finishStarted=System.nanoTime();
-        MotorwayProgressCalculator.Summary summary = motorwayCalculator.finish();
-        for (MotorwayProgressCalculator.Road road : summary.roads) {
-            if (!road.referenceAvailable) continue;
+        motorwayCalculator.finish(road -> {
             output.roadPercentages.put(road.ref.toUpperCase(java.util.Locale.ROOT), road.percent());
             if (selection.isAll()) appendCanonicalSections(output, road.incompleteMapSections, false);
             appendCanonicalSections(output, road.coveredMapSections, true);
             if (selection.isAll()) addIncompleteRoadSegments(output, road.ref, road.region, road.percent(),
                     road.matchedMetres, road.journeyIds.size(), road.incompleteMapSections);
-        }
+            road.incompleteMapSections.clear();
+            road.coveredMapSections.clear();
+        });
         ARoadProgressCalculator.Summary aSummary = aRoadCalculator.finish();
         for (ARoadProgressCalculator.Road road : aSummary.roads) {
             if (!road.referenceAvailable) continue;

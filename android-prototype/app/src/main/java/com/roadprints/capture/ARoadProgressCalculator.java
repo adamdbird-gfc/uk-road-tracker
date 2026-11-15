@@ -99,7 +99,7 @@ final class ARoadProgressCalculator {
     private ReferenceInfo info(Road road) {
         ReferenceInfo info = referenceInfo.get(road.id);
         if (info == null) {
-            reference(road);
+            reference(road, false);
             info = referenceInfo.get(road.id);
         }
         return info;
@@ -160,7 +160,7 @@ final class ARoadProgressCalculator {
                 return;
             }
         }
-        Reference reference = reference(road);
+        Reference reference = reference(road, true);
         if (reference == null) return;
         if (key == null) {
             matchFeature(reference, road, geometry);
@@ -228,7 +228,7 @@ final class ARoadProgressCalculator {
             Set<Integer> before = previous.getOrDefault(road.id, java.util.Collections.emptySet());
             List<JSONArray> lines = new ArrayList<>();
             JSONArray current = null;
-            Reference reference = reference(road);
+            Reference reference = reference(road, true);
             if (reference == null) continue;
             List<Anchor> anchors = reference.anchors;
             for (int i = 1; i < anchors.size(); i++) {
@@ -291,7 +291,7 @@ final class ARoadProgressCalculator {
             java.util.Iterator<String> it=root.keys();while(it.hasNext()){String key=it.next();index.put(key,root.optJSONObject(key));}
         } catch(Exception ignored) { }
     }
-    private Reference reference(Road road) {
+    private Reference reference(Road road, boolean retain) {
         if (referenceInfo.get(road.id) == MISSING) return null;
         Reference reference = references.get(road.id);
         if (reference != null) return reference;
@@ -312,7 +312,7 @@ final class ARoadProgressCalculator {
                     reference.anchors.size(), reference.totalKm));
         }
         int count = reference.anchors.size();
-        if (count <= MAX_CACHED_ANCHORS) {
+        if (retain && count <= MAX_CACHED_ANCHORS) {
             while (retainedAnchors + count > MAX_CACHED_ANCHORS) {
                 java.util.Iterator<Reference> oldest = references.values().iterator();
                 retainedAnchors -= oldest.next().anchors.size();

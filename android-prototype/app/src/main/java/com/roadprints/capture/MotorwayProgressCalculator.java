@@ -321,7 +321,9 @@ final class MotorwayProgressCalculator {
         return result;
     }
 
-    Summary finish() {
+    Summary finish() { return finish(null); }
+
+    Summary finish(java.util.function.Consumer<Road> onMapSections) {
         if (completedSummary != null) return completedSummary;
         boolean missingReferences = false;
         List<String> missingReferenceRoads = new ArrayList<>();
@@ -342,8 +344,10 @@ final class MotorwayProgressCalculator {
             road.referenceSections = reference.anchors.size();
             road.referenceKm = reference.totalKm > 0 ? reference.totalKm
                     : reference.anchors.size() * REFERENCE_SAMPLE_M / 1000.0;
-            if (includeMapSections) buildMapSections(road, reference);
-            references.remove(road.id);
+            if (onMapSections == null) {
+                if (includeMapSections) buildMapSections(road, reference);
+                references.remove(road.id);
+            }
         }
 
         double gbKm = 0, niKm = 0;
@@ -364,6 +368,15 @@ final class MotorwayProgressCalculator {
             if (byRegion != 0) return byRegion;
             return String.CASE_INSENSITIVE_ORDER.compare(left.ref, right.ref);
         });
+        if (includeMapSections && onMapSections != null) {
+            // Map applies its display budget in the same order as the full summary.
+            for (Road road : sorted) {
+                Reference reference = references.remove(road.id);
+                if (!road.referenceAvailable || reference == null) continue;
+                buildMapSections(road, reference);
+                onMapSections.accept(road);
+            }
+        }
         references.clear();
         pendingSegments.clear();
         assetRoads.clear();
