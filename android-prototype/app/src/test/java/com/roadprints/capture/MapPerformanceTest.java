@@ -274,6 +274,11 @@ public class MapPerformanceTest {
                 assertTrue(road.id, road.referenceAvailable);
                 assertTrue(road.coveredMapSections.isEmpty());
             }
+            if (i == 1) {
+                assertTrue(org.robolectric.shadows.ShadowLog.getLogsForTag("RoadprintsTiming").stream()
+                        .anyMatch(log -> log.msg.startsWith("progress_archive")
+                                && log.msg.contains("rows=1663 reads=0 reused=1663")));
+            }
             for (var log : org.robolectric.shadows.ShadowLog.getLogsForTag("RoadprintsTiming")) {
                 if (log.msg.startsWith("progress_archive") || log.msg.startsWith("progress_geometry")) {
                     System.out.println("PROGRESS_VOLUME pass=" + i + " " + log.msg);
@@ -327,11 +332,11 @@ public class MapPerformanceTest {
         System.out.println("MAP_CACHE_BENCHMARK identical_payload_bytes="+bytes.length+" legacy_hit_ms="+oldHit/1e6+" current_hit_ms="+newHit/1e6
             +" legacy_stale_ms="+oldMiss/1e6+" current_stale_ms="+newMiss/1e6);
     }
-    @Test public void drivingHistory1547ColdWarmAdditionFiltersAndCoverageRemainConsistent() throws Exception {
+    @Test public void drivingHistory1663ColdWarmAdditionFiltersAndCoverageRemainConsistent() throws Exception {
         JSONObject template=trip("bench");
         JSONArray raw=new JSONArray();for(int i=0;i<512;i++)raw.put(new JSONArray().put(.37).put(51.44).put(i));
         template.put("raw_capture_samples",raw);
-        for(int i=0;i<1547;i++){
+        for(int i=0;i<1663;i++){
             template.put("journey_id","driving-"+i);
             java.nio.file.Files.write(new File(app.getFilesDir(),"journey_driving-"+i+".json").toPath(),template.toString().getBytes(StandardCharsets.UTF_8));
         }
@@ -339,8 +344,11 @@ public class MapPerformanceTest {
         try {
             org.robolectric.shadows.ShadowLog.clear();
             long start=System.nanoTime();MapActivity.MapRoutes cold=read(controller.get(),JourneyFilters.all());long coldTime=System.nanoTime()-start;stageLogs("cold");
-            start=System.nanoTime();MapActivity.MapRoutes warm=read(controller.get(),JourneyFilters.all());long warmTime=System.nanoTime()-start;stageLogs("warm");
-            assertEquals(1547,cold.matchedJourneys);assertEquals(cold.matchedJourneys,warm.matchedJourneys);
+            start=System.nanoTime();MapActivity.MapRoutes warm=read(controller.get(),JourneyFilters.all());long warmTime=System.nanoTime()-start;
+            assertTrue(org.robolectric.shadows.ShadowLog.getLogsForTag("RoadprintsTiming").stream()
+                    .anyMatch(log -> log.msg.startsWith("map_records") && log.msg.contains("reused=1663 rebuilt=0 source_reads=0")));
+            stageLogs("warm");
+            assertEquals(1663,cold.matchedJourneys);assertEquals(cold.matchedJourneys,warm.matchedJourneys);
             assertEquals(cold.roadPercentages,warm.roadPercentages);
             snapshotBenchmark(controller.get(),warm);
             assertEquals(cold.coveredMotorwaySections.toString(),warm.coveredMotorwaySections.toString());
@@ -349,8 +357,8 @@ public class MapPerformanceTest {
             assertEquals(0,filtered.matchedJourneys);
             JourneyStore.save(app,new JSONObject(template.toString()).put("journey_id","new-driving"));
             start=System.nanoTime();MapActivity.MapRoutes added=read(controller.get(),JourneyFilters.all());long addTime=System.nanoTime()-start;stageLogs("add_one");
-            assertEquals(1548,added.matchedJourneys);assertEquals(cold.roadPercentages,added.roadPercentages);
-            System.out.println("MAP_DRIVING_BENCHMARK synthetic=1547 cold_prepare_ms="+coldTime/1e6+" warm_prepare_ms="+warmTime/1e6+" add_one_prepare_ms="+addTime/1e6+" completion=identical");
+            assertEquals(1664,added.matchedJourneys);assertEquals(cold.roadPercentages,added.roadPercentages);
+            System.out.println("MAP_DRIVING_BENCHMARK synthetic=1663 cold_prepare_ms="+coldTime/1e6+" warm_prepare_ms="+warmTime/1e6+" add_one_prepare_ms="+addTime/1e6+" completion=identical");
         } finally {controller.destroy();}
     }
 }

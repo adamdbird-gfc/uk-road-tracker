@@ -18,6 +18,7 @@ final class MapJourneyStore implements AutoCloseable {
     private SQLiteDatabase db;
     private final boolean bypass;
     int reused,rebuilt,sourceReads,legacyReads,writes,oversized;
+    long payloadBytes, payloadLookupNanos, payloadDecodeNanos;
     MapJourneyStore(Context context) {this(context,false);}
     MapJourneyStore(Context context,boolean bypass) {
         this.bypass=bypass;
@@ -50,17 +51,30 @@ final class MapJourneyStore implements AutoCloseable {
             return original;
         }
         JSONObject prepared(Factory factory) throws Exception {
-            if(cached)try(Cursor cursor=db.rawQuery("SELECT payload,payload_sha FROM entries WHERE source=? AND token=? AND format=?",
-                    new String[]{source.getName(),token,Integer.toString(FORMAT)})) {
-                if(cursor.moveToFirst()&&!cursor.isNull(0)) {
-                    byte[] bytes=cursor.getBlob(0);
-                    if(NcnJson.hash(bytes).equals(cursor.getString(1))) {
-                        JSONObject value=new JSONObject(new String(bytes,StandardCharsets.UTF_8));
-                        for(String key:new String[]{"motorway","a_road","roads","motorways"})value.getJSONArray(key);
-                        reused++;return value;
+            if (cached) {
+                long lookupStarted = System.nanoTime();
+                long decodeStarted = 0;
+                try (Cursor cursor = db.rawQuery("SELECT payload,payload_sha FROM entries WHERE source=? AND token=? AND format=?",
+                        new String[]{source.getName(), token, Integer.toString(FORMAT)})) {
+                    if (cursor.moveToFirst() && !cursor.isNull(0)) {
+                        byte[] bytes = cursor.getBlob(0);
+                        String expected = cursor.getString(1);
+                        decodeStarted = System.nanoTime();
+                        payloadBytes += bytes.length;
+                        if (NcnJson.hash(bytes).equals(expected)) {
+                            JSONObject value = new JSONObject(new String(bytes, StandardCharsets.UTF_8));
+                            for (String key : new String[]{"motorway", "a_road", "roads", "motorways"}) value.getJSONArray(key);
+                            reused++;
+                            return value;
+                        }
                     }
+                } catch (org.json.JSONException invalid) { /* Rebuild this derived row only. */ }
+                finally {
+                    long end = System.nanoTime();
+                    payloadLookupNanos += (decodeStarted == 0 ? end : decodeStarted) - lookupStarted;
+                    if (decodeStarted != 0) payloadDecodeNanos += end - decodeStarted;
                 }
-            } catch(org.json.JSONException invalid) { /* Rebuild this derived row only. */ }
+            }
             return rebuild(factory);
         }
         JSONObject rebuild(Factory factory) throws Exception {

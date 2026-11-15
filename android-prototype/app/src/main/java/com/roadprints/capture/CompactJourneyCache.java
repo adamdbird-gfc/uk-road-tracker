@@ -13,8 +13,11 @@ final class CompactJourneyCache implements AutoCloseable {
     interface Reader {JSONObject read(File file)throws Exception;}
     private final SQLiteDatabase db;private final String kind;
     int reads,hits,writes,skipped;
+    long payloadBytes, payloadLookupNanos, payloadDecodeNanos;
+    private final boolean measurePayload;
     CompactJourneyCache(Context context, String kind) {
         this.kind = kind;
+        measurePayload = "progress-v1".equals(kind);
         File file = new File(context.getCacheDir(), "compact-" + kind + ".db");
         SQLiteDatabase opened;
         try {
@@ -80,17 +83,30 @@ final class CompactJourneyCache implements AutoCloseable {
             }
         }
         JSONObject value = null;
+        long lookupStarted = measurePayload ? System.nanoTime() : 0;
+        long decodeStarted = 0;
         try (Cursor cursor = db.rawQuery("SELECT data,sha FROM rows WHERE kind=? AND source=? AND token=?",
                 new String[]{kind, file.getName(), token})) {
             if (cursor.moveToFirst()) {
                 byte[] data = cursor.getBlob(0);
-                if (NcnJson.hash(data).equals(cursor.getString(1))) {
+                String expected = cursor.getString(1);
+                if (measurePayload) {
+                    decodeStarted = System.nanoTime();
+                    payloadBytes += data.length;
+                }
+                if (NcnJson.hash(data).equals(expected)) {
                     value = new JSONObject(new String(data, StandardCharsets.UTF_8));
                     hits++;
                 }
             }
         } catch (org.json.JSONException | android.database.sqlite.SQLiteException invalid) {
             // Rebuild only this derived row.
+        } finally {
+            if (measurePayload) {
+                long end = System.nanoTime();
+                payloadLookupNanos += (decodeStarted == 0 ? end : decodeStarted) - lookupStarted;
+                if (decodeStarted != 0) payloadDecodeNanos += end - decodeStarted;
+            }
         }
         boolean fresh = value == null;
         if (fresh) { value = reader.read(file); reads++; }

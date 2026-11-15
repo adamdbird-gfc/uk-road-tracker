@@ -269,12 +269,16 @@ public class ProgressActivity extends Activity {
         long queuedAt = android.os.SystemClock.elapsedRealtime();
         statisticsExecutor.execute(() -> {
             long started = android.os.SystemClock.elapsedRealtime();
+            long[] archiveWaitMs = {-1};
             DistanceStats result = null; Exception failure = null;
             try (BetaMeasurement.Operation measurement = BetaMeasurement.operation(app, "progress_data_load")) {
-                result = ScreenDataLoader.prepareArchive(() -> summarizeSavedJourneys(app, generation));
+                result = ScreenDataLoader.prepareArchive(() -> {
+                    archiveWaitMs[0] = android.os.SystemClock.elapsedRealtime() - started;
+                    return summarizeSavedJourneys(app, generation);
+                });
             } catch (Exception error) { failure = error; }
             PerformanceDiagnostics.timing("progress_prepare", android.os.SystemClock.elapsedRealtime() - started,
-                    "queue_ms=" + (started - queuedAt) + " revision=" + revision);
+                    "queue_ms=" + (started - queuedAt) + " archive_wait_ms=" + archiveWaitMs[0] + " revision=" + revision);
             boolean current;
             synchronized (JourneyStore.class) {
                 current = failure == null && JourneyStore.progressRevision(app) == revision;
@@ -343,44 +347,56 @@ public class ProgressActivity extends Activity {
                 context, null, true, true);
         ARoadProgressCalculator aRoadCalculator = new ARoadProgressCalculator(context, false);
         int checkedJourneys = 0;
-        long cacheMs = 0;
-        long mergeMs = 0;
-        PerformanceDiagnostics.HeapSample heap = new PerformanceDiagnostics.HeapSample();
+        long cacheNanos = 0;
+        long mergeNanos = 0;
+        long referenceValidationNanos = 0;
+        PerformanceDiagnostics.ArchiveHeapSample heap = new PerformanceDiagnostics.ArchiveHeapSample();
 
-        long started=android.os.SystemClock.elapsedRealtime();
+        long started = System.nanoTime();
         JourneyStore.prepareArchive(context);
         List<java.io.File> sources=JourneyStore.archiveFiles(context);sources.sort((a,b)->Long.compare(b.lastModified(),a.lastModified()));
         try(CompactJourneyCache cache=new CompactJourneyCache(context,"progress-v1")) {
             for(java.io.File source:sources){
                 if(Thread.currentThread().isInterrupted())throw new java.util.concurrent.CancellationException();
                 CompactJourneyCache.Reader prepare=file->progressRow(context,JourneyStore.mapEvidence(context,file,true),motorwayCalculator,aRoadCalculator);
-                long rowStarted = android.os.SystemClock.elapsedRealtime();
+                long rowStarted = System.nanoTime();
                 JSONObject row=cache.get(source,prepare);
-                if(!motorwayCalculator.accepts(row.getJSONArray("motorway"))||!aRoadCalculator.accepts(row.getJSONArray("a_road"))){cache.invalidate(source);row=cache.get(source,prepare);}
-                long mergeStarted = android.os.SystemClock.elapsedRealtime();
-                cacheMs += mergeStarted - rowStarted;
+                long validationStarted = System.nanoTime();
+                boolean accepted = motorwayCalculator.accepts(row.getJSONArray("motorway"))
+                        && aRoadCalculator.accepts(row.getJSONArray("a_road"));
+                referenceValidationNanos += System.nanoTime() - validationStarted;
+                if (!accepted) { cache.invalidate(source); row = cache.get(source, prepare); }
+                long mergeStarted = System.nanoTime();
+                cacheNanos += mergeStarted - rowStarted;
                 stats.addDistances(row);
                 uniqueRoadEdges.addCompact(row.getJSONArray("driving_edges"));uniqueFootEdges.addCompact(row.getJSONArray("foot_edges"));
                 motorwayCalculator.addContribution(row.getString("id"),row.getJSONArray("motorway"));aRoadCalculator.addContribution(row.getString("id"),row.getJSONArray("a_road"));
                 mergeDiscovery(stats,row.getJSONArray("discovery"),row.getString("id"));
-                mergeMs += android.os.SystemClock.elapsedRealtime() - mergeStarted;
+                mergeNanos += System.nanoTime() - mergeStarted;
                 if (++checkedJourneys % 25 == 0) heap.sample();
                 if (checkedJourneys % 100 == 0) {
                     updateLoadingMessage(generation,"Preparing progress · "+checkedJourneys+" journeys checked");
                 }
             }
-            PerformanceDiagnostics.timing("progress_archive",android.os.SystemClock.elapsedRealtime()-started,"rows="+sources.size()+" reads="+cache.reads+" reused="+cache.hits+" cache_ms="+cacheMs+" merge_ms="+mergeMs+" "+heap.description());
+            PerformanceDiagnostics.timing("progress_archive",(System.nanoTime()-started)/1_000_000,"rows="+sources.size()+" reads="+cache.reads+" reused="+cache.hits+" cache_ms="+cacheNanos/1_000_000+" merge_ms="+mergeNanos/1_000_000
+                    + " payload_lookup_ms=" + cache.payloadLookupNanos / 1_000_000
+                    + " payload_decode_ms=" + cache.payloadDecodeNanos / 1_000_000
+                    + " payload_kib=" + cache.payloadBytes / 1024
+                    + " reference_validation_ms=" + referenceValidationNanos / 1_000_000
+                    + " a_road_reference_reads=" + aRoadCalculator.referenceReads() + " " + heap.description());
         }catch(Exception failure){throw new IllegalStateException("Progress preparation failed",failure);}
 
+        long geometryStarted=System.nanoTime();
+        PerformanceDiagnostics.ArchiveHeapSample geometryHeap = new PerformanceDiagnostics.ArchiveHeapSample();
         stats.uniqueDrivingMetres = uniqueRoadEdges.metres();
         stats.uniqueFootMetres = uniqueFootEdges.metres();
         uniqueRoadEdges.intervals.clear();
         uniqueFootEdges.intervals.clear();
         updateLoadingMessage(generation, "Calculating motorway coverage…");
-        long geometryStarted=android.os.SystemClock.elapsedRealtime();
         stats.motorwayProgress = motorwayCalculator.finish();
+        geometryHeap.sample();
         stats.aRoadProgress = aRoadCalculator.finish();
-        PerformanceDiagnostics.timing("progress_geometry",android.os.SystemClock.elapsedRealtime()-geometryStarted,"roads="+stats.discoveredRoads.size()+" peak_a_road_anchors="+aRoadCalculator.peakRetainedAnchors()+" "+heap.description());
+        PerformanceDiagnostics.timing("progress_geometry",(System.nanoTime()-geometryStarted)/1_000_000,"roads="+stats.discoveredRoads.size()+" peak_a_road_anchors="+aRoadCalculator.peakRetainedAnchors()+" "+geometryHeap.description());
         return stats;
     }
 

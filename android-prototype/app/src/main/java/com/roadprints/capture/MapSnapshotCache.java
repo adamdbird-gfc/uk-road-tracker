@@ -18,12 +18,13 @@ final class MapSnapshotCache {
         AtomicFile snapshot=file(c);
         if(!snapshot.getBaseFile().isFile())return legacy(c,revision);
         try(DataInputStream header=new DataInputStream(snapshot.openRead())) {
-            if(header.readInt()!=MAGIC||header.readLong()!=revision)return null;
+            if(header.readInt()!=MAGIC)return skipped("format");
+            if(header.readLong()!=revision)return skipped("revision");
             String expected=header.readUTF();int length=header.readInt();
             if(length<0||length>LIMIT)return null;
             Runtime runtime = Runtime.getRuntime();
             long headroom = runtime.maxMemory() - (runtime.totalMemory() - runtime.freeMemory());
-            if (headroom < 4L * length) return null;
+            if (headroom < 4L * length) return skipped("headroom");
             try (DataInputStream in = new DataInputStream(new GZIPInputStream(header))) {
                 byte[] payload = new byte[length];
                 in.readFully(payload);
@@ -31,6 +32,10 @@ final class MapSnapshotCache {
                 return new JSONObject(new String(payload, StandardCharsets.UTF_8));
             }
         } catch(Exception invalid) {return null;}
+    }
+    private static JSONObject skipped(String reason) {
+        PerformanceDiagnostics.timing("map_snapshot_skip", 0, "reason=" + reason);
+        return null;
     }
     static void write(Context c,long revision,JSONObject data) {
         AtomicFile snapshot=file(c);FileOutputStream raw=null;
