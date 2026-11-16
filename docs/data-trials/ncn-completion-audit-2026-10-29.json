@@ -1,0 +1,4567 @@
+{
+  "audit_date": "2026-10-29",
+  "source_commit": "d9adc5f65065adc82b16996ec8bcc945b81dd311",
+  "method": "Recovered original checkpoint and publication archives. Catalogue opened SQLite mode=ro. Existing provenance verifier compared source coordinates, nodes and modes. No catalogue build, repair, publication or writes.",
+  "archives": [
+    {
+      "filename": "roadprints-ncn-route-catalogue-assessment-2026-10-16.zip",
+      "sha256": "5f9d60b8d5cd8cac9d3f244051e523245bb940422af1924e4dd28e906784e8f5"
+    },
+    {
+      "filename": "roadprints-ncn-source-feasibility-2026-10-15.zip",
+      "sha256": "3bdf0b355a978a628eb4b5d1fb5fcf392edb3a1fcc6f78b16b373eecdebfe6c5"
+    },
+    {
+      "filename": "roadprints-ncn-completion-checkpoint-2026-10-19.zip",
+      "sha256": "94de96e1159e53ad1a5d7475792105fb7f9ed7e88391a7c8a4591733f7d396c7"
+    },
+    {
+      "filename": "roadprints-ncn-firebase-publication-2026-10-19.zip",
+      "sha256": "cda82cd2e888bc8e38ed0bc1e15b9f7cc12d85e7c1a541b5dcbceb0ff3261c35"
+    }
+  ],
+  "provenance_replay": {
+    "input_files_verified": 1147,
+    "route_manifests_read_back": 219,
+    "exact_route_way_rows_compared": 62487,
+    "identical_fields": [
+      "coordinates",
+      "osm_nodes",
+      "modes"
+    ],
+    "database_sha256": "973ad286cffbec67fa3249b7d00b3a201059ac552aac6b63b577bb5db5637093",
+    "checkpoint_sha256": "e837b6810d7044d42c2a2eb7db6bce102cebb957032cc18a76487297b6621f0b",
+    "held_identities": 34,
+    "result": "pass"
+  },
+  "live_manifest_check": {
+    "url": "https://roadprints-data-822cc.web.app/collections/published/ncn/manifest-v2.json",
+    "equals_pin": true,
+    "manifest": {
+      "schema_version": 2,
+      "scope": "national-verified-open-checkpoint",
+      "supported_identities": 219,
+      "source_ways": 62399,
+      "held_route_keys": [
+        "NCN:207",
+        "NCN:253",
+        "NCN:274",
+        "NCN:323",
+        "NCN:410",
+        "NCN:422",
+        "NCN:524",
+        "NCN:626",
+        "NCN:689",
+        "NCN:776",
+        "NCN:820",
+        "RCN:11",
+        "RCN:12",
+        "RCN:15",
+        "RCN:16",
+        "RCN:17",
+        "RCN:21",
+        "RCN:30",
+        "RCN:31",
+        "RCN:32",
+        "RCN:40",
+        "RCN:41",
+        "RCN:50",
+        "RCN:51",
+        "RCN:55",
+        "RCN:61",
+        "RCN:67",
+        "RCN:71",
+        "RCN:80",
+        "RCN:81",
+        "RCN:82",
+        "RCN:83",
+        "RCN:85",
+        "RCN:89"
+      ],
+      "network_length_m": 17435132.494005967,
+      "whole_published_route_ready": false,
+      "attribution": "\u00a9 OpenStreetMap contributors (ODbL 1.0); official open scope: Walk Wheel Cycle Trust (OGL 3.0).",
+      "checkpoint_sha256": "e837b6810d7044d42c2a2eb7db6bce102cebb957032cc18a76487297b6621f0b",
+      "sha256": "973ad286cffbec67fa3249b7d00b3a201059ac552aac6b63b577bb5db5637093",
+      "database_bytes": 243724288,
+      "revision": 1,
+      "compressed_sha256": "91c8e25f0d58ced6a1e2c91905fe4190b826dc8a469aafc4aab09b83dee1fd91",
+      "compressed_bytes": 142796162,
+      "filename": "collections/published/ncn/973ad286cffbec67fa3249b7d00b3a201059ac552aac6b63b577bb5db5637093/catalogue.db.gz"
+    }
+  },
+  "database_sha256": "973ad286cffbec67fa3249b7d00b3a201059ac552aac6b63b577bb5db5637093",
+  "compressed_sha256": "91c8e25f0d58ced6a1e2c91905fe4190b826dc8a469aafc4aab09b83dee1fd91",
+  "counts": {
+    "supported_identities": 219,
+    "group_counts": {
+      "national": 216,
+      "regional": 3
+    },
+    "measurable": 218,
+    "source_ways": 62399,
+    "route_way_rows": 62487,
+    "shared_physical_ways": 88,
+    "held_identities": 34,
+    "deferred_alternative_route_count": 49,
+    "deferred_alternative_occurrences": 176,
+    "routes_with_unbound_open_target_over_1m": 218,
+    "summed_route_local_unbound_metres": 1334036.7209665314,
+    "summed_route_local_target_metres": 17430021.642636135
+  },
+  "held_route_keys": [
+    "NCN:207",
+    "NCN:253",
+    "NCN:274",
+    "NCN:323",
+    "NCN:410",
+    "NCN:422",
+    "NCN:524",
+    "NCN:626",
+    "NCN:689",
+    "NCN:776",
+    "NCN:820",
+    "RCN:11",
+    "RCN:12",
+    "RCN:15",
+    "RCN:16",
+    "RCN:17",
+    "RCN:21",
+    "RCN:30",
+    "RCN:31",
+    "RCN:32",
+    "RCN:40",
+    "RCN:41",
+    "RCN:50",
+    "RCN:51",
+    "RCN:55",
+    "RCN:61",
+    "RCN:67",
+    "RCN:71",
+    "RCN:80",
+    "RCN:81",
+    "RCN:82",
+    "RCN:83",
+    "RCN:85",
+    "RCN:89"
+  ],
+  "network_length_m": 17435132.494005967,
+  "whole_published_route_ready": false,
+  "fresh_checks": {
+    "ncn_research_tests": {
+      "passed": 322,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "cycling_evidence_tests": {
+      "passed": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "reference_preservation_tests": {
+      "passed": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "shipped_catalogue_mapping_tests": {
+      "passed": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "android_tests": "Not rerun; historical 810-test result linked from integrated baseline. No device testing performed."
+  },
+  "mileposts": {
+    "source_snapshot": "2026-10-15T17:21:06Z",
+    "candidate_count": 889,
+    "disc_series_and_number_tagged": 2,
+    "recorded_check_date": 4,
+    "approved_unlock_locations_recovered": 0,
+    "geographic_region_counts": "Not independently spatially verified; no approved 12-geography matrix",
+    "geograph_correspondences": 3,
+    "status": "Historical candidate evidence only. No coordinates copied into active data."
+  },
+  "active_routes": [
+    {
+      "route_key": "NCN:1",
+      "group": "national",
+      "display_name": "NCN 1",
+      "measurable": true,
+      "database_reference_metres": 1943972.4188039866,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:7a4f6ba02c8579f92e63f93ff38aa8463ed1537627343ddcebdb794b245a8b15",
+      "deferred_alternative_way_ids": [
+        "1050302688",
+        "1086221429",
+        "1097758220",
+        "1097758221",
+        "1127839833",
+        "24431910",
+        "25066690",
+        "316228148",
+        "366753345",
+        "39857407",
+        "39857411",
+        "3993762",
+        "4238981",
+        "4761354",
+        "4888063",
+        "5030412",
+        "9728677",
+        "989381880",
+        "989381881"
+      ],
+      "canonical_open_length_m": 1943972.4188039866,
+      "maximum_bound_open_length_m": {
+        "on_foot": 1764266.4141314537,
+        "cycling": 1798125.3915329014,
+        "combined": 1801243.7111433605
+      },
+      "unbound_open_length_m": 142728.70766062615,
+      "checkpoint_maximum_combined_binding_percent": 92.65788412016468,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:10",
+      "group": "national",
+      "display_name": "NCN 10",
+      "measurable": true,
+      "database_reference_metres": 232324.24870637778,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:a6af3bd1e38f459ba2e93cd0165edf34c3a8e5c55b7d8d1cf8e88785ac2d047c",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 232324.24870637778,
+      "maximum_bound_open_length_m": {
+        "on_foot": 209148.05529437948,
+        "cycling": 210562.10207524098,
+        "combined": 210625.22919238114
+      },
+      "unbound_open_length_m": 21699.019513996638,
+      "checkpoint_maximum_combined_binding_percent": 90.6600281138019,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:11",
+      "group": "national",
+      "display_name": "NCN 11",
+      "measurable": true,
+      "database_reference_metres": 94198.79094601293,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:21c856b096062cfc5429d654a50650f07e129e433a6b74128703255b5f5645fd",
+      "deferred_alternative_way_ids": [
+        "1233446353",
+        "463919681"
+      ],
+      "canonical_open_length_m": 94198.79094601293,
+      "maximum_bound_open_length_m": {
+        "on_foot": 88011.74424076143,
+        "cycling": 89333.1485195352,
+        "combined": 89445.68473737499
+      },
+      "unbound_open_length_m": 4753.106208637939,
+      "checkpoint_maximum_combined_binding_percent": 94.95417493058692,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:110",
+      "group": "national",
+      "display_name": "NCN 110",
+      "measurable": true,
+      "database_reference_metres": 6843.589006917979,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:250504749b06da22430f04b6176499a3ca892c514776f7e55010dbdee4f95155",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 6843.589006917979,
+      "maximum_bound_open_length_m": {
+        "on_foot": 6545.6244754409545,
+        "cycling": 6555.157805290374,
+        "combined": 6555.157805290374
+      },
+      "unbound_open_length_m": 288.4312016276044,
+      "checkpoint_maximum_combined_binding_percent": 95.78538101373363,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:12",
+      "group": "national",
+      "display_name": "NCN 12",
+      "measurable": true,
+      "database_reference_metres": 196613.73559746594,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:8eae0265c6087d2892e55f716b952a8427790ec2887128091689ba007619f90e",
+      "deferred_alternative_way_ids": [
+        "135207398",
+        "1554375358",
+        "1998386"
+      ],
+      "canonical_open_length_m": 196613.73559746594,
+      "maximum_bound_open_length_m": {
+        "on_foot": 180865.7526428625,
+        "cycling": 184219.3042892975,
+        "combined": 184233.21558133038
+      },
+      "unbound_open_length_m": 12380.52001613556,
+      "checkpoint_maximum_combined_binding_percent": 93.70312558351334,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:125",
+      "group": "national",
+      "display_name": "NCN 125",
+      "measurable": true,
+      "database_reference_metres": 5515.472328023311,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:966d0ecf6b91f2845f68ffde54471686210f5203b16d6638212fb6d72cb17bbe",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 5515.472328023311,
+      "maximum_bound_open_length_m": {
+        "on_foot": 2491.6879201801644,
+        "cycling": 3496.264090138439,
+        "combined": 3516.7885807563453
+      },
+      "unbound_open_length_m": 1998.6837472669658,
+      "checkpoint_maximum_combined_binding_percent": 63.76223778493194,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:13",
+      "group": "national",
+      "display_name": "NCN 13",
+      "measurable": true,
+      "database_reference_metres": 240317.03600222626,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:fc99e345fc8376ba25b251dc5b7d608f886af97bd6825f50e81353556d303308",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 240317.03600222626,
+      "maximum_bound_open_length_m": {
+        "on_foot": 223155.21765340705,
+        "cycling": 225890.21700727532,
+        "combined": 227277.05918316508
+      },
+      "unbound_open_length_m": 13039.97681906118,
+      "checkpoint_maximum_combined_binding_percent": 94.57384418683478,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:136",
+      "group": "national",
+      "display_name": "NCN 136",
+      "measurable": true,
+      "database_reference_metres": 17697.608819588775,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:9d78bdb761db0e7a35ec35acf2aafb448231114c0935d98e8977d7bab337c165",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 17697.608819588775,
+      "maximum_bound_open_length_m": {
+        "on_foot": 15676.779661604802,
+        "cycling": 15725.762694465848,
+        "combined": 15731.538856973257
+      },
+      "unbound_open_length_m": 1966.0699626155183,
+      "checkpoint_maximum_combined_binding_percent": 88.89075929602787,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:137",
+      "group": "national",
+      "display_name": "NCN 137",
+      "measurable": true,
+      "database_reference_metres": 3053.2766885010283,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:31055fb3bd66a7ea02efc067a1359fbad40cd4d6aa355fea98cc4d670dba4f61",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 3053.2766885010283,
+      "maximum_bound_open_length_m": {
+        "on_foot": 2655.675229425688,
+        "cycling": 697.8367015044678,
+        "combined": 2730.5457484671592
+      },
+      "unbound_open_length_m": 322.73094003386905,
+      "checkpoint_maximum_combined_binding_percent": 89.43001329524739,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:14",
+      "group": "national",
+      "display_name": "NCN 14",
+      "measurable": true,
+      "database_reference_metres": 139951.6453706928,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:f8e53c0dc8a7b930eb5f4f9448bbf466f4265bcf6781a3e2e4a9931272f3b053",
+      "deferred_alternative_way_ids": [
+        "110695338",
+        "35802611",
+        "4690936",
+        "8033447"
+      ],
+      "canonical_open_length_m": 139951.6453706928,
+      "maximum_bound_open_length_m": {
+        "on_foot": 123690.97220465797,
+        "cycling": 130792.56493679622,
+        "combined": 131169.6073042281
+      },
+      "unbound_open_length_m": 8782.03806646471,
+      "checkpoint_maximum_combined_binding_percent": 93.72494832539944,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:141",
+      "group": "national",
+      "display_name": "NCN 141",
+      "measurable": true,
+      "database_reference_metres": 10883.645941059687,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:89dbac89592dc6bd77a7147871bff0ce5034469f5ade040599e29b1b8390a9a7",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 10883.645941059687,
+      "maximum_bound_open_length_m": {
+        "on_foot": 10073.982501223067,
+        "cycling": 10073.982501223067,
+        "combined": 10073.982501223067
+      },
+      "unbound_open_length_m": 809.6634398366205,
+      "checkpoint_maximum_combined_binding_percent": 92.5607333772033,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:15",
+      "group": "national",
+      "display_name": "NCN 15",
+      "measurable": true,
+      "database_reference_metres": 52210.77775270417,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:d633b101c3c97d876214d8ea9e3f35186adff38e8bd8ed2eff98f6a08781c241",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 52210.77775270417,
+      "maximum_bound_open_length_m": {
+        "on_foot": 47287.2183176663,
+        "cycling": 47527.12580379562,
+        "combined": 47623.62968953816
+      },
+      "unbound_open_length_m": 4587.148063166009,
+      "checkpoint_maximum_combined_binding_percent": 91.2141740448821,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:150",
+      "group": "national",
+      "display_name": "NCN 150",
+      "measurable": true,
+      "database_reference_metres": 15828.153633279368,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:1400d3910d983e35b9ffe908b4707672938a2407cc91f10a98fdbe8c9a0ecea6",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 15828.153633279368,
+      "maximum_bound_open_length_m": {
+        "on_foot": 9034.953262254185,
+        "cycling": 15111.177568982408,
+        "combined": 15240.50791813502
+      },
+      "unbound_open_length_m": 587.6457151443483,
+      "checkpoint_maximum_combined_binding_percent": 96.28733882195331,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:151",
+      "group": "national",
+      "display_name": "NCN 151",
+      "measurable": true,
+      "database_reference_metres": 3278.961652804842,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:dd12b8381ee252634d431bf0a195fa976591410d1a7279bede3e76f60d6fba08",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 3278.961652804842,
+      "maximum_bound_open_length_m": {
+        "on_foot": 2099.5512359823388,
+        "cycling": 2099.5512359823388,
+        "combined": 2099.5512359823388
+      },
+      "unbound_open_length_m": 1179.410416822503,
+      "checkpoint_maximum_combined_binding_percent": 64.03097865406176,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:155",
+      "group": "national",
+      "display_name": "NCN 155",
+      "measurable": true,
+      "database_reference_metres": 11920.213141195401,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:52c754e56c1f6bf71f574f24df4a24eb8e644e8c3b7d6ac65f0d45e129d94736",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 11920.213141195401,
+      "maximum_bound_open_length_m": {
+        "on_foot": 11469.765455451274,
+        "cycling": 11477.89887145282,
+        "combined": 11477.89887145282
+      },
+      "unbound_open_length_m": 442.314269742581,
+      "checkpoint_maximum_combined_binding_percent": 96.2893761671595,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:16",
+      "group": "national",
+      "display_name": "NCN 16",
+      "measurable": true,
+      "database_reference_metres": 68120.32815612688,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:4d1fce9edab5c0b5456123bc5998daae8554ab48ebfdc28522611007f8783eee",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 68120.32815612688,
+      "maximum_bound_open_length_m": {
+        "on_foot": 59401.2603565818,
+        "cycling": 64227.716259880835,
+        "combined": 64418.47445458551
+      },
+      "unbound_open_length_m": 3701.853701541375,
+      "checkpoint_maximum_combined_binding_percent": 94.56571363975671,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:164",
+      "group": "national",
+      "display_name": "NCN 164",
+      "measurable": true,
+      "database_reference_metres": 60897.599967122376,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:c7a4bf7c62e1aaf3f66a80de3e507aced27524d030da1fd4678e99466bb98f2e",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 60897.599967122376,
+      "maximum_bound_open_length_m": {
+        "on_foot": 55720.96110466627,
+        "cycling": 55687.92606457592,
+        "combined": 55758.74008230573
+      },
+      "unbound_open_length_m": 5138.859884816644,
+      "checkpoint_maximum_combined_binding_percent": 91.56147387156304,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:165",
+      "group": "national",
+      "display_name": "NCN 165",
+      "measurable": true,
+      "database_reference_metres": 115211.78998202892,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:309e2490c636a18b85eb626d429ff5ad99b92e6f546354a41ab84cc0f266d07f",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 115211.78998202892,
+      "maximum_bound_open_length_m": {
+        "on_foot": 112337.36547263141,
+        "cycling": 112337.36547263141,
+        "combined": 112337.36547263141
+      },
+      "unbound_open_length_m": 2874.424509397504,
+      "checkpoint_maximum_combined_binding_percent": 97.50509517311912,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:166",
+      "group": "national",
+      "display_name": "NCN 166",
+      "measurable": true,
+      "database_reference_metres": 56994.74351098911,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:0dad8588889f9d5a70a61c7b742c5deafedb78122e38dfe39b7e19ce15ef7aec",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 56994.74351098911,
+      "maximum_bound_open_length_m": {
+        "on_foot": 56356.02829371332,
+        "cycling": 56356.02829371332,
+        "combined": 56356.02829371332
+      },
+      "unbound_open_length_m": 638.7152172757851,
+      "checkpoint_maximum_combined_binding_percent": 98.87934364130854,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:167",
+      "group": "national",
+      "display_name": "NCN 167",
+      "measurable": true,
+      "database_reference_metres": 28789.982924431253,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:4668c5a5b51a085cb8d89b0363aa03425e274e599e493ce2124c15b8dbacbc14",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 28789.982924431253,
+      "maximum_bound_open_length_m": {
+        "on_foot": 28089.15241458156,
+        "cycling": 28432.903836992395,
+        "combined": 28432.903836992395
+      },
+      "unbound_open_length_m": 357.07908743885855,
+      "checkpoint_maximum_combined_binding_percent": 98.7597106661156,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:168",
+      "group": "national",
+      "display_name": "NCN 168",
+      "measurable": true,
+      "database_reference_metres": 20715.667331420744,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:fc6295a7edfdbb038a6d503863aa0d927a522c4a1fec9cfb9ba56f9408830a3c",
+      "deferred_alternative_way_ids": [
+        "97948657"
+      ],
+      "canonical_open_length_m": 20715.667331420744,
+      "maximum_bound_open_length_m": {
+        "on_foot": 18585.18643287359,
+        "cycling": 17422.812529783405,
+        "combined": 19196.934720149806
+      },
+      "unbound_open_length_m": 1518.732611270938,
+      "checkpoint_maximum_combined_binding_percent": 92.6686763840459,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:169",
+      "group": "national",
+      "display_name": "NCN 169",
+      "measurable": true,
+      "database_reference_metres": 9074.277925675058,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:98fd2402e88d81d186d8db076a1964c03a11b27535675027aecdb257ea9a7df0",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 9074.277925675058,
+      "maximum_bound_open_length_m": {
+        "on_foot": 5316.879171067287,
+        "cycling": 6476.755572210489,
+        "combined": 6476.755572210489
+      },
+      "unbound_open_length_m": 2597.5223534645693,
+      "checkpoint_maximum_combined_binding_percent": 71.37488652276062,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:17",
+      "group": "national",
+      "display_name": "NCN 17",
+      "measurable": true,
+      "database_reference_metres": 55782.942694001285,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:f8e0714a50dfcc43bd4bc29ab1a3ac26f7b30719d707efdb4bf0bfeda5a0ae07",
+      "deferred_alternative_way_ids": [
+        "209791899"
+      ],
+      "canonical_open_length_m": 55782.942694001285,
+      "maximum_bound_open_length_m": {
+        "on_foot": 47028.231450052896,
+        "cycling": 47848.72994128511,
+        "combined": 47949.35605015156
+      },
+      "unbound_open_length_m": 7833.586643849725,
+      "checkpoint_maximum_combined_binding_percent": 85.95702150956599,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:174",
+      "group": "national",
+      "display_name": "NCN 174",
+      "measurable": true,
+      "database_reference_metres": 14579.384412601963,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:8c05cdaa2e75019986648123872e15f71180ca37d10da7853b1c48fa3d62877f",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 14579.384412601963,
+      "maximum_bound_open_length_m": {
+        "on_foot": 12850.653497517802,
+        "cycling": 12786.685131028724,
+        "combined": 12918.565118926557
+      },
+      "unbound_open_length_m": 1660.8192936754058,
+      "checkpoint_maximum_combined_binding_percent": 88.6084402010839,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:177",
+      "group": "national",
+      "display_name": "NCN 177",
+      "measurable": true,
+      "database_reference_metres": 15147.377380842527,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:975e079444eb3838849784b25a6528c07bb10e199092c311f420664e296188f3",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 15147.377380842527,
+      "maximum_bound_open_length_m": {
+        "on_foot": 12426.376443243544,
+        "cycling": 12430.259506584684,
+        "combined": 12430.259506584684
+      },
+      "unbound_open_length_m": 2717.117874257843,
+      "checkpoint_maximum_combined_binding_percent": 82.0621233237756,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:179",
+      "group": "national",
+      "display_name": "NCN 179",
+      "measurable": true,
+      "database_reference_metres": 19687.07554122239,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:4dd5a99b9052b3530689d5f2553508f150e6312560c4ae249abeb62154f11ece",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 19687.07554122239,
+      "maximum_bound_open_length_m": {
+        "on_foot": 18142.849481641115,
+        "cycling": 18905.50785557219,
+        "combined": 18905.50785557219
+      },
+      "unbound_open_length_m": 781.5676856502032,
+      "checkpoint_maximum_combined_binding_percent": 96.03004679890778,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:18",
+      "group": "national",
+      "display_name": "NCN 18",
+      "measurable": true,
+      "database_reference_metres": 99544.7683300006,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:7f0e5c8d07f57058bffafe21830d70bf138cf2e44ba9f52f921a217c2f08e6f3",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 99544.7683300006,
+      "maximum_bound_open_length_m": {
+        "on_foot": 92750.05521289608,
+        "cycling": 94851.52513679968,
+        "combined": 94851.52513679968
+      },
+      "unbound_open_length_m": 4693.24319320092,
+      "checkpoint_maximum_combined_binding_percent": 95.2852939718114,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:195",
+      "group": "national",
+      "display_name": "NCN 195",
+      "measurable": true,
+      "database_reference_metres": 65274.05421072938,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:f548cc590ea28ebf903d39ed674fc50dd3e3b7fa49d133420dab3c610ec0a21b",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 65274.05421072938,
+      "maximum_bound_open_length_m": {
+        "on_foot": 44671.10295832742,
+        "cycling": 60925.33480212062,
+        "combined": 60925.33480212062
+      },
+      "unbound_open_length_m": 4348.719408608762,
+      "checkpoint_maximum_combined_binding_percent": 93.33775194264868,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:196",
+      "group": "national",
+      "display_name": "NCN 196",
+      "measurable": true,
+      "database_reference_metres": 32590.165606541403,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:2675e16f46f5750c68a583e9e71f5697926c4b2deec4f34aba24f1bbac4f4244",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 32590.165606541403,
+      "maximum_bound_open_length_m": {
+        "on_foot": 31957.555917568105,
+        "cycling": 31957.555917568105,
+        "combined": 31957.555917568105
+      },
+      "unbound_open_length_m": 632.609688973298,
+      "checkpoint_maximum_combined_binding_percent": 98.05889391109346,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:2",
+      "group": "national",
+      "display_name": "NCN 2",
+      "measurable": true,
+      "database_reference_metres": 565505.8691796699,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:4f6dd9de48333d67e3ac27e547c39d99b1cbe3ef1147482918a3e5f4be2e04fa",
+      "deferred_alternative_way_ids": [
+        "1299957755",
+        "1554377112",
+        "4422196",
+        "4728716",
+        "4949135",
+        "5198649",
+        "78174503"
+      ],
+      "canonical_open_length_m": 565505.8691796699,
+      "maximum_bound_open_length_m": {
+        "on_foot": 513225.6616508574,
+        "cycling": 519193.7674183935,
+        "combined": 528757.7266742943
+      },
+      "unbound_open_length_m": 36748.14250537555,
+      "checkpoint_maximum_combined_binding_percent": 93.50172217333785,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:20",
+      "group": "national",
+      "display_name": "NCN 20",
+      "measurable": true,
+      "database_reference_metres": 45357.414128543474,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:e6ec116207693487dda96e398bea0fa122ca0719de1ac8ab40435891f5add9c7",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 45357.414128543474,
+      "maximum_bound_open_length_m": {
+        "on_foot": 36472.85065468313,
+        "cycling": 37397.99031370255,
+        "combined": 37404.06889968604
+      },
+      "unbound_open_length_m": 7953.3452288574335,
+      "checkpoint_maximum_combined_binding_percent": 82.4651705092412,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:208",
+      "group": "national",
+      "display_name": "NCN 208",
+      "measurable": true,
+      "database_reference_metres": 8571.52567737116,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:d9e0a13ef6d791cc2edb74179d4cef22787047fc85b26b9d4fc920dcacd096b4",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 8571.52567737116,
+      "maximum_bound_open_length_m": {
+        "on_foot": 7153.207142762858,
+        "cycling": 7346.2413788897065,
+        "combined": 7624.820951213717
+      },
+      "unbound_open_length_m": 946.7047261574435,
+      "checkpoint_maximum_combined_binding_percent": 88.95523665458127,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:21",
+      "group": "national",
+      "display_name": "NCN 21",
+      "measurable": true,
+      "database_reference_metres": 152539.17817917062,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:affeb5a3e06a9f3a3bb992e001ef44adb4c2a3edcb2065163ee1ab345260b1e3",
+      "deferred_alternative_way_ids": [
+        "517810053",
+        "517810054"
+      ],
+      "canonical_open_length_m": 152539.17817917062,
+      "maximum_bound_open_length_m": {
+        "on_foot": 136446.104284463,
+        "cycling": 140988.35764109687,
+        "combined": 141364.21712327644
+      },
+      "unbound_open_length_m": 11174.961055894179,
+      "checkpoint_maximum_combined_binding_percent": 92.67403876873638,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:22",
+      "group": "national",
+      "display_name": "NCN 22",
+      "measurable": true,
+      "database_reference_metres": 153629.2253777585,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:4501ce462dcdd24efbccdfcf0ecee0c2d54ed7465a2d3e8a2dce43e6d4983cfe",
+      "deferred_alternative_way_ids": [
+        "1554372126",
+        "1554375389",
+        "257113622",
+        "4974429",
+        "700120517",
+        "700120518",
+        "81389853"
+      ],
+      "canonical_open_length_m": 153629.2253777585,
+      "maximum_bound_open_length_m": {
+        "on_foot": 140545.96459549025,
+        "cycling": 141324.96488107598,
+        "combined": 141486.07640745366
+      },
+      "unbound_open_length_m": 12143.148970304843,
+      "checkpoint_maximum_combined_binding_percent": 92.09580798155685,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:221",
+      "group": "national",
+      "display_name": "NCN 221",
+      "measurable": true,
+      "database_reference_metres": 13989.638926882943,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:fdca0a9057bc19ac840bb5a9b6e215d67e465d8dbaff6a05ff347fe81bc3dd01",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 13989.638926882943,
+      "maximum_bound_open_length_m": {
+        "on_foot": 13088.176425290585,
+        "cycling": 12695.980150060965,
+        "combined": 13088.176425290585
+      },
+      "unbound_open_length_m": 901.4625015923575,
+      "checkpoint_maximum_combined_binding_percent": 93.55621323535321,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:222",
+      "group": "national",
+      "display_name": "NCN 222",
+      "measurable": true,
+      "database_reference_metres": 29083.680720021734,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:48545644e0e46fd1bf020f1cfd83b798fee26a8e889b23b21caba1659a9643a1",
+      "deferred_alternative_way_ids": [
+        "5063256"
+      ],
+      "canonical_open_length_m": 29083.680720021734,
+      "maximum_bound_open_length_m": {
+        "on_foot": 19336.96728405124,
+        "cycling": 25027.230754028864,
+        "combined": 25133.580581222144
+      },
+      "unbound_open_length_m": 3950.1001387995893,
+      "checkpoint_maximum_combined_binding_percent": 86.41815602080837,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:223",
+      "group": "national",
+      "display_name": "NCN 223",
+      "measurable": true,
+      "database_reference_metres": 73185.21237161152,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:ae8a274a80117a321018147c4be123c01a02cd032ca75280cfc4b894ea65bfa1",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 73185.21237161152,
+      "maximum_bound_open_length_m": {
+        "on_foot": 67911.10162687338,
+        "cycling": 67773.33516417004,
+        "combined": 68098.62772260074
+      },
+      "unbound_open_length_m": 5086.58464901078,
+      "checkpoint_maximum_combined_binding_percent": 93.04970979221498,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:224",
+      "group": "national",
+      "display_name": "NCN 224",
+      "measurable": true,
+      "database_reference_metres": 21114.715469931736,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:7efa46d75e9ae737133e107f06e093ca2ed231767e48fc6f7427f136ac9a18c5",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 21114.715469931736,
+      "maximum_bound_open_length_m": {
+        "on_foot": 16677.858457168953,
+        "cycling": 19999.740544308403,
+        "combined": 20020.04603963316
+      },
+      "unbound_open_length_m": 1094.669430298578,
+      "checkpoint_maximum_combined_binding_percent": 94.81560889675528,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:228",
+      "group": "national",
+      "display_name": "NCN 228",
+      "measurable": false,
+      "database_reference_metres": 5649.324723293566,
+      "completion_kind": "preserved_numbered_alternative_inventory",
+      "reference_version": "inventory-completion:f489d39d1a7f008aa5dec3f6883615ead557f3784ebdcef36a8152fed337b5f1",
+      "deferred_alternative_way_ids": [],
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:23",
+      "group": "national",
+      "display_name": "NCN 23",
+      "measurable": true,
+      "database_reference_metres": 137132.0893298333,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:94b6fb5d30a5da4cb289cdcea592dccc32006e4365fdafbb8a7359d9ad177639",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 137132.0893298333,
+      "maximum_bound_open_length_m": {
+        "on_foot": 128091.98706368198,
+        "cycling": 128557.81159755058,
+        "combined": 129463.99720742102
+      },
+      "unbound_open_length_m": 7668.092122412287,
+      "checkpoint_maximum_combined_binding_percent": 94.40824378897283,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:236",
+      "group": "national",
+      "display_name": "NCN 236",
+      "measurable": true,
+      "database_reference_metres": 26753.387321512477,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:eedb457d28e6ae04a5fb4fbe526909bf4c84e6099e664dd62c80e49a4ab654a9",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 26753.387321512477,
+      "maximum_bound_open_length_m": {
+        "on_foot": 20306.70821369657,
+        "cycling": 24615.287763097862,
+        "combined": 24791.64971945737
+      },
+      "unbound_open_length_m": 1961.7376020551055,
+      "checkpoint_maximum_combined_binding_percent": 92.66733001515038,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:24",
+      "group": "national",
+      "display_name": "NCN 24",
+      "measurable": true,
+      "database_reference_metres": 110853.60799587631,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:840a270fdeb634a631d036c9d16dd93c62902dd44086d00b273d05fb4ac0f208",
+      "deferred_alternative_way_ids": [
+        "54435419"
+      ],
+      "canonical_open_length_m": 110853.60799587631,
+      "maximum_bound_open_length_m": {
+        "on_foot": 103291.619395764,
+        "cycling": 104378.7491320608,
+        "combined": 104579.36012222862
+      },
+      "unbound_open_length_m": 6274.247873647691,
+      "checkpoint_maximum_combined_binding_percent": 94.3400598437165,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:244",
+      "group": "national",
+      "display_name": "NCN 244",
+      "measurable": true,
+      "database_reference_metres": 5904.109210270869,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:848360bbc201b5baf7f27af94beedeb459f868021e8b8f9014c70e0501d72e27",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 5904.109210270869,
+      "maximum_bound_open_length_m": {
+        "on_foot": 5519.178320417063,
+        "cycling": 5519.178320417063,
+        "combined": 5519.178320417063
+      },
+      "unbound_open_length_m": 384.93088985380564,
+      "checkpoint_maximum_combined_binding_percent": 93.4802884542824,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:246",
+      "group": "national",
+      "display_name": "NCN 246",
+      "measurable": true,
+      "database_reference_metres": 50758.047762516886,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:275104ea254b8b71160752f402f0bf540f53bd6a6cb43b600a71f9b57b1667c5",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 50758.047762516886,
+      "maximum_bound_open_length_m": {
+        "on_foot": 48829.26234327992,
+        "cycling": 48954.23114281562,
+        "combined": 48996.407645517946
+      },
+      "unbound_open_length_m": 1761.6401169989404,
+      "checkpoint_maximum_combined_binding_percent": 96.52933831253483,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:248",
+      "group": "national",
+      "display_name": "NCN 248",
+      "measurable": true,
+      "database_reference_metres": 3434.7421693718084,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:fc77550fb474a8410e3633ff229fe313bf827f2f5ed8d0f8d5d804e4e472ee4d",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 3434.7421693718084,
+      "maximum_bound_open_length_m": {
+        "on_foot": 2365.7859219315883,
+        "cycling": 2365.7859219315883,
+        "combined": 2365.7859219315883
+      },
+      "unbound_open_length_m": 1068.95624744022,
+      "checkpoint_maximum_combined_binding_percent": 68.87812258596036,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:25",
+      "group": "national",
+      "display_name": "NCN 25",
+      "measurable": true,
+      "database_reference_metres": 92727.72491444714,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:3459707d1f37ee5c3e38069da248ff0faeb9c9000a30c374599cf9e2cdb0b032",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 92727.72491444714,
+      "maximum_bound_open_length_m": {
+        "on_foot": 84121.78561894633,
+        "cycling": 87861.90659906609,
+        "combined": 87861.90659906609
+      },
+      "unbound_open_length_m": 4865.818315381053,
+      "checkpoint_maximum_combined_binding_percent": 94.75257446478885,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:250",
+      "group": "national",
+      "display_name": "NCN 250",
+      "measurable": true,
+      "database_reference_metres": 10268.168307751277,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:2373222742990879c32829dbb07313529e8d00f47742a7a03bd0359f6e61083c",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 10268.168307751277,
+      "maximum_bound_open_length_m": {
+        "on_foot": 9592.082158036701,
+        "cycling": 9845.513510313776,
+        "combined": 9845.513510313776
+      },
+      "unbound_open_length_m": 422.65479743750075,
+      "checkpoint_maximum_combined_binding_percent": 95.88383453825503,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:256",
+      "group": "national",
+      "display_name": "NCN 256",
+      "measurable": true,
+      "database_reference_metres": 22542.96045870898,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:27f8defda728caede3e7bdee947923c065a6b4224ea7a9a6701400527a4b2e3d",
+      "deferred_alternative_way_ids": [
+        "191499466",
+        "207731581"
+      ],
+      "canonical_open_length_m": 22542.96045870898,
+      "maximum_bound_open_length_m": {
+        "on_foot": 17722.095987295215,
+        "cycling": 20047.87303819481,
+        "combined": 20047.87303819481
+      },
+      "unbound_open_length_m": 2495.08742051417,
+      "checkpoint_maximum_combined_binding_percent": 88.93185557822223,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:26",
+      "group": "national",
+      "display_name": "NCN 26",
+      "measurable": true,
+      "database_reference_metres": 112890.46183617889,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:355dadb41f7ac22008788219bbf84c9916473da6ad11e9fc6ddf89146563c49b",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 112890.46183617889,
+      "maximum_bound_open_length_m": {
+        "on_foot": 101900.73836271545,
+        "cycling": 108262.53757085785,
+        "combined": 108274.48530274205
+      },
+      "unbound_open_length_m": 4615.976533436842,
+      "checkpoint_maximum_combined_binding_percent": 95.91110138238666,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:267",
+      "group": "national",
+      "display_name": "NCN 267",
+      "measurable": true,
+      "database_reference_metres": 4756.679570760199,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:5114f623baa7af21865d1cee36ccf65ad11635ee4cf4ca5109eab143daa41dd2",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 4756.679570760199,
+      "maximum_bound_open_length_m": {
+        "on_foot": 1839.3083217750143,
+        "cycling": 4116.51219194813,
+        "combined": 4136.571949995828
+      },
+      "unbound_open_length_m": 620.107620764371,
+      "checkpoint_maximum_combined_binding_percent": 86.96343506978614,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:27",
+      "group": "national",
+      "display_name": "NCN 27",
+      "measurable": true,
+      "database_reference_metres": 120675.59053580389,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:0a8923490be3ae5941767b60e01b76f74eca329cb3a0d225970a4b67486b56cc",
+      "deferred_alternative_way_ids": [
+        "27093018"
+      ],
+      "canonical_open_length_m": 120675.59053580389,
+      "maximum_bound_open_length_m": {
+        "on_foot": 100144.50524248168,
+        "cycling": 112852.0947349787,
+        "combined": 112914.18519676689
+      },
+      "unbound_open_length_m": 7761.405339036995,
+      "checkpoint_maximum_combined_binding_percent": 93.56837177711243,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:270",
+      "group": "national",
+      "display_name": "NCN 270",
+      "measurable": true,
+      "database_reference_metres": 2690.162858361819,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:632f21e2738eb2d2f50c05272fb8711afb39511a5604012b9c189580341b76d4",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 2690.162858361819,
+      "maximum_bound_open_length_m": {
+        "on_foot": 2117.5559340050713,
+        "cycling": 2430.2202085106283,
+        "combined": 2430.2202085106283
+      },
+      "unbound_open_length_m": 259.9426498511907,
+      "checkpoint_maximum_combined_binding_percent": 90.33728946769105,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:272",
+      "group": "national",
+      "display_name": "NCN 272",
+      "measurable": true,
+      "database_reference_metres": 40547.439064213366,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:12af882cc37128d3de660af4e5b2bb906e292dca56be701ffdb741fec65ce56b",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 40547.439064213366,
+      "maximum_bound_open_length_m": {
+        "on_foot": 38429.81195184736,
+        "cycling": 38429.81195184736,
+        "combined": 38429.81195184736
+      },
+      "unbound_open_length_m": 2117.6271123660044,
+      "checkpoint_maximum_combined_binding_percent": 94.77740848438688,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:278",
+      "group": "national",
+      "display_name": "NCN 278",
+      "measurable": true,
+      "database_reference_metres": 11894.907413788353,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:5beeb51f6b6d80fd8f55d57a320a3497942f18d6462af22590fc564e005af75e",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 11894.907413788353,
+      "maximum_bound_open_length_m": {
+        "on_foot": 11611.811826168452,
+        "cycling": 11611.811826168452,
+        "combined": 11611.811826168452
+      },
+      "unbound_open_length_m": 283.09558761990047,
+      "checkpoint_maximum_combined_binding_percent": 97.62002697648794,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:28",
+      "group": "national",
+      "display_name": "NCN 28",
+      "measurable": true,
+      "database_reference_metres": 127236.55390914512,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:d8dfd27e608a833d04547ee7b1782b0a68442be7ac4f8cc28892cc73e450d922",
+      "deferred_alternative_way_ids": [
+        "1046353445"
+      ],
+      "canonical_open_length_m": 127236.55390914512,
+      "maximum_bound_open_length_m": {
+        "on_foot": 118025.18685762712,
+        "cycling": 118608.10754150226,
+        "combined": 118608.10754150226
+      },
+      "unbound_open_length_m": 8628.446367642857,
+      "checkpoint_maximum_combined_binding_percent": 93.21857901479783,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:288",
+      "group": "national",
+      "display_name": "NCN 288",
+      "measurable": true,
+      "database_reference_metres": 5836.8657617204535,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:ae900d425044d34942cbddaf089bca9baeda5f85e41acf9c4bfdbc55988454fb",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 5836.8657617204535,
+      "maximum_bound_open_length_m": {
+        "on_foot": 5080.447014054321,
+        "cycling": 5080.447014054321,
+        "combined": 5080.447014054321
+      },
+      "unbound_open_length_m": 756.4187476661327,
+      "checkpoint_maximum_combined_binding_percent": 87.04066911000582,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:3",
+      "group": "national",
+      "display_name": "NCN 3",
+      "measurable": true,
+      "database_reference_metres": 505702.3423116841,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:9ba26147bef681329d1bde4ddeab2e162ba66c6920b674a5526ade7b14717b89",
+      "deferred_alternative_way_ids": [
+        "1243810161",
+        "1387390157",
+        "1387390158",
+        "23373318",
+        "6015858",
+        "655702259"
+      ],
+      "canonical_open_length_m": 505702.3423116841,
+      "maximum_bound_open_length_m": {
+        "on_foot": 471701.2869953141,
+        "cycling": 482519.48395651934,
+        "combined": 483452.57429543335
+      },
+      "unbound_open_length_m": 22249.768016250746,
+      "checkpoint_maximum_combined_binding_percent": 95.60022444931899,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:304",
+      "group": "national",
+      "display_name": "NCN 304",
+      "measurable": true,
+      "database_reference_metres": 17319.24115368731,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:8223041a8902474aa3ccd094037067c2ad657583df13db122f6eebfa58671fcf",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 17319.24115368731,
+      "maximum_bound_open_length_m": {
+        "on_foot": 17024.679218265195,
+        "cycling": 17024.679218265195,
+        "combined": 17024.679218265195
+      },
+      "unbound_open_length_m": 294.5619354221162,
+      "checkpoint_maximum_combined_binding_percent": 98.29922146814496,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:305",
+      "group": "national",
+      "display_name": "NCN 305",
+      "measurable": true,
+      "database_reference_metres": 25538.669301081536,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:61f325ac720f6ac8763b5da0844e53d26895a18224426063faa85db983f3f626",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 25538.669301081536,
+      "maximum_bound_open_length_m": {
+        "on_foot": 22681.892531881505,
+        "cycling": 24436.453980939536,
+        "combined": 24436.453980939536
+      },
+      "unbound_open_length_m": 1102.2153201420006,
+      "checkpoint_maximum_combined_binding_percent": 95.68413174880916,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:32",
+      "group": "national",
+      "display_name": "NCN 32",
+      "measurable": true,
+      "database_reference_metres": 62299.214264844246,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:2ea6bef9e68da79b8457d288cd502e692d3f304f81222d2dcfb95e7b50314adc",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 62299.214264844246,
+      "maximum_bound_open_length_m": {
+        "on_foot": 56860.43707334998,
+        "cycling": 56554.09118508836,
+        "combined": 57095.61721087259
+      },
+      "unbound_open_length_m": 5203.597053971658,
+      "checkpoint_maximum_combined_binding_percent": 91.64741142344057,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:327",
+      "group": "national",
+      "display_name": "NCN 327",
+      "measurable": true,
+      "database_reference_metres": 38655.40714205914,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:eb54d1138ec47f4bb88b52ace9dd74eb8e9fc1cd1c59ff69404d7ee1ae1c5c02",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 38655.40714205914,
+      "maximum_bound_open_length_m": {
+        "on_foot": 37730.74244422575,
+        "cycling": 37725.73632383882,
+        "combined": 37730.74244422575
+      },
+      "unbound_open_length_m": 924.6646978333956,
+      "checkpoint_maximum_combined_binding_percent": 97.60792922336779,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:33",
+      "group": "national",
+      "display_name": "NCN 33",
+      "measurable": true,
+      "database_reference_metres": 87159.06599962362,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:92d54aa839e21e64418e1206cdc76ccfed5fb27947ba3c3463c04028da4a9c8b",
+      "deferred_alternative_way_ids": [
+        "1315707749",
+        "206446391",
+        "206446392",
+        "206446398",
+        "39443191",
+        "980898892",
+        "980898893"
+      ],
+      "canonical_open_length_m": 87159.06599962362,
+      "maximum_bound_open_length_m": {
+        "on_foot": 73759.82740234536,
+        "cycling": 76204.21244994306,
+        "combined": 76236.00908888047
+      },
+      "unbound_open_length_m": 10923.056910743151,
+      "checkpoint_maximum_combined_binding_percent": 87.4676755820326,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:334",
+      "group": "national",
+      "display_name": "NCN 334",
+      "measurable": true,
+      "database_reference_metres": 10796.310207947883,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:84eaaff35f5225961e069481e5a3d32b396dfba17e006b64961f6b98f850fb5f",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 10796.310207947883,
+      "maximum_bound_open_length_m": {
+        "on_foot": 10468.565056654788,
+        "cycling": 10468.565056654788,
+        "combined": 10468.565056654788
+      },
+      "unbound_open_length_m": 327.74515129309475,
+      "checkpoint_maximum_combined_binding_percent": 96.96428552921887,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:339",
+      "group": "national",
+      "display_name": "NCN 339",
+      "measurable": true,
+      "database_reference_metres": 14534.47315879236,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:dfc2e1546e2904f5d42c66ad6bcaa2f9dbdd5c34373bbb6d03d206769aa991f6",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 14534.47315879236,
+      "maximum_bound_open_length_m": {
+        "on_foot": 14306.847237008875,
+        "cycling": 14306.847237008875,
+        "combined": 14306.847237008875
+      },
+      "unbound_open_length_m": 227.62592178348496,
+      "checkpoint_maximum_combined_binding_percent": 98.43388942071294,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:34",
+      "group": "national",
+      "display_name": "NCN 34",
+      "measurable": true,
+      "database_reference_metres": 10227.76422690689,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:680e4110c0faf866faf30db00171b47827d6c721b742c439344fb19f29864dfd",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 10227.76422690689,
+      "maximum_bound_open_length_m": {
+        "on_foot": 5063.23783322026,
+        "cycling": 5882.643599293526,
+        "combined": 5882.643599293526
+      },
+      "unbound_open_length_m": 4345.1206276133635,
+      "checkpoint_maximum_combined_binding_percent": 57.51641775059349,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:344",
+      "group": "national",
+      "display_name": "NCN 344",
+      "measurable": true,
+      "database_reference_metres": 14273.240651508411,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:52950696a04e11f11a8d1fcc94b1916c8f05ebdb43e50989ca6e806ece25168a",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 14273.240651508411,
+      "maximum_bound_open_length_m": {
+        "on_foot": 13942.513357280937,
+        "cycling": 13942.513357280937,
+        "combined": 13942.513357280937
+      },
+      "unbound_open_length_m": 330.727294227474,
+      "checkpoint_maximum_combined_binding_percent": 97.68288574191088,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:4",
+      "group": "national",
+      "display_name": "NCN 4",
+      "measurable": true,
+      "database_reference_metres": 680116.3093395459,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:66d42c4bc3c54bf53adf4c614055ddd77604bcdf5d5d37d19c5a786395534088",
+      "deferred_alternative_way_ids": [
+        "23626936",
+        "572237126",
+        "686367525"
+      ],
+      "canonical_open_length_m": 680116.3093395459,
+      "maximum_bound_open_length_m": {
+        "on_foot": 549135.9676482534,
+        "cycling": 598275.2557078548,
+        "combined": 603468.3243497016
+      },
+      "unbound_open_length_m": 76647.98498984426,
+      "checkpoint_maximum_combined_binding_percent": 88.73016512950905,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:403",
+      "group": "national",
+      "display_name": "NCN 403",
+      "measurable": true,
+      "database_reference_metres": 64313.7273574212,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:1e8de1449d77bd08296d20b0dac27a6f5c7bf43232808d5776b5bdf9524798e2",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 64313.7273574212,
+      "maximum_bound_open_length_m": {
+        "on_foot": 61479.048270786574,
+        "cycling": 61514.469521605235,
+        "combined": 61537.30880520493
+      },
+      "unbound_open_length_m": 2776.4185522162734,
+      "checkpoint_maximum_combined_binding_percent": 95.68300786426757,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:41",
+      "group": "national",
+      "display_name": "NCN 41",
+      "measurable": true,
+      "database_reference_metres": 185373.40105659203,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:b18f7714693a382de64c793a1412017eaa08b88789d3efa58a97aa3e24eb54fd",
+      "deferred_alternative_way_ids": [
+        "3390206"
+      ],
+      "canonical_open_length_m": 185373.40105659203,
+      "maximum_bound_open_length_m": {
+        "on_foot": 163178.3681432178,
+        "cycling": 166538.45201750216,
+        "combined": 166680.0953781244
+      },
+      "unbound_open_length_m": 18693.305678467645,
+      "checkpoint_maximum_combined_binding_percent": 89.91586410352322,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:411",
+      "group": "national",
+      "display_name": "NCN 411",
+      "measurable": true,
+      "database_reference_metres": 1563.4202583650522,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:424fdbe8f23908f3a0891e067834bc21fa4d83fc19e4d8671381c386fa863c43",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 1563.4202583650522,
+      "maximum_bound_open_length_m": {
+        "on_foot": 841.2640469479153,
+        "cycling": 899.5182472144787,
+        "combined": 940.5395411792566
+      },
+      "unbound_open_length_m": 622.8807171857956,
+      "checkpoint_maximum_combined_binding_percent": 60.15909901044947,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:416",
+      "group": "national",
+      "display_name": "NCN 416",
+      "measurable": true,
+      "database_reference_metres": 20709.886177553035,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:dc7134cef562c54360cb3ec71e7f75adea2a9d5e400195dc32188f7c945bbeaa",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 20709.886177553035,
+      "maximum_bound_open_length_m": {
+        "on_foot": 16514.417442342725,
+        "cycling": 18321.499990911732,
+        "combined": 18341.631737093478
+      },
+      "unbound_open_length_m": 2368.2544404595574,
+      "checkpoint_maximum_combined_binding_percent": 88.5646187518575,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:42",
+      "group": "national",
+      "display_name": "NCN 42",
+      "measurable": true,
+      "database_reference_metres": 98169.43960473515,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:cbc0483d123cef84fc118abc90bf9b74cc7fd19ad9fb1c21724bd5359decc107",
+      "deferred_alternative_way_ids": [
+        "23626936",
+        "24237650"
+      ],
+      "canonical_open_length_m": 98169.43960473515,
+      "maximum_bound_open_length_m": {
+        "on_foot": 92615.43588686793,
+        "cycling": 94056.28140382975,
+        "combined": 94400.64801463966
+      },
+      "unbound_open_length_m": 3768.791590095483,
+      "checkpoint_maximum_combined_binding_percent": 96.16093195064578,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:423",
+      "group": "national",
+      "display_name": "NCN 423",
+      "measurable": true,
+      "database_reference_metres": 41316.05507546004,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:930086bf44d713e2db5373cfc30bcd324ca42c1f6f7e9cf014f7d22884ffa7e8",
+      "deferred_alternative_way_ids": [
+        "59479994"
+      ],
+      "canonical_open_length_m": 41316.05507546004,
+      "maximum_bound_open_length_m": {
+        "on_foot": 37850.15542379506,
+        "cycling": 37953.080154172814,
+        "combined": 37953.080154172814
+      },
+      "unbound_open_length_m": 3362.9749212872266,
+      "checkpoint_maximum_combined_binding_percent": 91.86036780339978,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:425",
+      "group": "national",
+      "display_name": "NCN 425",
+      "measurable": true,
+      "database_reference_metres": 7414.787144544135,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:f2a55d3b8bf6340788965856e1060d7b32c538544332918767b54fd709cb9ca4",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 7414.787144544135,
+      "maximum_bound_open_length_m": {
+        "on_foot": 6619.263116239114,
+        "cycling": 6630.793656127967,
+        "combined": 6630.793656127967
+      },
+      "unbound_open_length_m": 783.9934884161685,
+      "checkpoint_maximum_combined_binding_percent": 89.42662178788183,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:426",
+      "group": "national",
+      "display_name": "NCN 426",
+      "measurable": true,
+      "database_reference_metres": 8726.228262760314,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:157a70c986a0ca846b32c97c453a9afa94878c2ca49a492ef6a27dbbd8d3ae85",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 8726.228262760314,
+      "maximum_bound_open_length_m": {
+        "on_foot": 8398.773986981088,
+        "cycling": 8398.773986981088,
+        "combined": 8398.773986981088
+      },
+      "unbound_open_length_m": 327.454275779226,
+      "checkpoint_maximum_combined_binding_percent": 96.24747066064435,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:43",
+      "group": "national",
+      "display_name": "NCN 43",
+      "measurable": true,
+      "database_reference_metres": 49936.51875903693,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:8b7031c5234b906ed45fccb3b01a6a1a70c44f4a8224bf792614a62d01b36de0",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 49936.51875903693,
+      "maximum_bound_open_length_m": {
+        "on_foot": 34686.35940846972,
+        "cycling": 44649.298679422616,
+        "combined": 44649.298679422616
+      },
+      "unbound_open_length_m": 5287.220079614315,
+      "checkpoint_maximum_combined_binding_percent": 89.41211720198758,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:437",
+      "group": "national",
+      "display_name": "NCN 437",
+      "measurable": true,
+      "database_reference_metres": 13052.109319117035,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:d35297f27d7643516890b467d7a56790dd3168c4288d52227b7bbb801df1ad0e",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 13052.109319117035,
+      "maximum_bound_open_length_m": {
+        "on_foot": 8932.997389060063,
+        "cycling": 9976.041292179407,
+        "combined": 9976.041292179407
+      },
+      "unbound_open_length_m": 3076.068026937628,
+      "checkpoint_maximum_combined_binding_percent": 76.43240681081178,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:439",
+      "group": "national",
+      "display_name": "NCN 439",
+      "measurable": true,
+      "database_reference_metres": 7725.044124851083,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:0aa9b490e67c4e72c05f8ef11fe0fe8418df54786193926f4d7cfec6469bfaeb",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 7725.044124851083,
+      "maximum_bound_open_length_m": {
+        "on_foot": 2270.1593624215266,
+        "cycling": 6811.46547361475,
+        "combined": 6848.5945846386385
+      },
+      "unbound_open_length_m": 876.4495402124448,
+      "checkpoint_maximum_combined_binding_percent": 88.65443968930934,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:44",
+      "group": "national",
+      "display_name": "NCN 44",
+      "measurable": true,
+      "database_reference_metres": 70772.93724637254,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:08ab9cf34e5aa4eaa98c71914443ff17789776e4553e478b851b60969ed50efc",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 70772.93724637254,
+      "maximum_bound_open_length_m": {
+        "on_foot": 67889.34282332698,
+        "cycling": 67719.03507287467,
+        "combined": 67889.34282332698
+      },
+      "unbound_open_length_m": 2883.5944230455643,
+      "checkpoint_maximum_combined_binding_percent": 95.92556910135397,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:440",
+      "group": "national",
+      "display_name": "NCN 440",
+      "measurable": true,
+      "database_reference_metres": 5712.416149784283,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:60f8843420460d9b62ccb4e056979772e966bb482ec3c546572a1370d0f09776",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 5712.416149784283,
+      "maximum_bound_open_length_m": {
+        "on_foot": 5521.797309133281,
+        "cycling": 5521.797309133281,
+        "combined": 5521.797309133281
+      },
+      "unbound_open_length_m": 190.61884065100276,
+      "checkpoint_maximum_combined_binding_percent": 96.66307853537243,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:442",
+      "group": "national",
+      "display_name": "NCN 442",
+      "measurable": true,
+      "database_reference_metres": 81122.70543550097,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:16c9c21251903af9e73300f70140409fa7c0e2b1a54543ac164f48da05ade146",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 81122.70543550097,
+      "maximum_bound_open_length_m": {
+        "on_foot": 75894.3033779535,
+        "cycling": 78832.37009661121,
+        "combined": 79310.17870490477
+      },
+      "unbound_open_length_m": 1812.5267305962043,
+      "checkpoint_maximum_combined_binding_percent": 97.7656973829142,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:45",
+      "group": "national",
+      "display_name": "NCN 45",
+      "measurable": true,
+      "database_reference_metres": 369345.28314196225,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:dea6f862a2000cd6d4976e28c395e04aa452591d6df686c75aa85fc9986d7b26",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 369345.28314196225,
+      "maximum_bound_open_length_m": {
+        "on_foot": 338263.3137949285,
+        "cycling": 349792.32354209805,
+        "combined": 349869.2013993775
+      },
+      "unbound_open_length_m": 19476.081742584764,
+      "checkpoint_maximum_combined_binding_percent": 94.72686328172252,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:451",
+      "group": "national",
+      "display_name": "NCN 451",
+      "measurable": true,
+      "database_reference_metres": 22019.040570968482,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:f79fd78b0f700b392962527c47c6513dd0a07ea0179af512befefa441d80a991",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 22019.040570968482,
+      "maximum_bound_open_length_m": {
+        "on_foot": 18487.611631680033,
+        "cycling": 18793.842034713,
+        "combined": 18829.274111890314
+      },
+      "unbound_open_length_m": 3189.766459078168,
+      "checkpoint_maximum_combined_binding_percent": 85.51359924699085,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:455",
+      "group": "national",
+      "display_name": "NCN 455",
+      "measurable": true,
+      "database_reference_metres": 36832.00579237813,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:7e8d635afb762eaf8dc639a5ff7d521ff5e3285392d6bab41d0de50078b84bc8",
+      "deferred_alternative_way_ids": [
+        "64233326"
+      ],
+      "canonical_open_length_m": 36832.00579237813,
+      "maximum_bound_open_length_m": {
+        "on_foot": 35509.09384331213,
+        "cycling": 35641.78690869403,
+        "combined": 35641.78690869403
+      },
+      "unbound_open_length_m": 1190.2188836840942,
+      "checkpoint_maximum_combined_binding_percent": 96.76852004641465,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:46",
+      "group": "national",
+      "display_name": "NCN 46",
+      "measurable": true,
+      "database_reference_metres": 140478.50541859912,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:70865587789a13ecb673335ecd7836d81fbfe16a844c8f6e4a76d42ecb255e28",
+      "deferred_alternative_way_ids": [
+        "930263861"
+      ],
+      "canonical_open_length_m": 140478.50541859912,
+      "maximum_bound_open_length_m": {
+        "on_foot": 121409.70053433726,
+        "cycling": 127789.04764669188,
+        "combined": 127815.59067313786
+      },
+      "unbound_open_length_m": 12662.914745461254,
+      "checkpoint_maximum_combined_binding_percent": 90.98587025272786,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:461",
+      "group": "national",
+      "display_name": "NCN 461",
+      "measurable": true,
+      "database_reference_metres": 8879.847272777675,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:71b8520d5f2fde5edb63191c7e7a525baaef5bd60935c602fe374f4c0e79f5fa",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 8879.847272777675,
+      "maximum_bound_open_length_m": {
+        "on_foot": 8171.888030424215,
+        "cycling": 8175.795258434682,
+        "combined": 8175.795258434682
+      },
+      "unbound_open_length_m": 704.0520143429931,
+      "checkpoint_maximum_combined_binding_percent": 92.0713499600229,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:465",
+      "group": "national",
+      "display_name": "NCN 465",
+      "measurable": true,
+      "database_reference_metres": 17957.874976326962,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:df79f570aa1e8d7b4d8720f0f6864fe4039c0f3f5b061d2c3a8d335f6754f3e2",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 17957.874976326962,
+      "maximum_bound_open_length_m": {
+        "on_foot": 13135.447352244517,
+        "cycling": 16032.255094182941,
+        "combined": 16032.255094182941
+      },
+      "unbound_open_length_m": 1925.6198821440212,
+      "checkpoint_maximum_combined_binding_percent": 89.27701699292106,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:466",
+      "group": "national",
+      "display_name": "NCN 466",
+      "measurable": true,
+      "database_reference_metres": 21787.26600326609,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:fe90c1680e3f6e4230c11b77e4b7d69c93191a67e3a9dc27089820c4ea45404e",
+      "deferred_alternative_way_ids": [
+        "220402861"
+      ],
+      "canonical_open_length_m": 21787.26600326609,
+      "maximum_bound_open_length_m": {
+        "on_foot": 15763.05027777839,
+        "cycling": 17819.40926185954,
+        "combined": 17898.821612112803
+      },
+      "unbound_open_length_m": 3888.444391153287,
+      "checkpoint_maximum_combined_binding_percent": 82.15267399512,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:467",
+      "group": "national",
+      "display_name": "NCN 467",
+      "measurable": true,
+      "database_reference_metres": 13563.035800785958,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:4fa7a59d420d14958588f544a1cb5c0c5ab454348b47a92ffb5a6bf968a94d10",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 13563.035800785958,
+      "maximum_bound_open_length_m": {
+        "on_foot": 9525.48939624395,
+        "cycling": 12180.072303432311,
+        "combined": 12180.072303432311
+      },
+      "unbound_open_length_m": 1382.9634973536467,
+      "checkpoint_maximum_combined_binding_percent": 89.80343694681166,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:468",
+      "group": "national",
+      "display_name": "NCN 468",
+      "measurable": true,
+      "database_reference_metres": 15500.377360150824,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:49e7433fb20a979d0110f290089c781f872c81baf39940ffc5e5d3fb17d764b2",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 15500.377360150824,
+      "maximum_bound_open_length_m": {
+        "on_foot": 13430.106864541767,
+        "cycling": 13864.045901087267,
+        "combined": 13864.045901087267
+      },
+      "unbound_open_length_m": 1636.3314590635564,
+      "checkpoint_maximum_combined_binding_percent": 89.44327985671934,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:469",
+      "group": "national",
+      "display_name": "NCN 469",
+      "measurable": true,
+      "database_reference_metres": 8671.706914217304,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:77abeb691a128f38a3c5be7eb0756a5ec94ef5397d43bd8e984df6489b804754",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 8671.706914217304,
+      "maximum_bound_open_length_m": {
+        "on_foot": 7323.417375515892,
+        "cycling": 7415.840053786296,
+        "combined": 7420.041393786189
+      },
+      "unbound_open_length_m": 1251.6655204311155,
+      "checkpoint_maximum_combined_binding_percent": 85.56609981387858,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:47",
+      "group": "national",
+      "display_name": "NCN 47",
+      "measurable": true,
+      "database_reference_metres": 184931.7613086619,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:adf8a5d89ec33937a6c547ff81e90ca1d70ac98e02efd09e812b53887bbe1632",
+      "deferred_alternative_way_ids": [
+        "1257391872",
+        "26664848",
+        "358555413"
+      ],
+      "canonical_open_length_m": 184931.7613086619,
+      "maximum_bound_open_length_m": {
+        "on_foot": 170523.48954167071,
+        "cycling": 171612.26872592748,
+        "combined": 171612.26872592748
+      },
+      "unbound_open_length_m": 13319.492582734412,
+      "checkpoint_maximum_combined_binding_percent": 92.79761762475002,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:475",
+      "group": "national",
+      "display_name": "NCN 475",
+      "measurable": true,
+      "database_reference_metres": 7613.161127810138,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:7b0297c641acc0db465905fea0c5ca2e41f19c9839355c0564155e05596a89ae",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 7613.161127810138,
+      "maximum_bound_open_length_m": {
+        "on_foot": 4681.177407845153,
+        "cycling": 5960.32102072341,
+        "combined": 5960.32102072341
+      },
+      "unbound_open_length_m": 1652.8401070867285,
+      "checkpoint_maximum_combined_binding_percent": 78.289700173965,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:476",
+      "group": "national",
+      "display_name": "NCN 476",
+      "measurable": true,
+      "database_reference_metres": 2717.324286412442,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:0c44d140f0c9cb629d439ecc6c1a6e3d26a6b29b1f8de32d2734bf1678cb7c8a",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 2717.324286412442,
+      "maximum_bound_open_length_m": {
+        "on_foot": 853.5713324080297,
+        "cycling": 2635.566320049964,
+        "combined": 2635.566320049964
+      },
+      "unbound_open_length_m": 81.75796636247787,
+      "checkpoint_maximum_combined_binding_percent": 96.99123263383412,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:477",
+      "group": "national",
+      "display_name": "NCN 477",
+      "measurable": true,
+      "database_reference_metres": 9522.154349713079,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:f1bd9acaeaf76ae9ef624fd0d60a0bb6fbd02eaad04dcf1903a0774990d63e40",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 9522.154349713079,
+      "maximum_bound_open_length_m": {
+        "on_foot": 6644.824067162274,
+        "cycling": 7749.931201568754,
+        "combined": 7749.931201568754
+      },
+      "unbound_open_length_m": 1772.223148144325,
+      "checkpoint_maximum_combined_binding_percent": 81.38842237736121,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:478",
+      "group": "national",
+      "display_name": "NCN 478",
+      "measurable": true,
+      "database_reference_metres": 19779.29904811811,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:49c4a7a602742ce9665b4f9648061b66e9506ca69a6263cd24e2c732d78a1227",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 19779.29904811811,
+      "maximum_bound_open_length_m": {
+        "on_foot": 10432.302878145962,
+        "cycling": 16748.638666504106,
+        "combined": 16804.4042087144
+      },
+      "unbound_open_length_m": 2974.8948394037106,
+      "checkpoint_maximum_combined_binding_percent": 84.95955376291884,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:48",
+      "group": "national",
+      "display_name": "NCN 48",
+      "measurable": true,
+      "database_reference_metres": 127200.89158957911,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:e500025b420a0222442889f0030d7566408980dce7c3738bf2f34df3f53d3bc0",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 127200.89158957911,
+      "maximum_bound_open_length_m": {
+        "on_foot": 116100.4177480633,
+        "cycling": 117958.75205474219,
+        "combined": 117958.75205474219
+      },
+      "unbound_open_length_m": 9242.139534836926,
+      "checkpoint_maximum_combined_binding_percent": 92.73421796078505,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:482",
+      "group": "national",
+      "display_name": "NCN 482",
+      "measurable": true,
+      "database_reference_metres": 11682.13393199029,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:22f966a7790ee357861183aa9468750a2e3899f2681bbf8435276edaaba6baa3",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 11682.13393199029,
+      "maximum_bound_open_length_m": {
+        "on_foot": 11365.912337416681,
+        "cycling": 11365.912337416681,
+        "combined": 11365.912337416681
+      },
+      "unbound_open_length_m": 316.22159457360976,
+      "checkpoint_maximum_combined_binding_percent": 97.29311788056401,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:49",
+      "group": "national",
+      "display_name": "NCN 49",
+      "measurable": true,
+      "database_reference_metres": 32491.138514928367,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:c606499655a8057e1a6914fd9da910f55f9ec29d447659a843b1bc0423f6ee81",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 32491.138514928367,
+      "maximum_bound_open_length_m": {
+        "on_foot": 30029.244177140787,
+        "cycling": 30040.090186024845,
+        "combined": 30040.090186024845
+      },
+      "unbound_open_length_m": 2451.048328903522,
+      "checkpoint_maximum_combined_binding_percent": 92.45625594874933,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:492",
+      "group": "national",
+      "display_name": "NCN 492",
+      "measurable": true,
+      "database_reference_metres": 25062.215209911737,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:1c707f6d3bc6a2fb74c2fa8744371aada9b850a4dc13bb0a44399d52fa9a29fb",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 25062.215209911737,
+      "maximum_bound_open_length_m": {
+        "on_foot": 20732.2552216485,
+        "cycling": 22416.448315088113,
+        "combined": 22416.448315088113
+      },
+      "unbound_open_length_m": 2645.766894823624,
+      "checkpoint_maximum_combined_binding_percent": 89.44320415149392,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:5",
+      "group": "national",
+      "display_name": "NCN 5",
+      "measurable": true,
+      "database_reference_metres": 578924.210829198,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:6e70cf12a777c0faf2034008d3f581a9e2f581e8025015f5faacfc2dccb04139",
+      "deferred_alternative_way_ids": [
+        "1160136336",
+        "135872355",
+        "156319359",
+        "186164501",
+        "19677041",
+        "22723682",
+        "23799936",
+        "28878074",
+        "37900232",
+        "485292621",
+        "50015145",
+        "50015146",
+        "682295500",
+        "682295501",
+        "682320790",
+        "748947059"
+      ],
+      "canonical_open_length_m": 578924.210829198,
+      "maximum_bound_open_length_m": {
+        "on_foot": 509858.67088627536,
+        "cycling": 528935.5070011315,
+        "combined": 530173.7729094642
+      },
+      "unbound_open_length_m": 48750.43791973381,
+      "checkpoint_maximum_combined_binding_percent": 91.57913298358896,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:50",
+      "group": "national",
+      "display_name": "NCN 50",
+      "measurable": true,
+      "database_reference_metres": 106028.33956517752,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:85ea8b0a660741045f43e37c077d7f0bbdedd679b73daa57310c6ed21e6b425e",
+      "deferred_alternative_way_ids": [
+        "29346850"
+      ],
+      "canonical_open_length_m": 106028.33956517752,
+      "maximum_bound_open_length_m": {
+        "on_foot": 98363.23039217634,
+        "cycling": 99497.67893140361,
+        "combined": 99627.82223920152
+      },
+      "unbound_open_length_m": 6400.517325976005,
+      "checkpoint_maximum_combined_binding_percent": 93.96339002173896,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:51",
+      "group": "national",
+      "display_name": "NCN 51",
+      "measurable": true,
+      "database_reference_metres": 303551.461226709,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:d61f71d00831b32b14693ff2a9eb97acc643c4341b490f08ed9396e60f873605",
+      "deferred_alternative_way_ids": [
+        "1175929912",
+        "1194676792",
+        "1194676793"
+      ],
+      "canonical_open_length_m": 303551.461226709,
+      "maximum_bound_open_length_m": {
+        "on_foot": 270339.4552446181,
+        "cycling": 280599.79529566603,
+        "combined": 281430.60272306576
+      },
+      "unbound_open_length_m": 22120.85850364325,
+      "checkpoint_maximum_combined_binding_percent": 92.71264963962003,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:517",
+      "group": "national",
+      "display_name": "NCN 517",
+      "measurable": true,
+      "database_reference_metres": 38763.32459916615,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:dc570a2eff58e63385a3d13eb92e69254140cfa7ac9d6014e12ea5eda4d0e914",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 38763.32459916615,
+      "maximum_bound_open_length_m": {
+        "on_foot": 13675.602912131213,
+        "cycling": 14887.334825236228,
+        "combined": 14953.897269712863
+      },
+      "unbound_open_length_m": 23809.42732945329,
+      "checkpoint_maximum_combined_binding_percent": 38.57743736984454,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:52",
+      "group": "national",
+      "display_name": "NCN 52",
+      "measurable": true,
+      "database_reference_metres": 71272.3008735003,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:6fdbff335b6571b13569e1b26101dc1862b5144f6c9f91944e047bf3a49f3fc7",
+      "deferred_alternative_way_ids": [
+        "150527205",
+        "150608996",
+        "25102446"
+      ],
+      "canonical_open_length_m": 71272.3008735003,
+      "maximum_bound_open_length_m": {
+        "on_foot": 63295.51059079322,
+        "cycling": 66075.41104743628,
+        "combined": 66156.59645876879
+      },
+      "unbound_open_length_m": 5115.704414731503,
+      "checkpoint_maximum_combined_binding_percent": 92.82231055819109,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:523",
+      "group": "national",
+      "display_name": "NCN 523",
+      "measurable": true,
+      "database_reference_metres": 3727.5864819481912,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:565ab6b51f1832954737f254dbeba6a1df34dacc10c5baf040d17251b553ec72",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 3727.5864819481912,
+      "maximum_bound_open_length_m": {
+        "on_foot": 1788.0043499422618,
+        "cycling": 2803.727857128094,
+        "combined": 2803.727857128094
+      },
+      "unbound_open_length_m": 923.8586248200972,
+      "checkpoint_maximum_combined_binding_percent": 75.2156353905101,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:53",
+      "group": "national",
+      "display_name": "NCN 53",
+      "measurable": true,
+      "database_reference_metres": 17950.151734545958,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:fb6960310d1854d1806fa1467f2bd6c8fa7b071e8f60648647678def6b747837",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 17950.151734545958,
+      "maximum_bound_open_length_m": {
+        "on_foot": 15256.259270751196,
+        "cycling": 15513.261857091691,
+        "combined": 15560.340951869255
+      },
+      "unbound_open_length_m": 2389.8107826767027,
+      "checkpoint_maximum_combined_binding_percent": 86.68640344651018,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:533",
+      "group": "national",
+      "display_name": "NCN 533",
+      "measurable": true,
+      "database_reference_metres": 5268.130331137489,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:9249ba1de020b705d488288a492e87b58db063ff833a863366a73689ca9a48bb",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 5268.130331137489,
+      "maximum_bound_open_length_m": {
+        "on_foot": 5165.091556950632,
+        "cycling": 5165.091556950632,
+        "combined": 5165.091556950632
+      },
+      "unbound_open_length_m": 103.03877418685624,
+      "checkpoint_maximum_combined_binding_percent": 98.0441111417111,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:534",
+      "group": "national",
+      "display_name": "NCN 534",
+      "measurable": true,
+      "database_reference_metres": 9895.689573545467,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:728c908c98f9212ad4163d984e96eb7d2540e811c81230da968b4158a59e5a6e",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 9895.689573545467,
+      "maximum_bound_open_length_m": {
+        "on_foot": 5063.57320450483,
+        "cycling": 9029.610469160067,
+        "combined": 9043.405587288204
+      },
+      "unbound_open_length_m": 852.2839862572637,
+      "checkpoint_maximum_combined_binding_percent": 91.38732091459592,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:535",
+      "group": "national",
+      "display_name": "NCN 535",
+      "measurable": true,
+      "database_reference_metres": 13178.287158652187,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:e9f4239009993abb5fa4bed29da2b02ee52440b5f1de73d8d9fb3a60af52a250",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 13178.287158652187,
+      "maximum_bound_open_length_m": {
+        "on_foot": 8857.707372382489,
+        "cycling": 11486.444920510323,
+        "combined": 11516.906298194392
+      },
+      "unbound_open_length_m": 1661.3808604577953,
+      "checkpoint_maximum_combined_binding_percent": 87.39304402418476,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:536",
+      "group": "national",
+      "display_name": "NCN 536",
+      "measurable": true,
+      "database_reference_metres": 5378.219133708998,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:0c2a2c0e1cf1f319c84bce5bc641d7c0c6da5bf75d936df7d3243640b6ece499",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 5378.219133708998,
+      "maximum_bound_open_length_m": {
+        "on_foot": 4619.568960518184,
+        "cycling": 4645.018701836542,
+        "combined": 4645.018701836542
+      },
+      "unbound_open_length_m": 733.2004318724557,
+      "checkpoint_maximum_combined_binding_percent": 86.36722651784521,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:539",
+      "group": "national",
+      "display_name": "NCN 539",
+      "measurable": true,
+      "database_reference_metres": 28717.50568196975,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:7d71645ceeadbcdbee6acdfa1a8bf7dc942c75fb6c5f6f46e09062240bec2c06",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 28717.50568196975,
+      "maximum_bound_open_length_m": {
+        "on_foot": 16261.601875572725,
+        "cycling": 25921.203679413837,
+        "combined": 25940.81034671426
+      },
+      "unbound_open_length_m": 2776.6953352554883,
+      "checkpoint_maximum_combined_binding_percent": 90.331001006822,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:54",
+      "group": "national",
+      "display_name": "NCN 54",
+      "measurable": true,
+      "database_reference_metres": 93783.53373191033,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:2fa5e2cb9b02dac896f1d4bf4a3323267c1d13cc7f963a96c9eaa2590aa41901",
+      "deferred_alternative_way_ids": [
+        "24252244"
+      ],
+      "canonical_open_length_m": 93783.53373191033,
+      "maximum_bound_open_length_m": {
+        "on_foot": 81216.31095856793,
+        "cycling": 86781.09114115693,
+        "combined": 86797.12853910412
+      },
+      "unbound_open_length_m": 6986.405192806211,
+      "checkpoint_maximum_combined_binding_percent": 92.55049909637916,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:544",
+      "group": "national",
+      "display_name": "NCN 544",
+      "measurable": true,
+      "database_reference_metres": 16428.91764023934,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:142e9bc6c1c9ccd9e88565899e0208fcbfc0f9ce2c6127c672b4893757f50e55",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 16428.91764023934,
+      "maximum_bound_open_length_m": {
+        "on_foot": 15817.364505291907,
+        "cycling": 15817.364505291907,
+        "combined": 15817.364505291907
+      },
+      "unbound_open_length_m": 611.5531349474313,
+      "checkpoint_maximum_combined_binding_percent": 96.27758110218073,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:547",
+      "group": "national",
+      "display_name": "NCN 547",
+      "measurable": true,
+      "database_reference_metres": 194.43272809547824,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:13eb47ef5f7757a0134363f898efd034de870cb0dd709e825162ff9dbd8ae957",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 194.43272809547824,
+      "maximum_bound_open_length_m": {
+        "on_foot": 180.07969356264877,
+        "cycling": 180.07969356264877,
+        "combined": 180.07969356264877
+      },
+      "unbound_open_length_m": 14.353034532829469,
+      "checkpoint_maximum_combined_binding_percent": 92.61799457662227,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:548",
+      "group": "national",
+      "display_name": "NCN 548",
+      "measurable": true,
+      "database_reference_metres": 8393.42973937798,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:cab7d92cef00e1f1d149b23a5286615f82f748f5dfb1806af90a68d0f04784ee",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 8393.42973937798,
+      "maximum_bound_open_length_m": {
+        "on_foot": 8312.710883381558,
+        "cycling": 8312.710883381558,
+        "combined": 8312.710883381558
+      },
+      "unbound_open_length_m": 80.71885599642155,
+      "checkpoint_maximum_combined_binding_percent": 99.03830902857591,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:549",
+      "group": "national",
+      "display_name": "NCN 549",
+      "measurable": true,
+      "database_reference_metres": 31899.914637477385,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:6efda33d9425d87a73b44733e0aaef780171b7852b9c4129daa93bd734fca531",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 31899.914637477385,
+      "maximum_bound_open_length_m": {
+        "on_foot": 30195.993552462052,
+        "cycling": 30207.876702583064,
+        "combined": 30207.876702583064
+      },
+      "unbound_open_length_m": 1692.0379348943206,
+      "checkpoint_maximum_combined_binding_percent": 94.6957916529769,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:55",
+      "group": "national",
+      "display_name": "NCN 55",
+      "measurable": true,
+      "database_reference_metres": 175701.3586063826,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:a5747b60bd3a832ec3d19962d63f803e12b540664ddc513d054e2db5a2e191b4",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 175701.3586063826,
+      "maximum_bound_open_length_m": {
+        "on_foot": 152833.32375548847,
+        "cycling": 156814.40419951561,
+        "combined": 156942.87021941866
+      },
+      "unbound_open_length_m": 18758.48838696393,
+      "checkpoint_maximum_combined_binding_percent": 89.32365205610738,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:550",
+      "group": "national",
+      "display_name": "NCN 550",
+      "measurable": true,
+      "database_reference_metres": 33087.82900521009,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:fdfd33f9ccaf4675ee8563d3d454a6b26c676ee1e175998346867eb17335f1e1",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 33087.82900521009,
+      "maximum_bound_open_length_m": {
+        "on_foot": 30331.221787107097,
+        "cycling": 31462.911990876095,
+        "combined": 31514.781457405294
+      },
+      "unbound_open_length_m": 1573.0475478047993,
+      "checkpoint_maximum_combined_binding_percent": 95.24584236833095,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:551",
+      "group": "national",
+      "display_name": "NCN 551",
+      "measurable": true,
+      "database_reference_metres": 37983.23978800673,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:bf061b456f4116c9daa8ab234cd14ebd48102ce9d28c99be773e8a6cf2768fe9",
+      "deferred_alternative_way_ids": [
+        "1168807805",
+        "1168807806",
+        "23464682",
+        "321981429"
+      ],
+      "canonical_open_length_m": 37983.23978800673,
+      "maximum_bound_open_length_m": {
+        "on_foot": 32336.090257747917,
+        "cycling": 32345.315303646592,
+        "combined": 32345.315303646592
+      },
+      "unbound_open_length_m": 5637.924484360137,
+      "checkpoint_maximum_combined_binding_percent": 85.1568099092476,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:552",
+      "group": "national",
+      "display_name": "NCN 552",
+      "measurable": true,
+      "database_reference_metres": 52109.918722171984,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:a204a47671af1bb2f67a91b326cf84b47f79b8767cacb63da1125a359b92f61a",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 52109.918722171984,
+      "maximum_bound_open_length_m": {
+        "on_foot": 41257.04776022935,
+        "cycling": 41262.98208798971,
+        "combined": 41262.98208798971
+      },
+      "unbound_open_length_m": 10846.936634182275,
+      "checkpoint_maximum_combined_binding_percent": 79.18450671164247,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:555",
+      "group": "national",
+      "display_name": "NCN 555",
+      "measurable": true,
+      "database_reference_metres": 1428.451944098782,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:0d05af4a0ea6d9df97f2586127367c01cb60d5ef69000a95620adfd68f1b2a73",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 1428.451944098782,
+      "maximum_bound_open_length_m": {
+        "on_foot": 702.2755131304235,
+        "cycling": 1155.5710371938794,
+        "combined": 1155.5710371938794
+      },
+      "unbound_open_length_m": 272.88090690490253,
+      "checkpoint_maximum_combined_binding_percent": 80.89673873648829,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:558",
+      "group": "national",
+      "display_name": "NCN 558",
+      "measurable": true,
+      "database_reference_metres": 7545.378744140329,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:fc46773ce3c11e5c288360feb6581578491c047a474a74b03327c91ac1b5b20f",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 7545.378744140329,
+      "maximum_bound_open_length_m": {
+        "on_foot": 5102.165185002437,
+        "cycling": 5258.880262022812,
+        "combined": 5258.880262022812
+      },
+      "unbound_open_length_m": 2286.4984821175176,
+      "checkpoint_maximum_combined_binding_percent": 69.69670364270063,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:559",
+      "group": "national",
+      "display_name": "NCN 559",
+      "measurable": true,
+      "database_reference_metres": 11495.72333704716,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:f627c78b4db901f5e28479512ad86af4dcb395e8ee9ac2c9dde7d7581aa1c1c1",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 11495.72333704716,
+      "maximum_bound_open_length_m": {
+        "on_foot": 10928.533410547916,
+        "cycling": 10928.533410547916,
+        "combined": 10928.533410547916
+      },
+      "unbound_open_length_m": 567.1899264992444,
+      "checkpoint_maximum_combined_binding_percent": 95.06607883758504,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:56",
+      "group": "national",
+      "display_name": "NCN 56",
+      "measurable": true,
+      "database_reference_metres": 72499.3363175313,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:bbe780e4f0d6fb79992ea7593df939da1dd876d5738fdba8afba9c1d57506104",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 72499.3363175313,
+      "maximum_bound_open_length_m": {
+        "on_foot": 62584.286318719955,
+        "cycling": 62138.528346076964,
+        "combined": 63362.969038308554
+      },
+      "unbound_open_length_m": 9136.367279222744,
+      "checkpoint_maximum_combined_binding_percent": 87.3979987358678,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:562",
+      "group": "national",
+      "display_name": "NCN 562",
+      "measurable": true,
+      "database_reference_metres": 35913.19399175898,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:93a29a2e52469aa6b9c4413f6a972b6443ef7b7c3da84b504cdc42bf2f5405a6",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 35913.19399175898,
+      "maximum_bound_open_length_m": {
+        "on_foot": 32733.88952238998,
+        "cycling": 33098.93308083691,
+        "combined": 33558.04667587487
+      },
+      "unbound_open_length_m": 2355.1473158841036,
+      "checkpoint_maximum_combined_binding_percent": 93.4421112295817,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:563",
+      "group": "national",
+      "display_name": "NCN 563",
+      "measurable": true,
+      "database_reference_metres": 13065.48909065947,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:c7f935802f9322fca2e096bbf6287e3c0727881b44789e666d4f80f2c65734d2",
+      "deferred_alternative_way_ids": [
+        "190731982",
+        "190731993"
+      ],
+      "canonical_open_length_m": 13065.48909065947,
+      "maximum_bound_open_length_m": {
+        "on_foot": 10439.80621280897,
+        "cycling": 10969.413633385191,
+        "combined": 10969.413633385191
+      },
+      "unbound_open_length_m": 2096.075457274279,
+      "checkpoint_maximum_combined_binding_percent": 83.9571604037941,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:566",
+      "group": "national",
+      "display_name": "NCN 566",
+      "measurable": true,
+      "database_reference_metres": 25580.59982508976,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:62718149f9f8b8ea0980c961a727a013ac8bfb43a8fe469642b51d678598a809",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 25580.59982508976,
+      "maximum_bound_open_length_m": {
+        "on_foot": 16561.7237282118,
+        "cycling": 24388.815257780883,
+        "combined": 24388.815257780883
+      },
+      "unbound_open_length_m": 1191.7845673088777,
+      "checkpoint_maximum_combined_binding_percent": 95.34106089983096,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:568",
+      "group": "national",
+      "display_name": "NCN 568",
+      "measurable": true,
+      "database_reference_metres": 24063.956367706294,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:5a68033af99320374088bb4c06315f9b6193ab8ca4f56761c85bc8e79a79b7f2",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 24063.956367706294,
+      "maximum_bound_open_length_m": {
+        "on_foot": 21253.12811039471,
+        "cycling": 21415.83935815565,
+        "combined": 21428.956821885575
+      },
+      "unbound_open_length_m": 2634.9995458207195,
+      "checkpoint_maximum_combined_binding_percent": 89.05001527779997,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:57",
+      "group": "national",
+      "display_name": "NCN 57",
+      "measurable": true,
+      "database_reference_metres": 103821.81953631551,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:59733ec8b5cf0fe3beb7b3dcd897f6fe2663199962726499e285adcc21185f1d",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 103821.81953631551,
+      "maximum_bound_open_length_m": {
+        "on_foot": 98306.85486740421,
+        "cycling": 100245.86973763116,
+        "combined": 100498.6729488598
+      },
+      "unbound_open_length_m": 3323.1465874557034,
+      "checkpoint_maximum_combined_binding_percent": 96.79918286705299,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:573",
+      "group": "national",
+      "display_name": "NCN 573",
+      "measurable": true,
+      "database_reference_metres": 31417.66866968013,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:92a26552b403726e4548956dbce682cbbd0e74289816595f4dd2ee3af937f36b",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 31417.66866968013,
+      "maximum_bound_open_length_m": {
+        "on_foot": 30062.112140369798,
+        "cycling": 30115.1243215584,
+        "combined": 30115.1243215584
+      },
+      "unbound_open_length_m": 1302.5443481217299,
+      "checkpoint_maximum_combined_binding_percent": 95.85410247394086,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:574",
+      "group": "national",
+      "display_name": "NCN 574",
+      "measurable": true,
+      "database_reference_metres": 4364.303872886899,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:503b6d9891a87e36ded6e1031e4e18a057ec191235a909b07f12d4d7c5fabd94",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 4364.303872886899,
+      "maximum_bound_open_length_m": {
+        "on_foot": 4025.401649593625,
+        "cycling": 4017.146965130599,
+        "combined": 4025.401649593625
+      },
+      "unbound_open_length_m": 338.9022232932739,
+      "checkpoint_maximum_combined_binding_percent": 92.23467858416795,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:6",
+      "group": "national",
+      "display_name": "NCN 6",
+      "measurable": true,
+      "database_reference_metres": 690038.1387238943,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:e36b716f6052494803090c4ec1d00efb1c38c4b5de108c050c0cba0fe5b23688",
+      "deferred_alternative_way_ids": [
+        "101809041",
+        "12212367",
+        "1554371003",
+        "1554371004",
+        "2327013"
+      ],
+      "canonical_open_length_m": 690038.1387238943,
+      "maximum_bound_open_length_m": {
+        "on_foot": 594495.3501322345,
+        "cycling": 619229.5935378277,
+        "combined": 622529.0237052332
+      },
+      "unbound_open_length_m": 67509.11501866102,
+      "checkpoint_maximum_combined_binding_percent": 90.21661104942585,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:60",
+      "group": "national",
+      "display_name": "NCN 60",
+      "measurable": true,
+      "database_reference_metres": 7000.400426460651,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:afd75a4db69d830990882079f84d58b7ea8b5da127c88b6113dee4e0a6d0fde6",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 7000.400426460651,
+      "maximum_bound_open_length_m": {
+        "on_foot": 6286.80904359404,
+        "cycling": 6262.87719169361,
+        "combined": 6286.80904359404
+      },
+      "unbound_open_length_m": 713.5913828666107,
+      "checkpoint_maximum_combined_binding_percent": 89.80642049889998,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:601",
+      "group": "national",
+      "display_name": "NCN 601",
+      "measurable": true,
+      "database_reference_metres": 6316.974761359787,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:45cdae27e377be5fa8a56c500747f4da6276dfd9dd1eb2c26f2fe48fb5c84b87",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 6316.974761359787,
+      "maximum_bound_open_length_m": {
+        "on_foot": 5705.710438161613,
+        "cycling": 5705.710438161613,
+        "combined": 5705.710438161613
+      },
+      "unbound_open_length_m": 611.2643231981747,
+      "checkpoint_maximum_combined_binding_percent": 90.32346421680819,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:604",
+      "group": "national",
+      "display_name": "NCN 604",
+      "measurable": true,
+      "database_reference_metres": 4956.233362279653,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:9dfc93e43244135cafe78069bcc6e4d9e5870cc83c03c99fe5b386f66f5f9df2",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 4956.233362279653,
+      "maximum_bound_open_length_m": {
+        "on_foot": 4723.649720808951,
+        "cycling": 4723.649720808951,
+        "combined": 4723.649720808951
+      },
+      "unbound_open_length_m": 232.58364147070188,
+      "checkpoint_maximum_combined_binding_percent": 95.30724999268955,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:606",
+      "group": "national",
+      "display_name": "NCN 606",
+      "measurable": true,
+      "database_reference_metres": 9735.312875253405,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:01acca14ae399298d4c1e401ef19aa39a223e097dda889cce89052a02aab093d",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 9735.312875253405,
+      "maximum_bound_open_length_m": {
+        "on_foot": 5872.510113052044,
+        "cycling": 7351.502778537022,
+        "combined": 7351.502778537022
+      },
+      "unbound_open_length_m": 2383.8100967163828,
+      "checkpoint_maximum_combined_binding_percent": 75.5137803246582,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:61",
+      "group": "national",
+      "display_name": "NCN 61",
+      "measurable": true,
+      "database_reference_metres": 53240.21539614796,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:aa55d10a153a700f2a83d618c8d9b960471a4a98da854d0481db0b6f3162d58c",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 53240.21539614796,
+      "maximum_bound_open_length_m": {
+        "on_foot": 47599.32337588127,
+        "cycling": 48575.54698747811,
+        "combined": 48575.54698747811
+      },
+      "unbound_open_length_m": 4664.6684086698515,
+      "checkpoint_maximum_combined_binding_percent": 91.23844940528292,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:62",
+      "group": "national",
+      "display_name": "NCN 62",
+      "measurable": true,
+      "database_reference_metres": 338924.29846813553,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:46b6702364b8dcd9bc71607967e6d50d2c3e2715e8ac1d9f14383e6ac03780bb",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 338924.29846813553,
+      "maximum_bound_open_length_m": {
+        "on_foot": 267517.86644992745,
+        "cycling": 298534.55129837716,
+        "combined": 299793.0924339642
+      },
+      "unbound_open_length_m": 39131.20603417134,
+      "checkpoint_maximum_combined_binding_percent": 88.45429312355712,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:622",
+      "group": "national",
+      "display_name": "NCN 622",
+      "measurable": true,
+      "database_reference_metres": 31718.931232180934,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:6c7d42b220a419414c9a40d2eb5b3dd22f2a9ff398984b46905a75d492e03261",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 31718.931232180934,
+      "maximum_bound_open_length_m": {
+        "on_foot": 27054.733207329304,
+        "cycling": 28002.506030856013,
+        "combined": 28328.864389327548
+      },
+      "unbound_open_length_m": 3390.0668428533863,
+      "checkpoint_maximum_combined_binding_percent": 89.31216560218164,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:627",
+      "group": "national",
+      "display_name": "NCN 627",
+      "measurable": true,
+      "database_reference_metres": 37656.51934611396,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:b6335cc6e8bc2df54c2ce7e25b4f338a2786bd765817b08b2cec91dbd295dde8",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 37656.51934611396,
+      "maximum_bound_open_length_m": {
+        "on_foot": 34908.86059375922,
+        "cycling": 35016.982090069476,
+        "combined": 35024.186807036196
+      },
+      "unbound_open_length_m": 2632.332539077761,
+      "checkpoint_maximum_combined_binding_percent": 93.00962334069409,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:63",
+      "group": "national",
+      "display_name": "NCN 63",
+      "measurable": true,
+      "database_reference_metres": 140724.80609465364,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:27949f47c2a9cca6c31aebbdab8255c8d56eeb948f1bd0ababfce6ac8ec07330",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 140724.80609465364,
+      "maximum_bound_open_length_m": {
+        "on_foot": 117424.41249015507,
+        "cycling": 132446.72720191983,
+        "combined": 132478.11022538797
+      },
+      "unbound_open_length_m": 8246.695869265677,
+      "checkpoint_maximum_combined_binding_percent": 94.13984208035161,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:636",
+      "group": "national",
+      "display_name": "NCN 636",
+      "measurable": true,
+      "database_reference_metres": 6423.323986635142,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:5f0e10635cac07a3d48f778db6250ae2619a16a178113898186fb6ff33967e6a",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 6423.323986635142,
+      "maximum_bound_open_length_m": {
+        "on_foot": 5976.420994611063,
+        "cycling": 6063.832285367973,
+        "combined": 6063.832285367973
+      },
+      "unbound_open_length_m": 359.49170126716945,
+      "checkpoint_maximum_combined_binding_percent": 94.40333848930624,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:637",
+      "group": "national",
+      "display_name": "NCN 637",
+      "measurable": true,
+      "database_reference_metres": 17191.77240150979,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:84eb503e72e578ea22d978ea47fb5eca003c1220db597ee27295b40ba8703e82",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 17191.77240150979,
+      "maximum_bound_open_length_m": {
+        "on_foot": 15761.725576646579,
+        "cycling": 15761.725576646579,
+        "combined": 15761.725576646579
+      },
+      "unbound_open_length_m": 1430.0468248632096,
+      "checkpoint_maximum_combined_binding_percent": 91.68179527122159,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:64",
+      "group": "national",
+      "display_name": "NCN 64",
+      "measurable": true,
+      "database_reference_metres": 85632.64387732472,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:7d6513be1df31429e7fec8b9f8624d083091293a6021dae89dfa425fa0e78fc5",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 85632.64387732472,
+      "maximum_bound_open_length_m": {
+        "on_foot": 79870.90640127448,
+        "cycling": 81118.54909705941,
+        "combined": 81206.37020408188
+      },
+      "unbound_open_length_m": 4426.273673242846,
+      "checkpoint_maximum_combined_binding_percent": 94.83109072331828,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:645",
+      "group": "national",
+      "display_name": "NCN 645",
+      "measurable": true,
+      "database_reference_metres": 18214.284545133625,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:dc2c7220af6441e14f46bbc42f2b406210bafc5ed753069352cace9580873b72",
+      "deferred_alternative_way_ids": [
+        "1458090141",
+        "1458090142",
+        "343526444",
+        "867811813"
+      ],
+      "canonical_open_length_m": 18214.284545133625,
+      "maximum_bound_open_length_m": {
+        "on_foot": 17908.855411282715,
+        "cycling": 16678.33891374754,
+        "combined": 17908.855411282715
+      },
+      "unbound_open_length_m": 305.42913385091015,
+      "checkpoint_maximum_combined_binding_percent": 98.32313405945713,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:647",
+      "group": "national",
+      "display_name": "NCN 647",
+      "measurable": true,
+      "database_reference_metres": 20989.61590260895,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:7e22d2a9db818a57658a586ee3d63130219b601606f4a620da8ef710915f497c",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 20989.61590260895,
+      "maximum_bound_open_length_m": {
+        "on_foot": 17214.929930174454,
+        "cycling": 17237.988291721398,
+        "combined": 17237.988291721398
+      },
+      "unbound_open_length_m": 3751.6276108875536,
+      "checkpoint_maximum_combined_binding_percent": 82.12626839721618,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:648",
+      "group": "national",
+      "display_name": "NCN 648",
+      "measurable": true,
+      "database_reference_metres": 8350.59175159792,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:0cb636edbd6aaf3f5f79d5482e3e8f491370756f4cf22c77f17362656a7ac892",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 8350.59175159792,
+      "maximum_bound_open_length_m": {
+        "on_foot": 7480.742250640817,
+        "cycling": 7480.742250640817,
+        "combined": 7480.742250640817
+      },
+      "unbound_open_length_m": 869.8495009571034,
+      "checkpoint_maximum_combined_binding_percent": 89.58337891694137,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:65",
+      "group": "national",
+      "display_name": "NCN 65",
+      "measurable": true,
+      "database_reference_metres": 218438.02013695257,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:e0d784676b4f65883ca36047a26db3587e750f5282692bad676eabe02869d457",
+      "deferred_alternative_way_ids": [
+        "1166096804",
+        "1181828594",
+        "1181828595",
+        "1181828596",
+        "1181828597",
+        "144274501",
+        "23449308",
+        "5452675"
+      ],
+      "canonical_open_length_m": 218438.02013695257,
+      "maximum_bound_open_length_m": {
+        "on_foot": 202066.10263574385,
+        "cycling": 204891.97741862238,
+        "combined": 205538.35551320997
+      },
+      "unbound_open_length_m": 12899.664623742603,
+      "checkpoint_maximum_combined_binding_percent": 94.09458819684642,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:656",
+      "group": "national",
+      "display_name": "NCN 656",
+      "measurable": true,
+      "database_reference_metres": 29232.819742229913,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:8f3a310fd16013fc95d484ef078c2cfe44dd4daeb35ec9b6e62e604cc02ba583",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 29232.819742229913,
+      "maximum_bound_open_length_m": {
+        "on_foot": 28682.828205706537,
+        "cycling": 28682.828205706537,
+        "combined": 28682.828205706537
+      },
+      "unbound_open_length_m": 549.9915365233755,
+      "checkpoint_maximum_combined_binding_percent": 98.11858198636632,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:657",
+      "group": "national",
+      "display_name": "NCN 657",
+      "measurable": true,
+      "database_reference_metres": 35594.77580055506,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:66a1e0001332c84712ffdc25c811899a2f645244edff38e50d82e852b3d2243d",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 35594.77580055506,
+      "maximum_bound_open_length_m": {
+        "on_foot": 33497.7927603592,
+        "cycling": 34981.415326883725,
+        "combined": 34981.415326883725
+      },
+      "unbound_open_length_m": 613.3604736713314,
+      "checkpoint_maximum_combined_binding_percent": 98.27682445000323,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:658",
+      "group": "national",
+      "display_name": "NCN 658",
+      "measurable": true,
+      "database_reference_metres": 3687.4645868073194,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:99b828e3195d1f4c0526eac637a95861546a58f97a8deee6589156e001d1465b",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 3687.4645868073194,
+      "maximum_bound_open_length_m": {
+        "on_foot": 3400.889572699953,
+        "cycling": 2677.0960182210342,
+        "combined": 3400.889572699953
+      },
+      "unbound_open_length_m": 286.5750141073663,
+      "checkpoint_maximum_combined_binding_percent": 92.22839955853003,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:66",
+      "group": "national",
+      "display_name": "NCN 66",
+      "measurable": true,
+      "database_reference_metres": 215638.88901677128,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:05d299685e65fcddc05a742e369a53b5412e617a123d1bf7da9f14adda2c189c",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 215638.88901677128,
+      "maximum_bound_open_length_m": {
+        "on_foot": 186578.34519267414,
+        "cycling": 195904.66631367026,
+        "combined": 196669.3848128037
+      },
+      "unbound_open_length_m": 18969.504203967575,
+      "checkpoint_maximum_combined_binding_percent": 91.2031154072157,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:665",
+      "group": "national",
+      "display_name": "NCN 665",
+      "measurable": true,
+      "database_reference_metres": 16808.800782153143,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:ee211f36a9e011536dfb08dce4fe23a602fae3d4915c26eeea67219ba89d9d0c",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 16808.800782153143,
+      "maximum_bound_open_length_m": {
+        "on_foot": 15224.706142995761,
+        "cycling": 15332.756895309289,
+        "combined": 15332.756895309289
+      },
+      "unbound_open_length_m": 1476.0438868438541,
+      "checkpoint_maximum_combined_binding_percent": 91.21862465993972,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:668",
+      "group": "national",
+      "display_name": "NCN 668",
+      "measurable": true,
+      "database_reference_metres": 9837.578239243261,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:974f7d77b9e14aed9c024bd7469a955d9c3312a9d95b8cf5c08d528ffdd0ce0c",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 9837.578239243261,
+      "maximum_bound_open_length_m": {
+        "on_foot": 6187.53726241731,
+        "cycling": 8343.308335350639,
+        "combined": 8343.308335350639
+      },
+      "unbound_open_length_m": 1494.269903892622,
+      "checkpoint_maximum_combined_binding_percent": 84.81059192056229,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:67",
+      "group": "national",
+      "display_name": "NCN 67",
+      "measurable": true,
+      "database_reference_metres": 196329.0055925534,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:6bb4d80210cfe2383c2f9a6e98438beaecf5381d5c1a0f632cf4dc894ff88311",
+      "deferred_alternative_way_ids": [
+        "23442439",
+        "24616536",
+        "4371389",
+        "70048106",
+        "7398625",
+        "816842362",
+        "816842363",
+        "816842364",
+        "816842372"
+      ],
+      "canonical_open_length_m": 196329.0055925534,
+      "maximum_bound_open_length_m": {
+        "on_foot": 174058.37553901848,
+        "cycling": 176823.43646182708,
+        "combined": 176874.22478908722
+      },
+      "unbound_open_length_m": 19454.780803466187,
+      "checkpoint_maximum_combined_binding_percent": 90.09072513521451,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:672",
+      "group": "national",
+      "display_name": "NCN 672",
+      "measurable": true,
+      "database_reference_metres": 4992.132649461029,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:d1af33bcbf7a9240fe0b999e91f41b2f0bfeeb24bb110889390cec57eb44e635",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 4992.132649461029,
+      "maximum_bound_open_length_m": {
+        "on_foot": 4849.17525619567,
+        "cycling": 4849.17525619567,
+        "combined": 4849.17525619567
+      },
+      "unbound_open_length_m": 142.95739326535931,
+      "checkpoint_maximum_combined_binding_percent": 97.13634626113564,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:674",
+      "group": "national",
+      "display_name": "NCN 674",
+      "measurable": true,
+      "database_reference_metres": 10834.785888602526,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:4ae8cfb7db2ec2f7343eb22799c7044c8ce704d6db5c0aa8dd1d70f630d93eb4",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 10834.785888602526,
+      "maximum_bound_open_length_m": {
+        "on_foot": 10162.317687556158,
+        "cycling": 10159.087758405229,
+        "combined": 10162.317687556158
+      },
+      "unbound_open_length_m": 672.4682010463675,
+      "checkpoint_maximum_combined_binding_percent": 93.79343341012618,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:677",
+      "group": "national",
+      "display_name": "NCN 677",
+      "measurable": true,
+      "database_reference_metres": 8183.130613271826,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:7a11b5ea53f7013152104d7d595d02cb53af8b6cd1f8a90747d22369bc2d622c",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 8183.130613271826,
+      "maximum_bound_open_length_m": {
+        "on_foot": 6582.0725140683835,
+        "cycling": 6268.00788434008,
+        "combined": 6582.0725140683835
+      },
+      "unbound_open_length_m": 1601.058099203443,
+      "checkpoint_maximum_combined_binding_percent": 80.43465056506902,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:68",
+      "group": "national",
+      "display_name": "NCN 68",
+      "measurable": true,
+      "database_reference_metres": 437586.7546747344,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:800891ff10292d95f719923bcd7eb87a428b5a263b8717fadd43106dd0d92fb6",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 437586.7546747344,
+      "maximum_bound_open_length_m": {
+        "on_foot": 411391.33318377397,
+        "cycling": 418819.1081348363,
+        "combined": 418850.80715194286
+      },
+      "unbound_open_length_m": 18735.94752279151,
+      "checkpoint_maximum_combined_binding_percent": 95.71834674550004,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:680",
+      "group": "national",
+      "display_name": "NCN 680",
+      "measurable": true,
+      "database_reference_metres": 22457.229408294024,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:1a31ad56f5d1ed61393b36c8a8ac7d24470b0d8188392aca7102a4867e87973a",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 22457.229408294024,
+      "maximum_bound_open_length_m": {
+        "on_foot": 21280.722538845977,
+        "cycling": 21370.860810319504,
+        "combined": 21370.860810319504
+      },
+      "unbound_open_length_m": 1086.3685979745205,
+      "checkpoint_maximum_combined_binding_percent": 95.16249944183542,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:685",
+      "group": "national",
+      "display_name": "NCN 685",
+      "measurable": true,
+      "database_reference_metres": 3596.1791724361246,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:535b4b64ad008a301241eab0216050a5439855ddb9bfbd585a4cc180a2d28210",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 3596.1791724361246,
+      "maximum_bound_open_length_m": {
+        "on_foot": 3220.4609136701124,
+        "cycling": 3220.4609136701124,
+        "combined": 3220.4609136701124
+      },
+      "unbound_open_length_m": 375.71825876601224,
+      "checkpoint_maximum_combined_binding_percent": 89.55229312138269,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:688",
+      "group": "national",
+      "display_name": "NCN 688",
+      "measurable": true,
+      "database_reference_metres": 76265.85816081791,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:5866653f4fb7437e5052578a5c3078e132af7a2f4904e6fb8e46dc82b7421dea",
+      "deferred_alternative_way_ids": [
+        "4901302"
+      ],
+      "canonical_open_length_m": 76265.85816081791,
+      "maximum_bound_open_length_m": {
+        "on_foot": 73331.3640461671,
+        "cycling": 73331.3640461671,
+        "combined": 73331.3640461671
+      },
+      "unbound_open_length_m": 2934.4941146508063,
+      "checkpoint_maximum_combined_binding_percent": 96.15228336057926,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:69",
+      "group": "national",
+      "display_name": "NCN 69",
+      "measurable": true,
+      "database_reference_metres": 79796.67482613277,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:46964a5783d7d7663ea8a54ef591ecb2937d3d6b62752bdd223aa70ab38a0c25",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 79796.67482613277,
+      "maximum_bound_open_length_m": {
+        "on_foot": 70447.57996449224,
+        "cycling": 72050.99207741972,
+        "combined": 72064.39412638628
+      },
+      "unbound_open_length_m": 7732.280699746494,
+      "checkpoint_maximum_combined_binding_percent": 90.31002141806762,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:696",
+      "group": "national",
+      "display_name": "NCN 696",
+      "measurable": true,
+      "database_reference_metres": 9931.478566816857,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:29dc3dec59af217e9ffd4f82be9c5cb4a7f4b7d85f41c5029707ef8e3882882b",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 9931.478566816857,
+      "maximum_bound_open_length_m": {
+        "on_foot": 9619.751709012611,
+        "cycling": 9619.751709012611,
+        "combined": 9619.751709012611
+      },
+      "unbound_open_length_m": 311.7268578042458,
+      "checkpoint_maximum_combined_binding_percent": 96.86122407950624,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:697",
+      "group": "national",
+      "display_name": "NCN 697",
+      "measurable": true,
+      "database_reference_metres": 5848.093335381122,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:50a43db9fb9d409c75c64346c44605c222ec9db3f647f8e3d5ac941952c46ffe",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 5848.093335381122,
+      "maximum_bound_open_length_m": {
+        "on_foot": 5721.298414864455,
+        "cycling": 5721.298414864455,
+        "combined": 5721.298414864455
+      },
+      "unbound_open_length_m": 126.79492051666784,
+      "checkpoint_maximum_combined_binding_percent": 97.83185880858716,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:699",
+      "group": "national",
+      "display_name": "NCN 699",
+      "measurable": true,
+      "database_reference_metres": 3241.1074644769174,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:55ee9cf68b392a97d80483601763352fc9e395dd2704ab443d0390dce49b24a8",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 3241.1074644769174,
+      "maximum_bound_open_length_m": {
+        "on_foot": 2308.9535578506407,
+        "cycling": 2410.3189984292767,
+        "combined": 2410.3189984292767
+      },
+      "unbound_open_length_m": 830.7884660476407,
+      "checkpoint_maximum_combined_binding_percent": 74.36714224525963,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:7",
+      "group": "national",
+      "display_name": "NCN 7",
+      "measurable": true,
+      "database_reference_metres": 884853.9902621717,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:dad33b22d1145dd273d415a7ebd9c99531657bced00cdc9ed2577c71b4c5928e",
+      "deferred_alternative_way_ids": [
+        "119049941",
+        "1388030696",
+        "227476269"
+      ],
+      "canonical_open_length_m": 884853.9902621717,
+      "maximum_bound_open_length_m": {
+        "on_foot": 797327.169794073,
+        "cycling": 832815.8081024275,
+        "combined": 833317.3532917125
+      },
+      "unbound_open_length_m": 51536.63697045925,
+      "checkpoint_maximum_combined_binding_percent": 94.17569027911716,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:70",
+      "group": "national",
+      "display_name": "NCN 70",
+      "measurable": true,
+      "database_reference_metres": 188009.14106165027,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:d85a20ef604a96ab6e25607364d4f3d069ba9b7afbcd6bf9ac6f8b91a5aff9c5",
+      "deferred_alternative_way_ids": [
+        "34313328",
+        "930637422"
+      ],
+      "canonical_open_length_m": 188009.14106165027,
+      "maximum_bound_open_length_m": {
+        "on_foot": 177496.75872008112,
+        "cycling": 179325.40407584558,
+        "combined": 179605.87192510016
+      },
+      "unbound_open_length_m": 8403.269136550109,
+      "checkpoint_maximum_combined_binding_percent": 95.53039331540025,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:700",
+      "group": "national",
+      "display_name": "NCN 700",
+      "measurable": true,
+      "database_reference_metres": 61345.89951115468,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:cc00f00f2efa9e3824f5bb3f4e5f927c7b5e27a346108abb3d44647215514c1c",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 61345.89951115468,
+      "maximum_bound_open_length_m": {
+        "on_foot": 57441.511880063495,
+        "cycling": 57441.511880063495,
+        "combined": 57441.511880063495
+      },
+      "unbound_open_length_m": 3904.3876310911874,
+      "checkpoint_maximum_combined_binding_percent": 93.63545459076488,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:71",
+      "group": "national",
+      "display_name": "NCN 71",
+      "measurable": true,
+      "database_reference_metres": 108568.85693519148,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:e3668ef7df3ac9a97787d05a1ee04827ce89a0ba7460a6fa848d646d2d3e3424",
+      "deferred_alternative_way_ids": [
+        "55341713"
+      ],
+      "canonical_open_length_m": 108568.85693519148,
+      "maximum_bound_open_length_m": {
+        "on_foot": 105467.02295202667,
+        "cycling": 105467.02295202667,
+        "combined": 105467.02295202667
+      },
+      "unbound_open_length_m": 3101.8339831648045,
+      "checkpoint_maximum_combined_binding_percent": 97.14297997535665,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:715",
+      "group": "national",
+      "display_name": "NCN 715",
+      "measurable": true,
+      "database_reference_metres": 28301.72045796345,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:ac5c53fdf76005efbadaa4b915213cbf4ad7b2092616577512f58b13195803f2",
+      "deferred_alternative_way_ids": [
+        "457211727"
+      ],
+      "canonical_open_length_m": 28301.72045796345,
+      "maximum_bound_open_length_m": {
+        "on_foot": 27107.828814598488,
+        "cycling": 27347.05387289172,
+        "combined": 27373.654128189883
+      },
+      "unbound_open_length_m": 928.0663297735664,
+      "checkpoint_maximum_combined_binding_percent": 96.7208130291866,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:72",
+      "group": "national",
+      "display_name": "NCN 72",
+      "measurable": true,
+      "database_reference_metres": 252022.06756572152,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:0632de61f68c488d1254932ab36aa2a061bb48a6f237dfc4bbbb167db478cdb2",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 252022.06756572152,
+      "maximum_bound_open_length_m": {
+        "on_foot": 225365.99648286702,
+        "cycling": 237404.34559716223,
+        "combined": 238452.76226912127
+      },
+      "unbound_open_length_m": 13569.305296600243,
+      "checkpoint_maximum_combined_binding_percent": 94.61582653151527,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:725",
+      "group": "national",
+      "display_name": "NCN 725",
+      "measurable": true,
+      "database_reference_metres": 14988.691482009013,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:e4643bb47e9841bc0c5d52abf9f6ee5bc987a057fc0c14406a44415cd8d5606e",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 14988.691482009013,
+      "maximum_bound_open_length_m": {
+        "on_foot": 11543.781266863924,
+        "cycling": 12249.44035356441,
+        "combined": 12253.124085856485
+      },
+      "unbound_open_length_m": 2735.567396152528,
+      "checkpoint_maximum_combined_binding_percent": 81.74912466884757,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:73",
+      "group": "national",
+      "display_name": "NCN 73",
+      "measurable": true,
+      "database_reference_metres": 47840.14523237535,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:232c4fe0bc8a7caf6aa24c39da8d61d06303a9acd487830c3fc01b0ba7d9eaf0",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 47840.14523237535,
+      "maximum_bound_open_length_m": {
+        "on_foot": 43231.81598057539,
+        "cycling": 44660.801705626945,
+        "combined": 45177.22378453923
+      },
+      "unbound_open_length_m": 2662.9214478361173,
+      "checkpoint_maximum_combined_binding_percent": 94.43370952387075,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:74",
+      "group": "national",
+      "display_name": "NCN 74",
+      "measurable": true,
+      "database_reference_metres": 62140.08695196648,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:9556a1027f902b77bb3bf50d9659ef0933dc22e998568d4b818c9cd84a3dfcb3",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 62140.08695196648,
+      "maximum_bound_open_length_m": {
+        "on_foot": 47249.54183793022,
+        "cycling": 59050.30875579668,
+        "combined": 59082.19570920852
+      },
+      "unbound_open_length_m": 3057.891242757956,
+      "checkpoint_maximum_combined_binding_percent": 95.07903610575623,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:75",
+      "group": "national",
+      "display_name": "NCN 75",
+      "measurable": true,
+      "database_reference_metres": 135061.48866621556,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:6e69acd548c70f8085ecd0e51530f85c69dc06f6b52807b153d25a6935f20595",
+      "deferred_alternative_way_ids": [
+        "268183233",
+        "268183234",
+        "38358084",
+        "431738511"
+      ],
+      "canonical_open_length_m": 135061.48866621556,
+      "maximum_bound_open_length_m": {
+        "on_foot": 121904.4792373507,
+        "cycling": 125625.21313226044,
+        "combined": 125866.72029050339
+      },
+      "unbound_open_length_m": 9194.76837571217,
+      "checkpoint_maximum_combined_binding_percent": 93.19216123965901,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:753",
+      "group": "national",
+      "display_name": "NCN 753",
+      "measurable": true,
+      "database_reference_metres": 16170.416035812383,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:6dfc60796e9655d07ba369beae31742c6d33030a50d645f6722e78b083151197",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 16170.416035812383,
+      "maximum_bound_open_length_m": {
+        "on_foot": 14186.261805232396,
+        "cycling": 13741.879153731743,
+        "combined": 14404.73144116859
+      },
+      "unbound_open_length_m": 1765.6845946437934,
+      "checkpoint_maximum_combined_binding_percent": 89.0807720052882,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:754",
+      "group": "national",
+      "display_name": "NCN 754",
+      "measurable": true,
+      "database_reference_metres": 90769.69226735673,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:47999b1776812ffca44784ca0ca8936082efa0743a6e19697651c4c05be6de48",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 90769.69226735673,
+      "maximum_bound_open_length_m": {
+        "on_foot": 88716.23666354464,
+        "cycling": 88349.16459057573,
+        "combined": 88716.23666354464
+      },
+      "unbound_open_length_m": 2053.4556038120936,
+      "checkpoint_maximum_combined_binding_percent": 97.73772990464289,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:755",
+      "group": "national",
+      "display_name": "NCN 755",
+      "measurable": true,
+      "database_reference_metres": 12867.13221580012,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:2f5733360cd860eb4bf4deb43ce62027916d2a9d0371ea2e72c35e2f9443172a",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 12867.13221580012,
+      "maximum_bound_open_length_m": {
+        "on_foot": 12690.700012357342,
+        "cycling": 12699.730029000886,
+        "combined": 12699.730029000886
+      },
+      "unbound_open_length_m": 167.4021867992342,
+      "checkpoint_maximum_combined_binding_percent": 98.69899380847527,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:756",
+      "group": "national",
+      "display_name": "NCN 756",
+      "measurable": true,
+      "database_reference_metres": 19681.717418114684,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:e8cb5c5124761bfc9c07cc1136351da6b40733d8891b9cdcad8072c82f14bc58",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 19681.717418114684,
+      "maximum_bound_open_length_m": {
+        "on_foot": 14705.847649046384,
+        "cycling": 17915.283197638342,
+        "combined": 17915.283197638342
+      },
+      "unbound_open_length_m": 1766.4342204763416,
+      "checkpoint_maximum_combined_binding_percent": 91.02499958235073,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:76",
+      "group": "national",
+      "display_name": "NCN 76",
+      "measurable": true,
+      "database_reference_metres": 181295.64194056354,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:bca333841dbdbdb126cfb7bc0d967d4e3a38b5908b60d883901acdd339c71713",
+      "deferred_alternative_way_ids": [
+        "1466844841",
+        "1466844842",
+        "30450045",
+        "5219059",
+        "5219060",
+        "673635911",
+        "673635912",
+        "673635913",
+        "694763686",
+        "75044862"
+      ],
+      "canonical_open_length_m": 181295.64194056354,
+      "maximum_bound_open_length_m": {
+        "on_foot": 155128.06846066614,
+        "cycling": 169458.88702836723,
+        "combined": 169529.64271444656
+      },
+      "unbound_open_length_m": 11765.999226116983,
+      "checkpoint_maximum_combined_binding_percent": 93.51004850410338,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:764",
+      "group": "national",
+      "display_name": "NCN 764",
+      "measurable": true,
+      "database_reference_metres": 23394.938524679696,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:18bae89f06e5da96941e347336b2bae48fb9005e8c20d144ae6184007c245312",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 23394.938524679696,
+      "maximum_bound_open_length_m": {
+        "on_foot": 19762.922563482654,
+        "cycling": 20129.254888624517,
+        "combined": 20129.254888624517
+      },
+      "unbound_open_length_m": 3265.683636055179,
+      "checkpoint_maximum_combined_binding_percent": 86.04106767534286,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:765",
+      "group": "national",
+      "display_name": "NCN 765",
+      "measurable": true,
+      "database_reference_metres": 18430.75794632012,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:3494fb74c4b411681a8a78175a4da5cdd0ff81f3ffac69ef51f0c46a4ba0fbf5",
+      "deferred_alternative_way_ids": [
+        "7981579"
+      ],
+      "canonical_open_length_m": 18430.75794632012,
+      "maximum_bound_open_length_m": {
+        "on_foot": 13506.729951847283,
+        "cycling": 17246.017984163816,
+        "combined": 17347.918495210717
+      },
+      "unbound_open_length_m": 1082.8394511094011,
+      "checkpoint_maximum_combined_binding_percent": 94.12482408882376,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:766",
+      "group": "national",
+      "display_name": "NCN 766",
+      "measurable": true,
+      "database_reference_metres": 21209.63625018927,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:cfce2595cdf8b521c5b7069ff7ad037d4c19afba313df0ae029a4b426c962f19",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 21209.63625018927,
+      "maximum_bound_open_length_m": {
+        "on_foot": 18905.41139351377,
+        "cycling": 18905.41139351377,
+        "combined": 18905.41139351377
+      },
+      "unbound_open_length_m": 2304.2248566755006,
+      "checkpoint_maximum_combined_binding_percent": 89.13595297206034,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:767",
+      "group": "national",
+      "display_name": "NCN 767",
+      "measurable": true,
+      "database_reference_metres": 10175.961322334866,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:eb4eef349f61d427f0b9efddfef4da4ad2163c2307c16b02be41657e45a2da26",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 10175.961322334866,
+      "maximum_bound_open_length_m": {
+        "on_foot": 9819.959855104235,
+        "cycling": 9819.959855104235,
+        "combined": 9819.959855104235
+      },
+      "unbound_open_length_m": 356.00146723063153,
+      "checkpoint_maximum_combined_binding_percent": 96.50154461132576,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:768",
+      "group": "national",
+      "display_name": "NCN 768",
+      "measurable": true,
+      "database_reference_metres": 9469.514396139022,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:77042c0facf9da1bc6e34b9e84216005a5c85994ea823e50aac175488e38a0ea",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 9469.514396139022,
+      "maximum_bound_open_length_m": {
+        "on_foot": 8906.358048944829,
+        "cycling": 8937.98322098497,
+        "combined": 8937.98322098497
+      },
+      "unbound_open_length_m": 531.5311751540521,
+      "checkpoint_maximum_combined_binding_percent": 94.3869225715442,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:77",
+      "group": "national",
+      "display_name": "NCN 77",
+      "measurable": true,
+      "database_reference_metres": 78837.45815447891,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:854a866cb8a3c3b6595ee010c7c64e4efdb63154ed84a571156dfc1f8f3028c9",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 78837.45815447891,
+      "maximum_bound_open_length_m": {
+        "on_foot": 75030.65218122555,
+        "cycling": 75281.36185034088,
+        "combined": 75300.86944515338
+      },
+      "unbound_open_length_m": 3536.5887093255296,
+      "checkpoint_maximum_combined_binding_percent": 95.51407567910711,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:775",
+      "group": "national",
+      "display_name": "NCN 775",
+      "measurable": true,
+      "database_reference_metres": 26429.063714035612,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:ae6c46e8ae0d94f8303b2ad4a27bfa5f9a3a2b0829e94bd650e050807fc48d63",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 26429.063714035612,
+      "maximum_bound_open_length_m": {
+        "on_foot": 24507.250661622587,
+        "cycling": 24490.857092181588,
+        "combined": 24507.250661622587
+      },
+      "unbound_open_length_m": 1921.8130524130247,
+      "checkpoint_maximum_combined_binding_percent": 92.72841038484306,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:777",
+      "group": "national",
+      "display_name": "NCN 777",
+      "measurable": true,
+      "database_reference_metres": 25839.43584036547,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:bb58aab00502cf0c0fbf5d1cceeddd48b05cd20b9005808cc4223bf93f4960c3",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 25839.43584036547,
+      "maximum_bound_open_length_m": {
+        "on_foot": 25438.327250013805,
+        "cycling": 25438.327250013805,
+        "combined": 25438.327250013805
+      },
+      "unbound_open_length_m": 401.10859035166504,
+      "checkpoint_maximum_combined_binding_percent": 98.44768828224544,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:78",
+      "group": "national",
+      "display_name": "NCN 78",
+      "measurable": true,
+      "database_reference_metres": 143351.2386428014,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:047e5b11472825bf725bb6702caca4610be058d083997151437c90cda3b72e01",
+      "deferred_alternative_way_ids": [
+        "132180837"
+      ],
+      "canonical_open_length_m": 143351.2386428014,
+      "maximum_bound_open_length_m": {
+        "on_foot": 134931.36368681965,
+        "cycling": 135382.15647889144,
+        "combined": 135642.74794828793
+      },
+      "unbound_open_length_m": 7708.490694513486,
+      "checkpoint_maximum_combined_binding_percent": 94.62265497843288,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:8",
+      "group": "national",
+      "display_name": "NCN 8",
+      "measurable": true,
+      "database_reference_metres": 383185.1131687598,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:e16b51e215fd48a912fd5df4225c136741c91ba69128e9b68de6fb7c036fd811",
+      "deferred_alternative_way_ids": [
+        "1070968679",
+        "1102298807",
+        "1303465933",
+        "1487840543",
+        "1487840544",
+        "167311953"
+      ],
+      "canonical_open_length_m": 383185.1131687598,
+      "maximum_bound_open_length_m": {
+        "on_foot": 335293.1477796255,
+        "cycling": 355037.5551415163,
+        "combined": 355252.32935895614
+      },
+      "unbound_open_length_m": 27932.78380980366,
+      "checkpoint_maximum_combined_binding_percent": 92.71036821373025,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:81",
+      "group": "national",
+      "display_name": "NCN 81",
+      "measurable": true,
+      "database_reference_metres": 204255.01529156585,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:8ed103c9966c6668c5c6e8d8d187e8284ea00e313d2520ad99c92c334b4b7377",
+      "deferred_alternative_way_ids": [
+        "1430989519",
+        "1430989520",
+        "1430989521",
+        "1430989522",
+        "23769385",
+        "38333345",
+        "977031512"
+      ],
+      "canonical_open_length_m": 204255.01529156585,
+      "maximum_bound_open_length_m": {
+        "on_foot": 169851.80759943495,
+        "cycling": 188173.7771216484,
+        "combined": 188302.70213518306
+      },
+      "unbound_open_length_m": 15952.313156382792,
+      "checkpoint_maximum_combined_binding_percent": 92.19000173209382,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:810",
+      "group": "national",
+      "display_name": "NCN 810",
+      "measurable": true,
+      "database_reference_metres": 29022.28425846992,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:dd96c26a45ce3ec40084dd890963448c5b30f8153384268150fe56850f04c3bc",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 29022.28425846992,
+      "maximum_bound_open_length_m": {
+        "on_foot": 26996.418455496954,
+        "cycling": 26972.874215597592,
+        "combined": 27045.940005181496
+      },
+      "unbound_open_length_m": 1976.3442532884255,
+      "checkpoint_maximum_combined_binding_percent": 93.1902525807849,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:82",
+      "group": "national",
+      "display_name": "NCN 82",
+      "measurable": true,
+      "database_reference_metres": 207019.97944444488,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:e2317fcfd54281f2d95504ea9d29ee842b9151f06131b0ddbe7f460a46b3f769",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 207019.97944444488,
+      "maximum_bound_open_length_m": {
+        "on_foot": 186915.96328302534,
+        "cycling": 193033.36659477712,
+        "combined": 193042.927130814
+      },
+      "unbound_open_length_m": 13977.052313630877,
+      "checkpoint_maximum_combined_binding_percent": 93.24845246766064,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:822",
+      "group": "national",
+      "display_name": "NCN 822",
+      "measurable": true,
+      "database_reference_metres": 3644.073615129793,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:837f2173081dfc09127119aa702c8d4551a52be3866ac585885d2c55f2f6a0bd",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 3644.073615129793,
+      "maximum_bound_open_length_m": {
+        "on_foot": 2524.653633562223,
+        "cycling": 2615.1879102724192,
+        "combined": 2615.1879102724192
+      },
+      "unbound_open_length_m": 1028.8857048573736,
+      "checkpoint_maximum_combined_binding_percent": 71.76550713504926,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:825",
+      "group": "national",
+      "display_name": "NCN 825",
+      "measurable": true,
+      "database_reference_metres": 106188.63139313507,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:63573b69f8f51d0b4bf3f3c676ac62001459ac76b97c7d92a42f2a9ab9cff812",
+      "deferred_alternative_way_ids": [
+        "27421826",
+        "754918355"
+      ],
+      "canonical_open_length_m": 106188.63139313507,
+      "maximum_bound_open_length_m": {
+        "on_foot": 101596.3763088956,
+        "cycling": 101911.2833319908,
+        "combined": 101911.2833319908
+      },
+      "unbound_open_length_m": 4277.348061144279,
+      "checkpoint_maximum_combined_binding_percent": 95.97193409028078,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:83",
+      "group": "national",
+      "display_name": "NCN 83",
+      "measurable": true,
+      "database_reference_metres": 55776.23693540978,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:95fa7e9cd7b0f2c293f2e5f1b1e65982af928f548c2da18a7ed1252df102dc21",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 55776.23693540978,
+      "maximum_bound_open_length_m": {
+        "on_foot": 51820.91169668904,
+        "cycling": 54524.444778562385,
+        "combined": 54584.30326177949
+      },
+      "unbound_open_length_m": 1191.933673630294,
+      "checkpoint_maximum_combined_binding_percent": 97.86300808530596,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:84",
+      "group": "national",
+      "display_name": "NCN 84",
+      "measurable": true,
+      "database_reference_metres": 15757.9187089353,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:b8d4151626f1a00c2942d90edcb7a754bc3e70d2aa96403694591fe3d917b03d",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 15757.9187089353,
+      "maximum_bound_open_length_m": {
+        "on_foot": 14785.849489114944,
+        "cycling": 14380.511099240504,
+        "combined": 14865.358508174075
+      },
+      "unbound_open_length_m": 892.5602007612251,
+      "checkpoint_maximum_combined_binding_percent": 94.33579892593866,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:85",
+      "group": "national",
+      "display_name": "NCN 85",
+      "measurable": true,
+      "database_reference_metres": 9874.45490281918,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:0867286c9cf77183b7fc7fa00877139bb38aab9fb295bf4d5df54e9499dcc921",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 9874.45490281918,
+      "maximum_bound_open_length_m": {
+        "on_foot": 9274.858340079696,
+        "cycling": 9453.736296069084,
+        "combined": 9453.736296069084
+      },
+      "unbound_open_length_m": 420.7186067500952,
+      "checkpoint_maximum_combined_binding_percent": 95.73932322451562,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:862",
+      "group": "national",
+      "display_name": "NCN 862",
+      "measurable": true,
+      "database_reference_metres": 6783.376267934729,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:331ee75527c6ec4af7354333e2f442ea2e4ec62f84a559e7bc2f2bd94239fd1d",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 6783.376267934729,
+      "maximum_bound_open_length_m": {
+        "on_foot": 4939.098856660788,
+        "cycling": 5550.573854894895,
+        "combined": 5550.573854894895
+      },
+      "unbound_open_length_m": 1232.8024130398344,
+      "checkpoint_maximum_combined_binding_percent": 81.82612368316738,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:88",
+      "group": "national",
+      "display_name": "NCN 88",
+      "measurable": true,
+      "database_reference_metres": 49734.1209056837,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:ed7756ff1a5f276c6253681ed8d9fa8e27f6fa9a2cfa39ed6eb055369cfe2bf6",
+      "deferred_alternative_way_ids": [
+        "41238791",
+        "41239126"
+      ],
+      "canonical_open_length_m": 49734.1209056837,
+      "maximum_bound_open_length_m": {
+        "on_foot": 43737.65184206556,
+        "cycling": 43907.64664094877,
+        "combined": 43907.64664094877
+      },
+      "unbound_open_length_m": 5826.474264734934,
+      "checkpoint_maximum_combined_binding_percent": 88.28475469429866,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:881",
+      "group": "national",
+      "display_name": "NCN 881",
+      "measurable": true,
+      "database_reference_metres": 19410.835868063525,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:f5d7edecb3c0df24390795c67c09a04c6fc1b6394a300e93ee57e981ee055ce5",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 19410.835868063525,
+      "maximum_bound_open_length_m": {
+        "on_foot": 7661.341982928695,
+        "cycling": 14067.560173109261,
+        "combined": 14067.560173109261
+      },
+      "unbound_open_length_m": 5343.275694954264,
+      "checkpoint_maximum_combined_binding_percent": 72.47271713968019,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:883",
+      "group": "national",
+      "display_name": "NCN 883",
+      "measurable": true,
+      "database_reference_metres": 6913.942873913505,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:7c7c43e968dfede77cc20b0e33cc21484ed6ee7351a6e7a221aedaeae5acda16",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 6913.942873913505,
+      "maximum_bound_open_length_m": {
+        "on_foot": 6018.034953790493,
+        "cycling": 6644.92438215235,
+        "combined": 6644.92438215235
+      },
+      "unbound_open_length_m": 269.018491761155,
+      "checkpoint_maximum_combined_binding_percent": 96.10904375886344,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:884",
+      "group": "national",
+      "display_name": "NCN 884",
+      "measurable": true,
+      "database_reference_metres": 2480.3081545137265,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:9046a3aafa70501f932c36ce59acc0a777d51a0b0a015ca10a9b2040adf04c7e",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 2480.3081545137265,
+      "maximum_bound_open_length_m": {
+        "on_foot": 76.54752759853919,
+        "cycling": 1996.2238615031638,
+        "combined": 1996.2238615031638
+      },
+      "unbound_open_length_m": 484.08429301056276,
+      "checkpoint_maximum_combined_binding_percent": 80.48289717027241,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:885",
+      "group": "national",
+      "display_name": "NCN 885",
+      "measurable": true,
+      "database_reference_metres": 13057.157460890732,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:89e7f43ce66f368167a3c3fde4863ca1d1b7f89a98c2c03e7757fb1845dfcddd",
+      "deferred_alternative_way_ids": [
+        "54490169"
+      ],
+      "canonical_open_length_m": 13057.157460890732,
+      "maximum_bound_open_length_m": {
+        "on_foot": 9748.634225107422,
+        "cycling": 11580.852509083446,
+        "combined": 11580.852509083446
+      },
+      "unbound_open_length_m": 1476.3049518072858,
+      "checkpoint_maximum_combined_binding_percent": 88.69351957936352,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:887",
+      "group": "national",
+      "display_name": "NCN 887",
+      "measurable": true,
+      "database_reference_metres": 23035.904208027056,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:edfa0c2250f743e38f1f6f1da56c53a0ffc0a4f72d19428a03270dc32e3d7ab8",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 23035.904208027056,
+      "maximum_bound_open_length_m": {
+        "on_foot": 12906.667620372278,
+        "cycling": 21041.1465242768,
+        "combined": 21041.1465242768
+      },
+      "unbound_open_length_m": 1994.7576837502565,
+      "checkpoint_maximum_combined_binding_percent": 91.34065819280858,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:888",
+      "group": "national",
+      "display_name": "NCN 888",
+      "measurable": true,
+      "database_reference_metres": 10773.457724125212,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:62f02f86d682e5a54f3b825860d7322a19c873b755d37df80832662871857d6b",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 10773.457724125212,
+      "maximum_bound_open_length_m": {
+        "on_foot": 10596.039900996853,
+        "cycling": 10596.039900996853,
+        "combined": 10596.039900996853
+      },
+      "unbound_open_length_m": 177.41782312835858,
+      "checkpoint_maximum_combined_binding_percent": 98.35319516100144,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:9",
+      "group": "national",
+      "display_name": "NCN 9",
+      "measurable": true,
+      "database_reference_metres": 66635.79732580522,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:6687f906b892b3b55ea472cbaa8b2a83db790bb84b4c4f487aa50088c1630164",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 66635.79732580522,
+      "maximum_bound_open_length_m": {
+        "on_foot": 58788.478412570534,
+        "cycling": 60543.82990787296,
+        "combined": 60572.51015845511
+      },
+      "unbound_open_length_m": 6063.287167350114,
+      "checkpoint_maximum_combined_binding_percent": 90.90085598030046,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:91",
+      "group": "national",
+      "display_name": "NCN 91",
+      "measurable": true,
+      "database_reference_metres": 6215.045995132424,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:f3931f9f5f221dd721be93ad1f12d3dd9d7708e868ecb2c373bceca14d240942",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 6215.045995132424,
+      "maximum_bound_open_length_m": {
+        "on_foot": 3300.591605873094,
+        "cycling": 3200.50337330663,
+        "combined": 3300.591605873094
+      },
+      "unbound_open_length_m": 2914.4543892593297,
+      "checkpoint_maximum_combined_binding_percent": 53.10647110991764,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:92",
+      "group": "national",
+      "display_name": "NCN 92",
+      "measurable": true,
+      "database_reference_metres": 27685.00404690001,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:8e587af7cd618d9def7e71e0d2bf778da108ad57bbc20d292047088fb9040f78",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 27685.00404690001,
+      "maximum_bound_open_length_m": {
+        "on_foot": 12051.860588197109,
+        "cycling": 13336.944767133244,
+        "combined": 13336.944767133244
+      },
+      "unbound_open_length_m": 14348.059279766765,
+      "checkpoint_maximum_combined_binding_percent": 48.17389495244315,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:93",
+      "group": "national",
+      "display_name": "NCN 93",
+      "measurable": true,
+      "database_reference_metres": 54252.8680600422,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:bb8e87bcaf338089b4cf254fff98e91fa8c6835665c9027e9188e4c19b3bedae",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 54252.8680600422,
+      "maximum_bound_open_length_m": {
+        "on_foot": 40655.82834213853,
+        "cycling": 39635.86119841516,
+        "combined": 41076.183951566505
+      },
+      "unbound_open_length_m": 13176.684108475696,
+      "checkpoint_maximum_combined_binding_percent": 75.71246538728067,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:94",
+      "group": "national",
+      "display_name": "NCN 94",
+      "measurable": true,
+      "database_reference_metres": 13864.280973130317,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:ce5296be38188b5beebde91e550ea35f36b7edadcbdd70475cad12832b95c67c",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 13864.280973130317,
+      "maximum_bound_open_length_m": {
+        "on_foot": 12122.074093919291,
+        "cycling": 12117.207250649655,
+        "combined": 12183.425595707435
+      },
+      "unbound_open_length_m": 1680.8553774228822,
+      "checkpoint_maximum_combined_binding_percent": 87.87636098344757,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:96",
+      "group": "national",
+      "display_name": "NCN 96",
+      "measurable": true,
+      "database_reference_metres": 7758.711396697638,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:67197b566494a6b9a21c314485e6010877a6c126709246779c2f7d96c2837b64",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 7758.711396697638,
+      "maximum_bound_open_length_m": {
+        "on_foot": 5486.3227584562765,
+        "cycling": 5953.314482361583,
+        "combined": 5953.314482361583
+      },
+      "unbound_open_length_m": 1805.3969143360546,
+      "checkpoint_maximum_combined_binding_percent": 76.73071181505101,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:97",
+      "group": "national",
+      "display_name": "NCN 97",
+      "measurable": true,
+      "database_reference_metres": 1724.1004336038345,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:c9267a4fd80e9956e778db2e535916b011c88429ad80ebf85b9677020267ae2e",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 1724.1004336038345,
+      "maximum_bound_open_length_m": {
+        "on_foot": 987.6495378212536,
+        "cycling": 844.7219793754998,
+        "combined": 987.6495378212536
+      },
+      "unbound_open_length_m": 736.4508957825809,
+      "checkpoint_maximum_combined_binding_percent": 57.2849190552548,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "NCN:99",
+      "group": "national",
+      "display_name": "NCN 99",
+      "measurable": true,
+      "database_reference_metres": 22604.475348755277,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:6751af8ef84cb2beaec8f475f39a77b7c5bc926612827583a0997f3c566fd004",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 22604.475348755277,
+      "maximum_bound_open_length_m": {
+        "on_foot": 10763.724055075028,
+        "cycling": 10781.732492863925,
+        "combined": 10781.732492863925
+      },
+      "unbound_open_length_m": 11822.742855891353,
+      "checkpoint_maximum_combined_binding_percent": 47.697335711256066,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "RCN:70",
+      "group": "regional",
+      "display_name": "RCN 70",
+      "measurable": true,
+      "database_reference_metres": 3791.6971916789616,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:34be52334a082aa25a0a127eda6209489e445e5f60ade3d8e2a039727b29796e",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 3791.6971916789616,
+      "maximum_bound_open_length_m": {
+        "on_foot": 3769.980348697722,
+        "cycling": 3769.980348697722,
+        "combined": 3769.980348697722
+      },
+      "unbound_open_length_m": 21.71684298123955,
+      "checkpoint_maximum_combined_binding_percent": 99.42725270813033,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "RCN:90",
+      "group": "regional",
+      "display_name": "RCN 90",
+      "measurable": true,
+      "database_reference_metres": 2934.5068413689805,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:e97ddf28578b3b064ff96fd80bad13ef4876cced6dff6abf5010f823d4179dc3",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 2934.5068413689805,
+      "maximum_bound_open_length_m": {
+        "on_foot": 276.8224097022896,
+        "cycling": 276.8224097022896,
+        "combined": 276.8224097022896
+      },
+      "unbound_open_length_m": 2657.684431666691,
+      "checkpoint_maximum_combined_binding_percent": 9.4333537001791,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    },
+    {
+      "route_key": "RCN:92",
+      "group": "regional",
+      "display_name": "RCN 92",
+      "measurable": true,
+      "database_reference_metres": 273.6785876331362,
+      "completion_kind": "captured_open_main",
+      "reference_version": "open-completion:1fe014f254f85a502a2b5dbffa2b9e306d48655a8d0526649be189111cf78002",
+      "deferred_alternative_way_ids": [],
+      "canonical_open_length_m": 273.6785876331362,
+      "maximum_bound_open_length_m": {
+        "on_foot": 115.01743201999898,
+        "cycling": 115.01743201999898,
+        "combined": 115.01743201999898
+      },
+      "unbound_open_length_m": 158.66115561313723,
+      "checkpoint_maximum_combined_binding_percent": 42.026463602691074,
+      "note": "Binding capacity is catalogue evidence, not personal journey completion."
+    }
+  ]
+}
