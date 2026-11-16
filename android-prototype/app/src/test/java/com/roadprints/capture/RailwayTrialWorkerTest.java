@@ -101,7 +101,7 @@ public class RailwayTrialWorkerTest {
         assertEquals("selected_fixes_2048", limited.getString("limit"));
     }
 
-    @Test public void savedTrainAppearsInJourneyDetailsAfterCaptureEnds() throws Exception {
+    @Test public void savedTrainKeepsItsDistanceWithoutCompleteNetworkInference() throws Exception {
         var app = org.robolectric.RuntimeEnvironment.getApplication();
         org.robolectric.Shadows.shadowOf(app).grantPermissions(
                 "com.roadprints.capture.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION");
@@ -134,18 +134,20 @@ public class RailwayTrialWorkerTest {
             show.invoke(screen, journey);
             dialog = org.robolectric.shadows.ShadowAlertDialog.getLatestAlertDialog();
             android.view.View root = dialog.getWindow().getDecorView();
-            assertTrue(hasText(root, "Recorded distance"));
-            assertTrue(hasText(root, "Waiting for recording to finish"));
+            String distance = DistanceUnits.format(screen, 1600);
+            assertTrue(hasText(root, "Distance"));
+            assertTrue(hasText(root, distance));
+            assertFalse(hasText(root, "Railway comparison"));
             capture.edit().putBoolean("active", false).commit();
             RailwayTrialWorker.captureEnded(app);
             var looper = org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper());
             long deadline = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(20);
-            while (!hasText(root, "Full match") && System.nanoTime() < deadline) {
+            while (!hasReceipt(app) && System.nanoTime() < deadline) {
                 looper.idle();
                 Thread.sleep(10);
             }
-            assertTrue(hasText(root, "Full match"));
-            assertTrue(hasText(root, "Proposed distance"));
+            assertTrue(hasReceipt(app));
+            assertTrue(hasText(root, distance));
             assertArrayEquals(original, Files.readAllBytes(saved.toPath()));
             assertEquals(1600, JourneyStore.get(app, "railway-owner-test").getDouble("distance_meters"), 0);
         } finally {
@@ -188,6 +190,12 @@ public class RailwayTrialWorkerTest {
         assertEquals(1, output.list().length);
         assertEquals(result.toString(), RailwayTrialWorker.assess(source, output, "historic",
                 () -> { throw new AssertionError("Receipt recomputed"); }, () -> false).toString());
+    }
+
+    private static boolean hasReceipt(android.content.Context app) {
+        File[] receipts = new File(app.getFilesDir(), "railway-comparisons")
+                .listFiles((dir, name) -> name.endsWith(".json"));
+        return receipts != null && receipts.length > 0;
     }
 
     private static boolean hasText(android.view.View view, String text) {

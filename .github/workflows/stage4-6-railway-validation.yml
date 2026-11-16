@@ -1,0 +1,79 @@
+name: Validate Stage 4.6 railway mileage
+on:
+  pull_request:
+    branches: [feat/railway-stage4-5]
+    paths:
+      - 'android-prototype/**'
+      - '.github/workflows/stage4-6-railway-validation.yml'
+permissions:
+  contents: read
+jobs:
+  android:
+    if: github.head_ref == 'feat/railway-stage4-6'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      BASELINE: 07800f2e206259d0ee802428dc545cbacaad36e5
+      SOURCE_SHA: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - name: Verify the Build 282 ancestry
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$BASELINE" "$SOURCE_SHA"
+      - name: Restore existing packaging reference cache
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: |
+            .cache/ncn/catalogue.db
+            android-prototype/app/src/main/assets/historic-counties/boundaries.bin
+          key: reference-pins-v2-${{ runner.os }}-${{ hashFiles('android-prototype/app/src/main/assets/ncn-national/manifest.json', 'android-prototype/app/src/main/assets/historic-counties/catalogue.json') }}
+          fail-on-cache-miss: true
+      - name: Verify the county reference and select Java 17
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, json, pathlib
+          folder = pathlib.Path('android-prototype/app/src/main/assets/historic-counties')
+          expected = json.loads((folder / 'catalogue.json').read_text())['data_sha256']
+          with (folder / 'boundaries.bin').open('rb') as source:
+              assert hashlib.file_digest(source, 'sha256').hexdigest() == expected
+          PY
+          test -n "$JAVA_HOME_17_X64"
+          test -f "$ANDROID_HOME/platforms/android-35/android.jar"
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.10'
+          cache-read-only: true
+      - name: Compile the app and validate railway matching and the owner flow
+        run: |
+          set -euo pipefail
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:testDebugUnitTest --tests '*RailwayStage4Test' --tests '*RailwayTrialWorkerTest' --tests '*RegionalRailwayCatalogueTest' --tests '*NetworkFirstRailwayTest' --tests '*RailwayMileageTest'
+          python3 - <<'PY'
+          import pathlib, xml.etree.ElementTree as ET
+          root = pathlib.Path('android-prototype/app/build/test-results/testDebugUnitTest')
+          for name in ('RailwayStage4Test', 'RailwayTrialWorkerTest', 'RegionalRailwayCatalogueTest', 'NetworkFirstRailwayTest', 'RailwayMileageTest'):
+              report = ET.parse(root / f'TEST-com.roadprints.capture.{name}.xml').getroot()
+              counts = {key: int(report.attrib[key]) for key in ('tests', 'failures', 'errors', 'skipped')}
+              print(name, counts)
+              assert counts['tests'] > 0 and all(counts[key] == 0 for key in ('failures', 'errors', 'skipped'))
+          PY
+      - name: Allow the hosted Android emulator to use KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Assemble the existing isolated Android test package
+        run: gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:assembleAcceptance :app:assembleAcceptanceAndroidTest
+      - name: Run migration and restart on Android API 35
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: bash scripts/check_railway_migration_android.sh

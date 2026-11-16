@@ -1,7 +1,7 @@
-Roadprints regional Railway Intelligence trial
+Roadprints regional railway reference
 Catalogue revision stage1-osm-20261112-r1, schema 1, EPSG:32630
 Uncompressed SHA-256 5409cf795b0ab58e4ef9911531b463c538c0a5e8c8555e3183ecb7d23c3dad5a
-15,183,872 uncompressed bytes. Regional south-east England trial only.
+15,183,872 uncompressed bytes. Regional south-east England coverage.
 Contains no private journey data.
 
 Rail and road data © OpenStreetMap contributors.

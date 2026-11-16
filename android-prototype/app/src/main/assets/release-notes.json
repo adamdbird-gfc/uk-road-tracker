@@ -2,6 +2,18 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.237",
+      "version_code": 283,
+      "release_date": "2026-11-13",
+      "since": "0.25.236",
+      "changes": [
+        {
+          "title": "Train distances follow the railway",
+          "description": "Roadprints now measures eligible train journeys along the railway you travelled on. It checks saved train journeys automatically while the app is open, so some journey distances and totals may change. If Roadprints can't identify the full route, it keeps the distance already saved."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.228",
       "version_code": 274,
       "release_date": "2026-11-11",

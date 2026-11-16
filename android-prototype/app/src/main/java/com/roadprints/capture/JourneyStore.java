@@ -26,6 +26,9 @@ public final class JourneyStore {
     private static final String MIGRATED = "journeys_migrated_to_archive";
     private static final String LOW_QUALITY_PRUNED = "insufficient_timeline_journeys_pruned";
     private static final String DATA_REVISION = "journey_archive_revision";
+    private static final String RAILWAY_INPUT_REVISION = "railway_input_revision";
+    private static final String RAILWAY_WRITE_PENDING = "railway_distance_pending_id";
+    private static volatile boolean railwayWriteRecovered;
     private static final String PREFIX = "journey_";
     private static final String SUFFIX = ".json";
 
@@ -91,16 +94,8 @@ public final class JourneyStore {
                 if(previousNcnHash==null)try{previousNcnHash=ncnEvidenceHash(ncnEvidence(target));}
                 catch(Exception unreadable){/* Conservative invalidation for an unreadable predecessor. */}
             }
-            output.write(encoded);
-            output.flush();
-            // A replacement has a distinct stable token even for equal-size writes in one millisecond.
-            java.nio.file.Files.setLastModifiedTime(temporary.toPath(), java.nio.file.attribute.FileTime.fromMillis(
-                    Math.max(System.currentTimeMillis(), previousModified + 1)));
-            // Same-filesystem atomic replacement keeps the committed journey intact
-            // if writing or replacing its successor is interrupted.
-            java.nio.file.Files.move(temporary.toPath(),target.toPath(),
-                    java.nio.file.StandardCopyOption.ATOMIC_MOVE,
-                    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            replaceArchive(output, temporary, target, encoded,
+                    Math.max(System.currentTimeMillis(), previousModified + 1), false);
             contentHashes.edit().putString(id,contentHash).apply();
             boolean ncnChanged=false;
             if (!titleOnly) {
@@ -123,6 +118,90 @@ public final class JourneyStore {
         }
     }
 
+    private static void replaceArchive(FileOutputStream output, File temporary, File target,
+                                       byte[] encoded, long modified, boolean durable) throws IOException {
+        output.write(encoded);
+        output.flush();
+        if (durable) output.getFD().sync();
+        java.nio.file.Files.setLastModifiedTime(temporary.toPath(),
+                java.nio.file.attribute.FileTime.fromMillis(modified));
+        java.nio.file.Files.move(temporary.toPath(), target.toPath(),
+                java.nio.file.StandardCopyOption.ATOMIC_MOVE,
+                java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    static synchronized boolean applyRailwayDistance(Context context, String id, JSONObject result,
+                                                        java.util.function.BooleanSupplier stop) throws Exception {
+        File source = archiveFile(context, id);
+        if (!source.isFile() || !fileToken(source).equals(result.optString("archive_token")))
+            throw new java.util.concurrent.CancellationException();
+        JSONObject journey = read(source);
+        if (journey == null || !id.equals(journey.optString("journey_id"))
+                || !RailwayMileage.apply(journey, result)) return false;
+        writeRailwayDistance(context, source, journey, stop);
+        return true;
+    }
+
+    static synchronized boolean restoreRailwayDistance(Context context, String id) throws Exception {
+        File source = archiveFile(context, id);
+        JSONObject journey = read(source);
+        if (journey == null || !RailwayMileage.restore(journey)) return false;
+        writeRailwayDistance(context, source, journey, () -> false);
+        return true;
+    }
+
+    private static void writeRailwayDistance(Context context, File source, JSONObject journey,
+                                             java.util.function.BooleanSupplier stop) throws Exception {
+        recoverRailwayWrite(context);
+        SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        File temporary = new File(context.getFilesDir(), source.getName() + ".railway.tmp");
+        byte[] encoded = journey.toString().getBytes(StandardCharsets.UTF_8);
+        String id = journey.getString("journey_id");
+        try {
+            if (stop.getAsBoolean()) throw new java.util.concurrent.CancellationException();
+            // Mark the transaction before touching the archive. After process death
+            // either complete file is usable, but cached totals must be refreshed.
+            if (!preferences.edit().putString(RAILWAY_WRITE_PENDING, id).commit())
+                throw new IOException("Could not prepare railway distance update");
+            try (FileOutputStream output = new FileOutputStream(temporary)) {
+                // Preserve the journey's position in recency-ordered archive readers.
+                // Atomic replacement gives projection caches a new file identity.
+                replaceArchive(output, temporary, source, encoded, source.lastModified(), true);
+            }
+            completeRailwayWrite(context, preferences, id);
+        } catch (IOException failure) {
+            railwayWriteRecovered = false;
+            throw failure;
+        } finally {
+            temporary.delete();
+        }
+    }
+
+    private static void recoverRailwayWrite(Context context) {
+        if (railwayWriteRecovered) return;
+        synchronized (JourneyStore.class) {
+            if (railwayWriteRecovered) return;
+            SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+            String id = preferences.getString(RAILWAY_WRITE_PENDING, null);
+            if (id != null) {
+                completeRailwayWrite(context, preferences, id);
+                File[] leftovers = context.getFilesDir().listFiles((dir, name) -> name.endsWith(".railway.tmp"));
+                if (leftovers != null) for (File leftover : leftovers) leftover.delete();
+            }
+            railwayWriteRecovered = true;
+        }
+    }
+
+    private static void completeRailwayWrite(Context context, SharedPreferences preferences, String id) {
+        context.getSharedPreferences("roadprints_journey_content", 0).edit().remove(id).commit();
+        context.getSharedPreferences("roadprints_ncn_metadata", 0).edit().remove(id).apply();
+        long revision = preferences.getLong(DATA_REVISION, 0);
+        preferences.edit().putLong(DATA_REVISION, revision + 1)
+                .putLong(RAILWAY_INPUT_REVISION, preferences.getLong(RAILWAY_INPUT_REVISION, revision))
+                .putLong("ncn_evidence_revision", preferences.getLong("ncn_evidence_revision", revision))
+                .remove(RAILWAY_WRITE_PENDING).apply();
+    }
+
     /** Add bounded post-arrival observations without changing route, timing or raw recording. */
     static synchronized void appendArrivalDwell(Context context,JSONObject stop,JSONArray observations) throws Exception {
         String id=stop.optString("journey_id");
@@ -138,6 +217,7 @@ public final class JourneyStore {
 
     /** Cheap token for invalidating screen summaries when saved journey data changes. */
     public static long dataRevision(Context context) {
+        recoverRailwayWrite(context);
         return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
                 .getLong(DATA_REVISION, 0L);
     }
@@ -181,6 +261,12 @@ public final class JourneyStore {
         return summaries;
     }
 
+    static long railwayInputRevision(Context context) {
+        long archive = dataRevision(context);
+        return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .getLong(RAILWAY_INPUT_REVISION, archive);
+    }
+
     /** Reliable recent saved rows for first display, before the complete chronological list. */
     static List<JSONObject> firstSummaries(Context context,int limit) {
         migrateLegacy(context);List<File> files=archiveFiles(context);files.sort((a,b)->Long.compare(b.lastModified(),a.lastModified()));
@@ -210,7 +296,7 @@ public final class JourneyStore {
                         summary.put(name, readScalar(reader));
                         break;
                     case "source": case "capture_quality":
-                    case "stage_statuses": case "processing":
+                    case "stage_statuses": case "processing": case "recording_quality":
                         summary.put(name, readFlatObject(reader));
                         break;
                     case "route_geometry":
@@ -818,6 +904,7 @@ public final class JourneyStore {
 
     private static void applyModeEdit(JSONObject journey, String mode) throws org.json.JSONException {
         if (!mode.equals(journey.optString("mode"))) {
+            RailwayMileage.restore(journey);
             journey.remove("processing_result"); journey.remove("last_match_attempt");
             journey.remove("walking_outcome"); journey.remove("error_summary"); journey.remove("processing_completed_at");
             journey.put("processing_status", "pending");
@@ -958,7 +1045,7 @@ public final class JourneyStore {
     private static void bumpDataRevision(Context context,boolean ncnChanged,boolean scheduleNcn) {
         SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         long archive=preferences.getLong(DATA_REVISION,0),ncn=preferences.getLong("ncn_evidence_revision",archive);
-        preferences.edit().putLong(DATA_REVISION,archive+1)
+        preferences.edit().putLong(DATA_REVISION,archive+1).putLong(RAILWAY_INPUT_REVISION,archive+1)
                 .putLong("ncn_evidence_revision",ncn+(ncnChanged?1:0)).apply();
         if (scheduleNcn) NcnProgressStore.changed(context);
         MilepostReconciliationJob.archiveChanged(context);
