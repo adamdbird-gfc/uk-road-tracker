@@ -77,6 +77,13 @@ final class RailwayMatcher {
         this.cancelled = cancelled;
     }
 
+    Result inferNetwork(List<Fix> fixes, long start, long end, NetworkFirstRailway network) {
+        metrics = new Metrics();
+        inference = network.infer(fixes, start, end, graph, cancelled);
+        return inference == null ? new Result("unresolved", "outside_reviewed_routes", 0, 0, 0)
+                : new Result(inference.confidence(), inference.reason(), 0, inference.witnesses(), 0);
+    }
+
     Result compare(List<Fix> fixes, long start, long end, NetworkFirstRailway network) {
         inference = network == null ? null : network.infer(fixes, start, end, graph, cancelled);
         if (inference != null && ("inferred".equals(inference.confidence())

@@ -29,7 +29,7 @@ public class RailwayMileageTest {
         Files.write(source.toPath(), original.toString().getBytes(StandardCharsets.UTF_8));
         long modified = source.lastModified();
         long revision = JourneyStore.dataRevision(app);
-        long inputRevision = JourneyStore.railwayInputRevision(app);
+        long inputRevision = JourneyStore.geometryRevision(app);
         byte[] untouched = Files.readAllBytes(source.toPath());
         JSONObject result = completeReceipt(source, id);
 
@@ -40,7 +40,7 @@ public class RailwayMileageTest {
         assertTrue(JourneyStore.applyRailwayDistance(app, id, result, () -> false));
         assertEquals(modified, source.lastModified());
         assertEquals(revision + 1, JourneyStore.dataRevision(app));
-        assertEquals(inputRevision, JourneyStore.railwayInputRevision(app));
+        assertEquals(inputRevision, JourneyStore.geometryRevision(app));
         assertEquals(39125.162, JourneyStore.readSummary(source).getDouble("distance_meters"), 0);
         assertEquals(39125.162, JourneyStore.mapEvidence(app, source, true).getDouble("distance_meters"), 0);
         JSONObject saved = new JSONObject(new String(Files.readAllBytes(source.toPath()), StandardCharsets.UTF_8));

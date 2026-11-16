@@ -823,7 +823,7 @@ public class MapActivity extends Activity {
     }
 
     private long mapDataRevision() {
-        long revision = 31L * JourneyStore.dataRevision(getApplicationContext()) + 201L;
+        long revision = 31L * JourneyStore.geometryRevision(getApplicationContext()) + 201L;
         // Relative date selections must refresh at local midnight even without a new journey.
         String preset = mapFilters.date.preset;
         if (!getIntent().hasExtra("settlement_code") && ("today".equals(preset)
@@ -2140,7 +2140,7 @@ public class MapActivity extends Activity {
 
     /** Reuse already displayed overview geometry; no disk read or archive scan on Play. */
     static ReplayContext cachedReplayContext(Context context) {
-        long revision=31L*JourneyStore.dataRevision(context)+201L;
+        long revision=31L*JourneyStore.geometryRevision(context)+201L;
         synchronized(MAP_CACHE_LOCK) {
             if(processMapCache==null||processMapCacheRevision!=revision)return null;
             ReplayContext result=new ReplayContext();

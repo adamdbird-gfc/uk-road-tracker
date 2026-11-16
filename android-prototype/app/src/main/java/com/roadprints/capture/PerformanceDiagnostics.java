@@ -27,13 +27,15 @@ final class PerformanceDiagnostics {
             public void onActivityCreated(Activity a,Bundle b){} public void onActivityStarted(Activity a){}
             public void onActivityStopped(Activity a){} public void onActivitySaveInstanceState(Activity a,Bundle b){} public void onActivityDestroyed(Activity a){}
         });
+        if (android.os.Build.VERSION.SDK_INT >= 30) WORKER.execute(() -> recordPreviousExit(application));
         WORKER.scheduleWithFixedDelay(()->{
             try {
                 if(foreground==0){pendingAt=0;return;}
                 long now=SystemClock.uptimeMillis();
                 if(pendingAt==0){reported=false;pendingAt=now;main.post(()->pendingAt=0);}
                 else if(!reported&&now-pendingAt>=2000){reported=true;
-                    StringBuilder stack=new StringBuilder("foreground_ui_stall_ms=").append(now-pendingAt);
+                    StringBuilder stack=new StringBuilder("foreground_ui_stall_ms=").append(now-pendingAt)
+                            .append(" railway_worker_active=").append(RailwayTrialWorker.isChecking());
                     for(StackTraceElement frame:Looper.getMainLooper().getThread().getStackTrace()){
                         if(stack.length()>5000)break;stack.append('\n').append(frame);
                     }
@@ -42,6 +44,29 @@ final class PerformanceDiagnostics {
             }catch(Exception ignored){/* Diagnostics cannot interrupt the app. */}
         },1,1,TimeUnit.SECONDS);
     }
+    private static void recordPreviousExit(Application application) {
+        try {
+            var manager = application.getSystemService(android.app.ActivityManager.class);
+            var exits = manager.getHistoricalProcessExitReasons(application.getPackageName(), 0, 1);
+            if (exits.isEmpty()) return;
+            var exit = exits.get(0);
+            var preferences = application.getSharedPreferences(PREFS, 0);
+            if (exit.getTimestamp() <= preferences.getLong("last_exit", 0)) return;
+            String reason = switch (exit.getReason()) {
+                case android.app.ApplicationExitInfo.REASON_ANR -> "anr";
+                case android.app.ApplicationExitInfo.REASON_CRASH -> "java_crash";
+                case android.app.ApplicationExitInfo.REASON_CRASH_NATIVE -> "native_crash";
+                case android.app.ApplicationExitInfo.REASON_LOW_MEMORY -> "low_memory";
+                default -> "other_" + exit.getReason();
+            };
+            append("previous_process_exit reason=" + reason + " at=" +
+                    java.time.Instant.ofEpochMilli(exit.getTimestamp()) + " pss_kib=" + exit.getPss());
+            preferences.edit().putLong("last_exit", exit.getTimestamp()).apply();
+        } catch (Exception ignored) {
+            // Exit history may be unavailable on a managed or test device.
+        }
+    }
+
     static void timing(String operation,long ms,String counts){
         String value=operation+" ms="+ms+(counts.isEmpty()?"":" "+counts);
         android.util.Log.i("RoadprintsTiming",value);

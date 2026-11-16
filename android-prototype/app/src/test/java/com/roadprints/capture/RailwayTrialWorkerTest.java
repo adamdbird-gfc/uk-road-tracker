@@ -143,7 +143,7 @@ public class RailwayTrialWorkerTest {
             var looper = org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper());
             long deadline = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(20);
             while (!hasReceipt(app) && System.nanoTime() < deadline) {
-                looper.idle();
+                looper.idleFor(java.time.Duration.ofMillis(25));
                 Thread.sleep(10);
             }
             assertTrue(hasReceipt(app));
