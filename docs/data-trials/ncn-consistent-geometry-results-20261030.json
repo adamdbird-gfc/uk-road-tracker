@@ -1,0 +1,3858 @@
+{
+  "cases": [
+    {
+      "attribution_eligibility": {
+        "new_assessable_m": 0,
+        "new_completion_credit_m": 0,
+        "status": "not_assessed_no_entitlement"
+      },
+      "diagnostic_comparison": {
+        "exact_operational_replay": false,
+        "hypothetical_alternative_projection_changes": null,
+        "hypothetical_only": true,
+        "limitations": [
+          "operational route origin unavailable; local proxy only",
+          "No admitted NCN6 source row; bounded observed membership NCN7. Proximity cannot establish NCN6 identity.",
+          "publisher endpoints rounded to ten decimals in preserved research; original target digest not replayed"
+        ],
+        "measurements": {
+          "common_local_eq": {
+            "projection": {
+              "formula": "spherical_eq",
+              "origin_evidence": "Explicit diagnostic convention: first source vertex; not recovered route metadata.",
+              "origin_lon_lat": [
+                -2.9242844,
+                54.652334
+              ],
+              "origin_status": "verified",
+              "radius_m": 6371008.8,
+              "units": {
+                "direction": "undirected degrees",
+                "distance": "metres"
+              }
+            },
+            "status": "diagnostic_only",
+            "values": {
+              "continuous_source_reference_hausdorff_m": 0.0,
+              "continuous_source_reference_min_distance_m": 0.0,
+              "finite_target_pairs": [
+                {
+                  "direction_deg": 0.7359258320835623,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    0.0,
+                    44.25092588176817,
+                    0.4278109771499953,
+                    44.67508672140597
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 4.701749560556315,
+                  "min_distance_m": 4.133391745868436,
+                  "source_edge": 0,
+                  "source_geometry_sha256": "5475b17b7dde2d2ec9099c36ee0f6dac04dc1f19131d358eb4119a8b75c7710d",
+                  "target_geometry_sha256": "97f2f4c54b7da4036da278a13e8754d06337c1ea41074ca96515750fa0c04853",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 2.0035398234564723,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    0.0,
+                    113.85793715709748,
+                    44.67508672140596,
+                    158.46341898804425
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 4.701749560556315,
+                  "min_distance_m": 0.7211348282967271,
+                  "source_edge": 1,
+                  "source_geometry_sha256": "5475b17b7dde2d2ec9099c36ee0f6dac04dc1f19131d358eb4119a8b75c7710d",
+                  "target_geometry_sha256": "97f2f4c54b7da4036da278a13e8754d06337c1ea41074ca96515750fa0c04853",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 2.0028929106846407,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    0.0,
+                    87.58306884901242,
+                    158.46341898804425,
+                    245.9929801558755
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 2.3398896370970554,
+                  "min_distance_m": 0.0,
+                  "source_edge": 2,
+                  "source_geometry_sha256": "5475b17b7dde2d2ec9099c36ee0f6dac04dc1f19131d358eb4119a8b75c7710d",
+                  "target_geometry_sha256": "97f2f4c54b7da4036da278a13e8754d06337c1ea41074ca96515750fa0c04853",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.40443619170858885,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    0.0,
+                    432.89484638372113,
+                    245.99298015587547,
+                    678.8770419064548
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 2.3398896370970554,
+                  "min_distance_m": 0.0,
+                  "source_edge": 3,
+                  "source_geometry_sha256": "5475b17b7dde2d2ec9099c36ee0f6dac04dc1f19131d358eb4119a8b75c7710d",
+                  "target_geometry_sha256": "97f2f4c54b7da4036da278a13e8754d06337c1ea41074ca96515750fa0c04853",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.18225789156406405,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    0.0,
+                    273.25656426202204,
+                    678.8770419064548,
+                    952.1322236604531
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 0.7157785232432603,
+                  "min_distance_m": 0.0,
+                  "source_edge": 4,
+                  "source_geometry_sha256": "5475b17b7dde2d2ec9099c36ee0f6dac04dc1f19131d358eb4119a8b75c7710d",
+                  "target_geometry_sha256": "97f2f4c54b7da4036da278a13e8754d06337c1ea41074ca96515750fa0c04853",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.1781441631220029,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    0.0,
+                    31.239040655819036,
+                    952.1322236604531,
+                    983.3711133203312
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 0.250577559613048,
+                  "min_distance_m": 0.15344922249550275,
+                  "source_edge": 5,
+                  "source_geometry_sha256": "5475b17b7dde2d2ec9099c36ee0f6dac04dc1f19131d358eb4119a8b75c7710d",
+                  "target_geometry_sha256": "97f2f4c54b7da4036da278a13e8754d06337c1ea41074ca96515750fa0c04853",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 1.7954130175434349,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    0.0,
+                    53.31156230016311,
+                    983.3711133203311,
+                    1036.6565034734965
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 1.4197131663140747,
+                  "min_distance_m": 0.0,
+                  "source_edge": 6,
+                  "source_geometry_sha256": "5475b17b7dde2d2ec9099c36ee0f6dac04dc1f19131d358eb4119a8b75c7710d",
+                  "target_geometry_sha256": "97f2f4c54b7da4036da278a13e8754d06337c1ea41074ca96515750fa0c04853",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.4285493819395463,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    0.0,
+                    3.399347938803973,
+                    1036.6565034734967,
+                    1040.055756325534
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 1.4197131663140747,
+                  "min_distance_m": 1.3942876482846276,
+                  "source_edge": 7,
+                  "source_geometry_sha256": "5475b17b7dde2d2ec9099c36ee0f6dac04dc1f19131d358eb4119a8b75c7710d",
+                  "target_geometry_sha256": "97f2f4c54b7da4036da278a13e8754d06337c1ea41074ca96515750fa0c04853",
+                  "target_index": 0,
+                  "target_key": null
+                }
+              ],
+              "reference_length_m": 1039.7932934284072,
+              "source_length_m": 1039.7932934284072,
+              "source_reference_endpoint_directed_direction_deg": 1.2074182697257333e-06,
+              "source_reference_max_nearest_segment_undirected_direction_deg": 8.537736462515939e-07,
+              "topology": null,
+              "whole_edge_approved_union": null
+            }
+          },
+          "native_admission_aeqd": {
+            "projection": {
+              "formula": "spherical_aeqd",
+              "origin_evidence": "operational route origin unavailable; local proxy only",
+              "origin_lon_lat": null,
+              "origin_status": "unavailable",
+              "radius_m": 6371008.8,
+              "units": {
+                "direction": "undirected degrees",
+                "distance": "metres"
+              }
+            },
+            "reason": "Native route origin missing; no substituted origin.",
+            "status": "unavailable",
+            "values": null
+          },
+          "native_correspondence_eq": {
+            "projection": {
+              "formula": "spherical_eq",
+              "origin_evidence": "operational route origin unavailable; local proxy only",
+              "origin_lon_lat": null,
+              "origin_status": "unavailable",
+              "radius_m": 6371008.8,
+              "units": {
+                "direction": "undirected degrees",
+                "distance": "metres"
+              }
+            },
+            "reason": "Native route origin missing; no substituted origin.",
+            "status": "unavailable",
+            "values": null
+          }
+        },
+        "origin_comparison_status": "unavailable"
+      },
+      "further_investigation": {
+        "blocks_ordinary_development_or_publication_review": false,
+        "reason": "Projection sensitivity or provenance limitation may guide a specific future case; no additional eligible interval demonstrated and no general blocker established.",
+        "supported": true
+      },
+      "geometry_sha256": {
+        "reference": "5475b17b7dde2d2ec9099c36ee0f6dac04dc1f19131d358eb4119a8b75c7710d",
+        "source": "5475b17b7dde2d2ec9099c36ee0f6dac04dc1f19131d358eb4119a8b75c7710d",
+        "target_pairs": "be068426813f14fed3eee980fae3b6a65a312a8bd9ebd606a4527b7a4bff5802"
+      },
+      "input_snapshot": {
+        "path": "docs/data-trials/ncn-projection-cases-20261030.json",
+        "sha256": "26a8b2aded983c65e7ba1c7fba1c3b04674604db64f8463908f9a19dfa5f0963"
+      },
+      "key": "23385711",
+      "name": "Cumbria NCN6/NCN7 identity",
+      "operational_result": {
+        "record": {
+          "actual_admitted_source_present": false,
+          "admitted_vertex_ranges": null,
+          "compatibility": {
+            "attribution_eligibility": "not_assessed_no_entitlement",
+            "classification": "exact_match",
+            "mode_access": {
+              "reference": "supported",
+              "requested": "on_foot",
+              "source": "unknown"
+            },
+            "route_identity": {
+              "evidence": {
+                "bounded_osm_memberships": [
+                  {
+                    "id": "11017",
+                    "network": "ncn",
+                    "ref": "7"
+                  }
+                ],
+                "retained_ncn_row": {
+                  "observation": "No paths row for this feature ID in prior read-only exact shipped catalogue inspection.",
+                  "present": false
+                }
+              },
+              "requested": "NCN:6",
+              "status": "unproved_requested_route"
+            }
+          },
+          "eligibility_note": "No admitted NCN6 source row; bounded observed membership NCN7. Proximity cannot establish NCN6 identity.",
+          "existing_binding_count": null,
+          "history_status": "unavailable"
+        },
+        "status": "preserved_pinned_record_not_new_admission_replay"
+      },
+      "restrictions": {
+        "deferred_masks": "Not replayed; no mask override permitted",
+        "identity_and_access": {
+          "reference_id": "23385711",
+          "reference_provider": "osm",
+          "reference_tags": {
+            "highway": "tertiary",
+            "surface": "asphalt"
+          },
+          "source_id": "23385711",
+          "source_memberships": [
+            "NCN:7"
+          ],
+          "source_provider": "osm"
+        },
+        "mode_access": {
+          "reference": "supported",
+          "requested": "on_foot",
+          "source": "unknown"
+        },
+        "route_identity": {
+          "evidence": {
+            "bounded_osm_memberships": [
+              {
+                "id": "11017",
+                "network": "ncn",
+                "ref": "7"
+              }
+            ],
+            "retained_ncn_row": {
+              "observation": "No paths row for this feature ID in prior read-only exact shipped catalogue inspection.",
+              "present": false
+            }
+          },
+          "requested": "NCN:6",
+          "status": "unproved_requested_route"
+        },
+        "source_offsets": "Unchanged; measurement stations must never replace stored offsets",
+        "topology": "No new topology clearance; preserved restrictions remain authoritative",
+        "whole_edge_policy": "Retained; finite pieces cannot extend admission"
+      },
+      "route": "NCN:6",
+      "source_feature": {
+        "reference_id": "23385711",
+        "reference_provider": "osm",
+        "reference_tags": {
+          "highway": "tertiary",
+          "surface": "asphalt"
+        },
+        "source_id": "23385711",
+        "source_memberships": [
+          "NCN:7"
+        ],
+        "source_provider": "osm"
+      }
+    },
+    {
+      "attribution_eligibility": {
+        "new_assessable_m": 0,
+        "new_completion_credit_m": 0,
+        "status": "not_assessed_no_entitlement"
+      },
+      "diagnostic_comparison": {
+        "exact_operational_replay": false,
+        "hypothetical_alternative_projection_changes": {
+          "finite_pair_presence": 0,
+          "whole_edge_corridor": null
+        },
+        "hypothetical_only": true,
+        "limitations": [
+          "pinned source-section fixture",
+          "Admitted RCN90 source, zero bindings. Stable-chain node movement is supported by pinned histories; proposal note is not NCN90 membership."
+        ],
+        "measurements": {
+          "common_local_eq": {
+            "projection": {
+              "formula": "spherical_eq",
+              "origin_evidence": "Explicit diagnostic convention: first source vertex; not recovered route metadata.",
+              "origin_lon_lat": [
+                0.0810328,
+                50.8539893
+              ],
+              "origin_status": "verified",
+              "radius_m": 6371008.8,
+              "units": {
+                "direction": "undirected degrees",
+                "distance": "metres"
+              }
+            },
+            "status": "diagnostic_only",
+            "values": {
+              "continuous_source_reference_hausdorff_m": 0.6102156974900913,
+              "continuous_source_reference_min_distance_m": 0.0,
+              "finite_target_pairs": [],
+              "reference_length_m": 12.829688045305303,
+              "source_length_m": 12.961003568593796,
+              "source_reference_endpoint_directed_direction_deg": 2.6544336131187594,
+              "source_reference_max_nearest_segment_undirected_direction_deg": 4.232659491132381,
+              "topology": null,
+              "whole_edge_approved_union": null
+            }
+          },
+          "native_admission_aeqd": {
+            "projection": {
+              "formula": "spherical_aeqd",
+              "origin_evidence": "pinned source-section fixture",
+              "origin_lon_lat": [
+                -1.412814772702716,
+                52.49513027523595
+              ],
+              "origin_status": "verified",
+              "radius_m": 6371008.8,
+              "units": {
+                "direction": "undirected degrees",
+                "distance": "metres"
+              }
+            },
+            "status": "diagnostic_only",
+            "values": {
+              "continuous_source_reference_hausdorff_m": 0.6103122672770134,
+              "continuous_source_reference_min_distance_m": 0.0,
+              "finite_target_pairs": [],
+              "reference_length_m": 12.830301465006576,
+              "source_length_m": 12.96172207764592,
+              "source_reference_endpoint_directed_direction_deg": 2.6546384260693867,
+              "source_reference_max_nearest_segment_undirected_direction_deg": 4.23297271048942,
+              "topology": null,
+              "whole_edge_approved_union": null
+            }
+          },
+          "native_correspondence_eq": {
+            "projection": {
+              "formula": "spherical_eq",
+              "origin_evidence": "pinned source-section fixture",
+              "origin_lon_lat": [
+                -1.412814772702716,
+                52.49513027523595
+              ],
+              "origin_status": "verified",
+              "radius_m": 6371008.8,
+              "units": {
+                "direction": "undirected degrees",
+                "distance": "metres"
+              }
+            },
+            "status": "diagnostic_only",
+            "values": {
+              "continuous_source_reference_hausdorff_m": 0.5889660665487615,
+              "continuous_source_reference_min_distance_m": 0.0,
+              "finite_target_pairs": [],
+              "reference_length_m": 12.829066292214783,
+              "source_length_m": 12.957428890982115,
+              "source_reference_endpoint_directed_direction_deg": 2.560637566149715,
+              "source_reference_max_nearest_segment_undirected_direction_deg": 4.08364064092015,
+              "topology": null,
+              "whole_edge_approved_union": null
+            }
+          }
+        },
+        "origin_comparison_status": "verified"
+      },
+      "further_investigation": {
+        "blocks_ordinary_development_or_publication_review": false,
+        "reason": "Projection sensitivity or provenance limitation may guide a specific future case; no additional eligible interval demonstrated and no general blocker established.",
+        "supported": true
+      },
+      "geometry_sha256": {
+        "reference": "c7fee978db7dc57ccd9a4dbd13e43f4e6f4eac5a8c3831ca95811f5e6e92e2d4",
+        "source": "5825b5f9a09e432da336e0c325f21ee6c9c8e0dd9302d9aba612ed6555bcd3d4",
+        "target_pairs": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "input_snapshot": {
+        "path": "docs/data-trials/ncn-projection-cases-20261030.json",
+        "sha256": "26a8b2aded983c65e7ba1c7fba1c3b04674604db64f8463908f9a19dfa5f0963"
+      },
+      "key": "1289002662",
+      "name": "East Sussex source-version update RCN90",
+      "operational_result": {
+        "record": {
+          "actual_admitted_source_present": true,
+          "admitted_vertex_ranges": null,
+          "compatibility": {
+            "attribution_eligibility": "not_assessed_no_entitlement",
+            "classification": "same_identified_feature_with_documented_geometry_update",
+            "mode_access": {
+              "reference": "supported",
+              "requested": "on_foot",
+              "source": "supported"
+            },
+            "route_identity": {
+              "evidence": {
+                "binding_count": 0,
+                "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+                "route": "RCN:90",
+                "source_geometry_sha256": "7b8058924dac3672ef80aa069b0a51b68c98d6e652c09f71b9b299141515a59c"
+              },
+              "requested": "RCN:90",
+              "status": "supported_bounded_membership"
+            }
+          },
+          "eligibility_note": "Admitted RCN90 source, zero bindings. Stable-chain node movement is supported by pinned histories; proposal note is not NCN90 membership.",
+          "existing_binding_count": 0,
+          "history_status": "documented_shared_node_movement"
+        },
+        "status": "preserved_pinned_record_not_new_admission_replay"
+      },
+      "restrictions": {
+        "deferred_masks": "Not replayed; no mask override permitted",
+        "identity_and_access": {
+          "reference_id": "1289002662",
+          "reference_provider": "osm",
+          "reference_tags": {
+            "foot": "designated",
+            "highway": "cycleway"
+          },
+          "source_id": "1289002662",
+          "source_memberships": [
+            "RCN:90"
+          ],
+          "source_provider": "osm"
+        },
+        "mode_access": {
+          "reference": "supported",
+          "requested": "on_foot",
+          "source": "supported"
+        },
+        "route_identity": {
+          "evidence": {
+            "binding_count": 0,
+            "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+            "route": "RCN:90",
+            "source_geometry_sha256": "7b8058924dac3672ef80aa069b0a51b68c98d6e652c09f71b9b299141515a59c"
+          },
+          "requested": "RCN:90",
+          "status": "supported_bounded_membership"
+        },
+        "source_offsets": "Unchanged; measurement stations must never replace stored offsets",
+        "topology": "No new topology clearance; preserved restrictions remain authoritative",
+        "whole_edge_policy": "Retained; finite pieces cannot extend admission"
+      },
+      "route": "RCN:90",
+      "source_feature": {
+        "reference_id": "1289002662",
+        "reference_provider": "osm",
+        "reference_tags": {
+          "foot": "designated",
+          "highway": "cycleway"
+        },
+        "source_id": "1289002662",
+        "source_memberships": [
+          "RCN:90"
+        ],
+        "source_provider": "osm"
+      }
+    },
+    {
+      "attribution_eligibility": {
+        "new_assessable_m": 0,
+        "new_completion_credit_m": 0,
+        "status": "not_assessed_no_entitlement"
+      },
+      "diagnostic_comparison": {
+        "exact_operational_replay": false,
+        "hypothetical_alternative_projection_changes": {
+          "finite_pair_presence": 0,
+          "whole_edge_corridor": null
+        },
+        "hypothetical_only": true,
+        "limitations": [
+          "pinned source-section fixture",
+          "Only source vertices1..2 admitted. Vertex0 prefix excluded regardless of geometry metric.",
+          "ten-decimal catalogue display endpoints; authoritative metric lengths/keys retained in source fixture"
+        ],
+        "measurements": {
+          "common_local_eq": {
+            "projection": {
+              "formula": "spherical_eq",
+              "origin_evidence": "Explicit diagnostic convention: first source vertex; not recovered route metadata.",
+              "origin_lon_lat": [
+                0.0147904,
+                51.4962583
+              ],
+              "origin_status": "verified",
+              "radius_m": 6371008.8,
+              "units": {
+                "direction": "undirected degrees",
+                "distance": "metres"
+              }
+            },
+            "status": "diagnostic_only",
+            "values": {
+              "continuous_source_reference_hausdorff_m": 0.0,
+              "continuous_source_reference_min_distance_m": 0.0,
+              "finite_target_pairs": [
+                {
+                  "direction_deg": 3.5489533615639823,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 37.60581657699977,
+                  "min_distance_m": 1.3347560303351342,
+                  "source_edge": 0,
+                  "source_geometry_sha256": "2fd5190898bdbd39dd01a2a504a4d9aa3fdd0e30db4f7d7b0b0df10c5ce655fa",
+                  "target_geometry_sha256": "e577faaddf1c1bccdf41fd0f477a1a3d93b0c881f35008272870bf51ad46fca6",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.4523472027045778,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    0.0,
+                    36.681497549472176,
+                    8.25604482835295,
+                    44.93639920113749
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 1.2716537507226655,
+                  "min_distance_m": 0.9820582416429398,
+                  "source_edge": 0,
+                  "source_geometry_sha256": "2fd5190898bdbd39dd01a2a504a4d9aa3fdd0e30db4f7d7b0b0df10c5ce655fa",
+                  "target_geometry_sha256": "8124b0349afbf00df14149649a4d3db261963765c7aa758b3e217f6a956b508b",
+                  "target_index": 1,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 1.476851063794963,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    0.9706014986426423,
+                    37.30656031449593,
+                    0.0,
+                    36.32388872000052
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 1.8780914332484167,
+                  "min_distance_m": 0.9412898235540311,
+                  "source_edge": 1,
+                  "source_geometry_sha256": "2fd5190898bdbd39dd01a2a504a4d9aa3fdd0e30db4f7d7b0b0df10c5ce655fa",
+                  "target_geometry_sha256": "e577faaddf1c1bccdf41fd0f477a1a3d93b0c881f35008272870bf51ad46fca6",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 2.5244495004727088,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    0.0,
+                    0.9048334729948126,
+                    44.93639920113749,
+                    45.840354548783154
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 36.37240876233828,
+                  "min_distance_m": 0.9412898235540311,
+                  "source_edge": 1,
+                  "source_geometry_sha256": "2fd5190898bdbd39dd01a2a504a4d9aa3fdd0e30db4f7d7b0b0df10c5ce655fa",
+                  "target_geometry_sha256": "8124b0349afbf00df14149649a4d3db261963765c7aa758b3e217f6a956b508b",
+                  "target_index": 1,
+                  "target_key": null
+                }
+              ],
+              "reference_length_m": 73.98805786396811,
+              "source_length_m": 73.98805786396811,
+              "source_reference_endpoint_directed_direction_deg": 0.0,
+              "source_reference_max_nearest_segment_undirected_direction_deg": 1.2074182697257333e-06,
+              "topology": null,
+              "whole_edge_approved_union": null
+            }
+          },
+          "native_admission_aeqd": {
+            "projection": {
+              "formula": "spherical_aeqd",
+              "origin_evidence": "pinned source-section fixture",
+              "origin_lon_lat": [
+                -1.3437774293553804,
+                54.4699892643778
+              ],
+              "origin_status": "verified",
+              "radius_m": 6371008.8,
+              "units": {
+                "direction": "undirected degrees",
+                "distance": "metres"
+              }
+            },
+            "status": "diagnostic_only",
+            "values": {
+              "continuous_source_reference_hausdorff_m": 0.0,
+              "continuous_source_reference_min_distance_m": 0.0,
+              "finite_target_pairs": [
+                {
+                  "direction_deg": 3.54993262472041,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 37.61336336197475,
+                  "min_distance_m": 1.3354022691110672,
+                  "source_edge": 0,
+                  "source_geometry_sha256": "2fd5190898bdbd39dd01a2a504a4d9aa3fdd0e30db4f7d7b0b0df10c5ce655fa",
+                  "target_geometry_sha256": "e577faaddf1c1bccdf41fd0f477a1a3d93b0c881f35008272870bf51ad46fca6",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.45244091973560513,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    0.0,
+                    36.68840743478869,
+                    8.256954173266395,
+                    44.94421774220006
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 1.2720686735340498,
+                  "min_distance_m": 0.9823586035511415,
+                  "source_edge": 0,
+                  "source_geometry_sha256": "2fd5190898bdbd39dd01a2a504a4d9aa3fdd0e30db4f7d7b0b0df10c5ce655fa",
+                  "target_geometry_sha256": "8124b0349afbf00df14149649a4d3db261963765c7aa758b3e217f6a956b508b",
+                  "target_index": 1,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 1.4771798547961812,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    0.9712663294663761,
+                    37.314338081131226,
+                    0.0,
+                    36.33099391735596
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 1.8787435816768396,
+                  "min_distance_m": 0.9415499391710236,
+                  "source_edge": 1,
+                  "source_geometry_sha256": "2fd5190898bdbd39dd01a2a504a4d9aa3fdd0e30db4f7d7b0b0df10c5ce655fa",
+                  "target_geometry_sha256": "e577faaddf1c1bccdf41fd0f477a1a3d93b0c881f35008272870bf51ad46fca6",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 2.5251936896587943,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    0.0,
+                    0.9054624696999866,
+                    44.94421774220007,
+                    45.8488009580382
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 36.37953815634069,
+                  "min_distance_m": 0.9415499391710236,
+                  "source_edge": 1,
+                  "source_geometry_sha256": "2fd5190898bdbd39dd01a2a504a4d9aa3fdd0e30db4f7d7b0b0df10c5ce655fa",
+                  "target_geometry_sha256": "8124b0349afbf00df14149649a4d3db261963765c7aa758b3e217f6a956b508b",
+                  "target_index": 1,
+                  "target_key": null
+                }
+              ],
+              "reference_length_m": 74.00274551591991,
+              "source_length_m": 74.00274551591991,
+              "source_reference_endpoint_directed_direction_deg": 8.537736462515939e-07,
+              "source_reference_max_nearest_segment_undirected_direction_deg": 1.2074182697257333e-06,
+              "topology": null,
+              "whole_edge_approved_union": null
+            }
+          },
+          "native_correspondence_eq": {
+            "projection": {
+              "formula": "spherical_eq",
+              "origin_evidence": "pinned source-section fixture",
+              "origin_lon_lat": [
+                -1.3437774293553804,
+                54.4699892643778
+              ],
+              "origin_status": "verified",
+              "radius_m": 6371008.8,
+              "units": {
+                "direction": "undirected degrees",
+                "distance": "metres"
+              }
+            },
+            "status": "diagnostic_only",
+            "values": {
+              "continuous_source_reference_hausdorff_m": 0.0,
+              "continuous_source_reference_min_distance_m": 0.0,
+              "finite_target_pairs": [
+                {
+                  "direction_deg": 3.6265037064846983,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 35.95404577138467,
+                  "min_distance_m": 1.2488161458133815,
+                  "source_edge": 0,
+                  "source_geometry_sha256": "2fd5190898bdbd39dd01a2a504a4d9aa3fdd0e30db4f7d7b0b0df10c5ce655fa",
+                  "target_geometry_sha256": "e577faaddf1c1bccdf41fd0f477a1a3d93b0c881f35008272870bf51ad46fca6",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.4600863458028976,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    0.0,
+                    35.131100515231694,
+                    7.993490728803778,
+                    43.12345860154492
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 1.2387419737266094,
+                  "min_distance_m": 0.9566415102602048,
+                  "source_edge": 0,
+                  "source_geometry_sha256": "2fd5190898bdbd39dd01a2a504a4d9aa3fdd0e30db4f7d7b0b0df10c5ce655fa",
+                  "target_geometry_sha256": "8124b0349afbf00df14149649a4d3db261963765c7aa758b3e217f6a956b508b",
+                  "target_index": 1,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 1.512726956829312,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    0.8691681338672081,
+                    35.64379897211701,
+                    0.0,
+                    34.76251138208821
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 1.837963953352635,
+                  "min_distance_m": 0.9196278988672111,
+                  "source_edge": 1,
+                  "source_geometry_sha256": "2fd5190898bdbd39dd01a2a504a4d9aa3fdd0e30db4f7d7b0b0df10c5ce655fa",
+                  "target_geometry_sha256": "e577faaddf1c1bccdf41fd0f477a1a3d93b0c881f35008272870bf51ad46fca6",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 2.573863095459446,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    0.0,
+                    0.8035427232488271,
+                    43.123458601544925,
+                    43.92619067820017
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 34.81106589984909,
+                  "min_distance_m": 0.9196278988672111,
+                  "source_edge": 1,
+                  "source_geometry_sha256": "2fd5190898bdbd39dd01a2a504a4d9aa3fdd0e30db4f7d7b0b0df10c5ce655fa",
+                  "target_geometry_sha256": "8124b0349afbf00df14149649a4d3db261963765c7aa758b3e217f6a956b508b",
+                  "target_index": 1,
+                  "target_key": null
+                }
+              ],
+              "reference_length_m": 70.7748994873487,
+              "source_length_m": 70.7748994873487,
+              "source_reference_endpoint_directed_direction_deg": 0.0,
+              "source_reference_max_nearest_segment_undirected_direction_deg": 0.0,
+              "topology": null,
+              "whole_edge_approved_union": null
+            }
+          }
+        },
+        "origin_comparison_status": "verified"
+      },
+      "further_investigation": {
+        "blocks_ordinary_development_or_publication_review": false,
+        "reason": "Projection sensitivity or provenance limitation may guide a specific future case; no additional eligible interval demonstrated and no general blocker established.",
+        "supported": true
+      },
+      "geometry_sha256": {
+        "reference": "2fd5190898bdbd39dd01a2a504a4d9aa3fdd0e30db4f7d7b0b0df10c5ce655fa",
+        "source": "2fd5190898bdbd39dd01a2a504a4d9aa3fdd0e30db4f7d7b0b0df10c5ce655fa",
+        "target_pairs": "5e19e8679183927e99d9177e3dc3be166c0783b58a9f019d866808077dbbad8a"
+      },
+      "input_snapshot": {
+        "path": "docs/data-trials/ncn-projection-cases-20261030.json",
+        "sha256": "26a8b2aded983c65e7ba1c7fba1c3b04674604db64f8463908f9a19dfa5f0963"
+      },
+      "key": "1050757473",
+      "name": "London NCN1 Mudlarks Boulevard",
+      "operational_result": {
+        "record": {
+          "actual_admitted_source_present": true,
+          "admitted_vertex_ranges": [
+            [
+              1,
+              2
+            ]
+          ],
+          "compatibility": {
+            "attribution_eligibility": "not_assessed_no_entitlement",
+            "classification": "exact_match",
+            "mode_access": {
+              "reference": "supported",
+              "requested": "on_foot",
+              "source": "supported"
+            },
+            "route_identity": {
+              "evidence": {
+                "binding_count": 2,
+                "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+                "route": "NCN:1",
+                "source_geometry_sha256": "2fd5190898bdbd39dd01a2a504a4d9aa3fdd0e30db4f7d7b0b0df10c5ce655fa"
+              },
+              "requested": "NCN:1",
+              "status": "supported_bounded_membership"
+            }
+          },
+          "eligibility_note": "Only source vertices1..2 admitted. Vertex0 prefix excluded regardless of geometry metric.",
+          "existing_binding_count": 2,
+          "history_status": "unavailable"
+        },
+        "status": "preserved_pinned_record_not_new_admission_replay"
+      },
+      "restrictions": {
+        "deferred_masks": "Not replayed; no mask override permitted",
+        "identity_and_access": {
+          "reference_id": "1050757473",
+          "reference_provider": "osm",
+          "reference_tags": {
+            "foot": "designated",
+            "highway": "cycleway",
+            "name": "Mudlarks Boulevard",
+            "surface": "asphalt"
+          },
+          "source_id": "1050757473",
+          "source_memberships": [
+            "NCN:1"
+          ],
+          "source_provider": "osm"
+        },
+        "mode_access": {
+          "reference": "supported",
+          "requested": "on_foot",
+          "source": "supported"
+        },
+        "route_identity": {
+          "evidence": {
+            "binding_count": 2,
+            "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+            "route": "NCN:1",
+            "source_geometry_sha256": "2fd5190898bdbd39dd01a2a504a4d9aa3fdd0e30db4f7d7b0b0df10c5ce655fa"
+          },
+          "requested": "NCN:1",
+          "status": "supported_bounded_membership"
+        },
+        "source_offsets": "Unchanged; measurement stations must never replace stored offsets",
+        "topology": "No new topology clearance; preserved restrictions remain authoritative",
+        "whole_edge_policy": "Retained; finite pieces cannot extend admission"
+      },
+      "route": "NCN:1",
+      "source_feature": {
+        "reference_id": "1050757473",
+        "reference_provider": "osm",
+        "reference_tags": {
+          "foot": "designated",
+          "highway": "cycleway",
+          "name": "Mudlarks Boulevard",
+          "surface": "asphalt"
+        },
+        "source_id": "1050757473",
+        "source_memberships": [
+          "NCN:1"
+        ],
+        "source_provider": "osm"
+      }
+    },
+    {
+      "attribution_eligibility": {
+        "new_assessable_m": 0,
+        "new_completion_credit_m": 0,
+        "status": "not_assessed_no_entitlement"
+      },
+      "diagnostic_comparison": {
+        "exact_operational_replay": false,
+        "hypothetical_alternative_projection_changes": {
+          "finite_pair_presence": 0,
+          "whole_edge_corridor": null
+        },
+        "hypothetical_only": true,
+        "limitations": [
+          "uniquely inferred from pinned metric source edge and original WGS84 source vertices; not recovered route metadata",
+          "Preserved evidence only; source presence is not whole-way admission or target entitlement."
+        ],
+        "measurements": {
+          "common_local_eq": {
+            "projection": {
+              "formula": "spherical_eq",
+              "origin_evidence": "Explicit diagnostic convention: first source vertex; not recovered route metadata.",
+              "origin_lon_lat": [
+                -6.3675359,
+                54.3064421
+              ],
+              "origin_status": "verified",
+              "radius_m": 6371008.8,
+              "units": {
+                "direction": "undirected degrees",
+                "distance": "metres"
+              }
+            },
+            "status": "diagnostic_only",
+            "values": {
+              "continuous_source_reference_hausdorff_m": 0.0,
+              "continuous_source_reference_min_distance_m": 0.0,
+              "finite_target_pairs": [
+                {
+                  "direction_deg": 10.307022460909776,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    0.0,
+                    6.104890234474542,
+                    95.8693775741832,
+                    101.87575390090448
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 11.076078749940562,
+                  "min_distance_m": 8.04600744337075,
+                  "source_edge": 12,
+                  "source_geometry_sha256": "54651f2b5f401e93a809abad0c591faac82a6287c8045d3c24fa5f97b202808a",
+                  "target_geometry_sha256": "098ce113f33198c4c27d3c6a4dad4216dbb56bd4d1990903485547759e1fcd51",
+                  "target_index": 0,
+                  "target_key": "open-edge:169588ff44ed326fee1e8918daee2325138f19b44e408f45bbf3e690be84cd29"
+                },
+                {
+                  "direction_deg": 13.040856094948024,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    2.3873832224655507,
+                    10.938545601105464,
+                    0.0,
+                    8.33062285973024
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 10.040656968394817,
+                  "min_distance_m": 7.299331698438209,
+                  "source_edge": 12,
+                  "source_geometry_sha256": "54651f2b5f401e93a809abad0c591faac82a6287c8045d3c24fa5f97b202808a",
+                  "target_geometry_sha256": "ce7c3a120829e8f5076763119fbccd28f59f830952756218ebe84c927c3485e0",
+                  "target_index": 1,
+                  "target_key": "open-edge:10fba9e76f286f3c0a13375db33f5043011a49d678211e11106d44a4bc434e21"
+                }
+              ],
+              "reference_length_m": 2840.4732558011315,
+              "source_length_m": 2840.4732558011315,
+              "source_reference_endpoint_directed_direction_deg": 0.0,
+              "source_reference_max_nearest_segment_undirected_direction_deg": 1.2074182697257333e-06,
+              "topology": null,
+              "whole_edge_approved_union": null
+            }
+          },
+          "native_admission_aeqd": {
+            "projection": {
+              "formula": "spherical_aeqd",
+              "origin_evidence": "uniquely inferred from pinned metric source edge and original WGS84 source vertices; not recovered route metadata",
+              "origin_lon_lat": [
+                -6.176521313597284,
+                54.39183809942985
+              ],
+              "origin_status": "inferred",
+              "radius_m": 6371008.8,
+              "units": {
+                "direction": "undirected degrees",
+                "distance": "metres"
+              }
+            },
+            "status": "diagnostic_only",
+            "values": {
+              "continuous_source_reference_hausdorff_m": 0.0,
+              "continuous_source_reference_min_distance_m": 0.0,
+              "finite_target_pairs": [
+                {
+                  "direction_deg": 10.306989995410513,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    0.0,
+                    6.102757460015682,
+                    95.86272267440046,
+                    101.8670012617126
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 11.075732079170113,
+                  "min_distance_m": 8.045018961513657,
+                  "source_edge": 12,
+                  "source_geometry_sha256": "54651f2b5f401e93a809abad0c591faac82a6287c8045d3c24fa5f97b202808a",
+                  "target_geometry_sha256": "098ce113f33198c4c27d3c6a4dad4216dbb56bd4d1990903485547759e1fcd51",
+                  "target_index": 0,
+                  "target_key": "open-edge:169588ff44ed326fee1e8918daee2325138f19b44e408f45bbf3e690be84cd29"
+                },
+                {
+                  "direction_deg": 13.039312623569982,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    2.3860692225392053,
+                    10.93794673396906,
+                    0.0,
+                    8.331371529198803
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 10.038610035516344,
+                  "min_distance_m": 7.2979510502615375,
+                  "source_edge": 12,
+                  "source_geometry_sha256": "54651f2b5f401e93a809abad0c591faac82a6287c8045d3c24fa5f97b202808a",
+                  "target_geometry_sha256": "ce7c3a120829e8f5076763119fbccd28f59f830952756218ebe84c927c3485e0",
+                  "target_index": 1,
+                  "target_key": "open-edge:10fba9e76f286f3c0a13375db33f5043011a49d678211e11106d44a4bc434e21"
+                }
+              ],
+              "reference_length_m": 2840.4250892327077,
+              "source_length_m": 2840.4250892327077,
+              "source_reference_endpoint_directed_direction_deg": 8.537736462515939e-07,
+              "source_reference_max_nearest_segment_undirected_direction_deg": 1.4787793334710982e-06,
+              "topology": null,
+              "whole_edge_approved_union": null
+            }
+          },
+          "native_correspondence_eq": {
+            "projection": {
+              "formula": "spherical_eq",
+              "origin_evidence": "uniquely inferred from pinned metric source edge and original WGS84 source vertices; not recovered route metadata",
+              "origin_lon_lat": [
+                -6.176521313597284,
+                54.39183809942985
+              ],
+              "origin_status": "inferred",
+              "radius_m": 6371008.8,
+              "units": {
+                "direction": "undirected degrees",
+                "distance": "metres"
+              }
+            },
+            "status": "diagnostic_only",
+            "values": {
+              "continuous_source_reference_hausdorff_m": 0.0,
+              "continuous_source_reference_min_distance_m": 0.0,
+              "finite_target_pairs": [
+                {
+                  "direction_deg": 10.300548123814552,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    0.0,
+                    6.08240710865381,
+                    95.79919617447482,
+                    101.78357511892844
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 11.072501846828105,
+                  "min_distance_m": 8.036577397719238,
+                  "source_edge": 12,
+                  "source_geometry_sha256": "54651f2b5f401e93a809abad0c591faac82a6287c8045d3c24fa5f97b202808a",
+                  "target_geometry_sha256": "098ce113f33198c4c27d3c6a4dad4216dbb56bd4d1990903485547759e1fcd51",
+                  "target_index": 0,
+                  "target_key": "open-edge:169588ff44ed326fee1e8918daee2325138f19b44e408f45bbf3e690be84cd29"
+                },
+                {
+                  "direction_deg": 13.023230510098813,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    2.3745290501574208,
+                    10.93251852978953,
+                    0.0,
+                    8.3378675370178
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 10.019948483917053,
+                  "min_distance_m": 7.2856202263881755,
+                  "source_edge": 12,
+                  "source_geometry_sha256": "54651f2b5f401e93a809abad0c591faac82a6287c8045d3c24fa5f97b202808a",
+                  "target_geometry_sha256": "ce7c3a120829e8f5076763119fbccd28f59f830952756218ebe84c927c3485e0",
+                  "target_index": 1,
+                  "target_key": "open-edge:10fba9e76f286f3c0a13375db33f5043011a49d678211e11106d44a4bc434e21"
+                }
+              ],
+              "reference_length_m": 2839.96600349762,
+              "source_length_m": 2839.96600349762,
+              "source_reference_endpoint_directed_direction_deg": 0.0,
+              "source_reference_max_nearest_segment_undirected_direction_deg": 1.4787793334710982e-06,
+              "topology": null,
+              "whole_edge_approved_union": null
+            }
+          }
+        },
+        "origin_comparison_status": "inferred"
+      },
+      "further_investigation": {
+        "blocks_ordinary_development_or_publication_review": false,
+        "reason": "Projection sensitivity or provenance limitation may guide a specific future case; no additional eligible interval demonstrated and no general blocker established.",
+        "supported": true
+      },
+      "geometry_sha256": {
+        "reference": "4f001b47638fe6a60ee99a304ba9a31797f7b5e6e33927b3f3abd9faa4200486",
+        "source": "4f001b47638fe6a60ee99a304ba9a31797f7b5e6e33927b3f3abd9faa4200486",
+        "target_pairs": "4b8b15ef88b9ccf224a1f39b48145a400bd71c8305d017e1871519c0c6516c4e"
+      },
+      "input_snapshot": {
+        "path": "docs/data-trials/ncn-projection-cases-20261030.json",
+        "sha256": "26a8b2aded983c65e7ba1c7fba1c3b04674604db64f8463908f9a19dfa5f0963"
+      },
+      "key": "59306268",
+      "name": "Newry Canal Towpath NCN9",
+      "operational_result": {
+        "record": {
+          "actual_admitted_source_present": true,
+          "admitted_vertex_ranges": null,
+          "compatibility": {
+            "attribution_eligibility": "not_assessed_no_entitlement",
+            "classification": "exact_match",
+            "mode_access": {
+              "reference": "supported",
+              "requested": "on_foot",
+              "source": "supported"
+            },
+            "route_identity": {
+              "evidence": {
+                "binding_count": 32,
+                "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+                "route": "NCN:9",
+                "source_geometry_sha256": "4f001b47638fe6a60ee99a304ba9a31797f7b5e6e33927b3f3abd9faa4200486"
+              },
+              "requested": "NCN:9",
+              "status": "supported_bounded_membership"
+            }
+          },
+          "eligibility_note": "Preserved evidence only; source presence is not whole-way admission or target entitlement.",
+          "existing_binding_count": 32,
+          "history_status": "unavailable"
+        },
+        "status": "preserved_pinned_record_not_new_admission_replay"
+      },
+      "restrictions": {
+        "deferred_masks": "Not replayed; no mask override permitted",
+        "identity_and_access": {
+          "reference_id": "59306268",
+          "reference_provider": "osm",
+          "reference_tags": {
+            "foot": "designated",
+            "highway": "cycleway",
+            "name": "Newry Canal Towpath",
+            "surface": "asphalt"
+          },
+          "source_id": "59306268",
+          "source_memberships": [
+            "NCN:9"
+          ],
+          "source_provider": "osm"
+        },
+        "mode_access": {
+          "reference": "supported",
+          "requested": "on_foot",
+          "source": "supported"
+        },
+        "route_identity": {
+          "evidence": {
+            "binding_count": 32,
+            "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+            "route": "NCN:9",
+            "source_geometry_sha256": "4f001b47638fe6a60ee99a304ba9a31797f7b5e6e33927b3f3abd9faa4200486"
+          },
+          "requested": "NCN:9",
+          "status": "supported_bounded_membership"
+        },
+        "source_offsets": "Unchanged; measurement stations must never replace stored offsets",
+        "topology": "No new topology clearance; preserved restrictions remain authoritative",
+        "whole_edge_policy": "Retained; finite pieces cannot extend admission"
+      },
+      "route": "NCN:9",
+      "source_feature": {
+        "reference_id": "59306268",
+        "reference_provider": "osm",
+        "reference_tags": {
+          "foot": "designated",
+          "highway": "cycleway",
+          "name": "Newry Canal Towpath",
+          "surface": "asphalt"
+        },
+        "source_id": "59306268",
+        "source_memberships": [
+          "NCN:9"
+        ],
+        "source_provider": "osm"
+      }
+    },
+    {
+      "attribution_eligibility": {
+        "new_assessable_m": 0,
+        "new_completion_credit_m": 0,
+        "status": "not_assessed_no_entitlement"
+      },
+      "diagnostic_comparison": {
+        "exact_operational_replay": false,
+        "hypothetical_alternative_projection_changes": {
+          "finite_pair_presence": 3,
+          "whole_edge_corridor": 5
+        },
+        "hypothetical_only": true,
+        "limitations": [
+          "exact PR246 fixture",
+          "Preserved evidence only; source presence is not whole-way admission or target entitlement."
+        ],
+        "measurements": {
+          "common_local_eq": {
+            "projection": {
+              "formula": "spherical_eq",
+              "origin_evidence": "Explicit diagnostic convention: first source vertex; not recovered route metadata.",
+              "origin_lon_lat": [
+                1.4035412,
+                51.1968459
+              ],
+              "origin_status": "verified",
+              "radius_m": 6371008.8,
+              "units": {
+                "direction": "undirected degrees",
+                "distance": "metres"
+              }
+            },
+            "status": "diagnostic_only",
+            "values": {
+              "continuous_source_reference_hausdorff_m": 0.0,
+              "continuous_source_reference_min_distance_m": 0.0,
+              "finite_target_pairs": [
+                {
+                  "direction_deg": 4.39689418126927,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 223.58943982626403,
+                  "min_distance_m": 99.86411145627143,
+                  "source_edge": 0,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 1.5084525775752877,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 99.86411145627143,
+                  "min_distance_m": 82.91970082338419,
+                  "source_edge": 1,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 2.003657312225813,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 82.91970082338419,
+                  "min_distance_m": 61.70322785322756,
+                  "source_edge": 2,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 2.9471891722752415,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 61.70322785322756,
+                  "min_distance_m": 30.808922232449344,
+                  "source_edge": 3,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 5.506400849520547,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 30.808922232449344,
+                  "min_distance_m": 8.087223402702556,
+                  "source_edge": 4,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 1.7048890831660435,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    4.151358584797548,
+                    53.68524794689083,
+                    0.0,
+                    49.51196194969868
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 8.538735681329234,
+                  "min_distance_m": 7.061898828077114,
+                  "source_edge": 5,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 1.3265179474683328,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    0.0,
+                    63.12146660994974,
+                    49.51196194969868,
+                    112.61651213098101
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 10.425120334810702,
+                  "min_distance_m": 8.538735681329234,
+                  "source_edge": 6,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.11852807171401368,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 10.596587489741905,
+                  "min_distance_m": 10.425120334810702,
+                  "source_edge": 7,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.030553372897576956,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 10.596587489741905,
+                  "min_distance_m": 10.512531365332222,
+                  "source_edge": 8,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.09291601203130573,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 10.512531365332222,
+                  "min_distance_m": 10.368169225139255,
+                  "source_edge": 9,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.7586595476438003,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    27.80583099766312,
+                    35.147087241109645,
+                    488.3120512541037,
+                    495.652663947049
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 116.03328989046241,
+                  "min_distance_m": 9.901928380269922,
+                  "source_edge": 10,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 4.2758827927038645,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 119.84758213109792,
+                  "min_distance_m": 116.03328989046241,
+                  "source_edge": 11,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 57.91282672819797,
+                  "direction_gate_pass": false,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 121.44659285785956,
+                  "min_distance_m": 119.84758213109792,
+                  "source_edge": 12,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                }
+              ],
+              "reference_length_m": 841.9571544068956,
+              "source_length_m": 841.9571544068956,
+              "source_reference_endpoint_directed_direction_deg": 0.0,
+              "source_reference_max_nearest_segment_undirected_direction_deg": 8.537736462515939e-07,
+              "topology": null,
+              "whole_edge_approved_union": [
+                {
+                  "necessary_corridor_pass": true,
+                  "outside_approved_union_m": 0.0,
+                  "source_edge": 0
+                },
+                {
+                  "necessary_corridor_pass": true,
+                  "outside_approved_union_m": 0.0,
+                  "source_edge": 1
+                },
+                {
+                  "necessary_corridor_pass": true,
+                  "outside_approved_union_m": 0.0,
+                  "source_edge": 2
+                },
+                {
+                  "necessary_corridor_pass": true,
+                  "outside_approved_union_m": 0.0,
+                  "source_edge": 3
+                },
+                {
+                  "necessary_corridor_pass": true,
+                  "outside_approved_union_m": 0.0,
+                  "source_edge": 4
+                },
+                {
+                  "necessary_corridor_pass": true,
+                  "outside_approved_union_m": 0.0,
+                  "source_edge": 5
+                },
+                {
+                  "necessary_corridor_pass": false,
+                  "outside_approved_union_m": 18.36369962374374,
+                  "source_edge": 6
+                },
+                {
+                  "necessary_corridor_pass": false,
+                  "outside_approved_union_m": 82.88628312132231,
+                  "source_edge": 7
+                },
+                {
+                  "necessary_corridor_pass": false,
+                  "outside_approved_union_m": 157.62781455366738,
+                  "source_edge": 8
+                },
+                {
+                  "necessary_corridor_pass": false,
+                  "outside_approved_union_m": 89.01958660638557,
+                  "source_edge": 9
+                },
+                {
+                  "necessary_corridor_pass": false,
+                  "outside_approved_union_m": 27.80583099766347,
+                  "source_edge": 10
+                },
+                {
+                  "necessary_corridor_pass": true,
+                  "outside_approved_union_m": 0.0,
+                  "source_edge": 11
+                },
+                {
+                  "necessary_corridor_pass": true,
+                  "outside_approved_union_m": 0.0,
+                  "source_edge": 12
+                }
+              ]
+            }
+          },
+          "native_admission_aeqd": {
+            "projection": {
+              "formula": "spherical_aeqd",
+              "origin_evidence": "exact PR246 fixture",
+              "origin_lon_lat": [
+                -1.3437774293553804,
+                54.4699892643778
+              ],
+              "origin_status": "verified",
+              "radius_m": 6371008.8,
+              "units": {
+                "direction": "undirected degrees",
+                "distance": "metres"
+              }
+            },
+            "status": "diagnostic_only",
+            "values": {
+              "continuous_source_reference_hausdorff_m": 0.0,
+              "continuous_source_reference_min_distance_m": 0.0,
+              "finite_target_pairs": [
+                {
+                  "direction_deg": 4.399750369023305,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 223.6120202179924,
+                  "min_distance_m": 99.87165781203461,
+                  "source_edge": 0,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 1.5086409649319432,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 99.87165781203461,
+                  "min_distance_m": 82.92597758550404,
+                  "source_edge": 1,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 2.0053155021995948,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 82.92597758550404,
+                  "min_distance_m": 61.7073818542027,
+                  "source_edge": 2,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 2.9493002518203135,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 61.7073818542027,
+                  "min_distance_m": 30.809986263060374,
+                  "source_edge": 3,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 5.509727814288317,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 30.809986263060374,
+                  "min_distance_m": 8.089638292222448,
+                  "source_edge": 4,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 1.7063143746411604,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    4.148678020783312,
+                    53.69063276960545,
+                    0.0,
+                    49.51998708475528
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 8.54464639614256,
+                  "min_distance_m": 7.066330524859012,
+                  "source_edge": 5,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 1.3276555970163515,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    0.0,
+                    62.81228507706753,
+                    49.519987084755286,
+                    112.31540970846679
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 10.432832116552019,
+                  "min_distance_m": 8.54464639614256,
+                  "source_edge": 6,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.1188523826297447,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 10.604783506462384,
+                  "min_distance_m": 10.432832116552019,
+                  "source_edge": 7,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.030534611216008714,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 10.604783506462384,
+                  "min_distance_m": 10.520771713925557,
+                  "source_edge": 8,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.09316220060552897,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 10.520771713925557,
+                  "min_distance_m": 10.376014565674833,
+                  "source_edge": 9,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.7595803035040958,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    28.363924963720176,
+                    35.145625391817006,
+                    488.9146245942887,
+                    495.6957290798703
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 116.04740190825437,
+                  "min_distance_m": 9.909225578442452,
+                  "source_edge": 10,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 4.278054821402536,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 119.86216286716568,
+                  "min_distance_m": 116.04740190825437,
+                  "source_edge": 11,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 57.912137590200416,
+                  "direction_gate_pass": false,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 121.46251115569216,
+                  "min_distance_m": 119.86216286716568,
+                  "source_edge": 12,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                }
+              ],
+              "reference_length_m": 842.0397681124243,
+              "source_length_m": 842.0397681124243,
+              "source_reference_endpoint_directed_direction_deg": 0.0,
+              "source_reference_max_nearest_segment_undirected_direction_deg": 1.2074182697257333e-06,
+              "topology": null,
+              "whole_edge_approved_union": [
+                {
+                  "necessary_corridor_pass": true,
+                  "outside_approved_union_m": 0.0,
+                  "source_edge": 0
+                },
+                {
+                  "necessary_corridor_pass": true,
+                  "outside_approved_union_m": 0.0,
+                  "source_edge": 1
+                },
+                {
+                  "necessary_corridor_pass": true,
+                  "outside_approved_union_m": 0.0,
+                  "source_edge": 2
+                },
+                {
+                  "necessary_corridor_pass": true,
+                  "outside_approved_union_m": 0.0,
+                  "source_edge": 3
+                },
+                {
+                  "necessary_corridor_pass": true,
+                  "outside_approved_union_m": 0.0,
+                  "source_edge": 4
+                },
+                {
+                  "necessary_corridor_pass": true,
+                  "outside_approved_union_m": 0.0,
+                  "source_edge": 5
+                },
+                {
+                  "necessary_corridor_pass": false,
+                  "outside_approved_union_m": 18.68080322376776,
+                  "source_edge": 6
+                },
+                {
+                  "necessary_corridor_pass": false,
+                  "outside_approved_union_m": 82.89355056142496,
+                  "source_edge": 7
+                },
+                {
+                  "necessary_corridor_pass": false,
+                  "outside_approved_union_m": 157.64148220749746,
+                  "source_edge": 8
+                },
+                {
+                  "necessary_corridor_pass": false,
+                  "outside_approved_union_m": 89.02727983817353,
+                  "source_edge": 9
+                },
+                {
+                  "necessary_corridor_pass": false,
+                  "outside_approved_union_m": 28.36392496241386,
+                  "source_edge": 10
+                },
+                {
+                  "necessary_corridor_pass": true,
+                  "outside_approved_union_m": 0.0,
+                  "source_edge": 11
+                },
+                {
+                  "necessary_corridor_pass": true,
+                  "outside_approved_union_m": 0.0,
+                  "source_edge": 12
+                }
+              ]
+            }
+          },
+          "native_correspondence_eq": {
+            "projection": {
+              "formula": "spherical_eq",
+              "origin_evidence": "exact PR246 fixture",
+              "origin_lon_lat": [
+                -1.3437774293553804,
+                54.4699892643778
+              ],
+              "origin_status": "verified",
+              "radius_m": 6371008.8,
+              "units": {
+                "direction": "undirected degrees",
+                "distance": "metres"
+              }
+            },
+            "status": "diagnostic_only",
+            "values": {
+              "continuous_source_reference_hausdorff_m": 0.0,
+              "continuous_source_reference_min_distance_m": 0.0,
+              "finite_target_pairs": [
+                {
+                  "direction_deg": 4.079171087532988,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 223.5402735338529,
+                  "min_distance_m": 99.77603337167454,
+                  "source_edge": 0,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 1.4008723598597952,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 99.77603337167454,
+                  "min_distance_m": 82.84690637639785,
+                  "source_edge": 1,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 1.8594159752776311,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 82.84690637639785,
+                  "min_distance_m": 61.62747391236155,
+                  "source_edge": 2,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 2.734655113956336,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 61.62747391236155,
+                  "min_distance_m": 30.695874962162645,
+                  "source_edge": 3,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 5.108091735602723,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 30.695874962162645,
+                  "min_distance_m": 7.615057598024208,
+                  "source_edge": 4,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 1.5822316395475788,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    4.0642926355040006,
+                    53.672766452211114,
+                    0.0,
+                    49.5895593920258
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 7.922740161187911,
+                  "min_distance_m": 6.550470269745374,
+                  "source_edge": 5,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 1.2311614453540756,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    0.0,
+                    81.4616390930493,
+                    49.589559392025805,
+                    131.03239271218774
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 9.673038567329044,
+                  "min_distance_m": 7.922740161187911,
+                  "source_edge": 6,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.11003327353584888,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    0.0,
+                    82.84411260985993,
+                    131.03239271218771,
+                    213.87635255336855
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 9.832135858229687,
+                  "min_distance_m": 9.673038567329044,
+                  "source_edge": 7,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.02836453504337233,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    0.0,
+                    157.5426644212676,
+                    213.87635255336858,
+                    371.41899766943845
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 9.832135858229687,
+                  "min_distance_m": 9.754143652189573,
+                  "source_edge": 8,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.08626068015352706,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    0.0,
+                    88.97030368395411,
+                    371.4189976694384,
+                    460.3892005220646
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 9.754143652189573,
+                  "min_distance_m": 9.620195984928236,
+                  "source_edge": 9,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.7044241042847365,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    0.0,
+                    35.00158808292383,
+                    460.3892005220646,
+                    495.388143301922
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 116.03140940900975,
+                  "min_distance_m": 9.189184562566632,
+                  "source_edge": 10,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 3.9669473722056954,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 119.84565951320327,
+                  "min_distance_m": 116.03140940900975,
+                  "source_edge": 11,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 55.452428270274304,
+                  "direction_gate_pass": false,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 121.44653461542144,
+                  "min_distance_m": 119.84565951320327,
+                  "source_edge": 12,
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                }
+              ],
+              "reference_length_m": 841.4926548476631,
+              "source_length_m": 841.4926548476631,
+              "source_reference_endpoint_directed_direction_deg": 0.0,
+              "source_reference_max_nearest_segment_undirected_direction_deg": 1.2074182697257333e-06,
+              "topology": null,
+              "whole_edge_approved_union": [
+                {
+                  "necessary_corridor_pass": true,
+                  "outside_approved_union_m": 0.0,
+                  "source_edge": 0
+                },
+                {
+                  "necessary_corridor_pass": true,
+                  "outside_approved_union_m": 0.0,
+                  "source_edge": 1
+                },
+                {
+                  "necessary_corridor_pass": true,
+                  "outside_approved_union_m": 0.0,
+                  "source_edge": 2
+                },
+                {
+                  "necessary_corridor_pass": true,
+                  "outside_approved_union_m": 0.0,
+                  "source_edge": 3
+                },
+                {
+                  "necessary_corridor_pass": true,
+                  "outside_approved_union_m": 0.0,
+                  "source_edge": 4
+                },
+                {
+                  "necessary_corridor_pass": true,
+                  "outside_approved_union_m": 0.0,
+                  "source_edge": 5
+                },
+                {
+                  "necessary_corridor_pass": true,
+                  "outside_approved_union_m": 0.0,
+                  "source_edge": 6
+                },
+                {
+                  "necessary_corridor_pass": true,
+                  "outside_approved_union_m": 0.0,
+                  "source_edge": 7
+                },
+                {
+                  "necessary_corridor_pass": true,
+                  "outside_approved_union_m": 0.0,
+                  "source_edge": 8
+                },
+                {
+                  "necessary_corridor_pass": true,
+                  "outside_approved_union_m": 0.0,
+                  "source_edge": 9
+                },
+                {
+                  "necessary_corridor_pass": true,
+                  "outside_approved_union_m": 0.0,
+                  "source_edge": 10
+                },
+                {
+                  "necessary_corridor_pass": true,
+                  "outside_approved_union_m": 0.0,
+                  "source_edge": 11
+                },
+                {
+                  "necessary_corridor_pass": true,
+                  "outside_approved_union_m": 0.0,
+                  "source_edge": 12
+                }
+              ]
+            }
+          }
+        },
+        "origin_comparison_status": "verified"
+      },
+      "further_investigation": {
+        "blocks_ordinary_development_or_publication_review": false,
+        "reason": "Projection sensitivity or provenance limitation may guide a specific future case; no additional eligible interval demonstrated and no general blocker established.",
+        "supported": true
+      },
+      "geometry_sha256": {
+        "reference": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+        "source": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+        "target_pairs": "9d2fe84eae9d2f99f5b5dd712a9e333f83ea65239254d8c201e40ded5db46a83"
+      },
+      "input_snapshot": {
+        "path": "docs/data-trials/ncn-projection-cases-20261030.json",
+        "sha256": "26a8b2aded983c65e7ba1c7fba1c3b04674604db64f8463908f9a19dfa5f0963"
+      },
+      "key": "4471747",
+      "name": "Deal NCN1",
+      "operational_result": {
+        "record": {
+          "actual_admitted_source_present": true,
+          "admitted_vertex_ranges": null,
+          "compatibility": {
+            "attribution_eligibility": "not_assessed_no_entitlement",
+            "classification": "exact_match",
+            "mode_access": {
+              "reference": "supported",
+              "requested": "on_foot",
+              "source": "unknown"
+            },
+            "route_identity": {
+              "evidence": {
+                "bounded_osm_memberships": [
+                  {
+                    "id": "75880",
+                    "network": "ncn",
+                    "ref": "1"
+                  }
+                ],
+                "retained_ncn_row": {
+                  "binding_count": 10,
+                  "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+                  "route": "NCN:1",
+                  "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb"
+                }
+              },
+              "requested": "NCN:1",
+              "status": "supported_bounded_membership"
+            }
+          },
+          "eligibility_note": "Preserved evidence only; source presence is not whole-way admission or target entitlement.",
+          "existing_binding_count": 10,
+          "history_status": "unavailable",
+          "reviewed_source_spans": [
+            {
+              "from_vertex": 0,
+              "to_vertex": 6,
+              "way_id": 4471747
+            },
+            {
+              "from_vertex": 11,
+              "to_vertex": 13,
+              "way_id": 4471747
+            }
+          ]
+        },
+        "status": "preserved_pinned_record_not_new_admission_replay"
+      },
+      "restrictions": {
+        "deferred_masks": "Not replayed; no mask override permitted",
+        "identity_and_access": {
+          "reference_id": "4471747",
+          "reference_provider": "osm",
+          "reference_tags": {
+            "foot": "designated",
+            "highway": "cycleway",
+            "surface": "asphalt"
+          },
+          "source_id": "4471747",
+          "source_memberships": [
+            "NCN:1"
+          ],
+          "source_provider": "osm"
+        },
+        "mode_access": {
+          "reference": "supported",
+          "requested": "on_foot",
+          "source": "unknown"
+        },
+        "route_identity": {
+          "evidence": {
+            "bounded_osm_memberships": [
+              {
+                "id": "75880",
+                "network": "ncn",
+                "ref": "1"
+              }
+            ],
+            "retained_ncn_row": {
+              "binding_count": 10,
+              "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+              "route": "NCN:1",
+              "source_geometry_sha256": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb"
+            }
+          },
+          "requested": "NCN:1",
+          "status": "supported_bounded_membership"
+        },
+        "source_offsets": "Unchanged; measurement stations must never replace stored offsets",
+        "topology": "No new topology clearance; preserved restrictions remain authoritative",
+        "whole_edge_policy": "Retained; finite pieces cannot extend admission"
+      },
+      "route": "NCN:1",
+      "source_feature": {
+        "reference_id": "4471747",
+        "reference_provider": "osm",
+        "reference_tags": {
+          "foot": "designated",
+          "highway": "cycleway",
+          "surface": "asphalt"
+        },
+        "source_id": "4471747",
+        "source_memberships": [
+          "NCN:1"
+        ],
+        "source_provider": "osm"
+      }
+    },
+    {
+      "attribution_eligibility": {
+        "new_assessable_m": 0,
+        "new_completion_credit_m": 0,
+        "status": "not_assessed_no_entitlement"
+      },
+      "diagnostic_comparison": {
+        "exact_operational_replay": false,
+        "hypothetical_alternative_projection_changes": {
+          "finite_pair_presence": 0,
+          "whole_edge_corridor": null
+        },
+        "hypothetical_only": true,
+        "limitations": [
+          "uniquely inferred from pinned metric source edge and original WGS84 source vertices; not recovered route metadata",
+          "Preserved evidence only; source presence is not whole-way admission or target entitlement."
+        ],
+        "measurements": {
+          "common_local_eq": {
+            "projection": {
+              "formula": "spherical_eq",
+              "origin_evidence": "Explicit diagnostic convention: first source vertex; not recovered route metadata.",
+              "origin_lon_lat": [
+                -3.6826247,
+                52.4765612
+              ],
+              "origin_status": "verified",
+              "radius_m": 6371008.8,
+              "units": {
+                "direction": "undirected degrees",
+                "distance": "metres"
+              }
+            },
+            "status": "diagnostic_only",
+            "values": {
+              "continuous_source_reference_hausdorff_m": 0.0,
+              "continuous_source_reference_min_distance_m": 0.0,
+              "finite_target_pairs": [
+                {
+                  "direction_deg": 13.32491306818136,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    0.0,
+                    7.623320595016784,
+                    7.4180912883456624,
+                    0.0
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 22.25291130332059,
+                  "min_distance_m": 7.607905854464067,
+                  "source_edge": 48,
+                  "source_geometry_sha256": "fcad7736bbba22ee73a645767b8f7e3e1afcfe4c9b21dfa9c1c7626a48132d50",
+                  "target_geometry_sha256": "d9a717670b2e9241b5d43afba6c4074cd43a233dcc11955cde840aae1831139c",
+                  "target_index": 0,
+                  "target_key": "open-edge:64ce5f758cd3df6409e0038e14e2267a5aafa04ac3d9c2587dc2825f0d17db00"
+                },
+                {
+                  "direction_deg": 13.698779191282256,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    3.2437253240596373,
+                    25.766440557604508,
+                    41.3176061337505,
+                    19.435568316295605
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 10.625832195767934,
+                  "min_distance_m": 4.045798120139826,
+                  "source_edge": 48,
+                  "source_geometry_sha256": "fcad7736bbba22ee73a645767b8f7e3e1afcfe4c9b21dfa9c1c7626a48132d50",
+                  "target_geometry_sha256": "355bf3d0b2671daba92d39883f318f628c198eb0bcc5c165392ecb24d1fb6cb7",
+                  "target_index": 1,
+                  "target_key": "open-edge:550aacd3843452df19d9f2b49c662bb41ccc647198338371932b15d01b7479c1"
+                }
+              ],
+              "reference_length_m": 1496.7246151999927,
+              "source_length_m": 1496.7246151999927,
+              "source_reference_endpoint_directed_direction_deg": 0.0,
+              "source_reference_max_nearest_segment_undirected_direction_deg": 1.4787793334710982e-06,
+              "topology": null,
+              "whole_edge_approved_union": null
+            }
+          },
+          "native_admission_aeqd": {
+            "projection": {
+              "formula": "spherical_aeqd",
+              "origin_evidence": "uniquely inferred from pinned metric source edge and original WGS84 source vertices; not recovered route metadata",
+              "origin_lon_lat": [
+                -3.896190400994655,
+                52.3857856778366
+              ],
+              "origin_status": "inferred",
+              "radius_m": 6371008.8,
+              "units": {
+                "direction": "undirected degrees",
+                "distance": "metres"
+              }
+            },
+            "status": "diagnostic_only",
+            "values": {
+              "continuous_source_reference_hausdorff_m": 0.0,
+              "continuous_source_reference_min_distance_m": 0.0,
+              "finite_target_pairs": [
+                {
+                  "direction_deg": 13.323453596216495,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    0.0,
+                    7.624329653471574,
+                    7.419117939746039,
+                    0.0
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 22.24881580461038,
+                  "min_distance_m": 7.606570889444889,
+                  "source_edge": 48,
+                  "source_geometry_sha256": "fcad7736bbba22ee73a645767b8f7e3e1afcfe4c9b21dfa9c1c7626a48132d50",
+                  "target_geometry_sha256": "d9a717670b2e9241b5d43afba6c4074cd43a233dcc11955cde840aae1831139c",
+                  "target_index": 0,
+                  "target_key": "open-edge:64ce5f758cd3df6409e0038e14e2267a5aafa04ac3d9c2587dc2825f0d17db00"
+                },
+                {
+                  "direction_deg": 13.698876991774739,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    3.2455405343043293,
+                    25.764029551280164,
+                    41.31146349224908,
+                    19.433540775864035
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 10.625593239909568,
+                  "min_distance_m": 4.045528682800739,
+                  "source_edge": 48,
+                  "source_geometry_sha256": "fcad7736bbba22ee73a645767b8f7e3e1afcfe4c9b21dfa9c1c7626a48132d50",
+                  "target_geometry_sha256": "355bf3d0b2671daba92d39883f318f628c198eb0bcc5c165392ecb24d1fb6cb7",
+                  "target_index": 1,
+                  "target_key": "open-edge:550aacd3843452df19d9f2b49c662bb41ccc647198338371932b15d01b7479c1"
+                }
+              ],
+              "reference_length_m": 1496.6538231361396,
+              "source_length_m": 1496.6538231361396,
+              "source_reference_endpoint_directed_direction_deg": 8.537736462515939e-07,
+              "source_reference_max_nearest_segment_undirected_direction_deg": 1.2074182697257333e-06,
+              "topology": null,
+              "whole_edge_approved_union": null
+            }
+          },
+          "native_correspondence_eq": {
+            "projection": {
+              "formula": "spherical_eq",
+              "origin_evidence": "uniquely inferred from pinned metric source edge and original WGS84 source vertices; not recovered route metadata",
+              "origin_lon_lat": [
+                -3.896190400994655,
+                52.3857856778366
+              ],
+              "origin_status": "inferred",
+              "radius_m": 6371008.8,
+              "units": {
+                "direction": "undirected degrees",
+                "distance": "metres"
+              }
+            },
+            "status": "diagnostic_only",
+            "values": {
+              "continuous_source_reference_hausdorff_m": 0.0,
+              "continuous_source_reference_min_distance_m": 0.0,
+              "finite_target_pairs": [
+                {
+                  "direction_deg": 13.335290675919879,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    0.0,
+                    7.613829870460352,
+                    7.408538112436995,
+                    0.0
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 22.29035629697113,
+                  "min_distance_m": 7.62032826442688,
+                  "source_edge": 48,
+                  "source_geometry_sha256": "fcad7736bbba22ee73a645767b8f7e3e1afcfe4c9b21dfa9c1c7626a48132d50",
+                  "target_geometry_sha256": "d9a717670b2e9241b5d43afba6c4074cd43a233dcc11955cde840aae1831139c",
+                  "target_index": 0,
+                  "target_key": "open-edge:64ce5f758cd3df6409e0038e14e2267a5aafa04ac3d9c2587dc2825f0d17db00"
+                },
+                {
+                  "direction_deg": 13.696535137236026,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    3.2276419724314396,
+                    25.788791953316696,
+                    41.37355595656215,
+                    19.453967457314345
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 10.6280684896671,
+                  "min_distance_m": 4.048657045189656,
+                  "source_edge": 48,
+                  "source_geometry_sha256": "fcad7736bbba22ee73a645767b8f7e3e1afcfe4c9b21dfa9c1c7626a48132d50",
+                  "target_geometry_sha256": "355bf3d0b2671daba92d39883f318f628c198eb0bcc5c165392ecb24d1fb6cb7",
+                  "target_index": 1,
+                  "target_key": "open-edge:550aacd3843452df19d9f2b49c662bb41ccc647198338371932b15d01b7479c1"
+                }
+              ],
+              "reference_length_m": 1497.7062938701986,
+              "source_length_m": 1497.7062938701986,
+              "source_reference_endpoint_directed_direction_deg": 0.0,
+              "source_reference_max_nearest_segment_undirected_direction_deg": 1.2074182697257333e-06,
+              "topology": null,
+              "whole_edge_approved_union": null
+            }
+          }
+        },
+        "origin_comparison_status": "inferred"
+      },
+      "further_investigation": {
+        "blocks_ordinary_development_or_publication_review": false,
+        "reason": "Projection sensitivity or provenance limitation may guide a specific future case; no additional eligible interval demonstrated and no general blocker established.",
+        "supported": true
+      },
+      "geometry_sha256": {
+        "reference": "c9914cc9baeffcfea289d2899487f331b77a981aa65c4167750ca21ee5d31a01",
+        "source": "c9914cc9baeffcfea289d2899487f331b77a981aa65c4167750ca21ee5d31a01",
+        "target_pairs": "657b3f1e233017663d2df5b43d7e40c083b2f54fd753fb499491221305703c4d"
+      },
+      "input_snapshot": {
+        "path": "docs/data-trials/ncn-projection-cases-20261030.json",
+        "sha256": "26a8b2aded983c65e7ba1c7fba1c3b04674604db64f8463908f9a19dfa5f0963"
+      },
+      "key": "31252441",
+      "name": "Mid-Wales NCN8",
+      "operational_result": {
+        "record": {
+          "actual_admitted_source_present": true,
+          "admitted_vertex_ranges": null,
+          "compatibility": {
+            "attribution_eligibility": "not_assessed_no_entitlement",
+            "classification": "exact_match",
+            "mode_access": {
+              "reference": "supported",
+              "requested": "on_foot",
+              "source": "supported"
+            },
+            "route_identity": {
+              "evidence": {
+                "binding_count": 27,
+                "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+                "route": "NCN:8",
+                "source_geometry_sha256": "c9914cc9baeffcfea289d2899487f331b77a981aa65c4167750ca21ee5d31a01"
+              },
+              "requested": "NCN:8",
+              "status": "supported_bounded_membership"
+            }
+          },
+          "eligibility_note": "Preserved evidence only; source presence is not whole-way admission or target entitlement.",
+          "existing_binding_count": 27,
+          "history_status": "unavailable"
+        },
+        "status": "preserved_pinned_record_not_new_admission_replay"
+      },
+      "restrictions": {
+        "deferred_masks": "Not replayed; no mask override permitted",
+        "identity_and_access": {
+          "reference_id": "31252441",
+          "reference_provider": "osm",
+          "reference_tags": {
+            "highway": "unclassified",
+            "surface": "asphalt"
+          },
+          "source_id": "31252441",
+          "source_memberships": [
+            "NCN:8"
+          ],
+          "source_provider": "osm"
+        },
+        "mode_access": {
+          "reference": "supported",
+          "requested": "on_foot",
+          "source": "supported"
+        },
+        "route_identity": {
+          "evidence": {
+            "binding_count": 27,
+            "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+            "route": "NCN:8",
+            "source_geometry_sha256": "c9914cc9baeffcfea289d2899487f331b77a981aa65c4167750ca21ee5d31a01"
+          },
+          "requested": "NCN:8",
+          "status": "supported_bounded_membership"
+        },
+        "source_offsets": "Unchanged; measurement stations must never replace stored offsets",
+        "topology": "No new topology clearance; preserved restrictions remain authoritative",
+        "whole_edge_policy": "Retained; finite pieces cannot extend admission"
+      },
+      "route": "NCN:8",
+      "source_feature": {
+        "reference_id": "31252441",
+        "reference_provider": "osm",
+        "reference_tags": {
+          "highway": "unclassified",
+          "surface": "asphalt"
+        },
+        "source_id": "31252441",
+        "source_memberships": [
+          "NCN:8"
+        ],
+        "source_provider": "osm"
+      }
+    },
+    {
+      "attribution_eligibility": {
+        "new_assessable_m": 0,
+        "new_completion_credit_m": 0,
+        "status": "not_assessed_no_entitlement"
+      },
+      "diagnostic_comparison": {
+        "exact_operational_replay": false,
+        "hypothetical_alternative_projection_changes": {
+          "finite_pair_presence": 0,
+          "whole_edge_corridor": null
+        },
+        "hypothetical_only": true,
+        "limitations": [
+          "uniquely inferred from pinned metric source edge and original WGS84 source vertices; not recovered route metadata",
+          "Preserved evidence only; source presence is not whole-way admission or target entitlement."
+        ],
+        "measurements": {
+          "common_local_eq": {
+            "projection": {
+              "formula": "spherical_eq",
+              "origin_evidence": "Explicit diagnostic convention: first source vertex; not recovered route metadata.",
+              "origin_lon_lat": [
+                -2.1664558,
+                52.6290006
+              ],
+              "origin_status": "verified",
+              "radius_m": 6371008.8,
+              "units": {
+                "direction": "undirected degrees",
+                "distance": "metres"
+              }
+            },
+            "status": "diagnostic_only",
+            "values": {
+              "continuous_source_reference_hausdorff_m": 0.0,
+              "continuous_source_reference_min_distance_m": 0.0,
+              "finite_target_pairs": [
+                {
+                  "direction_deg": 0.5358878018597295,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    2.885825394491324,
+                    49.58272366357655,
+                    53.25608612078503,
+                    6.561230329529636
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 2.9483508412071067,
+                  "min_distance_m": 0.6315398177197348,
+                  "source_edge": 0,
+                  "source_geometry_sha256": "d3d5b5b17a331cff4fe6199fb01e61cf394e553279c957ce3f935709c0da94d7",
+                  "target_geometry_sha256": "07f7c2223cc14d1318041d4240c78aea3e8e2fc07a18d9f2cd7047254df66c6b",
+                  "target_index": 0,
+                  "target_key": "open-edge:eaa4aeacba79d530defb4216021a9b7ca57cfd652bfd151398f93c069c5da9f9"
+                },
+                {
+                  "direction_deg": 6.308347065985714,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    2.8101026531993583,
+                    49.58272366357655,
+                    51.92353808187685,
+                    5.434127237564759
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 4.5039470391902,
+                  "min_distance_m": 0.0,
+                  "source_edge": 0,
+                  "source_geometry_sha256": "d3d5b5b17a331cff4fe6199fb01e61cf394e553279c957ce3f935709c0da94d7",
+                  "target_geometry_sha256": "8eecfdd6fd5b4163aef65cfc290f6c8c6f2aa27e499013b863dbd17142e9a053",
+                  "target_index": 1,
+                  "target_key": "open-edge:eae0d4bebe56d38d78e6aa07537fe51b4607c6656c08ad6cd712f2bfef53b722"
+                }
+              ],
+              "reference_length_m": 1003.8632557385416,
+              "source_length_m": 1003.8632557385416,
+              "source_reference_endpoint_directed_direction_deg": 0.0,
+              "source_reference_max_nearest_segment_undirected_direction_deg": 1.2074182697257333e-06,
+              "topology": {
+                "active_pairs": 2,
+                "ordinary_seam_rejected": true
+              },
+              "whole_edge_approved_union": null
+            }
+          },
+          "native_admission_aeqd": {
+            "projection": {
+              "formula": "spherical_aeqd",
+              "origin_evidence": "uniquely inferred from pinned metric source edge and original WGS84 source vertices; not recovered route metadata",
+              "origin_lon_lat": [
+                -3.0333377811158853,
+                52.8451500423325
+              ],
+              "origin_status": "inferred",
+              "radius_m": 6371008.8,
+              "units": {
+                "direction": "undirected degrees",
+                "distance": "metres"
+              }
+            },
+            "status": "diagnostic_only",
+            "values": {
+              "continuous_source_reference_hausdorff_m": 0.0,
+              "continuous_source_reference_min_distance_m": 0.0,
+              "finite_target_pairs": [
+                {
+                  "direction_deg": 0.5359184204075689,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    2.8858763287880795,
+                    49.583532253400136,
+                    53.25696120745246,
+                    6.561348027216617
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 2.9483990058980316,
+                  "min_distance_m": 0.6315336842229959,
+                  "source_edge": 0,
+                  "source_geometry_sha256": "d3d5b5b17a331cff4fe6199fb01e61cf394e553279c957ce3f935709c0da94d7",
+                  "target_geometry_sha256": "07f7c2223cc14d1318041d4240c78aea3e8e2fc07a18d9f2cd7047254df66c6b",
+                  "target_index": 0,
+                  "target_key": "open-edge:eaa4aeacba79d530defb4216021a9b7ca57cfd652bfd151398f93c069c5da9f9"
+                },
+                {
+                  "direction_deg": 6.308287969379904,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    2.810154644739074,
+                    49.583532253400136,
+                    51.92433830649827,
+                    5.434170144210171
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 4.503988465480958,
+                  "min_distance_m": 0.0,
+                  "source_edge": 0,
+                  "source_geometry_sha256": "d3d5b5b17a331cff4fe6199fb01e61cf394e553279c957ce3f935709c0da94d7",
+                  "target_geometry_sha256": "8eecfdd6fd5b4163aef65cfc290f6c8c6f2aa27e499013b863dbd17142e9a053",
+                  "target_index": 1,
+                  "target_key": "open-edge:eae0d4bebe56d38d78e6aa07537fe51b4607c6656c08ad6cd712f2bfef53b722"
+                }
+              ],
+              "reference_length_m": 1003.9171423458525,
+              "source_length_m": 1003.9171423458525,
+              "source_reference_endpoint_directed_direction_deg": 0.0,
+              "source_reference_max_nearest_segment_undirected_direction_deg": 1.2074182697257333e-06,
+              "topology": {
+                "active_pairs": 2,
+                "ordinary_seam_rejected": true
+              },
+              "whole_edge_approved_union": null
+            }
+          },
+          "native_correspondence_eq": {
+            "projection": {
+              "formula": "spherical_eq",
+              "origin_evidence": "uniquely inferred from pinned metric source edge and original WGS84 source vertices; not recovered route metadata",
+              "origin_lon_lat": [
+                -3.0333377811158853,
+                52.8451500423325
+              ],
+              "origin_status": "inferred",
+              "radius_m": 6371008.8,
+              "units": {
+                "direction": "undirected degrees",
+                "distance": "metres"
+              }
+            },
+            "status": "diagnostic_only",
+            "values": {
+              "continuous_source_reference_hausdorff_m": 0.0,
+              "continuous_source_reference_min_distance_m": 0.0,
+              "finite_target_pairs": [
+                {
+                  "direction_deg": 0.5335699824135531,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    2.8834142337607873,
+                    49.567804449628284,
+                    53.23886492903848,
+                    6.5564990187381085
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 2.945419610362653,
+                  "min_distance_m": 0.6286050287008003,
+                  "source_edge": 0,
+                  "source_geometry_sha256": "d3d5b5b17a331cff4fe6199fb01e61cf394e553279c957ce3f935709c0da94d7",
+                  "target_geometry_sha256": "07f7c2223cc14d1318041d4240c78aea3e8e2fc07a18d9f2cd7047254df66c6b",
+                  "target_index": 0,
+                  "target_key": "open-edge:eaa4aeacba79d530defb4216021a9b7ca57cfd652bfd151398f93c069c5da9f9"
+                },
+                {
+                  "direction_deg": 6.2795144236746125,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    2.808388987947539,
+                    49.567804449628284,
+                    51.91859113014447,
+                    5.439726250319914
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 4.482095136651634,
+                  "min_distance_m": 0.0,
+                  "source_edge": 0,
+                  "source_geometry_sha256": "d3d5b5b17a331cff4fe6199fb01e61cf394e553279c957ce3f935709c0da94d7",
+                  "target_geometry_sha256": "8eecfdd6fd5b4163aef65cfc290f6c8c6f2aa27e499013b863dbd17142e9a053",
+                  "target_index": 1,
+                  "target_key": "open-edge:eae0d4bebe56d38d78e6aa07537fe51b4607c6656c08ad6cd712f2bfef53b722"
+                }
+              ],
+              "reference_length_m": 1002.0299728665856,
+              "source_length_m": 1002.0299728665856,
+              "source_reference_endpoint_directed_direction_deg": 8.537736462515939e-07,
+              "source_reference_max_nearest_segment_undirected_direction_deg": 1.2074182697257333e-06,
+              "topology": {
+                "active_pairs": 2,
+                "ordinary_seam_rejected": true
+              },
+              "whole_edge_approved_union": null
+            }
+          }
+        },
+        "origin_comparison_status": "inferred"
+      },
+      "further_investigation": {
+        "blocks_ordinary_development_or_publication_review": false,
+        "reason": "Projection sensitivity or provenance limitation may guide a specific future case; no additional eligible interval demonstrated and no general blocker established.",
+        "supported": true
+      },
+      "geometry_sha256": {
+        "reference": "2ce02a21fa14e3ce01b113f77cac58eb2453737cb4781712a06cbe75bf34837d",
+        "source": "2ce02a21fa14e3ce01b113f77cac58eb2453737cb4781712a06cbe75bf34837d",
+        "target_pairs": "135a7dfdd9e697dca36a8af73b480ff16723f8d253ff4a8d8e81e3facb65b5e1"
+      },
+      "input_snapshot": {
+        "path": "docs/data-trials/ncn-projection-cases-20261030.json",
+        "sha256": "26a8b2aded983c65e7ba1c7fba1c3b04674604db64f8463908f9a19dfa5f0963"
+      },
+      "key": "44807950",
+      "name": "West Midlands NCN81 hairpin",
+      "operational_result": {
+        "record": {
+          "actual_admitted_source_present": true,
+          "admitted_vertex_ranges": null,
+          "compatibility": {
+            "attribution_eligibility": "not_assessed_no_entitlement",
+            "classification": "exact_match",
+            "mode_access": {
+              "reference": "supported",
+              "requested": "on_foot",
+              "source": "supported"
+            },
+            "route_identity": {
+              "evidence": {
+                "binding_count": 58,
+                "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+                "route": "NCN:81",
+                "source_geometry_sha256": "2ce02a21fa14e3ce01b113f77cac58eb2453737cb4781712a06cbe75bf34837d"
+              },
+              "requested": "NCN:81",
+              "status": "supported_bounded_membership"
+            }
+          },
+          "eligibility_note": "Preserved evidence only; source presence is not whole-way admission or target entitlement.",
+          "existing_binding_count": 58,
+          "history_status": "unavailable"
+        },
+        "status": "preserved_pinned_record_not_new_admission_replay"
+      },
+      "restrictions": {
+        "deferred_masks": "Not replayed; no mask override permitted",
+        "identity_and_access": {
+          "reference_id": "44807950",
+          "reference_provider": "osm",
+          "reference_tags": {
+            "highway": "footway",
+            "surface": "unpaved"
+          },
+          "source_id": "44807950",
+          "source_memberships": [
+            "NCN:81"
+          ],
+          "source_provider": "osm"
+        },
+        "mode_access": {
+          "reference": "supported",
+          "requested": "on_foot",
+          "source": "supported"
+        },
+        "route_identity": {
+          "evidence": {
+            "binding_count": 58,
+            "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+            "route": "NCN:81",
+            "source_geometry_sha256": "2ce02a21fa14e3ce01b113f77cac58eb2453737cb4781712a06cbe75bf34837d"
+          },
+          "requested": "NCN:81",
+          "status": "supported_bounded_membership"
+        },
+        "source_offsets": "Unchanged; measurement stations must never replace stored offsets",
+        "topology": "Hairpin ambiguity retained",
+        "whole_edge_policy": "Retained; finite pieces cannot extend admission"
+      },
+      "route": "NCN:81",
+      "source_feature": {
+        "reference_id": "44807950",
+        "reference_provider": "osm",
+        "reference_tags": {
+          "highway": "footway",
+          "surface": "unpaved"
+        },
+        "source_id": "44807950",
+        "source_memberships": [
+          "NCN:81"
+        ],
+        "source_provider": "osm"
+      }
+    },
+    {
+      "attribution_eligibility": {
+        "new_assessable_m": 0,
+        "new_completion_credit_m": 0,
+        "status": "not_assessed_no_entitlement"
+      },
+      "diagnostic_comparison": {
+        "exact_operational_replay": false,
+        "hypothetical_alternative_projection_changes": null,
+        "hypothetical_only": true,
+        "limitations": [
+          "operational route origin unavailable; local proxy only",
+          "Source admitted in part; investigated historical target remains direction_gate. Local proxy cannot recreate route-wide original decision.",
+          "publisher endpoints rounded to ten decimals in preserved research; original target digest not replayed"
+        ],
+        "measurements": {
+          "common_local_eq": {
+            "projection": {
+              "formula": "spherical_eq",
+              "origin_evidence": "Explicit diagnostic convention: first source vertex; not recovered route metadata.",
+              "origin_lon_lat": [
+                -1.7535763,
+                53.7920704
+              ],
+              "origin_status": "verified",
+              "radius_m": 6371008.8,
+              "units": {
+                "direction": "undirected degrees",
+                "distance": "metres"
+              }
+            },
+            "status": "diagnostic_only",
+            "values": {
+              "continuous_source_reference_hausdorff_m": 0.0,
+              "continuous_source_reference_min_distance_m": 0.0,
+              "finite_target_pairs": [
+                {
+                  "direction_deg": 16.651418393934705,
+                  "direction_gate_pass": false,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 9.35154757389833,
+                  "min_distance_m": 6.558617319468343,
+                  "source_edge": 0,
+                  "source_geometry_sha256": "8b611738dfeb1caa6cfc80307064f9ce909f83e4dcfea394731fc4c50c1cec0e",
+                  "target_geometry_sha256": "2e45e0b335478e5d058b6bd24c678e48727bfd80f9f2a00be3c18aab2161add4",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 16.620294735623105,
+                  "direction_gate_pass": false,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 6.558617319468343,
+                  "min_distance_m": 0.0,
+                  "source_edge": 1,
+                  "source_geometry_sha256": "8b611738dfeb1caa6cfc80307064f9ce909f83e4dcfea394731fc4c50c1cec0e",
+                  "target_geometry_sha256": "2e45e0b335478e5d058b6bd24c678e48727bfd80f9f2a00be3c18aab2161add4",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 28.711787525105592,
+                  "direction_gate_pass": false,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 5.193882111378579,
+                  "min_distance_m": 2.0052174512192917,
+                  "source_edge": 2,
+                  "source_geometry_sha256": "8b611738dfeb1caa6cfc80307064f9ce909f83e4dcfea394731fc4c50c1cec0e",
+                  "target_geometry_sha256": "2e45e0b335478e5d058b6bd24c678e48727bfd80f9f2a00be3c18aab2161add4",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 28.72563300322261,
+                  "direction_gate_pass": false,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 2.093318585786327,
+                  "min_distance_m": 0.0,
+                  "source_edge": 3,
+                  "source_geometry_sha256": "8b611738dfeb1caa6cfc80307064f9ce909f83e4dcfea394731fc4c50c1cec0e",
+                  "target_geometry_sha256": "2e45e0b335478e5d058b6bd24c678e48727bfd80f9f2a00be3c18aab2161add4",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 9.731710309518064,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 4.536335986656362,
+                  "min_distance_m": 2.093318585786327,
+                  "source_edge": 4,
+                  "source_geometry_sha256": "8b611738dfeb1caa6cfc80307064f9ce909f83e4dcfea394731fc4c50c1cec0e",
+                  "target_geometry_sha256": "2e45e0b335478e5d058b6bd24c678e48727bfd80f9f2a00be3c18aab2161add4",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 3.8947827579905265,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 12.807339524097202,
+                  "min_distance_m": 4.536335986656362,
+                  "source_edge": 5,
+                  "source_geometry_sha256": "8b611738dfeb1caa6cfc80307064f9ce909f83e4dcfea394731fc4c50c1cec0e",
+                  "target_geometry_sha256": "2e45e0b335478e5d058b6bd24c678e48727bfd80f9f2a00be3c18aab2161add4",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 32.294966782035374,
+                  "direction_gate_pass": false,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 30.260147401442662,
+                  "min_distance_m": 12.807339524097202,
+                  "source_edge": 6,
+                  "source_geometry_sha256": "8b611738dfeb1caa6cfc80307064f9ce909f83e4dcfea394731fc4c50c1cec0e",
+                  "target_geometry_sha256": "2e45e0b335478e5d058b6bd24c678e48727bfd80f9f2a00be3c18aab2161add4",
+                  "target_index": 0,
+                  "target_key": null
+                }
+              ],
+              "reference_length_m": 93.74872540919482,
+              "source_length_m": 93.74872540919482,
+              "source_reference_endpoint_directed_direction_deg": 8.537736462515939e-07,
+              "source_reference_max_nearest_segment_undirected_direction_deg": 1.2074182697257333e-06,
+              "topology": null,
+              "whole_edge_approved_union": null
+            }
+          },
+          "native_admission_aeqd": {
+            "projection": {
+              "formula": "spherical_aeqd",
+              "origin_evidence": "operational route origin unavailable; local proxy only",
+              "origin_lon_lat": null,
+              "origin_status": "unavailable",
+              "radius_m": 6371008.8,
+              "units": {
+                "direction": "undirected degrees",
+                "distance": "metres"
+              }
+            },
+            "reason": "Native route origin missing; no substituted origin.",
+            "status": "unavailable",
+            "values": null
+          },
+          "native_correspondence_eq": {
+            "projection": {
+              "formula": "spherical_eq",
+              "origin_evidence": "operational route origin unavailable; local proxy only",
+              "origin_lon_lat": null,
+              "origin_status": "unavailable",
+              "radius_m": 6371008.8,
+              "units": {
+                "direction": "undirected degrees",
+                "distance": "metres"
+              }
+            },
+            "reason": "Native route origin missing; no substituted origin.",
+            "status": "unavailable",
+            "values": null
+          }
+        },
+        "origin_comparison_status": "unavailable"
+      },
+      "further_investigation": {
+        "blocks_ordinary_development_or_publication_review": false,
+        "reason": "Projection sensitivity or provenance limitation may guide a specific future case; no additional eligible interval demonstrated and no general blocker established.",
+        "supported": true
+      },
+      "geometry_sha256": {
+        "reference": "8b611738dfeb1caa6cfc80307064f9ce909f83e4dcfea394731fc4c50c1cec0e",
+        "source": "8b611738dfeb1caa6cfc80307064f9ce909f83e4dcfea394731fc4c50c1cec0e",
+        "target_pairs": "8ad07dbefa5dd0b1221c4cbeb40c922182b83ddef9a4fd07527d93d7d3fc94ec"
+      },
+      "input_snapshot": {
+        "path": "docs/data-trials/ncn-projection-cases-20261030.json",
+        "sha256": "26a8b2aded983c65e7ba1c7fba1c3b04674604db64f8463908f9a19dfa5f0963"
+      },
+      "key": "159311690",
+      "name": "Bradford NCN66",
+      "operational_result": {
+        "record": {
+          "actual_admitted_source_present": true,
+          "admitted_vertex_ranges": null,
+          "compatibility": {
+            "attribution_eligibility": "not_assessed_no_entitlement",
+            "classification": "exact_match",
+            "mode_access": {
+              "reference": "supported",
+              "requested": "on_foot",
+              "source": "unknown"
+            },
+            "route_identity": {
+              "evidence": {
+                "bounded_osm_memberships": [
+                  {
+                    "id": "17883",
+                    "network": "ncn",
+                    "ref": "66"
+                  }
+                ],
+                "retained_ncn_row": {
+                  "binding_count": 3,
+                  "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+                  "route": "NCN:66",
+                  "source_geometry_sha256": "cb4f97a8ea3f0bb3676f2eeb28edb6f918f312bb2f0d54e726d368a08f07354c"
+                }
+              },
+              "requested": "NCN:66",
+              "status": "supported_bounded_membership"
+            }
+          },
+          "eligibility_note": "Source admitted in part; investigated historical target remains direction_gate. Local proxy cannot recreate route-wide original decision.",
+          "existing_binding_count": 3,
+          "history_status": "unavailable"
+        },
+        "status": "preserved_pinned_record_not_new_admission_replay"
+      },
+      "restrictions": {
+        "deferred_masks": "Not replayed; no mask override permitted",
+        "identity_and_access": {
+          "reference_id": "159311690",
+          "reference_provider": "osm",
+          "reference_tags": {
+            "foot": "designated",
+            "highway": "path"
+          },
+          "source_id": "159311690",
+          "source_memberships": [
+            "NCN:66"
+          ],
+          "source_provider": "osm"
+        },
+        "mode_access": {
+          "reference": "supported",
+          "requested": "on_foot",
+          "source": "unknown"
+        },
+        "route_identity": {
+          "evidence": {
+            "bounded_osm_memberships": [
+              {
+                "id": "17883",
+                "network": "ncn",
+                "ref": "66"
+              }
+            ],
+            "retained_ncn_row": {
+              "binding_count": 3,
+              "observation": "Read-only exact shipped catalogue inspection completed before interruption; recorded tool output retained in task history.",
+              "route": "NCN:66",
+              "source_geometry_sha256": "cb4f97a8ea3f0bb3676f2eeb28edb6f918f312bb2f0d54e726d368a08f07354c"
+            }
+          },
+          "requested": "NCN:66",
+          "status": "supported_bounded_membership"
+        },
+        "source_offsets": "Unchanged; measurement stations must never replace stored offsets",
+        "topology": "No new topology clearance; preserved restrictions remain authoritative",
+        "whole_edge_policy": "Retained; finite pieces cannot extend admission"
+      },
+      "route": "NCN:66",
+      "source_feature": {
+        "reference_id": "159311690",
+        "reference_provider": "osm",
+        "reference_tags": {
+          "foot": "designated",
+          "highway": "path"
+        },
+        "source_id": "159311690",
+        "source_memberships": [
+          "NCN:66"
+        ],
+        "source_provider": "osm"
+      }
+    },
+    {
+      "attribution_eligibility": {
+        "new_assessable_m": 0,
+        "new_completion_credit_m": 0,
+        "status": "not_assessed_no_entitlement"
+      },
+      "diagnostic_comparison": {
+        "exact_operational_replay": false,
+        "hypothetical_alternative_projection_changes": {
+          "finite_pair_presence": 1,
+          "whole_edge_corridor": null
+        },
+        "hypothetical_only": true,
+        "limitations": [
+          "exact PR246 fixture",
+          "Distinct private identity; no confirmed NCN membership; no geometric identity transfer."
+        ],
+        "measurements": {
+          "common_local_eq": {
+            "projection": {
+              "formula": "spherical_eq",
+              "origin_evidence": "Explicit diagnostic convention: first source vertex; not recovered route metadata.",
+              "origin_lon_lat": [
+                1.4035412,
+                51.1968459
+              ],
+              "origin_status": "verified",
+              "radius_m": 6371008.8,
+              "units": {
+                "direction": "undirected degrees",
+                "distance": "metres"
+              }
+            },
+            "status": "diagnostic_only",
+            "values": {
+              "continuous_source_reference_hausdorff_m": 4.554073756893225,
+              "continuous_source_reference_min_distance_m": 0.0,
+              "finite_target_pairs": [
+                {
+                  "direction_deg": 4.767658541304294,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 223.93143245458256,
+                  "min_distance_m": 100.21178222373462,
+                  "source_edge": 0,
+                  "source_geometry_sha256": "7788dc65e0e46de97dc3201f75b0a564566487c26a4e9bd06bcb11e6415dfd7e",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 2.026872125352618,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 100.21178222373462,
+                  "min_distance_m": 61.11946109640511,
+                  "source_edge": 1,
+                  "source_geometry_sha256": "7788dc65e0e46de97dc3201f75b0a564566487c26a4e9bd06bcb11e6415dfd7e",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 3.066734494072224,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 61.11946109640511,
+                  "min_distance_m": 10.625765039750544,
+                  "source_edge": 2,
+                  "source_geometry_sha256": "7788dc65e0e46de97dc3201f75b0a564566487c26a4e9bd06bcb11e6415dfd7e",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 1.3160575165926753,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 11.679305257165922,
+                  "min_distance_m": 10.546404567117749,
+                  "source_edge": 3,
+                  "source_geometry_sha256": "7788dc65e0e46de97dc3201f75b0a564566487c26a4e9bd06bcb11e6415dfd7e",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.8187104853127134,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 12.852617250906935,
+                  "min_distance_m": 11.679305257165922,
+                  "source_edge": 4,
+                  "source_geometry_sha256": "7788dc65e0e46de97dc3201f75b0a564566487c26a4e9bd06bcb11e6415dfd7e",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.5259970100011302,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 13.592509633852606,
+                  "min_distance_m": 12.852617250906935,
+                  "source_edge": 5,
+                  "source_geometry_sha256": "7788dc65e0e46de97dc3201f75b0a564566487c26a4e9bd06bcb11e6415dfd7e",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.2843948898788205,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 13.592509633852606,
+                  "min_distance_m": 12.805913639277772,
+                  "source_edge": 6,
+                  "source_geometry_sha256": "7788dc65e0e46de97dc3201f75b0a564566487c26a4e9bd06bcb11e6415dfd7e",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.36887471720641407,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 13.395437885063965,
+                  "min_distance_m": 12.805913639277772,
+                  "source_edge": 7,
+                  "source_geometry_sha256": "7788dc65e0e46de97dc3201f75b0a564566487c26a4e9bd06bcb11e6415dfd7e",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.917046309358448,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 121.44659285785956,
+                  "min_distance_m": 12.853979122680256,
+                  "source_edge": 8,
+                  "source_geometry_sha256": "7788dc65e0e46de97dc3201f75b0a564566487c26a4e9bd06bcb11e6415dfd7e",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                }
+              ],
+              "reference_length_m": 841.0843199879823,
+              "source_length_m": 841.9571544068956,
+              "source_reference_endpoint_directed_direction_deg": 0.17975039073389437,
+              "source_reference_max_nearest_segment_undirected_direction_deg": 58.82987303755601,
+              "topology": null,
+              "whole_edge_approved_union": null
+            }
+          },
+          "native_admission_aeqd": {
+            "projection": {
+              "formula": "spherical_aeqd",
+              "origin_evidence": "exact PR246 fixture",
+              "origin_lon_lat": [
+                -1.3437774293553804,
+                54.4699892643778
+              ],
+              "origin_status": "verified",
+              "radius_m": 6371008.8,
+              "units": {
+                "direction": "undirected degrees",
+                "distance": "metres"
+              }
+            },
+            "status": "diagnostic_only",
+            "values": {
+              "continuous_source_reference_hausdorff_m": 4.556847928119533,
+              "continuous_source_reference_min_distance_m": 0.0,
+              "finite_target_pairs": [
+                {
+                  "direction_deg": 4.770714345829812,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 223.95278770287027,
+                  "min_distance_m": 100.21797417279379,
+                  "source_edge": 0,
+                  "source_geometry_sha256": "7788dc65e0e46de97dc3201f75b0a564566487c26a4e9bd06bcb11e6415dfd7e",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 2.0286011609656804,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 100.21797417279379,
+                  "min_distance_m": 61.12196693702696,
+                  "source_edge": 1,
+                  "source_geometry_sha256": "7788dc65e0e46de97dc3201f75b0a564566487c26a4e9bd06bcb11e6415dfd7e",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 3.068947009870476,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 61.12196693702696,
+                  "min_distance_m": 10.631779586804601,
+                  "source_edge": 2,
+                  "source_geometry_sha256": "7788dc65e0e46de97dc3201f75b0a564566487c26a4e9bd06bcb11e6415dfd7e",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 1.3173107126424848,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 11.687259187684674,
+                  "min_distance_m": 10.553059470846744,
+                  "source_edge": 3,
+                  "source_geometry_sha256": "7788dc65e0e46de97dc3201f75b0a564566487c26a4e9bd06bcb11e6415dfd7e",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.8195972716716895,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 12.86195131957129,
+                  "min_distance_m": 11.687259187684674,
+                  "source_edge": 4,
+                  "source_geometry_sha256": "7788dc65e0e46de97dc3201f75b0a564566487c26a4e9bd06bcb11e6415dfd7e",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.5265910998672194,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 13.602746655913817,
+                  "min_distance_m": 12.86195131957129,
+                  "source_edge": 5,
+                  "source_geometry_sha256": "7788dc65e0e46de97dc3201f75b0a564566487c26a4e9bd06bcb11e6415dfd7e",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.2844995286501195,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 13.602746655913817,
+                  "min_distance_m": 12.815794534094536,
+                  "source_edge": 6,
+                  "source_geometry_sha256": "7788dc65e0e46de97dc3201f75b0a564566487c26a4e9bd06bcb11e6415dfd7e",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.3689510173223122,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 13.405493748153587,
+                  "min_distance_m": 12.815794534094536,
+                  "source_edge": 7,
+                  "source_geometry_sha256": "7788dc65e0e46de97dc3201f75b0a564566487c26a4e9bd06bcb11e6415dfd7e",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.9180487775707065,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 121.46251115569216,
+                  "min_distance_m": 12.863486644431703,
+                  "source_edge": 8,
+                  "source_geometry_sha256": "7788dc65e0e46de97dc3201f75b0a564566487c26a4e9bd06bcb11e6415dfd7e",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                }
+              ],
+              "reference_length_m": 841.164864614083,
+              "source_length_m": 842.0397681124243,
+              "source_reference_endpoint_directed_direction_deg": 0.17983869564739893,
+              "source_reference_max_nearest_segment_undirected_direction_deg": 58.83018636777063,
+              "topology": null,
+              "whole_edge_approved_union": null
+            }
+          },
+          "native_correspondence_eq": {
+            "projection": {
+              "formula": "spherical_eq",
+              "origin_evidence": "exact PR246 fixture",
+              "origin_lon_lat": [
+                -1.3437774293553804,
+                54.4699892643778
+              ],
+              "origin_status": "verified",
+              "radius_m": 6371008.8,
+              "units": {
+                "direction": "undirected degrees",
+                "distance": "metres"
+              }
+            },
+            "status": "diagnostic_only",
+            "values": {
+              "continuous_source_reference_hausdorff_m": 4.223621326526899,
+              "continuous_source_reference_min_distance_m": 0.0,
+              "finite_target_pairs": [
+                {
+                  "direction_deg": 4.423007260671389,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 223.85933360457753,
+                  "min_distance_m": 100.06148083517466,
+                  "source_edge": 0,
+                  "source_geometry_sha256": "7788dc65e0e46de97dc3201f75b0a564566487c26a4e9bd06bcb11e6415dfd7e",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 1.8809527677798172,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 100.06148083517466,
+                  "min_distance_m": 60.93693835837309,
+                  "source_edge": 1,
+                  "source_geometry_sha256": "7788dc65e0e46de97dc3201f75b0a564566487c26a4e9bd06bcb11e6415dfd7e",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 2.8455360268164656,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 60.93693835837309,
+                  "min_distance_m": 9.856627424140301,
+                  "source_edge": 2,
+                  "source_geometry_sha256": "7788dc65e0e46de97dc3201f75b0a564566487c26a4e9bd06bcb11e6415dfd7e",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 1.2214552033556676,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": [
+                    1.4095379622310933,
+                    11.476006994157002,
+                    0.0,
+                    10.064181640224568
+                  ],
+                  "finite_pair_present": true,
+                  "group": 0,
+                  "max_endpoint_distance_m": 10.836744954909825,
+                  "min_distance_m": 9.78319156257058,
+                  "source_edge": 3,
+                  "source_geometry_sha256": "7788dc65e0e46de97dc3201f75b0a564566487c26a4e9bd06bcb11e6415dfd7e",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.7599280686527843,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 11.925412692271408,
+                  "min_distance_m": 10.836744954909825,
+                  "source_edge": 4,
+                  "source_geometry_sha256": "7788dc65e0e46de97dc3201f75b0a564566487c26a4e9bd06bcb11e6415dfd7e",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.4882587644756894,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 12.61192827446079,
+                  "min_distance_m": 11.925412692271408,
+                  "source_edge": 5,
+                  "source_geometry_sha256": "7788dc65e0e46de97dc3201f75b0a564566487c26a4e9bd06bcb11e6415dfd7e",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.2640354477508298,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 12.61192827446079,
+                  "min_distance_m": 11.882078340089421,
+                  "source_edge": 6,
+                  "source_geometry_sha256": "7788dc65e0e46de97dc3201f75b0a564566487c26a4e9bd06bcb11e6415dfd7e",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.34242015510250684,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 12.429073538434535,
+                  "min_distance_m": 11.882078340089421,
+                  "source_edge": 7,
+                  "source_geometry_sha256": "7788dc65e0e46de97dc3201f75b0a564566487c26a4e9bd06bcb11e6415dfd7e",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                },
+                {
+                  "direction_deg": 0.8515198934926879,
+                  "direction_gate_pass": true,
+                  "finite_pair_local_stations_m": null,
+                  "finite_pair_present": false,
+                  "group": 0,
+                  "max_endpoint_distance_m": 121.44653461542144,
+                  "min_distance_m": 11.929214282405425,
+                  "source_edge": 8,
+                  "source_geometry_sha256": "7788dc65e0e46de97dc3201f75b0a564566487c26a4e9bd06bcb11e6415dfd7e",
+                  "target_geometry_sha256": "b1c54f440128f9505db5e57c2e24ac53ba6847cb8885947005042da7cea18f02",
+                  "target_index": 0,
+                  "target_key": null
+                }
+              ],
+              "reference_length_m": 840.7402256665177,
+              "source_length_m": 841.4926548476631,
+              "source_reference_endpoint_directed_direction_deg": 0.16680067893347483,
+              "source_reference_max_nearest_segment_undirected_direction_deg": 56.303948163766954,
+              "topology": null,
+              "whole_edge_approved_union": null
+            }
+          }
+        },
+        "origin_comparison_status": "verified"
+      },
+      "further_investigation": {
+        "blocks_ordinary_development_or_publication_review": false,
+        "reason": "Projection sensitivity or provenance limitation may guide a specific future case; no additional eligible interval demonstrated and no general blocker established.",
+        "supported": true
+      },
+      "geometry_sha256": {
+        "reference": "7788dc65e0e46de97dc3201f75b0a564566487c26a4e9bd06bcb11e6415dfd7e",
+        "source": "d87a1574fc5ac999e24d159cf00937531f9178481705bfa15d25923022196ecb",
+        "target_pairs": "5a816422652497a1c723b3cfc52263c2243584e21d9ccc60caf248af3d381feb"
+      },
+      "input_snapshot": {
+        "path": "docs/data-trials/ncn-projection-cases-20261030.json",
+        "sha256": "26a8b2aded983c65e7ba1c7fba1c3b04674604db64f8463908f9a19dfa5f0963"
+      },
+      "key": "deal-private-parallel",
+      "name": "Deal private parallel negative",
+      "operational_result": {
+        "record": {
+          "actual_admitted_source_present": false,
+          "admitted_vertex_ranges": null,
+          "compatibility": {
+            "attribution_eligibility": "not_assessed_no_entitlement",
+            "classification": "incompatible_or_unsupported_correspondence",
+            "mode_access": {
+              "reference": "incompatible",
+              "requested": "cycling",
+              "source": "unknown"
+            },
+            "route_identity": {
+              "evidence": "Distinct private feature; no confirmed route membership; no identity transfer.",
+              "requested": "NCN:1",
+              "status": "supported_bounded_membership"
+            }
+          },
+          "eligibility_note": "Distinct private identity; no confirmed NCN membership; no geometric identity transfer.",
+          "existing_binding_count": null,
+          "history_status": "unavailable"
+        },
+        "status": "preserved_pinned_record_not_new_admission_replay"
+      },
+      "restrictions": {
+        "deferred_masks": "Not replayed; no mask override permitted",
+        "identity_and_access": {
+          "reference_id": "77611523",
+          "reference_provider": "osm",
+          "reference_tags": {
+            "access": "private",
+            "highway": "residential",
+            "lanes": "1",
+            "maxspeed": "20 mph",
+            "name": "Wellington Parade",
+            "surface": "gravel"
+          },
+          "source_id": "4471747",
+          "source_memberships": [
+            "NCN:1"
+          ],
+          "source_provider": "osm"
+        },
+        "mode_access": {
+          "reference": "incompatible",
+          "requested": "cycling",
+          "source": "unknown"
+        },
+        "route_identity": {
+          "evidence": "Distinct private feature; no confirmed route membership; no identity transfer.",
+          "requested": "NCN:1",
+          "status": "supported_bounded_membership"
+        },
+        "source_offsets": "Unchanged; measurement stations must never replace stored offsets",
+        "topology": "No new topology clearance; preserved restrictions remain authoritative",
+        "whole_edge_policy": "Retained; finite pieces cannot extend admission"
+      },
+      "route": "NCN:1",
+      "source_feature": {
+        "reference_id": "77611523",
+        "reference_provider": "osm",
+        "reference_tags": {
+          "access": "private",
+          "highway": "residential",
+          "lanes": "1",
+          "maxspeed": "20 mph",
+          "name": "Wellington Parade",
+          "surface": "gravel"
+        },
+        "source_id": "4471747",
+        "source_memberships": [
+          "NCN:1"
+        ],
+        "source_provider": "osm"
+      }
+    }
+  ],
+  "input_snapshots_sha256": {
+    "docs/data-trials/ncn-projection-cases-20261030.json": "26a8b2aded983c65e7ba1c7fba1c3b04674604db64f8463908f9a19dfa5f0963",
+    "docs/data-trials/ncn1-deal-fixture-20261030.json": "bb7fa4420151218c053cda1e93b6a592323e2c85a724965985b211d9386c779c",
+    "tests/fixtures/ncn-binding-attainability/source-sections.json": "5e42cc0058ed71a4bead0ac9636e757e289f3aa1bc8e57b18be95bd31c57a91b",
+    "tests/fixtures/ncn-gap-seams/diagnostic-witnesses.json": "9b741fa37ef7f74e29269ed77de2d9d0068ed54744b18775b1a994b49a06612b",
+    "tests/fixtures/ncn-source-compatibility/controls.json": "113bf75bbe0d89f1fa64b65d732eee4e94e43dbb533b619c86d29c27a445244e"
+  },
+  "new_assessable_m": 0,
+  "new_completion_credit_m": 0,
+  "operational_changes": false,
+  "policy": "ncn-geometry-diagnostics-v1",
+  "predicates": {
+    "direction": "Finite target pairs: undirected planar segment angle. Source/reference: source segment midpoint nearest reference segment maximum undirected angle plus directed endpoint heading. Descriptive only; separate from topology/identity/access.",
+    "finite_pair": "Existing edge_interval: finite along-target clipping, perpendicular corridor <=10 m, undirected angle <=15 degrees, nonzero interval >1e-7 m.",
+    "source_reference": "Continuous planar Hausdorff and minimum distance; not sampled source-version classification.",
+    "whole_edge": "Necessary approved-union corridor only: Shapely buffer(10), outside length <=1e-5 m; not full admission."
+  },
+  "schema_version": 1
+}
