@@ -94,6 +94,20 @@ final class JourneyCorrectionUtils {
         return scope;
     }
 
+    static Set<String> legacyRoadIds(JSONObject journey) {
+        JSONObject corrections = journey.optJSONObject("journey_corrections");
+        return corrections == null ? Collections.emptySet() : scope(journey, corrections).legacyIds;
+    }
+
+    static boolean excludesLegacyRoadFeature(JSONObject journey, JSONObject feature) {
+        JSONObject properties = feature == null ? null : feature.optJSONObject("properties");
+        if (properties == null) return false;
+        Set<String> ids = legacyRoadIds(journey);
+        if (ids.isEmpty()) return false;
+        for (String id : roadIds(properties)) if (ids.contains(id)) return true;
+        return false;
+    }
+
     /** Retain only the road geometry and distance outside an explicit removal. */
     static JSONObject retainedRoadFeature(JSONObject journey, JSONObject feature) {
         if (journey == null || feature == null) return feature;

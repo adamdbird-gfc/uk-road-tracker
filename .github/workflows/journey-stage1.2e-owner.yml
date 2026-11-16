@@ -29,7 +29,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
-      - name: Verify lineage and restore the exact 288 packaged reference assets
+      - name: Verify lineage and restore the exact build 289 reference assets
         run: |
           set -euo pipefail
           git merge-base --is-ancestor c4ed7fc96cc36dab7437cf6c7272594e6432c5ea "$GITHUB_SHA"
