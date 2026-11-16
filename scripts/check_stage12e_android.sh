@@ -2,7 +2,7 @@
 set -euo pipefail
 
 package=com.roadprints.capture
-baseline="$RUNNER_TEMP/build288.apk"
+baseline="$RUNNER_TEMP/build289.apk"
 fixtures="$RUNNER_TEMP/stage12e-fixtures"
 log="$RUNNER_TEMP/stage12e-android.log"
 mkdir -p "$fixtures"
@@ -23,6 +23,10 @@ for i, mode in enumerate(("driving", "driving", "walking")):
         "route_geometry": geometry,
         "processing_result": {"geojson": {"type": "FeatureCollection", "features": [{"type": "Feature", "geometry": geometry}]}},
     }
+    if i == 0:
+        phantom = {"type": "LineString", "coordinates": [[0.374, 51.442], [0.3742, 51.442]]}
+        row["processing_result"]["geojson"]["features"].append({"type": "Feature", "geometry": phantom})
+        row["journey_corrections"] = {"removed_matched_segments": [1], "removed_road_ids": ["name:ordnance road"]}
     (root / f"journey_{journey_id}.json").write_text(json.dumps(row))
 (root / "roadprints_ncn_national_v2.xml").write_text('<map><boolean name="enabled" value="false"/><long name="revision" value="17"/><string name="activity">cycling</string></map>')
 (root / "roadprints_achievements_v1.xml").write_text('<map><string name="unlocked">{"test-award":{"level":1,"unlocked_at":1794744000000}}</string></map>')
@@ -41,8 +45,8 @@ for file in "$fixtures"/*.xml; do seed "shared_prefs/${file##*/}" "$file"; done
 
 adb install -r "$RUNNER_TEMP/$APK"
 adb shell dumpsys package "$package" > "$RUNNER_TEMP/installed-roadprints.txt"
-grep -F "versionCode=289 " "$RUNNER_TEMP/installed-roadprints.txt"
-grep -F "versionName=0.25.243" "$RUNNER_TEMP/installed-roadprints.txt"
+grep -F "versionCode=290 " "$RUNNER_TEMP/installed-roadprints.txt"
+grep -F "versionName=0.25.244" "$RUNNER_TEMP/installed-roadprints.txt"
 for file in "$fixtures"/journey_*.json; do verify "files/${file##*/}" "$file"; done
 for file in "$fixtures"/*.xml; do verify "shared_prefs/${file##*/}" "$file"; done
 
@@ -69,4 +73,4 @@ adb shell am start -W -n "$package/.OnboardingActivity" | grep -F "Status: ok"
 wait_log 'map_cache.*source=hit|map_local_roads.*calculated=0 reused=2 held=0 sections=1 lines=1 unique_mm=17603'
 wait_log 'map_render'
 
-printf '%s\n' 'Build 288 upgraded in place. Seeded archive and preferences were preserved. Cold and repeat Map showed one 17.603m section for two driving journeys.' | tee -a "$GITHUB_STEP_SUMMARY"
+printf '%s\n' 'Build 289 upgraded in place. Seeded archive and preferences were preserved. Cold and repeat Map showed one 17.603m section for two driving journeys.' | tee -a "$GITHUB_STEP_SUMMARY"

@@ -1104,6 +1104,7 @@ public class RoutePreviewView extends View {
     private void tapNearestRouteEdge(float tapX, float tapY) {
         int nearestIndex = -1;
         float nearestDistance = Float.MAX_VALUE;
+        RouteRemoval.Segment nearest = null;
         int edgeIndex = 0;
         for (JSONArray route : matchedSegments) {
             for (int index = 1; index < route.length(); index++, edgeIndex++) {
@@ -1113,6 +1114,7 @@ public class RoutePreviewView extends View {
                         && distance < nearestDistance) {
                     nearestDistance = distance;
                     nearestIndex = edgeIndex;
+                    nearest = RouteRemoval.segment(route.optJSONArray(index - 1), route.optJSONArray(index));
                 }
             }
         }
@@ -1121,19 +1123,19 @@ public class RoutePreviewView extends View {
         // too far from a matched edge instead of snapping to another line.
         if (nearestIndex < 0 || nearestDistance > dp(32) || routeEdgeTapListener == null) return;
 
-        // Select only truly coincident strokes. A narrow tolerance preserves the
-        // one-tap stacked-line removal without catching a neighbouring road below.
-        float stackTolerance = dp(4);
-        float stackLimit = nearestDistance + stackTolerance;
         Set<Integer> selected = new java.util.LinkedHashSet<>();
-        edgeIndex = 0;
-        for (JSONArray route : matchedSegments) {
-            for (int index = 1; index < route.length(); index++, edgeIndex++) {
-                float distance = editableEdgeDistance(route, index, tapX, tapY);
-                if (Float.isFinite(distance)
-                        && removedRouteEdges.contains(edgeIndex) == restoreRouteMode
-                        && distance <= stackLimit) {
-                    selected.add(edgeIndex);
+        selected.add(nearestIndex);
+        if (nearest != null) {
+            double scaleX = 111_195.08 * Math.cos(Math.toRadians(nearest.a().y()));
+            RouteRemoval.Segment target = RouteRemoval.metres(nearest, scaleX, 111_195.08);
+            edgeIndex = 0;
+            for (JSONArray route : matchedSegments) {
+                for (int index = 1; index < route.length(); index++, edgeIndex++) {
+                    if (edgeIndex == nearestIndex || removedRouteEdges.contains(edgeIndex) != restoreRouteMode
+                            || editableEdgeDistance(route, index, tapX, tapY) > nearestDistance + dp(4)) continue;
+                    RouteRemoval.Segment edge = RouteRemoval.segment(route.optJSONArray(index - 1), route.optJSONArray(index));
+                    if (edge != null && RouteRemoval.sameSection(target, RouteRemoval.metres(edge, scaleX, 111_195.08)))
+                        selected.add(edgeIndex);
                 }
             }
         }

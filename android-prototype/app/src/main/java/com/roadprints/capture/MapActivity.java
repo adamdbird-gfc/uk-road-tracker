@@ -1291,8 +1291,8 @@ public class MapActivity extends Activity {
         JSONArray features = geojson == null ? null : geojson.optJSONArray("features");
         if (features == null) return routes;
         for (int index = 0; index < features.length(); index++) {
-            JSONObject feature = features.optJSONObject(index);
-            if (JourneyCorrectionUtils.excludesRoadFeature(journey, feature)) continue;
+            JSONObject feature = JourneyCorrectionUtils.retainedRoadFeature(journey, features.optJSONObject(index));
+            if (feature == null) continue;
             JSONObject geometry = feature == null ? null : feature.optJSONObject("geometry");
             if (geometry == null) continue;
             String type = geometry.optString("type", "");
@@ -1721,9 +1721,8 @@ public class MapActivity extends Activity {
                     JSONArray features = roadFeaturesForTap(result);
                     if (features == null) return;
                     for (int i = 0; i < features.length(); i++) {
-                        JSONObject feature = features.optJSONObject(i);
-                        if (feature == null || JourneyCorrectionUtils.excludesRoadFeature(journey, feature))
-                            continue;
+                        JSONObject feature = JourneyCorrectionUtils.retainedRoadFeature(journey, features.optJSONObject(i));
+                        if (feature == null) continue;
                         JSONObject properties = feature.optJSONObject("properties");
                         if (properties == null) continue;
                         String rawRef = properties.optString("road_ref",
@@ -2338,8 +2337,8 @@ public class MapActivity extends Activity {
                 JSONObject collection=result.optJSONObject(keys[k]);
                 JSONArray features=collection==null?null:collection.optJSONArray("features");if(features==null)continue;
                 for(int f=0;f<features.length();f++) {
-                    JSONObject feature=features.optJSONObject(f);
-                    if(feature==null||JourneyCorrectionUtils.excludesRoadFeature(journey,feature))continue;
+                    JSONObject feature = JourneyCorrectionUtils.retainedRoadFeature(journey, features.optJSONObject(f));
+                    if (feature == null) continue;
                     for(JSONArray line:DiscoveryReplay.lines(feature.optJSONObject("geometry"))) {
                         JSONArray retained=new JSONArray();
                         for(int i=0;i<line.length();i++) {

@@ -1,4 +1,4 @@
-name: Roadprints Stage 1.2E owner APK
+name: Roadprints Build 290 owner APK
 on:
   push:
     branches: [codex/all-road-coverage-stage1-2e]
@@ -8,7 +8,7 @@ on:
 permissions:
   contents: write
 concurrency:
-  group: roadprints-stage1-2e-owner
+  group: roadprints-build-290-owner
   cancel-in-progress: false
 jobs:
   owner-apk:
@@ -18,10 +18,10 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: adamdbird-gfc/uk-road-tracker
-      BASELINE_SHA: a10a9619204e89ab70d1424091217f5b12f11ae76fa72a118041f7b2da6c3248
+      BASELINE_SHA: 8c689384a5ae96ee3ddd1f8574af2f283e9a7d7300feaec0de0623b1edafc066
       CERT_SHA256: 5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031
-      APK: Roadprints-0.25.243-289.apk
-      TAG: roadprints-0.25.243-289-stage1.2e
+      APK: Roadprints-0.25.244-290.apk
+      TAG: roadprints-0.25.244-290
       JAVA_TOOL_OPTIONS: -XX:TieredStopAtLevel=1
       NCN_TEST_DATABASE: ${{ github.workspace }}/.cache/ncn/catalogue.db
       MILEPOST_CANDIDATE_CATALOGUE: ${{ github.workspace }}/reference-data/millennium-mileposts/revision-1/catalogue.jsonl
@@ -32,10 +32,10 @@ jobs:
       - name: Verify lineage and restore the exact 288 packaged reference assets
         run: |
           set -euo pipefail
-          git merge-base --is-ancestor 7d54df3f42cbfee2d8dd1ed3327f3e33e9904cd8 "$GITHUB_SHA"
-          git merge-base --is-ancestor 31e6bdd64c1aaa3393d959bcfccdf7772c6b0b32 "$GITHUB_SHA"
-          baseline="$RUNNER_TEMP/build288.apk"
-          gh release download roadprints-0.25.242-288-journey-stage1.1 --pattern Roadprints-0.25.242-288.apk --output "$baseline"
+          git merge-base --is-ancestor c4ed7fc96cc36dab7437cf6c7272594e6432c5ea "$GITHUB_SHA"
+          git merge-base --is-ancestor ab02f988fe2594d0463a0669d929ad2934d43c19 "$GITHUB_SHA"
+          baseline="$RUNNER_TEMP/build289.apk"
+          gh release download roadprints-0.25.243-289-stage1.2e --pattern Roadprints-0.25.243-289.apk --output "$baseline"
           echo "$BASELINE_SHA  $baseline" | sha256sum --check
           assets=android-prototype/app/src/main/assets
           for asset in historic-counties/boundaries.bin railway/national.json railway/national.sqlite.gzip; do
@@ -60,10 +60,11 @@ jobs:
           python -m unittest discover -s scripts -p 'test_audit_native_road_coverage.py'
           if [[ ! -s "$NCN_TEST_DATABASE" ]]; then unset NCN_TEST_DATABASE; fi
           gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false \
-            :app:testDebugUnitTest --tests '*LocalRoadCoverageTest' --tests '*Map*Test' \
+            :app:testDebugUnitTest --tests '*LocalRoadCoverageTest' --tests '*JourneyCorrectionUtilsTest' --tests '*Map*Test' \
             --tests '*JourneyStore*Test' --tests '*CaptureRecoveryIntegrationTest' \
             --tests '*MotorwayProgressCalculatorTest' --tests '*ARoadProgressCalculatorTest' \
-            --tests '*NcnAndroidTest' --tests '*NcnPresentationTest' --tests '*MultimodalFerryTest'
+            --tests '*NcnAndroidTest' --tests '*NcnPresentationTest' --tests '*MultimodalFerryTest' \
+            --tests '*Milepost*Test' --tests '*Railway*Test' --tests '*JourneyIntelligence*Test'
       - name: Assemble with the established owner signing certificate
         env:
           ROADPRINTS_DEBUG_KEYSTORE_B64: ${{ secrets.ROADPRINTS_DEBUG_KEYSTORE_B64 }}
@@ -87,14 +88,14 @@ jobs:
         run: |
           set -euo pipefail
           signer=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -n 1)
-          "$signer" verify --print-certs "$RUNNER_TEMP/build288.apk" | grep -F "certificate SHA-256 digest: $CERT_SHA256"
+          "$signer" verify --print-certs "$RUNNER_TEMP/build289.apk" | grep -F "certificate SHA-256 digest: $CERT_SHA256"
           "$signer" verify --print-certs "$RUNNER_TEMP/$APK" | grep -F "certificate SHA-256 digest: $CERT_SHA256"
-          "${signer%/*}/aapt" dump badging "$RUNNER_TEMP/build288.apk" > "$RUNNER_TEMP/baseline-package.txt"
+          "${signer%/*}/aapt" dump badging "$RUNNER_TEMP/build289.apk" > "$RUNNER_TEMP/baseline-package.txt"
           "${signer%/*}/aapt" dump badging "$RUNNER_TEMP/$APK" > "$RUNNER_TEMP/package.txt"
-          grep -F "package: name='com.roadprints.capture' versionCode='288' versionName='0.25.242'" "$RUNNER_TEMP/baseline-package.txt"
-          grep -F "package: name='com.roadprints.capture' versionCode='289' versionName='0.25.243'" "$RUNNER_TEMP/package.txt"
+          grep -F "package: name='com.roadprints.capture' versionCode='289' versionName='0.25.243'" "$RUNNER_TEMP/baseline-package.txt"
+          grep -F "package: name='com.roadprints.capture' versionCode='290' versionName='0.25.244'" "$RUNNER_TEMP/package.txt"
           python scripts/verify_milepost_apk.py "$RUNNER_TEMP/$APK"
-          python - "$RUNNER_TEMP/$APK" "$RUNNER_TEMP/build288.apk" <<'PY'
+          python - "$RUNNER_TEMP/$APK" "$RUNNER_TEMP/build289.apk" <<'PY'
           import hashlib, sys, zipfile
           with zipfile.ZipFile(sys.argv[1]) as update, zipfile.ZipFile(sys.argv[2]) as baseline:
               for old in baseline.infolist():
@@ -111,7 +112,7 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-      - name: Upgrade build 288 and exercise the regular Map on Android
+      - name: Upgrade build 289 and exercise the regular Map on Android
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
@@ -134,8 +135,8 @@ jobs:
           set -euo pipefail
           apk="$RUNNER_TEMP/$APK"
           gh release create "$TAG" "$apk" --target "$GITHUB_SHA" --prerelease --latest=false \
-            --title "Roadprints 0.25.243 (289) • Gravesend road coverage" \
-            --notes "Owner test. Install over signed build 288. Gravesend’s locally supported streets appear as cumulative coverage in the normal Map. Accuracy in everyday driving and Pixel 10 performance are pending owner testing. Source: $GITHUB_SHA. APK SHA-256: $APK_SHA256."
+            --title "Roadprints 0.25.244 (290) • Precise road coverage corrections" \
+            --notes "Owner test. Install over signed build 289. Existing native driving journeys are reassessed with section-scoped removals and the same evidence thresholds. Pixel 10 acceptance is pending. Source: $GITHUB_SHA. APK SHA-256: $APK_SHA256."
           test "$(gh api "repos/$GH_REPO/git/ref/tags/$TAG" --jq .object.sha)" = "$GITHUB_SHA"
           asset_url=$(gh api "repos/$GH_REPO/releases/tags/$TAG" | jq -er --arg apk "$APK" \
             'select(.draft == false and .prerelease == true) | .assets[] | select(.name == $apk and .state == "uploaded") | .browser_download_url')

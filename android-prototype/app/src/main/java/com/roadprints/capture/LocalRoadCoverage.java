@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 
 /** Read-only journey attribution and disposable projection for the overview Map. */
@@ -90,16 +91,15 @@ final class LocalRoadCoverage implements AutoCloseable {
             throws Exception {
         long start = Instant.parse(started).toEpochMilli(), end = Instant.parse(ended).toEpochMilli();
         Map<Edge, List<Interval>> spans = new LinkedHashMap<>();
-        JSONArray empty = new JSONArray();
+        JSONObject corrections = null;
+        JSONArray output = new JSONArray();
         int stored = 0;
-        try (JsonReader reader = new JsonReader(new InputStreamReader(
-                new java.io.FileInputStream(source), StandardCharsets.UTF_8))) {
+        try (JsonReader reader = journeyReader(source)) {
             reader.beginObject();
             while (reader.hasNext()) {
                 String field = reader.nextName();
                 if ("journey_corrections".equals(field) && reader.peek() == JsonToken.BEGIN_OBJECT) {
-                    // Edits are authoritative. The original samples have no mapping to removed edit indices.
-                    if (hasRemovedRoadEvidence(reader)) return new JSONObject().put("spans", empty);
+                    corrections = (JSONObject) JourneyStore.readEvidenceValue(reader);
                 } else if ("raw_capture_samples".equals(field) && reader.peek() == JsonToken.BEGIN_ARRAY) {
                     reader.beginArray();
                     Fix previous = null;
@@ -108,7 +108,8 @@ final class LocalRoadCoverage implements AutoCloseable {
                         Fix fix = readFix(reader, network, start, end);
                         for (Span span : network.observe(previous, fix)) {
                             spans.computeIfAbsent(span.edge(), ignored -> new ArrayList<>()).add(span.interval());
-                            if (++stored > MAX_INTERVALS_PER_JOURNEY * 8) return new JSONObject().put("spans", empty);
+                            if (++stored > MAX_INTERVALS_PER_JOURNEY * 8)
+                                return new JSONObject().put("spans", output);
                         }
                         previous = fix;
                     }
@@ -117,29 +118,45 @@ final class LocalRoadCoverage implements AutoCloseable {
             }
             reader.endObject();
         }
-        JSONArray output = new JSONArray();
+
+        // Original observations keep their own evidence gates. The matched route
+        // supplies the location of explicit exclusions only.
+        if (!spans.isEmpty() && corrections != null) applyRemovals(network, source, corrections, spans);
         for (Map.Entry<Edge, List<Interval>> section : spans.entrySet()) {
             for (Interval range : union(section.getValue())) {
-                if (output.length() == MAX_INTERVALS_PER_JOURNEY) return new JSONObject().put("spans", empty);
+                if (output.length() == MAX_INTERVALS_PER_JOURNEY)
+                    return new JSONObject().put("spans", new JSONArray());
                 output.put(new JSONArray().put(section.getKey().id()).put(range.start()).put(range.end()));
             }
         }
         return new JSONObject().put("spans", output);
     }
 
-    private static boolean hasRemovedRoadEvidence(JsonReader reader) throws Exception {
-        reader.beginObject();
-        while (reader.hasNext()) {
-            String name = reader.nextName();
-            if ((name.equals("removed_matched_segments") || name.equals("removed_road_ids"))
-                    && reader.peek() == JsonToken.BEGIN_ARRAY) {
-                reader.beginArray();
-                if (reader.hasNext()) return true;
-                reader.endArray();
-            } else reader.skipValue();
+    private static JsonReader journeyReader(File source) throws Exception {
+        return new JsonReader(new InputStreamReader(new java.io.FileInputStream(source), StandardCharsets.UTF_8));
+    }
+
+    private static void applyRemovals(LocalRoadNetwork network, File source, JSONObject corrections,
+                                      Map<Edge, List<Interval>> spans) throws Exception {
+        Set<Integer> indices = JourneyCorrectionUtils.removedEdgeIndices(corrections);
+        Set<String> legacyIds = JourneyCorrectionUtils.savedRoadIds(corrections);
+        JSONArray savedIndices = corrections.optJSONArray("removed_matched_segments");
+        boolean hasIndices = savedIndices != null && savedIndices.length() > 0;
+        if (!hasIndices && legacyIds.isEmpty()) return;
+        List<RouteRemoval.Segment> selected = hasIndices ? RouteRemoval.selected(
+                JourneyMapEditorActivity.matchedRouteSegments(JourneyStore.matchedResult(source)), indices) : Collections.emptyList();
+        if (!hasIndices || selected.size() != indices.size() || indices.isEmpty()) {
+            // ID-only legacy records and corrupt indices have no physical scope.
+            // Keep other named roads when legacy identifiers can bound the uncertainty.
+            spans.keySet().removeIf(edge -> legacyIds.isEmpty() || edge.label.isBlank()
+                    || legacyIds.contains("name:" + edge.label.trim().toLowerCase(java.util.Locale.ROOT).replaceAll("\\s+", " "))
+                    || legacyIds.contains("ref:" + edge.label.replaceAll("\\s+", "").toUpperCase(java.util.Locale.ROOT)));
         }
-        reader.endObject();
-        return false;
+        for (RouteRemoval.Segment geometry : selected) {
+            if (Thread.currentThread().isInterrupted()) throw new CancellationException();
+            network.applyRemoval(new RouteRemoval.Segment(network.point(geometry.a().x(), geometry.a().y()),
+                    network.point(geometry.b().x(), geometry.b().y())), spans);
+        }
     }
 
     private static Fix readFix(JsonReader reader, LocalRoadNetwork network, long start, long end) throws Exception {

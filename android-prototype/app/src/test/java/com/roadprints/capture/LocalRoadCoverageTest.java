@@ -165,6 +165,55 @@ public class LocalRoadCoverageTest {
         screen.finish();
     }
 
+    @Test public void editedCaptureKeepsDistantCoverageAndRestorationRecoversRemovedInterval() throws Exception {
+        LocalRoadNetwork network = new LocalRoadNetwork(0, 0, .02, .02);
+        Edge first = new Edge(1, 101, 102, "First Road", new Point(50, 50), new Point(90, 50), 0, true);
+        Edge second = new Edge(2, 201, 202, "Second Road", new Point(200, 50), new Point(240, 50), 0, true);
+        network.add(first);
+        network.add(second);
+        JSONArray firstRoute = new JSONArray().put(network.coordinates(first.at(.25)))
+                .put(network.coordinates(first.at(.75)));
+        JSONArray samples = new JSONArray();
+        Point[] points = {first.at(.25), first.at(.75), second.at(.25), second.at(.75)};
+        for (int i = 0; i < points.length; i++) {
+            JSONArray xy = network.coordinates(points[i]);
+            samples.put(new JSONArray().put(xy.getDouble(0)).put(xy.getDouble(1))
+                    .put(2).put(TIME + i * 2000L).put(10).put("gps"));
+        }
+        JSONObject route = new JSONObject().put("type", "LineString").put("coordinates", firstRoute);
+        JSONObject row = new JSONObject().put("raw_capture_samples", samples)
+                .put("processing_result", new JSONObject().put("geojson", new JSONObject()
+                        .put("features", new JSONArray().put(new JSONObject().put("geometry", route)))))
+                .put("journey_corrections", new JSONObject().put("removed_matched_segments", new JSONArray().put(0))
+                        .put("removed_road_ids", new JSONArray().put("name:second road")));
+        java.nio.file.Path file = Files.createTempFile("local-road-edits", ".json");
+        try {
+            Files.writeString(file, row.toString());
+            JSONArray edited = LocalRoadCoverage.readContribution(network, file.toFile(), START, END).getJSONArray("spans");
+            assertEquals(1, edited.length());
+            assertEquals(second.id(), edited.getJSONArray(0).getString(0));
+            assertEquals(20000, edited.getJSONArray(0).getInt(2) - edited.getJSONArray(0).getInt(1));
+
+            row.remove("journey_corrections");
+            Files.writeString(file, row.toString());
+            JSONArray restored = LocalRoadCoverage.readContribution(network, file.toFile(), START, END).getJSONArray("spans");
+            assertEquals(2, restored.length());
+            assertEquals(first.id(), restored.getJSONArray(0).getString(0));
+        } finally {
+            Files.deleteIfExists(file);
+        }
+    }
+
+    @Test public void unresolvedRemovalHoldsOnlyNearbyObservationSpans() {
+        LocalRoadNetwork network = new LocalRoadNetwork(0, 0, .02, .02);
+        Edge edge = new Edge(1, 101, 102, "Road", new Point(30, 50), new Point(220, 50), 0, true);
+        network.add(edge);
+        Map<Edge, List<Interval>> spans = new LinkedHashMap<>();
+        spans.put(edge, new java.util.ArrayList<>(List.of(new Interval(10000, 20000), new Interval(95000, 110000))));
+        network.applyRemoval(new RouteRemoval.Segment(new Point(45, 54), new Point(49, 54)), spans);
+        assertEquals(List.of(new Interval(95000, 110000)), spans.get(edge));
+    }
+
     private static LocalRoadCoverage.Section section(LocalRoadNetwork network, Edge edge,
             Map<String, List<Interval>> history) throws Exception {
         return new LocalRoadCoverage.Section(edge.id(), edge.label, edge.mm,
@@ -202,6 +251,14 @@ public class LocalRoadCoverageTest {
                 .put("source", new JSONObject().put("type", "android_activity_capture"))
                 .put("raw_capture_samples", samples).put("route_geometry", geometry)
                 .put("processing_result", new JSONObject().put("geojson", matched));
+        if ("drive-one".equals(id)) {
+            JSONObject phantom = new JSONObject().put("type", "LineString").put("coordinates",
+                    new JSONArray().put(network.coordinates(new Point(-400, 100)))
+                            .put(network.coordinates(new Point(-380, 100))));
+            matched.getJSONArray("features").put(new JSONObject().put("geometry", phantom));
+            row.put("journey_corrections", new JSONObject().put("removed_matched_segments", new JSONArray().put(1))
+                    .put("removed_road_ids", new JSONArray().put("name:" + edge.label.toLowerCase(java.util.Locale.ROOT))));
+        }
         Files.write(JourneyStore.archiveFile(context, id).toPath(), row.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 }

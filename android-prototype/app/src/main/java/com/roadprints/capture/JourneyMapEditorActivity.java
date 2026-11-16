@@ -371,18 +371,17 @@ public class JourneyMapEditorActivity extends Activity {
         }
         if (JourneyCorrectionUtils.hasNewRemovals(removedEdges, originalRemovedEdges)) {
             StringBuilder message = new StringBuilder();
-            if (roadRecords.isEmpty()) {
-                message.append(removedEdges.size()).append(" matched route section")
-                        .append(removedEdges.size() == 1 ? "" : "s")
-                        .append(" will be removed. No named road records could be associated with them.");
-            } else {
-                message.append("Road records for these roads will be removed from this journey and its map, journey summaries, progress and achievements:");
+            message.append(removedEdges.size()).append(" matched route section")
+                    .append(removedEdges.size() == 1 ? "" : "s")
+                    .append(" will be removed. You can restore these sections in the route editor.");
+            if (!roadRecords.isEmpty()) {
+                message.append(" Road credit changes where the selected sections overlap these roads:");
                 for (JSONObject record : roadRecords) {
                     message.append("\n\n• ").append(record.optString("label", "Road"));
                 }
             }
-            showStyledConfirmation("ROAD RECORDS", "Confirm road record removal",
-                    message.toString(), "CANCEL", "REMOVE RECORDS",
+            showStyledConfirmation("ROUTE CORRECTION", "Remove these route sections?",
+                    message.toString(), "CANCEL", "REMOVE SECTIONS",
                     () -> persistChanges(roadRecords));
             return;
         }

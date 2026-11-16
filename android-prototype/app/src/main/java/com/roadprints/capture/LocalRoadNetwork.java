@@ -20,7 +20,7 @@ import java.util.Set;
 final class LocalRoadNetwork {
     static final String ASSET = "gravesend-tagged-v1.json";
     static final String SHA256 = "9c3ce6b58789df13f2019b69be50cb95aa56eacdf612b1606973cfaf08fe4aba";
-    static final String CACHE_VERSION = "local-roads-v1-" + SHA256.substring(0, 16);
+    static final String CACHE_VERSION = "local-roads-v2-" + SHA256.substring(0, 16);
     private static final double LAT_SCALE = 111_195.08;
     private static final double HEADING = Math.cos(Math.toRadians(20));
     private static final double GRID = 40;
@@ -204,6 +204,44 @@ final class LocalRoadNetwork {
         }
         if (Math.max(matches.get(0).start, 1 - previous.end) * length > SEAM) return Collections.emptyList();
         return spans;
+    }
+
+    /** Clip a proven physical match, or hold just the nearby spans when identity is uncertain. */
+    void applyRemoval(RouteRemoval.Segment removed, Map<Edge, List<Interval>> spans) {
+        Edge resolved = null;
+        double[] clip = null;
+        for (Edge edge : nearby(removed.a(), removed.b(), 2)) {
+            double[] overlap = RouteRemoval.overlap(new RouteRemoval.Segment(edge.a, edge.b), removed);
+            if (overlap == null || (overlap[1] - overlap[0]) * edge.length + .25 < removed.length()) continue;
+            if (resolved != null) {
+                resolved = null;
+                break;
+            }
+            resolved = edge;
+            clip = overlap;
+        }
+        if (resolved == null) {
+            for (Map.Entry<Edge, List<Interval>> section : spans.entrySet()) {
+                Edge edge = section.getKey();
+                section.getValue().removeIf(interval -> RouteRemoval.near(removed,
+                        new RouteRemoval.Segment(edge.at(interval.start / (double) edge.mm),
+                                edge.at(interval.end / (double) edge.mm)), RADIUS + 5));
+            }
+            return;
+        }
+        List<Interval> intervals = spans.get(resolved);
+        if (intervals == null) return;
+        int low = (int) Math.floor(clip[0] * resolved.mm), high = (int) Math.ceil(clip[1] * resolved.mm);
+        List<Interval> retained = new ArrayList<>();
+        for (Interval interval : intervals) {
+            if (interval.end <= low || interval.start >= high) {
+                retained.add(interval);
+            } else {
+                if (interval.start < low) retained.add(new Interval(interval.start, low));
+                if (interval.end > high) retained.add(new Interval(high, interval.end));
+            }
+        }
+        spans.put(resolved, retained);
     }
 
     /**

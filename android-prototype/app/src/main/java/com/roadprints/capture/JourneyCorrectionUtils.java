@@ -15,8 +15,7 @@ import java.util.WeakHashMap;
 
 /** Shared handling for user-removed route and road evidence. */
 final class JourneyCorrectionUtils {
-    private static final double ROAD_ASSOCIATION_METRES = 35.0;
-    private static final Map<JSONObject, Set<String>> REMOVED_ROAD_CACHE = new WeakHashMap<>();
+    private static final Map<JSONObject, RemovalScope> REMOVAL_CACHE = new WeakHashMap<>();
 
     private JourneyCorrectionUtils() {}
 
@@ -56,106 +55,157 @@ final class JourneyCorrectionUtils {
         return keys;
     }
 
-    static Set<String> removedRoadIds(JSONObject journey) {
-        if (journey == null) return Collections.emptySet();
-        synchronized (REMOVED_ROAD_CACHE) {
-            Set<String> cached = REMOVED_ROAD_CACHE.get(journey);
-            if (cached != null) return cached;
-        }
-        Set<String> output = new LinkedHashSet<>();
-        JSONObject corrections = journey == null ? null : journey.optJSONObject("journey_corrections");
-        JSONArray values = corrections == null ? null : corrections.optJSONArray("removed_road_ids");
+    static Set<Integer> removedEdgeIndices(JSONObject corrections) {
+        Set<Integer> result = new LinkedHashSet<>();
+        JSONArray values = corrections == null ? null : corrections.optJSONArray("removed_matched_segments");
         if (values != null) {
-            for (int index = 0; index < values.length(); index++) {
-                String id = values.optString(index, "").trim();
-                if (!id.isEmpty()) output.add(id);
-            }
+            for (int i = 0; i < values.length(); i++) result.add(values.optInt(i, -1));
         }
-        if (!output.isEmpty() || journey == null || corrections == null) return output;
-
-        // Older saved edits contain only route-edge indices. Derive the associated
-        // road names on read so those corrections update the other screens too.
-        JSONArray removedValues = corrections.optJSONArray("removed_matched_segments");
-        if (removedValues == null || removedValues.length() == 0) return output;
-        Set<Integer> removedEdges = new LinkedHashSet<>();
-        for (int index = 0; index < removedValues.length(); index++) {
-            int edge = removedValues.optInt(index, -1);
-            if (edge >= 0) removedEdges.add(edge);
-        }
-        JSONObject result = journey.optJSONObject("processing_result");
-        JSONObject geojson = result == null ? null : result.optJSONObject("geojson");
-        JSONArray features = geojson == null ? null : geojson.optJSONArray("features");
-        List<JSONArray> routes = new ArrayList<>();
-        if (features != null) {
-            for (int index = 0; index < features.length(); index++) {
-                JSONObject feature = features.optJSONObject(index);
-                JSONObject geometry = feature == null ? null : feature.optJSONObject("geometry");
-                if (geometry == null) continue;
-                String type = geometry.optString("type", "");
-                JSONArray coordinates = geometry.optJSONArray("coordinates");
-                if ("LineString".equals(type) && coordinates != null && coordinates.length() >= 2) {
-                    routes.add(coordinates);
-                } else if ("MultiLineString".equals(type) && coordinates != null) {
-                    for (int line = 0; line < coordinates.length(); line++) {
-                        JSONArray segment = coordinates.optJSONArray(line);
-                        if (segment != null && segment.length() >= 2) routes.add(segment);
-                    }
-                }
-            }
-        }
-        for (JSONObject record : removedRoadRecords(journey, routes, removedEdges)) {
-            String id = record.optString("id", "");
-            if (!id.isEmpty()) output.add(id);
-        }
-        Set<String> immutableResult = Collections.unmodifiableSet(output);
-        synchronized (REMOVED_ROAD_CACHE) {
-            REMOVED_ROAD_CACHE.put(journey, immutableResult);
-        }
-        return immutableResult;
+        return result;
     }
 
-    static boolean excludesRoadFeature(JSONObject journey, JSONObject feature) {
-        Set<String> removed = removedRoadIds(journey);
-        if (removed.isEmpty()) return false;
-        JSONObject properties = feature == null ? null : feature.optJSONObject("properties");
-        if (properties == null) return false;
-        for (String id : roadIds(properties)) if (removed.contains(id)) return true;
-        return false;
+    static Set<String> savedRoadIds(JSONObject corrections) {
+        Set<String> result = new LinkedHashSet<>();
+        JSONArray values = corrections == null ? null : corrections.optJSONArray("removed_road_ids");
+        if (values != null) {
+            for (int i = 0; i < values.length(); i++) {
+                String id = values.optString(i, "").trim();
+                if (!id.isEmpty()) result.add(id);
+            }
+        }
+        return result;
+    }
+
+    private record RemovalScope(List<RouteRemoval.Segment> segments, Set<String> legacyIds) {}
+    private record TrimmedLine(List<JSONArray> fragments, double original, double removed) {}
+
+    private static RemovalScope scope(JSONObject journey, JSONObject corrections) {
+        synchronized (REMOVAL_CACHE) {
+            RemovalScope known = REMOVAL_CACHE.get(corrections);
+            if (known != null) return known;
+        }
+        Set<Integer> indices = removedEdgeIndices(corrections);
+        List<RouteRemoval.Segment> selected = indices.isEmpty() ? Collections.emptyList()
+                : RouteRemoval.selected(JourneyMapEditorActivity.matchedRouteSegments(
+                        journey.optJSONObject("processing_result")), indices);
+        boolean located = !selected.isEmpty() && selected.size() == indices.size();
+        RemovalScope scope = new RemovalScope(selected, located ? Collections.emptySet() : savedRoadIds(corrections));
+        synchronized (REMOVAL_CACHE) { REMOVAL_CACHE.put(corrections, scope); }
+        return scope;
+    }
+
+    /** Retain only the road geometry and distance outside an explicit removal. */
+    static JSONObject retainedRoadFeature(JSONObject journey, JSONObject feature) {
+        if (journey == null || feature == null) return feature;
+        JSONObject corrections = journey.optJSONObject("journey_corrections");
+        if (corrections == null) return feature;
+        RemovalScope scope = scope(journey, corrections);
+        JSONObject properties = feature.optJSONObject("properties");
+        if (properties != null && !scope.legacyIds.isEmpty()) {
+            for (String id : roadIds(properties)) if (scope.legacyIds.contains(id)) return null;
+        }
+        if (scope.segments.isEmpty()) return feature;
+        List<JSONArray> lines = DiscoveryReplay.lines(feature.optJSONObject("geometry"));
+        List<JSONArray> retained = new ArrayList<>();
+        double original = 0, removed = 0;
+        for (JSONArray line : lines) {
+            TrimmedLine trimmed = trimLine(line, scope.segments);
+            retained.addAll(trimmed.fragments);
+            original += trimmed.original;
+            removed += trimmed.removed;
+        }
+        if (removed <= 0) return feature;
+        if (retained.isEmpty()) return null;
+        try {
+            JSONObject clipped = copy(feature);
+            JSONObject geometry = copy(feature.getJSONObject("geometry"));
+            geometry.put("type", retained.size() == 1 ? "LineString" : "MultiLineString");
+            geometry.put("coordinates", retained.size() == 1 ? retained.get(0) : new JSONArray(retained));
+            clipped.put("geometry", geometry);
+            if (properties != null && properties.has("distance_m")) {
+                JSONObject adjusted = copy(properties);
+                adjusted.put("distance_m", properties.optDouble("distance_m", 0) * Math.max(0, 1 - removed / original));
+                clipped.put("properties", adjusted);
+            }
+            return clipped;
+        } catch (org.json.JSONException invalid) {
+            return null;
+        }
+    }
+
+    private static JSONObject copy(JSONObject source) throws org.json.JSONException {
+        JSONObject result = new JSONObject();
+        for (java.util.Iterator<String> keys = source.keys(); keys.hasNext();) {
+            String key = keys.next();
+            result.put(key, source.get(key));
+        }
+        return result;
+    }
+
+    private static TrimmedLine trimLine(JSONArray line, List<RouteRemoval.Segment> removals) {
+        List<JSONArray> fragments = new ArrayList<>();
+        JSONArray path = null;
+        double original = 0, removed = 0;
+        for (int i = 1; i < line.length(); i++) {
+            JSONArray a = line.optJSONArray(i - 1), b = line.optJSONArray(i);
+            RouteRemoval.Segment edge = RouteRemoval.segment(a, b);
+            if (edge == null) {
+                path = null;
+                continue;
+            }
+            double scaleX = 111_195.08 * Math.cos(Math.toRadians(edge.a().y()));
+            RouteRemoval.Segment metres = RouteRemoval.metres(edge, scaleX, 111_195.08);
+            double length = metres.length();
+            if (length == 0) continue;
+            original += length;
+            List<double[]> cuts = new ArrayList<>();
+            for (RouteRemoval.Segment removal : removals) {
+                double[] cut = RouteRemoval.overlap(metres, RouteRemoval.metres(removal, scaleX, 111_195.08));
+                if (cut != null) cuts.add(cut);
+            }
+            cuts.sort(java.util.Comparator.comparingDouble(cut -> cut[0]));
+            double cursor = 0;
+            for (double[] cut : cuts) {
+                if (cut[1] <= cursor) continue;
+                if (cut[0] > cursor + 1e-8) appendFragment(fragments, path, edge, cursor, cut[0]);
+                path = null;
+                removed += (cut[1] - Math.max(cursor, cut[0])) * length;
+                cursor = cut[1];
+            }
+            if (cursor < 1 - 1e-8) path = appendFragment(fragments, path, edge, cursor, 1);
+        }
+        return new TrimmedLine(fragments, original, removed);
+    }
+
+    private static JSONArray appendFragment(List<JSONArray> fragments, JSONArray path,
+                                            RouteRemoval.Segment edge, double start, double end) {
+        if (path == null) {
+            path = new JSONArray().put(RouteRemoval.coordinate(edge, start));
+            fragments.add(path);
+        }
+        path.put(RouteRemoval.coordinate(edge, end));
+        return path;
     }
 
     static List<JSONObject> removedRoadRecords(JSONObject journey, List<JSONArray> routes,
                                                 Set<Integer> removedEdges) {
+        List<JSONObject> records = new ArrayList<>();
+        if (removedEdges.isEmpty()) return records;
+        List<RouteRemoval.Segment> selected = RouteRemoval.selected(routes, removedEdges);
         Map<String, String> found = new LinkedHashMap<>();
-        if (journey == null || routes == null || removedEdges == null || removedEdges.isEmpty()) {
-            return new ArrayList<>();
-        }
-        List<JSONObject> features = roadFeatures(journey);
-        int edge = 0;
-        for (JSONArray route : routes) {
-            if (route == null) continue;
-            for (int point = 1; point < route.length(); point++, edge++) {
-                if (!removedEdges.contains(edge)) continue;
-                JSONArray a = route.optJSONArray(point - 1);
-                JSONArray b = route.optJSONArray(point);
-                if (a == null || b == null || a.length() < 2 || b.length() < 2) continue;
-                double lon = (a.optDouble(0) + b.optDouble(0)) / 2.0;
-                double lat = (a.optDouble(1) + b.optDouble(1)) / 2.0;
-                for (JSONObject feature : features) {
-                    JSONObject geometry = feature.optJSONObject("geometry");
-                    if (geometry == null || distanceToGeometryMetres(lon, lat, geometry)
-                            > ROAD_ASSOCIATION_METRES) continue;
-                    JSONObject properties = feature.optJSONObject("properties");
-                    if (properties == null) continue;
-                    String label = roadLabel(properties);
-                    for (String id : roadIds(properties)) found.putIfAbsent(id, label);
-                }
+        for (JSONObject feature : roadFeatures(journey)) {
+            JSONObject properties = feature.optJSONObject("properties");
+            if (properties == null) continue;
+            for (JSONArray line : DiscoveryReplay.lines(feature.optJSONObject("geometry"))) {
+                if (trimLine(line, selected).removed <= 0) continue;
+                for (String id : roadIds(properties)) found.putIfAbsent(id, roadLabel(properties));
+                break;
             }
         }
-        List<JSONObject> records = new ArrayList<>();
         for (Map.Entry<String, String> entry : found.entrySet()) {
             try {
                 records.add(new JSONObject().put("id", entry.getKey()).put("label", entry.getValue()));
-            } catch (Exception ignored) { }
+            } catch (org.json.JSONException ignored) { }
         }
         return records;
     }
