@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Roadprints road-section attribution candidate, version 1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "journey_id", "evidence", "status"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "journey_id": {"type": "string", "minLength": 1},
+    "status": {"enum": ["verified", "unresolved", "unavailable"]},
+    "reason": {
+      "enum": [
+        "missing_identity", "unsupported_source_version", "missing_evidence",
+        "sparse_observations", "low_confidence", "ambiguous_alignment",
+        "discontinuous_path", "unsupported_span"
+      ]
+    },
+    "section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "dataset_version", "section_id", "centreline_ref", "start_mm", "end_mm", "direction"],
+      "properties": {
+        "source": {"type": "string", "minLength": 1},
+        "dataset_version": {"type": "string", "minLength": 1},
+        "section_id": {"type": "string", "minLength": 1},
+        "centreline_ref": {"type": "string", "minLength": 1},
+        "start_mm": {"type": "integer", "minimum": 0},
+        "end_mm": {"type": "integer", "minimum": 1},
+        "direction": {"enum": ["forward", "reverse"]}
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["matcher", "match_sha256", "route_confidence"],
+      "properties": {
+        "matcher": {"type": "string", "minLength": 1},
+        "match_sha256": {"$ref": "#/$defs/sha256"},
+        "observations_sha256": {"$ref": "#/$defs/sha256"},
+        "from_observation_index": {"type": "integer", "minimum": 0},
+        "to_observation_index": {"type": "integer", "minimum": 1},
+        "route_confidence": {"type": ["number", "null"], "minimum": 0, "maximum": 1}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "verified"}}},
+      "then": {
+        "required": ["section"],
+        "not": {"required": ["reason"]},
+        "properties": {
+          "evidence": {
+            "required": ["observations_sha256", "from_observation_index", "to_observation_index"],
+            "properties": {"route_confidence": {"type": "number", "exclusiveMinimum": 0}}
+          }
+        }
+      },
+      "else": {"required": ["reason"]}
+    },
+    {
+      "if": {"properties": {"reason": {"enum": ["missing_identity", "unsupported_source_version"]}}, "required": ["reason"]},
+      "then": {
+        "properties": {"status": {"const": "unavailable"}},
+        "not": {"required": ["section"]}
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}
