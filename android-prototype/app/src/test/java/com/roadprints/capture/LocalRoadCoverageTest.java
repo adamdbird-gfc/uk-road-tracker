@@ -188,14 +188,14 @@ public class LocalRoadCoverageTest {
                         .put("removed_road_ids", new JSONArray().put("name:second road")));
         java.nio.file.Path file = Files.createTempFile("local-road-edits", ".json");
         try {
-            Files.writeString(file, row.toString());
+            Files.write(file, row.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
             JSONArray edited = LocalRoadCoverage.readContribution(network, file.toFile(), START, END).getJSONArray("spans");
             assertEquals(1, edited.length());
             assertEquals(second.id(), edited.getJSONArray(0).getString(0));
             assertEquals(20000, edited.getJSONArray(0).getInt(2) - edited.getJSONArray(0).getInt(1));
 
             row.remove("journey_corrections");
-            Files.writeString(file, row.toString());
+            Files.write(file, row.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
             JSONArray restored = LocalRoadCoverage.readContribution(network, file.toFile(), START, END).getJSONArray("spans");
             assertEquals(2, restored.length());
             assertEquals(first.id(), restored.getJSONArray(0).getString(0));

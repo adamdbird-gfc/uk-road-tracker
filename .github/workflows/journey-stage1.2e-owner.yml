@@ -64,7 +64,8 @@ jobs:
             --tests '*JourneyStore*Test' --tests '*CaptureRecoveryIntegrationTest' \
             --tests '*MotorwayProgressCalculatorTest' --tests '*ARoadProgressCalculatorTest' \
             --tests '*NcnAndroidTest' --tests '*NcnPresentationTest' --tests '*MultimodalFerryTest' \
-            --tests '*Milepost*Test' --tests '*Railway*Test' --tests '*JourneyIntelligence*Test'
+            --tests '*Milepost*Test' --tests '*Railway*Test' --tests '*JourneyIntelligence*Test' \
+            --tests '*TownAchievementsTest' --tests '*CountyCollectorTest' --tests '*FinalTravelAchievementsTest'
       - name: Assemble with the established owner signing certificate
         env:
           ROADPRINTS_DEBUG_KEYSTORE_B64: ${{ secrets.ROADPRINTS_DEBUG_KEYSTORE_B64 }}
