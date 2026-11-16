@@ -1,0 +1,25 @@
+{
+  "register_arithmetic": "passed",
+  "reversed_mapping_and_shared_union_controls": "passed",
+  "endpoint_precision_sensitivity": {
+    "7": {
+      "count": 128521,
+      "over_1km": 112,
+      "over_1km_m": 295717.12615356134,
+      "largest_100_m": 283267.10447252245
+    },
+    "8": {
+      "count": 128636,
+      "over_1km": 113,
+      "over_1km_m": 294952.02096829895,
+      "largest_100_m": 281435.2212892823
+    },
+    "9": {
+      "count": 129626,
+      "over_1km": 119,
+      "over_1km_m": 283291.5646465039,
+      "largest_100_m": 263017.73295595974
+    }
+  },
+  "interpretation": "Precision sensitivity describes geometry grouping only; it does not prove common cause or eligible recovery."
+}
