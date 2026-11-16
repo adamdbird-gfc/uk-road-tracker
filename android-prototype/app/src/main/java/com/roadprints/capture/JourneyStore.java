@@ -26,6 +26,7 @@ public final class JourneyStore {
     private static final String MIGRATED = "journeys_migrated_to_archive";
     private static final String LOW_QUALITY_PRUNED = "insufficient_timeline_journeys_pruned";
     private static final String DATA_REVISION = "journey_archive_revision";
+    private static final String PROGRESS_REVISION = "journey_progress_revision";
     private static final String RAILWAY_INPUT_REVISION = "railway_input_revision";
     private static final String RAILWAY_WRITE_PENDING = "railway_distance_pending_id";
     private static volatile boolean railwayWriteRecovered;
@@ -106,7 +107,7 @@ public final class JourneyStore {
             }
             context.getSharedPreferences("roadprints_ncn_metadata",0).edit()
                     .putString(id,ncnMetadata(journey).toString()).apply();
-            bumpDataRevision(context,ncnChanged,!titleOnly);
+            bumpDataRevision(context, ncnChanged, titleOnly);
             if (titleOnly) return;
             PlaceAnchorStore.record(context,journey);
             AchievementStore.recordCapture(context, journey);
@@ -206,6 +207,7 @@ public final class JourneyStore {
         context.getSharedPreferences("roadprints_journey_content", 0).edit().remove(id).commit();
         long revision = preferences.getLong(DATA_REVISION, 0);
         preferences.edit().putLong(DATA_REVISION, revision + 1)
+                .putLong(PROGRESS_REVISION, revision + 1)
                 .putLong(RAILWAY_INPUT_REVISION, preferences.getLong(RAILWAY_INPUT_REVISION, revision))
                 .putLong("ncn_evidence_revision", preferences.getLong("ncn_evidence_revision", revision))
                 .remove(RAILWAY_WRITE_PENDING).apply();
@@ -267,6 +269,11 @@ public final class JourneyStore {
             PerformanceDiagnostics.timing("journeys_archive",android.os.SystemClock.elapsedRealtime()-started,"rows="+summaries.size()+" reads="+cache.reads+" reused="+cache.hits);
         }
         return summaries;
+    }
+
+    static long progressRevision(Context context) {
+        SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        return preferences.getLong(PROGRESS_REVISION, preferences.getLong(DATA_REVISION, 0));
     }
 
     static long geometryRevision(Context context) {
@@ -784,6 +791,7 @@ public final class JourneyStore {
         if (file.exists()) {
             if (!file.delete()) throw new IllegalStateException("Could not delete journey archive");
             bumpDataRevision(context);
+            JourneyReconciliation.forget(context, journeyId);
             RailwayTrialWorker.deleteResult(context, journeyId);
             ServiceStationStore.forgetJourney(context,journeyId);
             VenueVisitStore.forgetJourney(context,journeyId);
@@ -848,6 +856,7 @@ public final class JourneyStore {
         if (!preferences.edit().clear().putBoolean(MIGRATED, true)
                 .putBoolean(LOW_QUALITY_PRUNED, true).putLong(DATA_REVISION, revision + 1).commit())
             throw new IllegalStateException("Could not clear legacy journey data");
+        JourneyReconciliation.forget(context, null);
         RailwayTrialWorker.clearResults(context);
         ServiceStationStore.clearOnDeleteAll(context);
         PlaceAnchorStore.clear(context);
@@ -1048,14 +1057,19 @@ public final class JourneyStore {
     }
     private static void bumpDataRevision(Context context) {bumpDataRevision(context,true);}
     private static void bumpDataRevision(Context context,boolean ncnChanged) {
-        bumpDataRevision(context,ncnChanged,true);
+        bumpDataRevision(context, ncnChanged, false);
     }
-    private static void bumpDataRevision(Context context,boolean ncnChanged,boolean scheduleNcn) {
+    private static void bumpDataRevision(Context context, boolean ncnChanged, boolean titleOnly) {
         SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-        long archive=preferences.getLong(DATA_REVISION,0),ncn=preferences.getLong("ncn_evidence_revision",archive);
-        preferences.edit().putLong(DATA_REVISION,archive+1).putLong(RAILWAY_INPUT_REVISION,archive+1)
-                .putLong("ncn_evidence_revision",ncn+(ncnChanged?1:0)).apply();
-        if (scheduleNcn) NcnProgressStore.changed(context);
+        long archive = preferences.getLong(DATA_REVISION, 0);
+        long ncn = preferences.getLong("ncn_evidence_revision", archive);
+        long geometry = preferences.getLong(RAILWAY_INPUT_REVISION, archive);
+        long progress = preferences.getLong(PROGRESS_REVISION, archive);
+        preferences.edit().putLong(DATA_REVISION, archive + 1)
+                .putLong(RAILWAY_INPUT_REVISION, titleOnly ? geometry : archive + 1)
+                .putLong(PROGRESS_REVISION, titleOnly ? progress : archive + 1)
+                .putLong("ncn_evidence_revision", ncn + (ncnChanged ? 1 : 0)).apply();
+        if (!titleOnly) NcnProgressStore.changed(context);
         MilepostReconciliationJob.archiveChanged(context);
         RailwayTrialWorker.archiveChanged(context);
     }

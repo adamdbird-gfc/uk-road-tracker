@@ -136,6 +136,12 @@ final class RailwayTrialWorker {
         detailStatus.accept(message);
     }
 
+    // Runs before a foreground archive allocation. Any running batch sees the
+    // preparation flag and yields at its normal cancellation checkpoints.
+    static void releaseCatalogueForScreen() throws Exception {
+        WORK.submit(RailwayTrialWorker::closeCatalogue).get();
+    }
+
     private static void schedule(Context app) {
         if (!foreground) return;
         if (CaptureService.isActive(app)) {
@@ -143,7 +149,7 @@ final class RailwayTrialWorker {
             return;
         }
         if (queued) return;
-        long delay = resumeAt - SystemClock.uptimeMillis();
+        long delay = Math.max(resumeAt - SystemClock.uptimeMillis(), ScreenDataLoader.preparingArchive() ? 500L : 0L);
         if (delay > 0) {
             if (!delayed) {
                 delayed = true;
@@ -166,7 +172,7 @@ final class RailwayTrialWorker {
             long started = SystemClock.elapsedRealtime();
             boolean ncnAtStart = NcnProgressStore.isAssessing();
             BooleanSupplier stop = () -> !foreground || generation != foregroundGeneration
-                    || CaptureService.isActive(app);
+                    || CaptureService.isActive(app) || ScreenDataLoader.preparingArchive();
             boolean more = false;
             boolean failed = false;
             boolean cancelled = false;

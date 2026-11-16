@@ -1,6 +1,9 @@
 package com.roadprints.capture;
 
 import android.content.Context;
+import android.content.res.AssetManager;
+import android.util.JsonReader;
+import android.util.JsonToken;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -8,11 +11,13 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.ref.WeakReference;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -37,9 +42,9 @@ final class ARoadProgressCalculator {
         final Set<Integer> covered = new HashSet<>();
         final List<JSONArray> coveredMapSections = new ArrayList<>();
         final List<JSONArray> incompleteMapSections = new ArrayList<>();
-        List<Anchor> anchors = new ArrayList<>();
+        final List<Anchor> anchors = Collections.emptyList();
         int referenceSections;
-        android.util.LongSparseArray<List<Anchor>> grid = new android.util.LongSparseArray<>();
+        final android.util.LongSparseArray<List<Anchor>> grid = new android.util.LongSparseArray<>();
         double matchedMetres, totalKm;
         boolean referenceAvailable;
         Road(String id, String ref, String region) { this.id=id; this.ref=ref; this.region=region; }
@@ -59,24 +64,92 @@ final class ARoadProgressCalculator {
         final int id; final double lng,lat,x,y; final int component;
         Anchor(int id,double lng,double lat,int component) { this.id=id;this.lng=lng;this.lat=lat;this.component=component;double[] xy=mercator(lng,lat);x=xy[0];y=xy[1]; }
     }
-    private final Context context;
+    private final AssetManager assets;
     private final boolean includeMapSections;
     private Summary completedSummary;
     private Map<String,Road> roads=new TreeMap<>();
     private final Map<String,JSONObject> index=new HashMap<>();
-    private final Set<String> failed=new HashSet<>();
-    private final Map<String,Road> referenceTemplates=new HashMap<>();
-    private final Map<String,String> referenceSignatures=new HashMap<>();
-    private String signature(Road road) {
-        return referenceSignatures.computeIfAbsent(road.id,id->{
-            StringBuilder text=new StringBuilder().append(road.totalKm).append('|');
-            for(Anchor a:road.anchors)text.append(a.lng).append(',').append(a.lat).append(',').append(a.component).append(';');
-            return NcnJson.hash(text.toString().getBytes(StandardCharsets.UTF_8));
-        });
+    // Aggregates and cache validation retain only metadata. Spatial indexes are
+    // needed for fresh matching, and are loaded one road at a time for map geometry.
+    private static final int MAX_CACHED_ANCHORS = 16_384;
+    private static final class Reference {
+        final List<Anchor> anchors = new ArrayList<>();
+        android.util.LongSparseArray<List<Anchor>> grid;
+        double totalKm;
+    }
+    private static final class ReferenceInfo {
+        final String signature;
+        final int sections;
+        final double totalKm;
+        ReferenceInfo(String signature, int sections, double totalKm) {
+            this.signature = signature;
+            this.sections = sections;
+            this.totalKm = totalKm;
+        }
+    }
+    // These references are bundled assets. Share signatures and counts across scans
+    // of the same assets without keeping any geometry or spatial indexes alive.
+    private static final int MAX_SHARED_REFERENCES = 512;
+    private record ReferenceKey(String id, String ref) {}
+    private static final Map<ReferenceKey, ReferenceInfo> SHARED_INFO = new LinkedHashMap<>(16, .75f, true);
+    private static WeakReference<AssetManager> sharedAssets = new WeakReference<>(null);
+
+    private static synchronized ReferenceInfo sharedInfo(AssetManager assets, ReferenceKey key) {
+        return sharedAssets.get() == assets ? SHARED_INFO.get(key) : null;
+    }
+
+    private static synchronized void rememberInfo(AssetManager assets, ReferenceKey key, ReferenceInfo info) {
+        if (sharedAssets.get() != assets) {
+            SHARED_INFO.clear();
+            sharedAssets = new WeakReference<>(assets);
+        }
+        SHARED_INFO.put(key, info);
+        if (SHARED_INFO.size() > MAX_SHARED_REFERENCES) {
+            var oldest = SHARED_INFO.keySet().iterator();
+            oldest.next();
+            oldest.remove();
+        }
+    }
+
+    private static final ReferenceInfo MISSING = new ReferenceInfo("missing", 0, 0);
+    private final LinkedHashMap<String, Reference> references = new LinkedHashMap<>(16, .75f, true);
+    private final Map<String, ReferenceInfo> referenceInfo = new HashMap<>();
+    private int retainedAnchors;
+    private int peakRetainedAnchors;
+    private int referenceReads;
+    // Identical matched geometry can recur on daily journeys. Retain only small
+    // index arrays, keyed by geometry and canonical road, for this scan.
+    private final LinkedHashMap<String, int[]> projectedFeatures = new LinkedHashMap<>(64, .75f, true);
+
+    int peakRetainedAnchors() { return peakRetainedAnchors; }
+
+    int referenceReads() { return referenceReads; }
+
+    private ReferenceInfo info(Road road) {
+        return info(road.id, road.ref);
+    }
+
+    private ReferenceInfo info(String id, String ref) {
+        ReferenceInfo info = referenceInfo.get(id);
+        if (info != null) return info;
+        info = sharedInfo(assets, new ReferenceKey(id, ref));
+        if (info == null) {
+            Reference reference = readReference(id, ref);
+            info = reference == null ? MISSING : describeReference(id, ref, reference);
+        }
+        referenceInfo.put(id, info);
+        return info;
+    }
+
+    private void applyInfo(Road road) {
+        ReferenceInfo info = info(road);
+        road.referenceSections = info.sections;
+        road.totalKm = info.totalKm;
+        road.referenceAvailable = info != MISSING;
     }
     ARoadProgressCalculator(Context context) { this(context,true); }
     ARoadProgressCalculator(Context context, boolean includeMapSections) {
-        this.context=context.getApplicationContext(); this.includeMapSections=includeMapSections; loadIndex();
+        this.assets=context.getApplicationContext().getAssets(); this.includeMapSections=includeMapSections; loadIndex();
     }
 
     void addJourney(JSONObject journey) { addJourney(journey, null); }
@@ -105,8 +178,43 @@ final class ARoadProgressCalculator {
             if(road==null){road=new Road(id,ref,region);roads.put(id,road);}
             road.matchedMetres+=Math.max(0,props.optDouble("distance_m",0));
             if(!jid.isEmpty()) road.journeyIds.add(jid);
-            ensureReference(road);
-            if(road.referenceAvailable) matchFeature(road,feature.optJSONObject("geometry"));
+            addFeatureCoverage(road, feature.optJSONObject("geometry"));
+        }
+    }
+
+    private void addFeatureCoverage(Road road, JSONObject geometry) {
+        if (geometry == null) return;
+        // Cache only compact features. Large features still use the canonical matcher.
+        JSONArray coordinates = geometry.optJSONArray("coordinates");
+        String key = null;
+        if ("LineString".equals(geometry.optString("type"))
+                && coordinates != null && coordinates.length() <= 256) {
+            key = road.id + ":" + NcnJson.hash(geometry.toString().getBytes(StandardCharsets.UTF_8));
+            int[] cached = projectedFeatures.get(key);
+            if (cached != null) {
+                for (int index : cached) road.covered.add(index);
+                return;
+            }
+        }
+        Reference reference = reference(road);
+        if (reference == null) return;
+        if (key == null) {
+            matchFeature(reference, road, geometry);
+            return;
+        }
+        Road contribution = new Road(road.id, road.ref, road.region);
+        matchFeature(reference, contribution, geometry);
+        road.covered.addAll(contribution.covered);
+        if (contribution.covered.size() <= 256) {
+            int[] indices = new int[contribution.covered.size()];
+            int offset = 0;
+            for (int index : contribution.covered) indices[offset++] = index;
+            if (projectedFeatures.size() == 512) {
+                java.util.Iterator<String> oldest = projectedFeatures.keySet().iterator();
+                oldest.next();
+                oldest.remove();
+            }
+            projectedFeatures.put(key, indices);
         }
     }
 
@@ -116,7 +224,7 @@ final class ARoadProgressCalculator {
         try {
             addJourney(journey);JSONArray rows=new JSONArray();
             for(Road road:roads.values()) {
-                String signature=road.referenceAvailable?signature(road):"missing";
+                String signature=info(road).signature;
                 JSONArray indices=new JSONArray();for(int index:road.covered)indices.put(index);
                 rows.put(new JSONObject().put("id",road.id).put("ref",road.ref).put("region",road.region)
                         .put("metres",road.matchedMetres).put("indices",indices).put("reference",signature));
@@ -129,11 +237,12 @@ final class ARoadProgressCalculator {
     boolean accepts(JSONArray rows) throws Exception {
         for(int i=0;i<rows.length();i++) {
             JSONObject row=rows.getJSONObject(i);
-            Road probe=new Road(row.getString("id"),row.getString("ref"),row.getString("region"));
-            ensureReference(probe);
-            String signature=probe.referenceAvailable?signature(probe):"missing";
-            int count=probe.anchors.size();
-            if(!signature.equals(row.getString("reference")))return false;
+            String id = row.getString("id");
+            String ref = row.getString("ref");
+            row.getString("region"); // Required by the contribution merge.
+            ReferenceInfo info = info(id, ref);
+            int count = info.sections;
+            if (!info.signature.equals(row.getString("reference"))) return false;
             JSONArray indices=row.getJSONArray("indices");
             for(int j=0;j<indices.length();j++)if(indices.getInt(j)<0||indices.getInt(j)>=count)return false;
         }
@@ -144,7 +253,7 @@ final class ARoadProgressCalculator {
             JSONObject row=rows.getJSONObject(i);String id=row.getString("id");
             Road road=roads.get(id);
             if(road==null){road=new Road(id,row.getString("ref"),row.getString("region"));roads.put(id,road);}
-            ensureReference(road);
+            applyInfo(road);
             road.matchedMetres+=row.getDouble("metres");
             if(!journeyId.isEmpty())road.journeyIds.add(journeyId);
             JSONArray indices=row.getJSONArray("indices");for(int j=0;j<indices.length();j++)road.covered.add(indices.getInt(j));
@@ -157,8 +266,11 @@ final class ARoadProgressCalculator {
             Set<Integer> before = previous.getOrDefault(road.id, java.util.Collections.emptySet());
             List<JSONArray> lines = new ArrayList<>();
             JSONArray current = null;
-            for (int i = 1; i < road.anchors.size(); i++) {
-                Anchor a = road.anchors.get(i - 1), b = road.anchors.get(i);
+            Reference reference = reference(road);
+            if (reference == null) continue;
+            List<Anchor> anchors = reference.anchors;
+            for (int i = 1; i < anchors.size(); i++) {
+                Anchor a = anchors.get(i - 1), b = anchors.get(i);
                 boolean fresh = (road.covered.contains(a.id) || road.covered.contains(b.id))
                         && !before.contains(a.id) && !before.contains(b.id)
                         && a.component == b.component && distance(a.lng, a.lat, b.lng, b.lat) <= 250;
@@ -176,96 +288,220 @@ final class ARoadProgressCalculator {
         return result;
     }
 
+    boolean populateMapSections(Road road) {
+        Reference reference = readReference(road);
+        if (reference == null) return false;
+        buildMapSections(road, reference.anchors);
+        return true;
+    }
+
     Summary finish() {
         if(completedSummary!=null) return completedSummary;
         List<String> missing=new ArrayList<>();
         for(Road road:roads.values()) {
-            if(!road.referenceAvailable) missing.add(road.id);
-            else if(includeMapSections) buildMapSections(road);
-            // Coverage figures retain counts, not the spatial lookup or anchors.
-            road.anchors.clear();
-            road.grid.clear();
+            checkInterrupted();
+            applyInfo(road);
+            if (!road.referenceAvailable) missing.add(road.id);
+            else if (includeMapSections) {
+                Reference reference = references.remove(road.id);
+                if (reference == null) reference = readReference(road);
+                else retainedAnchors -= reference.anchors.size();
+                if (reference != null) buildMapSections(road, reference.anchors);
+            }
         }
         List<Road> sorted=new ArrayList<>(roads.values());
         sorted.sort((a,b)->Double.compare(b.matchedMetres,a.matchedMetres));
         Summary result=new Summary(sorted,missing);
         for(Road road:sorted) result.matchedMetres+=road.matchedMetres;
-        index.clear();
+        projectedFeatures.clear();
+        references.clear();
+        referenceInfo.clear();
+        retainedAnchors = 0;
+        if (includeMapSections) index.clear();
         completedSummary=result;
         return result;
     }
     private void loadIndex() {
-        try(InputStream in=context.getAssets().open("index.json");
+        try(InputStream in=assets.open("index.json");
             BufferedReader reader=new BufferedReader(new InputStreamReader(in,StandardCharsets.UTF_8))) {
             StringBuilder s=new StringBuilder();String line;while((line=reader.readLine())!=null)s.append(line);
             JSONObject root=new JSONObject(s.toString()).optJSONObject("roads"); if(root==null)return;
             java.util.Iterator<String> it=root.keys();while(it.hasNext()){String key=it.next();index.put(key,root.optJSONObject(key));}
         } catch(Exception ignored) { }
     }
-    private void ensureReference(Road road) {
-        if(road.referenceAvailable||failed.contains(road.id))return;
-        Road template=referenceTemplates.get(road.id);
-        if(template!=null){
-            road.anchors=template.anchors;road.grid=template.grid;
-            road.totalKm=template.totalKm;road.referenceSections=template.referenceSections;road.referenceAvailable=true;return;
+    private Reference reference(Road road) {
+        if (referenceInfo.get(road.id) == MISSING) return null;
+        Reference reference = references.get(road.id);
+        if (reference != null) return reference;
+        reference = readReference(road);
+        if (reference == null) {
+            referenceInfo.putIfAbsent(road.id, MISSING);
+            return null;
         }
-        JSONObject entry=index.get(road.id); String file=entry==null?null:entry.optString("file",null);
-        if(file==null){failed.add(road.id);return;}
-        try(InputStream in=context.getAssets().open(file);
-            BufferedReader reader=new BufferedReader(new InputStreamReader(in,StandardCharsets.UTF_8))) {
-            StringBuilder s=new StringBuilder();String line;while((line=reader.readLine())!=null)s.append(line);
-            JSONObject data=new JSONObject(s.toString()); JSONArray paths=data.optJSONArray("paths");
-            if(paths==null){failed.add(road.id);return;}
-            int component=-1;
-            for(int p=0;p<paths.length();p++){
-                JSONArray path=paths.optJSONArray(p);if(path==null||path.length()<2)continue;
-                List<double[]> points=new ArrayList<>();
-                for(int j=0;j<path.length();j++){
-                    JSONArray raw=path.optJSONArray(j);if(raw==null||raw.length()<2)continue;
-                    double lng=raw.optDouble(0,Double.NaN),lat=raw.optDouble(1,Double.NaN);
-                    if(Double.isFinite(lng)&&Double.isFinite(lat))points.add(new double[]{lng,lat,raw.optInt(2,0)});
-                }
-                if(points.size()<2)continue;
-                component++;
-                sampleReferencePath(road,points,component);
+        if (!referenceInfo.containsKey(road.id)) {
+            referenceInfo.put(road.id, describeReference(road.id, road.ref, reference));
+        }
+        int count = reference.anchors.size();
+        if (count <= MAX_CACHED_ANCHORS) {
+            while (retainedAnchors + count > MAX_CACHED_ANCHORS) {
+                java.util.Iterator<Reference> oldest = references.values().iterator();
+                retainedAnchors -= oldest.next().anchors.size();
+                oldest.remove();
             }
-            road.totalKm=VERIFIED_LENGTH_KM.getOrDefault(road.ref,
-                    data.optDouble("total_km",entry.optDouble("total_km",0)));
-            road.referenceSections=road.anchors.size();
-            road.referenceAvailable=road.referenceSections>0&&road.totalKm>0;
-            if(!road.referenceAvailable)failed.add(road.id);else referenceTemplates.put(road.id,road);
-        }catch(Exception ignored){failed.add(road.id);}
-    }
-    private void sampleReferencePath(Road road,List<double[]> points,int component) {
-        double carry=0; double[] previous=points.get(0); addAnchor(road,previous,component);
-        for(int i=1;i<points.size();i++){
-            double[] next=points.get(i); double d=distance(previous[0],previous[1],next[0],next[1]);
-            if(!Double.isFinite(d)||d<=0){previous=next;continue;}
-            double first=SAMPLE_M-carry;
-            for(double along=first;along<=d+0.000001;along+=SAMPLE_M){double f=along/d;addAnchor(road,new double[]{previous[0]+(next[0]-previous[0])*f,previous[1]+(next[1]-previous[1])*f,component},component);}
-            carry=(carry+d)%SAMPLE_M; previous=next;
+            references.put(road.id, reference);
+            retainedAnchors += count;
+            peakRetainedAnchors = Math.max(peakRetainedAnchors, retainedAnchors);
         }
-        double[] last=points.get(points.size()-1); Anchor tail=road.anchors.isEmpty()?null:road.anchors.get(road.anchors.size()-1);
-        if(tail==null||distance(tail.lng,tail.lat,last[0],last[1])>2)addAnchor(road,last,component);
+        return reference;
     }
-    private void addAnchor(Road road,double[] p,int component){Anchor a=new Anchor(road.anchors.size(),p[0],p[1],component);road.anchors.add(a);long key=spatialKey((long)Math.floor(a.x/GRID_M),(long)Math.floor(a.y/GRID_M));List<Anchor> bucket=road.grid.get(key);if(bucket==null){bucket=new ArrayList<>();road.grid.put(key,bucket);}bucket.add(a);}
-    private void matchFeature(Road road,JSONObject geometry){
+
+    private ReferenceInfo describeReference(String id, String ref, Reference reference) {
+        // Keep the signature format used by existing compact rows.
+        StringBuilder text = new StringBuilder().append(reference.totalKm).append('|');
+        for (Anchor point : reference.anchors) {
+            text.append(point.lng).append(',').append(point.lat).append(',')
+                    .append(point.component).append(';');
+        }
+        ReferenceInfo info = new ReferenceInfo(
+                NcnJson.hash(text.toString().getBytes(StandardCharsets.UTF_8)),
+                reference.anchors.size(), reference.totalKm);
+        rememberInfo(assets, new ReferenceKey(id, ref), info);
+        return info;
+    }
+
+    private Reference readReference(Road road) {
+        return readReference(road.id, road.ref);
+    }
+
+    private Reference readReference(String id, String ref) {
+        JSONObject entry = index.get(id);
+        String file = entry == null ? null : entry.optString("file", null);
+        if (file == null) return null;
+        referenceReads++;
+        Reference reference = new Reference();
+        double totalKm = entry.optDouble("total_km", 0);
+        try (InputStream in = assets.open(file);
+             JsonReader reader = new JsonReader(new BufferedReader(
+                     new InputStreamReader(in, StandardCharsets.UTF_8)))) {
+            reader.beginObject();
+            while (reader.hasNext()) {
+                checkInterrupted();
+                String field = reader.nextName();
+                if ("paths".equals(field) && reader.peek() == JsonToken.BEGIN_ARRAY) {
+                    reader.beginArray();
+                    int component = 0;
+                    while (reader.hasNext()) {
+                        if (reader.peek() == JsonToken.BEGIN_ARRAY) {
+                            if (sampleReferencePath(reference, reader, component)) component++;
+                        } else reader.skipValue();
+                    }
+                    reader.endArray();
+                } else if ("total_km".equals(field) && reader.peek() == JsonToken.NUMBER) {
+                    totalKm = reader.nextDouble();
+                } else reader.skipValue();
+            }
+            reader.endObject();
+        } catch (java.util.concurrent.CancellationException stopped) {
+            throw stopped;
+        } catch (Exception invalid) {
+            return null;
+        }
+        reference.totalKm = VERIFIED_LENGTH_KM.getOrDefault(ref, totalKm);
+        return reference.anchors.isEmpty() || reference.totalKm <= 0 ? null : reference;
+    }
+
+    private boolean sampleReferencePath(Reference reference, JsonReader reader, int component)
+            throws java.io.IOException {
+        reader.beginArray();
+        int points = 0;
+        double previousLon = 0, previousLat = 0, carry = 0;
+        while (reader.hasNext()) {
+            checkInterrupted();
+            if (reader.peek() != JsonToken.BEGIN_ARRAY) {
+                reader.skipValue();
+                continue;
+            }
+            reader.beginArray();
+            double lon = readCoordinate(reader), lat = readCoordinate(reader);
+            while (reader.hasNext()) reader.skipValue();
+            reader.endArray();
+            if (!Double.isFinite(lon) || !Double.isFinite(lat)) continue;
+            if (++points == 2) addAnchor(reference, previousLon, previousLat, component);
+            if (points >= 2) {
+                double metres = distance(previousLon, previousLat, lon, lat);
+                if (Double.isFinite(metres) && metres > 0) {
+                    for (double along = SAMPLE_M - carry; along <= metres + .000001; along += SAMPLE_M) {
+                        checkInterrupted();
+                        double fraction = along / metres;
+                        addAnchor(reference, previousLon + (lon - previousLon) * fraction,
+                                previousLat + (lat - previousLat) * fraction, component);
+                    }
+                    carry = (carry + metres) % SAMPLE_M;
+                }
+            }
+            previousLon = lon;
+            previousLat = lat;
+        }
+        reader.endArray();
+        if (points < 2) return false;
+        Anchor tail = reference.anchors.get(reference.anchors.size() - 1);
+        if (distance(tail.lng, tail.lat, previousLon, previousLat) > 2) {
+            addAnchor(reference, previousLon, previousLat, component);
+        }
+        return true;
+    }
+
+    private static double readCoordinate(JsonReader reader) throws java.io.IOException {
+        if (!reader.hasNext()) return Double.NaN;
+        if (reader.peek() == JsonToken.NUMBER || reader.peek() == JsonToken.STRING) {
+            try { return Double.parseDouble(reader.nextString()); }
+            catch (NumberFormatException invalid) { return Double.NaN; }
+        }
+        reader.skipValue();
+        return Double.NaN;
+    }
+
+    private static void checkInterrupted() {
+        if (Thread.currentThread().isInterrupted()) throw new java.util.concurrent.CancellationException();
+    }
+
+    private void addAnchor(Reference reference, double lon, double lat, int component) {
+        reference.anchors.add(new Anchor(reference.anchors.size(), lon, lat, component));
+    }
+
+    private void prepareGrid(Reference reference) {
+        if (reference.grid != null) return;
+        android.util.LongSparseArray<List<Anchor>> grid = new android.util.LongSparseArray<>();
+        for (Anchor anchor : reference.anchors) {
+            checkInterrupted();
+            long key = spatialKey((long)Math.floor(anchor.x / GRID_M), (long)Math.floor(anchor.y / GRID_M));
+            List<Anchor> bucket = grid.get(key);
+            if (bucket == null) {
+                bucket = new ArrayList<>();
+                grid.put(key, bucket);
+            }
+            bucket.add(anchor);
+        }
+        reference.grid = grid;
+    }
+    private void matchFeature(Reference reference, Road road,JSONObject geometry){
         if(geometry==null)return;JSONArray coords=geometry.optJSONArray("coordinates");if(coords==null)return;
+        prepareGrid(reference);
         String type=geometry.optString("type","");
-        if("LineString".equals(type))matchLine(road,coords);
-        else if("MultiLineString".equals(type))for(int i=0;i<coords.length();i++){JSONArray line=coords.optJSONArray(i);if(line!=null)matchLine(road,line);}
+        if("LineString".equals(type))matchLine(reference, road,coords);
+        else if("MultiLineString".equals(type))for(int i=0;i<coords.length();i++){JSONArray line=coords.optJSONArray(i);if(line!=null)matchLine(reference, road,line);}
     }
-    private void matchLine(Road road,JSONArray line){
+    private void matchLine(Reference reference, Road road,JSONArray line){
         for(int i=1;i<line.length();i++){JSONArray a=line.optJSONArray(i-1),b=line.optJSONArray(i);if(a==null||b==null||a.length()<2||b.length()<2)continue;
             double lng1=a.optDouble(0,Double.NaN),lat1=a.optDouble(1,Double.NaN),lng2=b.optDouble(0,Double.NaN),lat2=b.optDouble(1,Double.NaN);
             double d=distance(lng1,lat1,lng2,lat2);if(!Double.isFinite(d)||d<=0)continue;int n=Math.max(1,(int)Math.ceil(d/25));
-            for(int j=0;j<=n;j++){double f=j/(double)n;Anchor near=nearest(road,lng1+(lng2-lng1)*f,lat1+(lat2-lat1)*f);if(near!=null)road.covered.add(near.id);}
+            for(int j=0;j<=n;j++){double f=j/(double)n;Anchor near=nearest(reference,lng1+(lng2-lng1)*f,lat1+(lat2-lat1)*f);if(near!=null)road.covered.add(near.id);}
         }
     }
-    private Anchor nearest(Road road,double lng,double lat){double[] xy=mercator(lng,lat);Anchor best=null;double bd=MATCH_RADIUS_M;long gx=(long)Math.floor(xy[0]/GRID_M),gy=(long)Math.floor(xy[1]/GRID_M);
-        for(long x=gx-1;x<=gx+1;x++)for(long y=gy-1;y<=gy+1;y++){List<Anchor> bucket=road.grid.get(spatialKey(x,y));if(bucket==null)continue;for(Anchor a:bucket){double d=Math.hypot(xy[0]-a.x,xy[1]-a.y);if(d<bd){best=a;bd=d;}}}return best;}
-    private void buildMapSections(Road road){JSONArray current=null;Boolean covered=null;Anchor prev=null;
-        for(Anchor a:road.anchors){if(prev==null){prev=a;continue;}if(a.component!=prev.component||distance(prev.lng,prev.lat,a.lng,a.lat)>250){addSection(road,current,covered);current=null;covered=null;prev=a;continue;}
+    private Anchor nearest(Reference reference,double lng,double lat){double[] xy=mercator(lng,lat);Anchor best=null;double bd=MATCH_RADIUS_M;long gx=(long)Math.floor(xy[0]/GRID_M),gy=(long)Math.floor(xy[1]/GRID_M);
+        for(long x=gx-1;x<=gx+1;x++)for(long y=gy-1;y<=gy+1;y++){List<Anchor> bucket=reference.grid.get(spatialKey(x,y));if(bucket==null)continue;for(Anchor a:bucket){double d=Math.hypot(xy[0]-a.x,xy[1]-a.y);if(d<bd){best=a;bd=d;}}}return best;}
+    private void buildMapSections(Road road, List<Anchor> anchors){JSONArray current=null;Boolean covered=null;Anchor prev=null;
+        for(Anchor a:anchors){if(prev==null){prev=a;continue;}if(a.component!=prev.component||distance(prev.lng,prev.lat,a.lng,a.lat)>250){addSection(road,current,covered);current=null;covered=null;prev=a;continue;}
             boolean next=road.covered.contains(prev.id)||road.covered.contains(a.id);
             if(current==null||covered==null||covered!=next){addSection(road,current,covered);current=new JSONArray();current.put(coord(prev));covered=next;}current.put(coord(a));prev=a;
         }addSection(road,current,covered);

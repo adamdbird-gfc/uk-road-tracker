@@ -42,6 +42,14 @@ public class RailwayMileageRuntimeTest {
             var receipt = new JSONObject(new String(Files.readAllBytes(source.toPath()), StandardCharsets.UTF_8)).getJSONObject("railway_distance");
             assertTrue(receipt.getLong("migration_committed_at_ms") > 0);
             assertEquals("committed", receipt.getString("migration_status"));
+            byte[] committed = Files.readAllBytes(source.toPath());
+            try (JourneyReconciliation reconciliation = new JourneyReconciliation(app)) {
+                var rule = JourneyReconciliation.BASELINE;
+                assertNull(reconciliation.receipt(rule, ID));
+                assertEquals(1, reconciliation.runBatch(rule, () -> false));
+                assertEquals(NcnJson.hash(committed), reconciliation.receipt(rule, ID).getString("source_sha"));
+            }
+            assertArrayEquals(committed, Files.readAllBytes(source.toPath()));
             assertEquals(distance - 43_900, receipt.getDouble("train_total_change_meters"), 0);
             assertEquals(distance - 43_900, receipt.getDouble("overall_total_change_meters"), 0);
             long revision = preferences.getLong("journey_archive_revision", 0);
@@ -83,6 +91,11 @@ public class RailwayMileageRuntimeTest {
         android.util.Log.i("RoadprintsRailwayRuntime", "cold_assess_and_write_ms=" + elapsed + " cpu_ms=" + cpuElapsed);
         // Catch runaway cold processing on the CI emulator. This budget is not a Pixel 10 benchmark.
         assertTrue("Cold railway archive update exceeded 5 s CPU", cpuElapsed < 5_000);
+        try (JourneyReconciliation reconciliation = new JourneyReconciliation(app)) {
+            var rule = JourneyReconciliation.BASELINE;
+            reconciliation.enqueue(rule, List.of(ID));
+            assertEquals(0, reconciliation.runBatch(rule, () -> true));
+        }
         // Model a process ending after atomic archive replacement and before cache invalidation.
         assertTrue(preferences.edit().putString("railway_distance_pending_id", ID).commit());
     }
@@ -104,7 +117,7 @@ public class RailwayMileageRuntimeTest {
                         .put(0).put("gps"));
             }
         }
-        for (int index = 0; index < 1652; index++) {
+        for (int index = 0; index < 1663; index++) {
             boolean train = index < 24;
             boolean national = train && index%2!=0;
             String id = "navigation-" + index;
@@ -116,18 +129,25 @@ public class RailwayMileageRuntimeTest {
             if (train) {
                 journey.put("raw_capture_samples", national ? nationalTrace : trace);
             } else if (index % 3 == 0) {
-                var coordinates = new JSONArray();
-                for (int point = 0; point < 24; point++)
-                    coordinates.put(new JSONArray().put(0.36 + point * .0001).put(51.44));
-                var line = new JSONObject().put("type", "LineString").put("coordinates", coordinates);
-                var feature = new JSONObject().put("type", "Feature").put("geometry", line)
-                        .put("properties", new JSONObject().put("road_ref", "B" + (2000 + index))
-                                .put("highway", "secondary"));
-                var features = new JSONObject().put("type", "FeatureCollection")
-                        .put("features", new JSONArray().put(feature));
+                var features = new JSONArray();
+                JSONObject recorded = null;
+                // 547 completed drives with nine sections each, close to the owner's 4,853 map sections.
+                for (int section = 0; section < 9; section++) {
+                    var coordinates = new JSONArray();
+                    for (int point = 0; point < 24; point++) {
+                        coordinates.put(new JSONArray().put(0.36 + section * .003 + point * .0001)
+                                .put(51.44 + (index % 80) * .001 + (point % 2) * .0002));
+                    }
+                    var line = new JSONObject().put("type", "LineString").put("coordinates", coordinates);
+                    if (recorded == null) recorded = line;
+                    features.put(new JSONObject().put("type", "Feature").put("geometry", line)
+                            .put("properties", new JSONObject().put("road_ref", "B" + (2000 + index))
+                                    .put("highway", "secondary")));
+                }
+                var collection = new JSONObject().put("type", "FeatureCollection").put("features", features);
                 journey.put("mode", "driving").put("processing_status", "complete")
-                        .put("route_geometry", line).put("processing_result",
-                                new JSONObject().put("geojson", features).put("road_geojson", features));
+                        .put("route_geometry", recorded).put("processing_result",
+                                new JSONObject().put("geojson", collection).put("road_geojson", collection));
             }
             var source = JourneyStore.archiveFile(app, id);
             Files.write(source.toPath(), journey.toString().getBytes(StandardCharsets.UTF_8));
@@ -145,9 +165,12 @@ public class RailwayMileageRuntimeTest {
                 assertTrue("A first journey must commit", waitForDistance(app, "navigation-0", 39_228, 30_000));
             }
             for (int i = 0; i < 2; i++) {
+                // Measure cold Map preparation on its own, then exercise Progress
+                // and retained navigation while railway history is still pending.
+                exerciseCompletedMap();
                 exerciseScreen(ProgressActivity.class);
-                exerciseScreen(MapActivity.class);
                 exerciseScreen(JourneyListActivity.class);
+                exerciseScreen(AchievementsActivity.class);
             }
             try (var screen = androidx.test.core.app.ActivityScenario.launch(JourneyListActivity.class)) {
                 assertTrue("Railway history should resume and finish", waitForDistance(app, "navigation-22", 39_228, 90_000));
@@ -181,14 +204,14 @@ public class RailwayMileageRuntimeTest {
                         for (String field : List.of("drivingMetres", "footMetres", "trainMetres",
                                 "ferryMetres", "flightMetres", "transitMetres", "cyclingMetres", "unknownMetres"))
                             overall += summary.getDouble(field);
-                        assertEquals(total + 1628 * 200, overall, .01);
+                        assertEquals(total + 1639 * 200, overall, .01);
                         return true;
                     } catch (org.json.JSONException unavailable) {
                         return false;
                     }
                 }, 45_000);
             }
-            assertEquals(1652, JourneyStore.archiveFiles(app).stream()
+            assertEquals(1663, JourneyStore.archiveFiles(app).stream()
                     .filter(file -> file.getName().startsWith("journey_navigation-")).count());
         } finally {
             controls.edit().remove("active").commit();
@@ -255,11 +278,28 @@ public class RailwayMileageRuntimeTest {
         }
     }
 
+    private static void exerciseCompletedMap() throws Exception {
+        long start = SystemClock.elapsedRealtime();
+        var ready = MapActivity.class.getDeclaredField("mapReady");
+        ready.setAccessible(true);
+        var displayed = MapActivity.class.getDeclaredField("hasDisplayedMap");
+        displayed.setAccessible(true);
+        try (var screen = androidx.test.core.app.ActivityScenario.launch(MapActivity.class)) {
+            var target = new java.util.concurrent.atomic.AtomicReference<MapActivity>();
+            screen.onActivity(target::set);
+            awaitOnMain(() -> {
+                try { return ready.getBoolean(target.get()) && displayed.getBoolean(target.get()); }
+                catch (IllegalAccessException error) { throw new AssertionError(error); }
+            }, 15_000);
+            android.util.Log.i("RoadprintsRailwayRuntime",
+                    "overview_ready_ms=" + (SystemClock.elapsedRealtime() - start));
+        }
+    }
+
     private static <T extends android.app.Activity> void exerciseScreen(Class<T> type) throws Exception {
         long start = SystemClock.elapsedRealtime();
         try (var screen = androidx.test.core.app.ActivityScenario.launch(type)) {
             awaitOnMain(() -> true, 4000);
-            awaitOnMain(() -> RailwayTrialWorker.isChecking(), 4000);
         }
         long elapsed = SystemClock.elapsedRealtime() - start;
         android.util.Log.i("RoadprintsRailwayRuntime", "navigation=" + type.getSimpleName() + " elapsed_ms=" + elapsed);

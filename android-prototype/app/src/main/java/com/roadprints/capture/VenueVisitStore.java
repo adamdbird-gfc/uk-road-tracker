@@ -317,19 +317,53 @@ final class VenueVisitStore {
             if(changed)write(context,collection,records);
         }
     }
-    static synchronized JSONArray nativePending(Context context,String collection){
-        JSONArray out=new JSONArray();JSONObject records=read(context,collection);java.util.Iterator<String> keys=records.keys();
-        while(keys.hasNext()){
-            String key=keys.next();JSONObject proof=records.optJSONObject(key);
-            if(proof!=null&&proof.optBoolean("pending")&&!proof.optBoolean("dismissed"))try{
-                boolean alreadyConfirmed=false;java.util.Iterator<String> other=records.keys();
-                while(other.hasNext()){JSONObject accepted=records.optJSONObject(other.next());
-                    if(accepted!=null&&!accepted.optBoolean("pending")&&!accepted.optBoolean("dismissed")&&sameSession(accepted,proof))alreadyConfirmed=true;}
-                if(!alreadyConfirmed)out.put(new JSONObject(proof.toString()).put("record_key",key));
+    static synchronized JSONArray nativePending(Context context, String collection) {
+        JSONObject records = read(context, collection);
+        java.util.Map<String, java.util.List<long[]>> accepted = new java.util.HashMap<>();
+        java.util.Iterator<String> keys = records.keys();
+        while (keys.hasNext()) {
+            JSONObject proof = records.optJSONObject(keys.next());
+            if (proof == null || proof.optBoolean("pending") || proof.optBoolean("dismissed")) continue;
+            long start = time(proof);
+            if (start <= 0) continue;
+            accepted.computeIfAbsent(proof.optString("venue_id"), key -> new java.util.ArrayList<>())
+                    .add(new long[]{start, sessionEnd(proof, start)});
+        }
+        for (java.util.List<long[]> sessions : accepted.values()) {
+            sessions.sort(java.util.Comparator.comparingLong(row -> row[0]));
+            long end = Long.MIN_VALUE;
+            for (long[] session : sessions) session[1] = end = Math.max(end, session[1]);
+        }
+        JSONArray pending = new JSONArray();
+        keys = records.keys();
+        while (keys.hasNext()) {
+            String key = keys.next();
+            JSONObject proof = records.optJSONObject(key);
+            if (proof == null || !proof.optBoolean("pending") || proof.optBoolean("dismissed")) continue;
+            long start = time(proof);
+            java.util.List<long[]> sessions = accepted.get(proof.optString("venue_id"));
+            boolean confirmed = false;
+            if (start > 0 && sessions != null) {
+                long latest = sessionEnd(proof, start) + 900000;
+                int lo = 0, hi = sessions.size();
+                while (lo < hi) {
+                    int mid = (lo + hi) >>> 1;
+                    if (sessions.get(mid)[0] <= latest) lo = mid + 1;
+                    else hi = mid;
+                }
+                confirmed = lo > 0 && start <= sessions.get(lo - 1)[1] + 900000;
             }
-            catch(Exception invalid){throw new IllegalStateException(invalid);}
-        }return out;
+            if (!confirmed) try { pending.put(proof.put("record_key", key)); }
+            catch (org.json.JSONException invalid) { throw new IllegalStateException(invalid); }
+        }
+        return pending;
     }
+
+    private static long sessionEnd(JSONObject proof, long start) {
+        JSONObject evidence = proof.optJSONObject("evidence");
+        return evidence == null ? start : Math.max(start, evidence.optLong("to_ms", start));
+    }
+
     static void reviewNative(Context context,String collection,String key,boolean confirmed) throws Exception {
         String journeyId;long epoch;
         synchronized(VenueVisitStore.class){

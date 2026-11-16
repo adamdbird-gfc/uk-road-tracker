@@ -36,6 +36,7 @@ final class RoadDetailModel {
     private JSONObject boundary;
     double referenceMetres, uniqueMetres, percent=Double.NaN;
     private static final int MAX_MAP_EDGES=60_000;
+    static final String[] ROAD_FIELDS = {"road_geojson", "motorway_geojson", "a_road_geojson", "cycling_geojson"};
 
     static RoadDetailModel load(Context context,RoadDetailSelection selection,boolean cumulative) throws Exception {
         return load(context,selection,cumulative,null);
@@ -50,7 +51,7 @@ final class RoadDetailModel {
         MotorwayProgressCalculator motorway=seed==null&&!cumulative&&RoadDetailSelection.MOTORWAY.equals(selection.kind)?new MotorwayProgressCalculator(context):null;
         ARoadProgressCalculator aRoad=seed==null&&!cumulative&&RoadDetailSelection.A_ROAD.equals(selection.kind)?new ARoadProgressCalculator(context):null;
         Set<String> refs=Collections.singleton(RoadDetailSelection.normalizeRef(selection.label));
-        cachedRoadEvidence(context,journey->{
+        cachedRoadEvidence(context, selection, null, journey->{
             if(!"complete".equals(journey.optString("processing_status")))return;
             if(motorway!=null)motorway.addJourney(journey,refs);
             if(aRoad!=null)aRoad.addJourney(journey,refs);
@@ -78,31 +79,47 @@ final class RoadDetailModel {
         output.journeys.sort((a,b)->b.date.compareTo(a.date));
         return output;
     }
-    static void cachedRoadEvidence(Context context,JourneyStore.JourneyVisitor visitor)throws Exception {
+    private static void cachedRoadEvidence(Context context, RoadDetailSelection selection,
+                                           Set<String> onlyIds, JourneyStore.JourneyVisitor visitor) throws Exception {
         long started = android.os.SystemClock.elapsedRealtime();
         JourneyStore.prepareArchive(context);
         long prepared = android.os.SystemClock.elapsedRealtime();
         long rowNanos = 0, visitorNanos = 0;
-        int reads, reused;
+        int reads, reused, skipped, decoded = 0;
+        PerformanceDiagnostics.HeapSample heap = new PerformanceDiagnostics.HeapSample();
         long opened, finished;
         try (CompactJourneyCache cache = new CompactJourneyCache(context, "road-evidence-v1")) {
             opened = android.os.SystemClock.elapsedRealtime();
-            for (java.io.File source : JourneyStore.archiveFiles(context)) {
+            java.util.Map<String, String> excluded = selection == null || onlyIds != null
+                    ? java.util.Collections.emptyMap() : cache.excludedSources(selection::mayMatch);
+            Iterable<java.io.File> sources = onlyIds == null ? JourneyStore.archiveFiles(context)
+                    : () -> onlyIds.stream().map(id -> JourneyStore.archiveFile(context, id)).iterator();
+            for (java.io.File source : sources) {
                 if (Thread.currentThread().isInterrupted()) throw new java.util.concurrent.CancellationException();
+                if (onlyIds != null && !source.isFile()) continue;
+                String excludedToken = excluded.get(source.getName());
+                if (excludedToken != null && excludedToken.equals(JourneyStore.fileToken(source))) {
+                    cache.skipped++;
+                    continue;
+                }
                 long rowStart = System.nanoTime();
-                JSONObject row = cache.get(source, file -> JourneyStore.mapEvidence(context, file, false));
+                JSONObject row = cache.get(source, file -> JourneyStore.mapEvidence(context, file, false),
+                        selection == null ? null : selection::mayMatch, RoadDetailSelection::index);
                 long visitStart = System.nanoTime();
                 rowNanos += visitStart - rowStart;
+                if (row == null) continue;
+                if (++decoded % 25 == 0) heap.sample();
                 visitor.visit(row);
                 visitorNanos += System.nanoTime() - visitStart;
             }
             reads = cache.reads;
             reused = cache.hits;
+            skipped = cache.skipped;
             finished = android.os.SystemClock.elapsedRealtime();
         }
         long closed = android.os.SystemClock.elapsedRealtime();
         PerformanceDiagnostics.timing("focused_archive", closed-started,
-                "reads="+reads+" reused="+reused+" prepare_ms="+(prepared-started)
+                "query="+(onlyIds!=null?"contributors":selection==null?"all":"road")+" reads="+reads+" reused="+reused+" indexed_out="+skipped+" visited="+decoded+" "+heap.description()+" prepare_ms="+(prepared-started)
                         +" cache_open_ms="+(opened-prepared)+" row_ms="+rowNanos/1_000_000
                         +" visitor_ms="+visitorNanos/1_000_000+" cache_close_ms="+(closed-finished));
     }
@@ -110,8 +127,7 @@ final class RoadDetailModel {
         if(ncn){List<Entry> related=new ArrayList<>();Section selected=sectionAt(latitude,longitude);if(selected==null||!selected.travelled)return related;for(Entry e:journeys)for(JSONArray line:e.lines)if(NcnGeometry.overlaps(line,selected.line)){related.add(e);break;}return related;}
         Set<String> ids=new HashSet<>();for(Entry e:journeys)ids.add(e.id);
         List<Entry> related=new ArrayList<>();
-        cachedRoadEvidence(context,journey->{
-            if(!ids.contains(journey.optString("journey_id")))return;
+        cachedRoadEvidence(context, selection, ids, journey->{
             Entry entry=collect(journey,selection,boundary,false);
             if(entry.near(latitude,longitude)){entry.lines.clear();related.add(entry);}
         });
@@ -155,7 +171,7 @@ final class RoadDetailModel {
         JSONObject result=journey.optJSONObject("processing_result");if(result==null)return entry;
         String canonical=RoadDetailSelection.MOTORWAY.equals(selection.kind)?"motorway_geojson":RoadDetailSelection.A_ROAD.equals(selection.kind)?"a_road_geojson":null;
         if(cumulative&&canonical!=null&&!driven)return entry;
-        String[] fields=cumulative&&canonical!=null?new String[]{canonical}:new String[]{"road_geojson","motorway_geojson","a_road_geojson","cycling_geojson"};
+        String[] fields=cumulative&&canonical!=null?new String[]{canonical}:ROAD_FIELDS;
         Set<String> seen=new HashSet<>();
         for(String field:fields) {
             JSONObject collection=result.optJSONObject(field);JSONArray features=collection==null?null:collection.optJSONArray("features");

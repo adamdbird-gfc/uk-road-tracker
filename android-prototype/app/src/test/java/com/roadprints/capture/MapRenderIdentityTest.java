@@ -37,6 +37,32 @@ public class MapRenderIdentityTest {
         System.out.println("RENDER_IDENTITY_BENCHMARK points=25000 frames=30 structural_hash_calls=0 warm_frames_ms="+(System.nanoTime()-started)/1e6+" environment=Robolectric_not_phone");
         cache.clear();assertEquals(0,cache.vertices);MapRenderGeometry.clearPrepared();
     }
+    @Test public void oversizedLayerReusesVisiblePathsAndOnlyCullsOncePerViewport() throws Exception {
+        MapRenderGeometry.clearPrepared();
+        MapRenderGeometry cache = new MapRenderGeometry();
+        java.util.List<JSONArray> roads = new java.util.ArrayList<>();
+        for (int i = 0; i < 12; i++) roads.add(row(10_000));
+        roads.add(new JSONArray("[[30,0],[30.1,0]]"));
+        Paint paint = new Paint();
+        Canvas canvas = canvas();
+        cache.beginViewport(.1, 0, 0, 300, 300);
+        cache.drawLayer(canvas, roads, paint);
+        assertEquals(12, cache.builds);
+        assertEquals(1, cache.culled);
+        assertEquals(100_000, cache.vertices);
+
+        cache.drawLayer(canvas, roads, paint);
+        assertEquals(14, cache.builds);
+        assertEquals(10, cache.hits);
+        assertEquals(1, cache.culled);
+
+        cache.beginViewport(.1, MapRenderGeometry.x(30), 0, 300, 300);
+        cache.drawLayer(canvas, roads, paint);
+        assertEquals(15, cache.builds);
+        assertEquals(13, cache.culled);
+        assertEquals(2, cache.vertices);
+    }
+
     @Test public void republishingMutatedSameLengthGeometryRetiresThePreparedPath() throws Exception {
         JSONArray row=row(2);RoutePreviewView view=new RoutePreviewView(RuntimeEnvironment.getApplication(),row);
         MapRenderGeometry.prepare(Collections.singletonList(row));

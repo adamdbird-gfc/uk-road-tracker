@@ -84,8 +84,10 @@ final class MilepostPresentation {
             Award a=awards.get(index);
             boolean visible=a.earned&&(index!=5||target()==7);
             String hiddenTitle=index==5?"The seven-chapter mystery":index==6?"Collection achievement":"Hidden personality";
+            String status = a.ordinal <= 0 ? "" : a.earned ? "Previously unlocked"
+                    : "Previously unlocked · credit withdrawn";
             return new Card(visible?NAMES[index]:hiddenTitle,
-                visible&&index<6?BIOS[index]:"",a.ordinal>0?"Previously unlocked":"",
+                visible&&index<6?BIOS[index]:"",status,
                 visible,index==5?target():0);
         }
         String dates(){return from==null?"Historical dates unavailable":

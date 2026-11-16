@@ -3,6 +3,7 @@ package com.roadprints.capture;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
@@ -671,41 +672,34 @@ public class JourneyListActivity extends Activity {
         }
         try {
             processor.execute(() -> {
+                if (isDestroyed() || revision != JourneyStore.geometryRevision(getApplicationContext())) return;
+                synchronized (SUMMARY_CACHE_LOCK) {
+                    if (processDiscoveryRevision == revision) return;
+                }
                 Map<String, List<String>> highlights = readDiscoveryCache(revision);
                 boolean calculated = highlights != null;
                 if (highlights == null) {
                     highlights = new LinkedHashMap<>();
                     try {
                         List<JourneyDiscoveryRecord> records = new ArrayList<>();
-                        RoadDetailModel.cachedRoadEvidence(getApplicationContext(), journey -> {
-                            if (!"complete".equals(journey.optString("processing_status"))) return;
-                            String mode = journey.optString("mode", "unknown").toLowerCase();
-                            if (!(isRoadMode(mode) || isFootMode(mode) || MatchingCoordinator.isCycle(mode))) return;
-                            Map<String, String> roads = new LinkedHashMap<>();
-                            for (JSONObject feature : discoveryFeatures(journey)) {
-                                JSONObject properties = feature.optJSONObject("properties");
-                                if (properties == null) continue;
-                                String rawRef = properties.optString("road_ref",
-                                        properties.optString("ref", ""));
-                                String name = properties.optString("name",
-                                        properties.optString("road_name", "")).trim();
-                                String[] refs = rawRef.trim().isEmpty() ? new String[]{""}
-                                        : rawRef.trim().split("[;,/]");
-                                for (String value : refs) {
-                                    String ref = value.trim().toUpperCase();
-                                    boolean usableRef = !ref.isEmpty()
-                                            && !ref.matches("\\d+(?:[.,]\\d+)?");
-                                    String label = usableRef ? ref : name;
-                                    if (label.isEmpty()
-                                            || label.matches("\\d+(?:[.,]\\d+)?")) continue;
-                                    roads.putIfAbsent(usableRef ? "ref:" + ref
-                                            : "name:" + label.toLowerCase(), label);
-                                }
+                        Context app = getApplicationContext();
+                        long started = android.os.SystemClock.elapsedRealtime();
+                        JourneyStore.prepareArchive(app);
+                        try (CompactJourneyCache cache = new CompactJourneyCache(app, "road-discovery-v1")) {
+                            for (java.io.File source : JourneyStore.archiveFiles(app)) {
+                                if (Thread.currentThread().isInterrupted() || isDestroyed()) return;
+                                JSONObject row = cache.get(source, file -> discoveryRow(JourneyStore.mapEvidence(app, file, false)));
+                                if (row == null) continue;
+                                JSONObject labels = row.getJSONObject("roads");
+                                if (labels.length() == 0) continue;
+                                Map<String, String> roads = new LinkedHashMap<>();
+                                labels.keys().forEachRemaining(key -> roads.put(key, labels.optString(key)));
+                                records.add(new JourneyDiscoveryRecord(row.getString("id"), row.getLong("started"), roads));
                             }
-                            if (!roads.isEmpty()) records.add(new JourneyDiscoveryRecord(
-                                    journey.optString("journey_id", ""),
-                                    journeyStartMillis(journey), roads));
-                        });
+                            PerformanceDiagnostics.timing("journey_discovery_archive",
+                                    android.os.SystemClock.elapsedRealtime() - started,
+                                    "reads=" + cache.reads + " reused=" + cache.hits + " contributors=" + records.size());
+                        }
                         records.sort(Comparator.comparingLong(record -> record.startedAt));
                         Set<String> seen = new HashSet<>();
                         for (JourneyDiscoveryRecord record : records) {
@@ -731,8 +725,10 @@ public class JourneyListActivity extends Activity {
                 }
                 mainHandler.post(() -> {
                     if (isFinishing() || generation != refreshGeneration) return;
-                    newRoadHighlights = result;
-                    render();
+                    if (!newRoadHighlights.equals(result)) {
+                        newRoadHighlights = result;
+                        render();
+                    }
                 });
             });
         } catch (RejectedExecutionException ignored) {
@@ -771,6 +767,30 @@ public class JourneyListActivity extends Activity {
         } catch (Exception error) {
             android.util.Log.w("Roadprints", "Journey highlight cache could not be saved", error);
         }
+    }
+
+    private JSONObject discoveryRow(JSONObject journey) throws org.json.JSONException {
+        JSONObject roads = new JSONObject();
+        String mode = journey.optString("mode", "unknown").toLowerCase(java.util.Locale.ROOT);
+        if ("complete".equals(journey.optString("processing_status"))
+                && (isRoadMode(mode) || isFootMode(mode) || MatchingCoordinator.isCycle(mode))) {
+            for (JSONObject feature : discoveryFeatures(journey)) {
+                JSONObject props = feature.optJSONObject("properties");
+                if (props == null) continue;
+                String refs = props.optString("road_ref", props.optString("ref", ""));
+                String name = props.optString("name", props.optString("road_name", "")).trim();
+                for (String value : (refs.trim().isEmpty() ? new String[]{""} : refs.split("[;,/]"))) {
+                    String ref = value.trim().toUpperCase(java.util.Locale.ROOT);
+                    boolean numbered = !ref.isEmpty() && !ref.matches("\\d+(?:[.,]\\d+)?");
+                    String label = numbered ? ref : name;
+                    if (label.isEmpty() || label.matches("\\d+(?:[.,]\\d+)?")) continue;
+                    String key = numbered ? "ref:" + ref : "name:" + label.toLowerCase(java.util.Locale.ROOT);
+                    if (!roads.has(key)) roads.put(key, label);
+                }
+            }
+        }
+        return new JSONObject().put("id", journey.optString("journey_id"))
+                .put("started", journeyStartMillis(journey)).put("roads", roads);
     }
 
     private List<JSONObject> discoveryFeatures(JSONObject journey) {

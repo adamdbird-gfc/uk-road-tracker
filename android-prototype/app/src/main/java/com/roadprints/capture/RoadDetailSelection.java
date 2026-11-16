@@ -33,6 +33,18 @@ final class RoadDetailSelection {
         String ref=value.trim().replaceAll("\\s+","").toUpperCase(Locale.ROOT);
         return ref.equals("M6T")||ref.equals("M6TOLL")?"M6 Toll":ref;
     }
+    private static String normalizeName(String name) {
+        return name.trim().replaceAll("\\s+", " ");
+    }
+
+    boolean mayMatch(JSONArray index) {
+        String key = LOCAL.equals(kind) ? "name:" + normalizeName(label) : "ref:" + normalizeRef(label);
+        for (int i = 0; i < index.length(); i++) {
+            if (index.optString(i).equalsIgnoreCase(key)) return true;
+        }
+        return false;
+    }
+
     boolean matches(JSONObject feature) {
         JSONObject p=feature==null?null:feature.optJSONObject("properties");
         if(p==null || (!region.isEmpty()&&!region.equals(region(feature)))) return false;
@@ -42,12 +54,36 @@ final class RoadDetailSelection {
             String refs=p.optString("road_ref",p.optString("ref",""));
             for(String ref:refs.split("[;,/]")) if(normalizeRef(ref).matches("[MAB][0-9]+.*")) return false;
             String name=p.optString("name",p.optString("road_name",""));
-            return name.trim().replaceAll("\\s+"," ").equalsIgnoreCase(label.trim().replaceAll("\\s+"," "));
+            return normalizeName(name).equalsIgnoreCase(normalizeName(label));
         }
         for(String ref:p.optString("road_ref",p.optString("ref","")).split("[;,/]"))
             if(normalizeRef(ref).equals(normalizeRef(label))) return true;
         return false;
     }
+    /** Deliberately includes region and correction false positives. Full evidence makes the decision. */
+    static JSONArray index(JSONObject journey) {
+        java.util.Set<String> keys = new java.util.TreeSet<>();
+        JSONObject result = journey.optJSONObject("processing_result");
+        if (result != null && "complete".equals(journey.optString("processing_status"))) {
+            for (String field : RoadDetailModel.ROAD_FIELDS) {
+                JSONObject collection = result.optJSONObject(field);
+                JSONArray features = collection == null ? null : collection.optJSONArray("features");
+                for (int i = 0; features != null && i < features.length(); i++) {
+                    JSONObject feature = features.optJSONObject(i);
+                    JSONObject props = feature == null ? null : feature.optJSONObject("properties");
+                    if (props == null) continue;
+                    for (String ref : props.optString("road_ref", props.optString("ref", "")).split("[;,/]")) {
+                        String normalized = normalizeRef(ref);
+                        if (!normalized.isEmpty()) keys.add("ref:" + normalized);
+                    }
+                    String name = normalizeName(props.optString("name", props.optString("road_name", "")));
+                    if (!name.isEmpty()) keys.add("name:" + name);
+                }
+            }
+        }
+        return new JSONArray(keys);
+    }
+
     static String region(JSONObject feature) {
         JSONObject p=feature.optJSONObject("properties");
         String explicit=p==null?"":p.optString("road_region","").toUpperCase(Locale.ROOT);

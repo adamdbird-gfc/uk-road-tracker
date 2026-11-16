@@ -203,6 +203,116 @@ public class MapPerformanceTest {
         try {assertEquals(1,read(controller.get(),JourneyFilters.all()).matchedJourneys);assertEquals(3,JourneyStore.count(app));}
         finally {controller.destroy();}
     }
+    @Test public void focusedRoadIndexSkipsGeometryForUnrelatedRecords() throws Exception {
+        JSONObject template = trip("focused");
+        byte[] selected = template.put("journey_id", "focused-selected").toString().getBytes(StandardCharsets.UTF_8);
+        java.nio.file.Files.write(JourneyStore.archiveFile(app, "focused-selected").toPath(), selected);
+        JSONObject unrelated = new JSONObject(template.toString());
+        unrelated.getJSONObject("processing_result").remove("a_road_geojson");
+        for (int i = 0; i < 120; i++) {
+            String id = "focused-other-" + i;
+            java.nio.file.Files.write(JourneyStore.archiveFile(app, id).toPath(),
+                    unrelated.put("journey_id", id).toString().getBytes(StandardCharsets.UTF_8));
+        }
+        RoadDetailSelection road = new RoadDetailSelection(RoadDetailSelection.A_ROAD, "A2", "GB", "", "");
+        String[] modes = {"cold", "warm"};
+        for (String mode : modes) {
+            org.robolectric.shadows.ShadowLog.clear();
+            RoadDetailModel result = RoadDetailModel.load(app, road, true);
+            assertEquals(1, result.journeys.size());
+            assertEquals("focused-selected", result.journeys.get(0).id);
+            String timing = org.robolectric.shadows.ShadowLog.getLogsForTag("RoadprintsTiming").stream()
+                    .map(entry -> entry.msg).filter(line -> line.startsWith("focused_archive ")).findFirst().orElseThrow();
+            System.out.println("FOCUSED " + mode + " " + timing);
+            if ("warm".equals(mode)) {
+                assertTrue(timing, timing.contains("reads=0 reused=1 indexed_out=120 visited=1"));
+            }
+        }
+    }
+
+    @Test public void progressRetainsBoundedARoadIndexesWith1663Journeys() throws Exception {
+        JSONObject master = trip("volume").put("distance_meters", 1000);
+        JSONObject roads = asset("index.json").getJSONObject("roads");
+        List<JSONObject> templates = new ArrayList<>();
+        List<String> ids = new ArrayList<>();
+        roads.keys().forEachRemaining(ids::add);
+        ids.sort(Comparator.comparingDouble((String id) -> roads.optJSONObject(id).optDouble("total_km", 0)).reversed());
+        for (String id : ids) {
+            if (!id.startsWith("GB:")) continue;
+            JSONObject entry = roads.getJSONObject(id);
+            JSONArray paths = asset(entry.getString("file")).getJSONArray("paths");
+            if (paths.length() == 0 || paths.getJSONArray(0).length() < 2) continue;
+            JSONArray first = paths.getJSONArray(0).getJSONArray(0);
+            if (first.getDouble(0) < -5.3 && first.getDouble(1) > 53.9 && first.getDouble(1) < 55.6) continue;
+            JSONObject journey = new JSONObject(master.toString());
+            journey.getJSONObject("processing_result").put("a_road_geojson",
+                    collection(feature(id.substring(3), line(paths.getJSONArray(0), 12))));
+            templates.add(journey);
+            if (templates.size() == 56) break;
+        }
+        assertEquals(56, templates.size());
+        for (int i = 0; i < 1663; i++) {
+            String id = "progress-volume-" + i;
+            JSONObject journey = templates.get(i % templates.size()).put("journey_id", id);
+            java.nio.file.Files.write(JourneyStore.archiveFile(app, id).toPath(),
+                    journey.toString().getBytes(StandardCharsets.UTF_8));
+        }
+        var controller = Robolectric.buildActivity(ProgressActivity.class);
+        Method summarize = ProgressActivity.class.getDeclaredMethod("summarizeSavedJourneys", Context.class, int.class);
+        summarize.setAccessible(true);
+        for (int i = 0; i < 2; i++) {
+            org.robolectric.shadows.ShadowLog.clear();
+            long start = System.nanoTime();
+            Object stats = summarize.invoke(controller.get(), app, 0);
+            System.out.println("PROGRESS_WALL pass=" + i + " ms=" + (System.nanoTime() - start) / 1e6);
+            Field drivingMetres = stats.getClass().getDeclaredField("drivingMetres");
+            drivingMetres.setAccessible(true);
+            assertEquals(1663000, drivingMetres.getDouble(stats), 0);
+            Field field = stats.getClass().getDeclaredField("aRoadProgress");
+            field.setAccessible(true);
+            ARoadProgressCalculator.Summary summary = (ARoadProgressCalculator.Summary) field.get(stats);
+            assertEquals(56, summary.roads.size());
+            assertEquals(1663000, summary.matchedMetres, 0);
+            for (ARoadProgressCalculator.Road road : summary.roads) {
+                assertTrue(road.id, road.referenceAvailable);
+                assertTrue(road.coveredMapSections.isEmpty());
+            }
+            if (i == 1) {
+                assertTrue(org.robolectric.shadows.ShadowLog.getLogsForTag("RoadprintsTiming").stream()
+                        .anyMatch(log -> log.msg.startsWith("progress_archive")
+                                && log.msg.contains("rows=1663 reads=0 reused=1663")));
+            }
+            for (var log : org.robolectric.shadows.ShadowLog.getLogsForTag("RoadprintsTiming")) {
+                if (log.msg.startsWith("progress_archive") || log.msg.startsWith("progress_geometry")) {
+                    System.out.println("PROGRESS_VOLUME pass=" + i + " " + log.msg);
+                }
+            }
+        }
+        long revision = JourneyStore.progressRevision(app);
+        JSONObject changed = JourneyStore.get(app, "progress-volume-0");
+        JourneyStore.save(app, changed.put("distance_meters", 1234));
+        assertTrue(JourneyStore.progressRevision(app) > revision);
+        org.robolectric.shadows.ShadowLog.clear();
+        Object updated = summarize.invoke(controller.get(), app, 0);
+        Field drivingMetres = updated.getClass().getDeclaredField("drivingMetres");
+        drivingMetres.setAccessible(true);
+        assertEquals(1663234, drivingMetres.getDouble(updated), 0);
+        assertTrue(org.robolectric.shadows.ShadowLog.getLogsForTag("RoadprintsTiming").stream()
+                .anyMatch(log -> log.msg.startsWith("progress_archive")
+                        && log.msg.contains("rows=1663 reads=1 reused=1662")));
+    }
+
+    @Test public void staleFocusedExclusionIsRecheckedAfterFileReplacement() throws Exception {
+        JSONObject journey = trip("stale-index");
+        JSONObject original = new JSONObject(journey.toString());
+        journey.getJSONObject("processing_result").remove("a_road_geojson");
+        JourneyStore.save(app, journey);
+        RoadDetailSelection road = new RoadDetailSelection(RoadDetailSelection.A_ROAD, "A2", "GB", "", "");
+        assertTrue(RoadDetailModel.load(app, road, true).journeys.isEmpty());
+        JourneyStore.save(app, original);
+        assertEquals(1, RoadDetailModel.load(app, road, true).journeys.size());
+    }
+
     private void stageLogs(String label) {
         for(org.robolectric.shadows.ShadowLog.LogItem item:org.robolectric.shadows.ShadowLog.getLogsForTag("RoadprintsTiming"))
             if(item.msg.startsWith("map_"))System.out.println("MAP_STAGE "+label+" "+item.msg);
@@ -237,11 +347,11 @@ public class MapPerformanceTest {
         System.out.println("MAP_CACHE_BENCHMARK identical_payload_bytes="+bytes.length+" legacy_hit_ms="+oldHit/1e6+" current_hit_ms="+newHit/1e6
             +" legacy_stale_ms="+oldMiss/1e6+" current_stale_ms="+newMiss/1e6);
     }
-    @Test public void drivingHistory1547ColdWarmAdditionFiltersAndCoverageRemainConsistent() throws Exception {
+    @Test public void drivingHistory1663ColdWarmAdditionFiltersAndCoverageRemainConsistent() throws Exception {
         JSONObject template=trip("bench");
         JSONArray raw=new JSONArray();for(int i=0;i<512;i++)raw.put(new JSONArray().put(.37).put(51.44).put(i));
         template.put("raw_capture_samples",raw);
-        for(int i=0;i<1547;i++){
+        for(int i=0;i<1663;i++){
             template.put("journey_id","driving-"+i);
             java.nio.file.Files.write(new File(app.getFilesDir(),"journey_driving-"+i+".json").toPath(),template.toString().getBytes(StandardCharsets.UTF_8));
         }
@@ -249,8 +359,11 @@ public class MapPerformanceTest {
         try {
             org.robolectric.shadows.ShadowLog.clear();
             long start=System.nanoTime();MapActivity.MapRoutes cold=read(controller.get(),JourneyFilters.all());long coldTime=System.nanoTime()-start;stageLogs("cold");
-            start=System.nanoTime();MapActivity.MapRoutes warm=read(controller.get(),JourneyFilters.all());long warmTime=System.nanoTime()-start;stageLogs("warm");
-            assertEquals(1547,cold.matchedJourneys);assertEquals(cold.matchedJourneys,warm.matchedJourneys);
+            start=System.nanoTime();MapActivity.MapRoutes warm=read(controller.get(),JourneyFilters.all());long warmTime=System.nanoTime()-start;
+            assertTrue(org.robolectric.shadows.ShadowLog.getLogsForTag("RoadprintsTiming").stream()
+                    .anyMatch(log -> log.msg.startsWith("map_records") && log.msg.contains("reused=1663 rebuilt=0 source_reads=0")));
+            stageLogs("warm");
+            assertEquals(1663,cold.matchedJourneys);assertEquals(cold.matchedJourneys,warm.matchedJourneys);
             assertEquals(cold.roadPercentages,warm.roadPercentages);
             snapshotBenchmark(controller.get(),warm);
             assertEquals(cold.coveredMotorwaySections.toString(),warm.coveredMotorwaySections.toString());
@@ -259,8 +372,8 @@ public class MapPerformanceTest {
             assertEquals(0,filtered.matchedJourneys);
             JourneyStore.save(app,new JSONObject(template.toString()).put("journey_id","new-driving"));
             start=System.nanoTime();MapActivity.MapRoutes added=read(controller.get(),JourneyFilters.all());long addTime=System.nanoTime()-start;stageLogs("add_one");
-            assertEquals(1548,added.matchedJourneys);assertEquals(cold.roadPercentages,added.roadPercentages);
-            System.out.println("MAP_DRIVING_BENCHMARK synthetic=1547 cold_prepare_ms="+coldTime/1e6+" warm_prepare_ms="+warmTime/1e6+" add_one_prepare_ms="+addTime/1e6+" completion=identical");
+            assertEquals(1664,added.matchedJourneys);assertEquals(cold.roadPercentages,added.roadPercentages);
+            System.out.println("MAP_DRIVING_BENCHMARK synthetic=1663 cold_prepare_ms="+coldTime/1e6+" warm_prepare_ms="+warmTime/1e6+" add_one_prepare_ms="+addTime/1e6+" completion=identical");
         } finally {controller.destroy();}
     }
 }

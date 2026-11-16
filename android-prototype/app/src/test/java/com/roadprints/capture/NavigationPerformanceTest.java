@@ -71,6 +71,21 @@ public class NavigationPerformanceTest {
         assertEquals(raw,JourneyStore.get(app,"nav-0").getJSONArray("raw_capture_samples").toString());System.out.println("NAV_BENCHMARK changed_one_progress_ms="+changed/1e6+" full_history_invalidations=0");
         list.finish();paged.finish();progress.finish();
     }
+    @Test public void titleOnlyEditLeavesScreenPreparationRevisionsCurrent() throws Exception {
+        JourneyStore.save(app, trip("rename-0"));
+        long archive = JourneyStore.dataRevision(app);
+        long progress = JourneyStore.progressRevision(app);
+        long geometry = JourneyStore.geometryRevision(app);
+        JourneyStore.updateTitle(app, "rename-0", "Retitled");
+        assertTrue(JourneyStore.dataRevision(app) > archive);
+        assertEquals(progress, JourneyStore.progressRevision(app));
+        assertEquals(geometry, JourneyStore.geometryRevision(app));
+        assertEquals("Retitled", JourneyStore.get(app, "rename-0").optString("title"));
+        JourneyStore.delete(app, "rename-0");
+        assertTrue(JourneyStore.progressRevision(app) > progress);
+        assertTrue(JourneyStore.geometryRevision(app) > geometry);
+    }
+
     @Test public void compactCacheInvalidatesOnlyChangedSourcesAndIgnoresDeletedRows()throws Exception {
         JourneyStore.save(app,trip("small-0"));JourneyStore.save(app,trip("small-1"));
         try(CompactJourneyCache cache=new CompactJourneyCache(app,"test")){for(File file:JourneyStore.archiveFiles(app))cache.get(file,JourneyStore::readSummary);assertEquals(2,cache.reads);}
@@ -123,6 +138,30 @@ public class NavigationPerformanceTest {
         assertEquals(0,cache.builds);assertTrue(cache.vertices<=100000);
         System.out.println("NAV_BENCHMARK road_sections=3565 legacy_project_draw_ms="+legacy/1e6+" worker_path_preparation_ms="+preparation/1e6+" first_cached_draw_ms="+current/1e6+" warm_cached_draw_ms="+warm/1e6+" ui_path_builds="+cache.builds+" offscreen_culled="+cache.culled+" environment=Robolectric_not_phone");MapRenderGeometry.clearPrepared();
     }
+    @Test public void boundsOnlyOverviewRetainsVisiblePathsAcrossRepeatedFrames() throws Exception {
+        List<JSONArray> rows = new ArrayList<>();
+        for (int i = 0; i < 4853; i++) {
+            rows.add(i < 60 ? new JSONArray("[[0,0],[0.01,0.01]]")
+                    : new JSONArray("[[10,10],[10.01,10.01]]"));
+        }
+        MapRenderGeometry.clearPrepared();
+        try {
+            MapRenderGeometry.prepareBounds(rows);
+            MapRenderGeometry geometry = new MapRenderGeometry();
+            Canvas canvas = new Canvas(Bitmap.createBitmap(120, 120, Bitmap.Config.ARGB_8888));
+            Paint paint = new Paint();
+            for (JSONArray row : rows) geometry.draw(canvas, row, paint, null, .01, 0, 0, 120, 120);
+            assertEquals(60, geometry.builds);
+            for (JSONArray row : rows) geometry.draw(canvas, row, paint, null, .01, 0, 0, 120, 120);
+            assertEquals(60, geometry.builds);
+            assertEquals(60, geometry.hits);
+        assertEquals(2 * (4853 - 60), geometry.culled);
+            assertEquals(120, geometry.vertices);
+        } finally {
+            MapRenderGeometry.clearPrepared();
+        }
+    }
+
     @Test public void mutableEditingDoesNotReuseImmutableGeometry()throws Exception {
         MapRenderGeometry cache=new MapRenderGeometry();JSONArray row=new JSONArray("[[0,0],[0.0001,0]]");Paint paint=new Paint();Canvas canvas=new Canvas(Bitmap.createBitmap(100,100,Bitmap.Config.ARGB_8888));
         cache.draw(canvas,row,paint,null,1,0,0,100,100,false);row.getJSONArray(1).put(0,.0002);cache.draw(canvas,row,paint,null,1,0,0,100,100,false);

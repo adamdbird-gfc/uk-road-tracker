@@ -67,6 +67,60 @@ final class PerformanceDiagnostics {
         }
     }
 
+    /** Sampled Java heap usage, including concurrent work in the app process. */
+    static final class HeapSample {
+        private long peak;
+        HeapSample() { sample(); }
+        void sample() {
+            Runtime runtime = Runtime.getRuntime();
+            peak = Math.max(peak, runtime.totalMemory() - runtime.freeMemory());
+        }
+        String description() {
+            sample();
+            return "sampled_heap_peak_mib=" + peak / (1024 * 1024)
+                    + " heap_limit_mib=" + Runtime.getRuntime().maxMemory() / (1024 * 1024)
+                    + " railway_worker_active=" + RailwayTrialWorker.isChecking();
+        }
+    }
+
+    /** Process-wide occupancy and natural ART GC deltas for a single preparation phase. */
+    static final class ArchiveHeapSample {
+        private final long start = usedHeap();
+        private final long gcStart = runtimeStat("art.gc.gc-count");
+        private final long freedStart = runtimeStat("art.gc.bytes-freed");
+        private long peak = start;
+
+        void sample() { peak = Math.max(peak, usedHeap()); }
+
+        String description() {
+            long end = usedHeap();
+            peak = Math.max(peak, end);
+            long gcEnd = runtimeStat("art.gc.gc-count");
+            long freedEnd = runtimeStat("art.gc.bytes-freed");
+            return "sampled_heap_peak_mib=" + peak / 1_048_576
+                    + " heap_limit_mib=" + Runtime.getRuntime().maxMemory() / 1_048_576
+                    + " heap_start_kib=" + start / 1024 + " heap_end_kib=" + end / 1024
+                    + " gc_runs=" + delta(gcStart, gcEnd, 1)
+                    + " gc_freed_kib=" + delta(freedStart, freedEnd, 1024)
+                    + " railway_worker_active=" + RailwayTrialWorker.isChecking();
+        }
+
+        private static long usedHeap() {
+            Runtime runtime = Runtime.getRuntime();
+            return runtime.totalMemory() - runtime.freeMemory();
+        }
+
+        private static long runtimeStat(String key) {
+            String value = android.os.Debug.getRuntimeStat(key);
+            try { return value == null ? -1 : Long.parseLong(value); }
+            catch (NumberFormatException unavailable) { return -1; }
+        }
+
+        private static String delta(long start, long end, int unit) {
+            return start < 0 || end < start ? "unavailable" : Long.toString((end - start) / unit);
+        }
+    }
+
     static void timing(String operation,long ms,String counts){
         String value=operation+" ms="+ms+(counts.isEmpty()?"":" "+counts);
         android.util.Log.i("RoadprintsTiming",value);

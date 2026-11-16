@@ -175,7 +175,7 @@ public class RoutePreviewView extends View {
     private volatile boolean renderingActive=true;
     void setRenderingActive(boolean active){
         renderingActive=active;
-        if(!active){tileBitmaps.evictAll();renderGeometry.clear();}else invalidate();
+        if(!active){tileBitmaps.evictAll();}else invalidate();
     }
     private final LruCache<String, Bitmap> tileBitmaps = new LruCache<>(48);
     private final Set<String> loadingTiles =
@@ -354,6 +354,7 @@ public class RoutePreviewView extends View {
     private final List<JSONArray> ferrySegments=new ArrayList<>();
     private final Paint ferryPaint=new Paint(Paint.ANTI_ALIAS_FLAG);
     public void setFerrySegments(List<JSONArray> routes) {
+        renderGeometry.invalidateLayer(ferrySegments);
         ferrySegments.clear();
         if(routes!=null)for(JSONArray route:routes)if(hasRoutePoints(route))ferrySegments.add(route);
         ferryPaint.setColor(0xFF008A99);ferryPaint.setStyle(Paint.Style.STROKE);ferryPaint.setStrokeWidth(4*getResources().getDisplayMetrics().density);
@@ -598,6 +599,7 @@ public class RoutePreviewView extends View {
 
     /** Adds the POC-style blue motorway evidence over the normal journey map. */
     public void setMotorwaySegments(List<JSONArray> segments) {
+        renderGeometry.invalidateLayer(motorwaySegments);
         motorwaySegments.clear();
         if (segments != null) {
             for (JSONArray segment : segments) {
@@ -673,6 +675,7 @@ public class RoutePreviewView extends View {
     }
 
     private void replaceSegments(List<JSONArray> target, List<JSONArray> source) {
+        renderGeometry.invalidateLayer(target);
         target.clear();
         if (source == null) return;
         for (JSONArray segment : source) {
@@ -701,6 +704,8 @@ public class RoutePreviewView extends View {
         if(routeEditMode)renderGeometry.clear();
         canvas.drawColor(Color.rgb(239, 246, 250));
         boolean hasTiles = drawTiles(canvas);
+        if (!routeEditMode) renderGeometry.beginViewport(mapTileSize() * Math.pow(2.0, cameraZoom) / (2 * Math.PI * 6378137),
+                MapRenderGeometry.x(centerLongitude), MapRenderGeometry.y(centerLatitude), getWidth(), getHeight());
         long tilesFinished=android.os.SystemClock.elapsedRealtime();
 
         // Composite the existing road overlays as one layer so overlaps also stay at 50%.
@@ -720,30 +725,23 @@ public class RoutePreviewView extends View {
                 } else {
                     // Paint every outline before any centreline. A later
                     // section's round white cap must not cut the preceding line.
-                    if(!flatRoadMapStyle)for(JSONArray segment:matchedSegments)
-                        drawRoute(canvas,segment,routeHaloPaint,null);
-                    for(JSONArray segment:matchedSegments)drawRoute(canvas,segment,routePaint,null);
+                    if (!flatRoadMapStyle) drawRoadLayer(canvas, matchedSegments, routeHaloPaint);
+                    drawRoadLayer(canvas, matchedSegments, routePaint);
                 }
             } else if (travelVisible && hasRoutePoints(coordinates)) {
                 drawRoute(canvas, coordinates, routePaint,
                         flatRoadMapStyle ? null : routeHaloPaint);
             }
-            if(remainingVisible) for (JSONArray segment : incompleteMotorwaySegments) {
-                drawRoute(canvas, segment, motorwayIncompletePaint, null);
+            if (remainingVisible) {
+                drawRoadLayer(canvas, incompleteMotorwaySegments, motorwayIncompletePaint);
+                drawRoadLayer(canvas, incompleteARoadSegments, aRoadIncompletePaint);
             }
-            if(remainingVisible) for (JSONArray segment : incompleteARoadSegments) {
-                drawRoute(canvas, segment, aRoadIncompletePaint, null);
+            if (aRoadVisible) drawRoadLayer(canvas, coveredARoadSegments, aRoadPaint);
+            if (motorwayVisible) {
+                drawRoadLayer(canvas, coveredMotorwaySegments, motorwayPaint);
+                drawRoadLayer(canvas, motorwaySegments, motorwayPaint);
             }
-            if(aRoadVisible) for (JSONArray segment : coveredARoadSegments) {
-                drawRoute(canvas, segment, aRoadPaint, null);
-            }
-            if(motorwayVisible) for (JSONArray segment : coveredMotorwaySegments) {
-                drawRoute(canvas, segment, motorwayPaint, null);
-            }
-            if(motorwayVisible) for (JSONArray segment : motorwaySegments) {
-                drawRoute(canvas, segment, motorwayPaint, null);
-            }
-            for(JSONArray ferry:ferrySegments)drawRoute(canvas,ferry,ferryPaint,null);
+            drawRoadLayer(canvas, ferrySegments, ferryPaint);
             if (showEndpointMarkers) {
                 JSONArray startEndRoute = hasRoutePoints(coordinates)
                         ? coordinates : hasMatchedRoute ? matchedSegments.get(0)
@@ -1238,6 +1236,15 @@ public class RoutePreviewView extends View {
         }
         markerTextPaint.setTextSize(originalTextSize);
         markerTextPaint.setColor(originalTextColor);
+    }
+
+    private void drawRoadLayer(Canvas canvas, List<JSONArray> segments, Paint paint) {
+        if (routeEditMode) {
+            for (JSONArray segment : segments) drawRoute(canvas, segment, paint, null);
+        } else {
+            try { renderGeometry.drawLayer(canvas, segments, paint); }
+            catch (Exception invalid) { drawMessage(canvas, "Route preview unavailable"); }
+        }
     }
 
     private void drawRoute(Canvas canvas, JSONArray coordinates, Paint paint, Paint haloPaint) {

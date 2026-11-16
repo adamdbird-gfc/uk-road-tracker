@@ -18,6 +18,7 @@ final class MapJourneyStore implements AutoCloseable {
     private SQLiteDatabase db;
     private final boolean bypass;
     int reused,rebuilt,sourceReads,legacyReads,writes,oversized;
+    long payloadBytes, payloadLookupNanos, payloadDecodeNanos;
     MapJourneyStore(Context context) {this(context,false);}
     MapJourneyStore(Context context,boolean bypass) {
         this.bypass=bypass;
@@ -50,17 +51,30 @@ final class MapJourneyStore implements AutoCloseable {
             return original;
         }
         JSONObject prepared(Factory factory) throws Exception {
-            if(cached)try(Cursor cursor=db.rawQuery("SELECT payload,payload_sha FROM entries WHERE source=? AND token=? AND format=?",
-                    new String[]{source.getName(),token,Integer.toString(FORMAT)})) {
-                if(cursor.moveToFirst()&&!cursor.isNull(0)) {
-                    byte[] bytes=cursor.getBlob(0);
-                    if(NcnJson.hash(bytes).equals(cursor.getString(1))) {
-                        JSONObject value=new JSONObject(new String(bytes,StandardCharsets.UTF_8));
-                        for(String key:new String[]{"motorway","a_road","roads","motorways"})value.getJSONArray(key);
-                        reused++;return value;
+            if (cached) {
+                long lookupStarted = System.nanoTime();
+                long decodeStarted = 0;
+                try (Cursor cursor = db.rawQuery("SELECT payload,payload_sha FROM entries WHERE source=? AND token=? AND format=?",
+                        new String[]{source.getName(), token, Integer.toString(FORMAT)})) {
+                    if (cursor.moveToFirst() && !cursor.isNull(0)) {
+                        byte[] bytes = cursor.getBlob(0);
+                        String expected = cursor.getString(1);
+                        decodeStarted = System.nanoTime();
+                        payloadBytes += bytes.length;
+                        if (NcnJson.hash(bytes).equals(expected)) {
+                            JSONObject value = new JSONObject(new String(bytes, StandardCharsets.UTF_8));
+                            for (String key : new String[]{"motorway", "a_road", "roads", "motorways"}) value.getJSONArray(key);
+                            reused++;
+                            return value;
+                        }
                     }
+                } catch (org.json.JSONException invalid) { /* Rebuild this derived row only. */ }
+                finally {
+                    long end = System.nanoTime();
+                    payloadLookupNanos += (decodeStarted == 0 ? end : decodeStarted) - lookupStarted;
+                    if (decodeStarted != 0) payloadDecodeNanos += end - decodeStarted;
                 }
-            } catch(org.json.JSONException invalid) { /* Rebuild this derived row only. */ }
+            }
             return rebuild(factory);
         }
         JSONObject rebuild(Factory factory) throws Exception {
@@ -97,16 +111,21 @@ final class MapJourneyStore implements AutoCloseable {
     }
     void forEach(BooleanSupplier cancelled,Visitor visitor) throws Exception {
         JourneyStore.prepareArchive(context);
-        for(File source:JourneyStore.archiveFiles(context)) {
-            if(cancelled.getAsBoolean()||Thread.currentThread().isInterrupted())throw new java.util.concurrent.CancellationException();
-            String token=JourneyStore.fileToken(source);JSONObject head=null;
-            if(!bypass)try(Cursor cursor=db.rawQuery("SELECT header,header_sha FROM entries WHERE source=? AND token=? AND format=?",
-                    new String[]{source.getName(),token,Integer.toString(FORMAT)})) {
-                if(cursor.moveToFirst()) {
-                    byte[] bytes=cursor.getBlob(0);
-                    if(NcnJson.hash(bytes).equals(cursor.getString(1)))head=new JSONObject(new String(bytes,StandardCharsets.UTF_8));
-                }
-            } catch(org.json.JSONException corrupt) {head=null;}
+        java.util.List<File> files = JourneyStore.archiveFiles(context);
+        // Headers are small. Keep their order from the archive enumeration,
+        // which also determines which lines fit the existing display budget.
+        java.util.Map<String, CachedHeader> headers = bypass
+                ? java.util.Collections.emptyMap() : readHeaders(cancelled);
+        for (File source : files) {
+            checkCancelled(cancelled);
+            String token = JourneyStore.fileToken(source);
+            CachedHeader known = bypass ? null : headers.remove(source.getName());
+            JSONObject head = null;
+            if (known != null && token.equals(known.token)) {
+                try { head = new JSONObject(known.data); }
+                catch (org.json.JSONException invalid) { /* Rebuild this record. */ }
+            }
+            if (!bypass && known == null) head = readHeader(source, token);
             JSONObject raw=null;
             if(head==null) {
                 raw=bypass?null:JourneyProjectionCache.read(context,source,"map-v1");
@@ -116,10 +135,53 @@ final class MapJourneyStore implements AutoCloseable {
                 head=header(raw);
             }
             Record record=new Record(source,token,head,raw,raw==null);
-            if(raw!=null)save(record,null);
             visitor.visit(record);
+            // A prepared payload commits its header in the same write. Save a
+            // header separately only for rows that did not need a payload.
+            if (raw != null && !record.cached) save(record, null);
         }
     }
+    private record CachedHeader(String token, String data) {}
+
+    private java.util.Map<String, CachedHeader> readHeaders(BooleanSupplier cancelled) {
+        java.util.Map<String, CachedHeader> headers = new java.util.HashMap<>();
+        try (Cursor cursor = db.rawQuery("SELECT source,token,header,header_sha FROM entries WHERE format=?",
+                new String[]{Integer.toString(FORMAT)})) {
+            while (headers.size() < 4096 && cursor.moveToNext()) {
+                checkCancelled(cancelled);
+                byte[] bytes = cursor.getBlob(2);
+                if (bytes.length <= 4096 && NcnJson.hash(bytes).equals(cursor.getString(3))) {
+                    headers.put(cursor.getString(0), new CachedHeader(cursor.getString(1),
+                            new String(bytes, StandardCharsets.UTF_8)));
+                }
+            }
+        } catch (android.database.sqlite.SQLiteException invalid) {
+            headers.clear();
+        }
+        return headers;
+    }
+
+    private JSONObject readHeader(File source, String token) {
+        try (Cursor cursor = db.rawQuery("SELECT header,header_sha FROM entries WHERE source=? AND token=? AND format=?",
+                new String[]{source.getName(), token, Integer.toString(FORMAT)})) {
+            if (cursor.moveToFirst()) {
+                byte[] bytes = cursor.getBlob(0);
+                if (NcnJson.hash(bytes).equals(cursor.getString(1))) {
+                    return new JSONObject(new String(bytes, StandardCharsets.UTF_8));
+                }
+            }
+        } catch (org.json.JSONException | android.database.sqlite.SQLiteException invalid) {
+            // Fallback to the source if the disposable record cannot be read.
+        }
+        return null;
+    }
+
+    private static void checkCancelled(BooleanSupplier cancelled) {
+        if (cancelled.getAsBoolean() || Thread.currentThread().isInterrupted()) {
+            throw new java.util.concurrent.CancellationException();
+        }
+    }
+
     @Override public void close() {
         if(db!=null){if(db.inTransaction()){db.setTransactionSuccessful();db.endTransaction();}db.close();db=null;}
     }

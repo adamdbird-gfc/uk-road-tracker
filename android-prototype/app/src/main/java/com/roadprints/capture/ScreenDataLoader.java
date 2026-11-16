@@ -33,6 +33,28 @@ final class ScreenDataLoader {
 
     private static final ExecutorService SUMMARIES=Executors.newSingleThreadExecutor(task->new Thread(task,"roadprints-journey-summaries"));
     static void summaries(Runnable task){SUMMARIES.execute(task);}
+    private static final ExecutorService VENUES = Executors.newSingleThreadExecutor(
+            task -> new Thread(task, "roadprints-venue-ui"));
+    static void venues(Runnable task) { VENUES.execute(task); }
+
+    private static final java.util.concurrent.locks.ReentrantLock ARCHIVE_PREPARATION =
+            new java.util.concurrent.locks.ReentrantLock(true);
+    private static volatile boolean preparingArchive;
+
+    static boolean preparingArchive() { return preparingArchive; }
+
+    static <T> T prepareArchive(java.util.concurrent.Callable<T> prepare) throws Exception {
+        ARCHIVE_PREPARATION.lockInterruptibly();
+        preparingArchive = true;
+        try {
+            RailwayTrialWorker.releaseCatalogueForScreen();
+            return prepare.call();
+        } finally {
+            preparingArchive = false;
+            ARCHIVE_PREPARATION.unlock();
+        }
+    }
+
     private ScreenDataLoader() {}
 
     static java.util.concurrent.Future<?> submit(Runnable task) { return WORKER.submit(task); }

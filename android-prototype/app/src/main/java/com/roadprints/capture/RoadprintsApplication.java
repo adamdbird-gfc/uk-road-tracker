@@ -21,6 +21,7 @@ public class RoadprintsApplication extends Application {
 
     @Override public void onTrimMemory(int level) {
         super.onTrimMemory(level);
-        if (level >= TRIM_MEMORY_RUNNING_LOW) MapActivity.clearProcessMapCache();
+        if (level >= TRIM_MEMORY_RUNNING_LOW && level != TRIM_MEMORY_UI_HIDDEN)
+            MapActivity.clearProcessMapCache();
     }
 }
