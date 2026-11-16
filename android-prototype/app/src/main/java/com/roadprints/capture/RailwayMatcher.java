@@ -5,11 +5,15 @@ import java.util.function.BooleanSupplier;
 
 /** Regional rail matcher. The graph uses the catalogue's EPSG:32630 coordinates. */
 final class RailwayMatcher {
-    static final String VERSION = "railway-android-1";
+    static final String VERSION = "railway-android-2";
+    static final long BOUNDARY_MS = 5_000;
+    private static final double MAX_BOUNDARY_PAIR_METRES = 100;
     static final double RADIUS = 40;
     static final int MAX_FIXES = 2048;
 
-    record Fix(double x, double y, double accuracy, long time) {}
+    record Fix(double x, double y, double accuracy, long time, boolean estimated) {
+        Fix(double x, double y, double accuracy, long time) { this(x, y, accuracy, time, false); }
+    }
     record Edge(long id, long a, long b, double ax, double ay, double bx, double by,
                 double length, String ref, boolean eligible) {
         Hit hit(Fix p) {
@@ -48,6 +52,9 @@ final class RailwayMatcher {
 
     Result match(List<Fix> fixes, long start, long end) {
         if (fixes.size() > MAX_FIXES) return new Result("unresolved","input_limit",0,0,0);
+        if (fixes.isEmpty() || end <= start)
+            return new Result("unresolved","insufficient_fixes",0,0,0);
+        fixes = withinBoundaries(fixes, start, end);
         if (fixes.size() < 4) return new Result("unresolved","insufficient_fixes",0,0,0);
         List<Pair> run = new ArrayList<>();
         double metres = 0;
@@ -61,7 +68,8 @@ final class RailwayMatcher {
             Candidates last = next == null ? null : candidates(next);
             Pair pair = next == null ? null : pair(previous,next,first,last,run.isEmpty()?null:run.get(run.size()-1));
             if (pair == null || !run.isEmpty() && !connected(run.get(run.size()-1), pair)) {
-                int left = -1, right = -1, count = 0;
+                int left = -1, right = -1, count = 0, measured = 0;
+                int runStart = i - 1 - run.size();
                 double witnessMetres = 0;
                 for (int j = 0; j < run.size(); j++) {
                     Pair p = run.get(j);
@@ -69,11 +77,15 @@ final class RailwayMatcher {
                         if (left < 0) left = j;
                         right = j;
                         count++;
-                        witnessMetres += Math.abs(p.to.offset-p.from.offset);
+                        if (!fixes.get(runStart + j).estimated && !fixes.get(runStart + j + 1).estimated) {
+                            measured++;
+                            witnessMetres += Math.abs(p.to.offset-p.from.offset);
+                        }
                     }
                 }
-                if (count >= 3 && witnessMetres >= 100) {
-                    int runStart = i - 1 - run.size();
+                // A clipped boundary can locate the route end but cannot supply
+                // the minimum independent measured movement needed to confirm rail.
+                if (measured >= 3 && witnessMetres >= 100) {
                     firstSupported = firstSupported < 0 ? fixes.get(runStart+left).time : firstSupported;
                     lastSupported = fixes.get(runStart+right+1).time;
                     for (int j = left; j <= right; j++) metres += run.get(j).metres;
@@ -93,6 +105,37 @@ final class RailwayMatcher {
                 && firstSupported == start && lastSupported == end && end > start;
         return new Result(full?"full":pairs>0?"partial":"unresolved",
                 full?"connected_full_route":pairs>0?"incomplete_route":"no_supported_route",metres,witnesses,pairs);
+    }
+
+    private List<Fix> withinBoundaries(List<Fix> fixes, long start, long end) {
+        List<Fix> clipped = new ArrayList<>(fixes.size());
+        long[] boundaries = {start, end};
+        for (int i = 0; i < fixes.size(); i++) {
+            check();
+            Fix fix = fixes.get(i);
+            if (i > 0) {
+                Fix previous = fixes.get(i - 1);
+                for (long boundary : boundaries) {
+                    if (previous.time < boundary && boundary < fix.time) {
+                        Fix estimated = interpolateBoundary(previous, fix, boundary);
+                        if (estimated != null) clipped.add(estimated);
+                    }
+                }
+            }
+            if (start <= fix.time && fix.time <= end) clipped.add(fix);
+        }
+        return clipped;
+    }
+
+    private Fix interpolateBoundary(Fix before, Fix after, long boundary) {
+        if (boundary - before.time > BOUNDARY_MS || after.time - boundary > BOUNDARY_MS) return null;
+        Pair bridge = pair(before, after, candidates(before), candidates(after), null);
+        if (bridge == null || !bridge.witness || bridge.start.edge.id != bridge.end.edge.id
+                || bridge.metres > MAX_BOUNDARY_PAIR_METRES) return null;
+        double fraction = (double) (boundary - before.time) / (after.time - before.time);
+        return new Fix(before.x + fraction * (after.x - before.x),
+                before.y + fraction * (after.y - before.y),
+                Math.max(before.accuracy, after.accuracy), boundary, true);
     }
 
     private Candidates candidates(Fix p) {

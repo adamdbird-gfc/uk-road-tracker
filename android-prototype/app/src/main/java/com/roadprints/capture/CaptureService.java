@@ -1708,6 +1708,7 @@ public class CaptureService extends Service {
                     refreshDiagnosticLocationUpdates();
                 }
             }
+            RailwayTrialWorker.captureEnded(this);
             broadcastUpdate(captureDiscarded
                     ? "No journey saved: only brief or stationary movement. Waiting for your next journey..."
                     : "Journey saved locally. Review its transport type next time.");

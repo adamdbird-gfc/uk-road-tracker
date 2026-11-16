@@ -690,6 +690,7 @@ public final class JourneyStore {
         if (file.exists()) {
             if (!file.delete()) throw new IllegalStateException("Could not delete journey archive");
             bumpDataRevision(context);
+            RailwayTrialWorker.deleteResult(context, journeyId);
             ServiceStationStore.forgetJourney(context,journeyId);
             VenueVisitStore.forgetJourney(context,journeyId);
             PlaceAnchorStore.forget(context,journeyId);
@@ -753,6 +754,7 @@ public final class JourneyStore {
         if (!preferences.edit().clear().putBoolean(MIGRATED, true)
                 .putBoolean(LOW_QUALITY_PRUNED, true).putLong(DATA_REVISION, revision + 1).commit())
             throw new IllegalStateException("Could not clear legacy journey data");
+        RailwayTrialWorker.clearResults(context);
         ServiceStationStore.clearOnDeleteAll(context);
         PlaceAnchorStore.clear(context);
         ReturnRecapStore.clear(context);
@@ -901,6 +903,15 @@ public final class JourneyStore {
 
     static void prepareArchive(Context context) { migrateLegacy(context); }
 
+    static File archiveFile(Context context, String id) {
+        return new File(context.getFilesDir(), PREFIX + id + SUFFIX);
+    }
+
+    static String archiveId(File file) {
+        String name = file.getName();
+        return name.substring(PREFIX.length(), name.length() - SUFFIX.length());
+    }
+
     static List<File> archiveFiles(Context context) {
         File[] files = context.getFilesDir().listFiles((directory, name) ->
                 name.startsWith(PREFIX) && name.endsWith(SUFFIX));
@@ -951,6 +962,7 @@ public final class JourneyStore {
                 .putLong("ncn_evidence_revision",ncn+(ncnChanged?1:0)).apply();
         if (scheduleNcn) NcnProgressStore.changed(context);
         MilepostReconciliationJob.archiveChanged(context);
+        RailwayTrialWorker.archiveChanged(context);
     }
 
     private static JSONObject read(File file) {
