@@ -62,6 +62,45 @@ public class RailwayTrialWorkerTest {
         assertEquals(1, opens.get());
     }
 
+    @Test public void mixedProviderSamplesUseTheSelectedFixBudget() throws Exception {
+        File source = temp.newFile("journey_mixed.json");
+        File output = temp.newFolder();
+        long start = 1794474000000L;
+        var samples = new org.json.JSONArray();
+        for (int i = 0; i < 900; i++) {
+            for (String provider : new String[]{"gps", "fused", "network"}) {
+                samples.put(new org.json.JSONArray().put(0.3).put(51.4).put(8)
+                        .put(start + i * 5000L).put(0).put(provider));
+            }
+        }
+        JSONObject journey = new JSONObject().put("journey_id", "mixed").put("mode", "train")
+                .put("started_at", java.time.Instant.ofEpochMilli(start).toString())
+                .put("ended_at", java.time.Instant.ofEpochMilli(start + 4495000).toString())
+                .put("distance_meters", 42).put("raw_capture_samples", samples);
+        Files.write(source.toPath(), journey.toString().getBytes(StandardCharsets.UTF_8));
+        byte[] original = Files.readAllBytes(source.toPath());
+        var matcher = new RailwayMatcher(RailwayStage4Test.graph(false, false), () -> false);
+        JSONObject result = RailwayTrialWorker.assess(source, output, "mixed", () -> matcher, () -> false);
+        assertEquals(2700, result.getInt("raw_samples"));
+        assertEquals(900, result.getInt("input_fixes"));
+        assertEquals("no_supported_route", result.getString("reason"));
+        assertEquals(42, result.getDouble("proposed_m"), 0);
+        assertArrayEquals(original, Files.readAllBytes(source.toPath()));
+
+        var oversize = new org.json.JSONArray();
+        for (int i = 0; i < 2049; i++) {
+            oversize.put(new org.json.JSONArray().put(0.3).put(51.4).put(8)
+                    .put(start+i).put(0).put("gps"));
+        }
+        journey.put("raw_capture_samples", oversize).put("journey_id", "oversize");
+        File held = temp.newFile("journey_oversize.json");
+        Files.write(held.toPath(), journey.toString().getBytes(StandardCharsets.UTF_8));
+        JSONObject limited = RailwayTrialWorker.assess(held, output, "oversize",
+                () -> {throw new AssertionError("Graph opened above the selected-fix cap");}, () -> false);
+        assertEquals("input_limit", limited.getString("reason"));
+        assertEquals("selected_fixes_2048", limited.getString("limit"));
+    }
+
     @Test public void savedTrainAppearsInJourneyDetailsAfterCaptureEnds() throws Exception {
         var app = org.robolectric.RuntimeEnvironment.getApplication();
         org.robolectric.Shadows.shadowOf(app).grantPermissions(

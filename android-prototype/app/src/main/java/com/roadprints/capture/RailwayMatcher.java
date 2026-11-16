@@ -5,7 +5,7 @@ import java.util.function.BooleanSupplier;
 
 /** Regional rail matcher. The graph uses the catalogue's EPSG:32630 coordinates. */
 final class RailwayMatcher {
-    static final String VERSION = "railway-android-2";
+    static final String VERSION = "railway-android-3";
     static final long BOUNDARY_MS = 5_000;
     private static final double MAX_BOUNDARY_PAIR_METRES = 100;
     static final double RADIUS = 40;
@@ -43,6 +43,32 @@ final class RailwayMatcher {
         boolean held(String ref, double lo, double hi);
     }
 
+    static final class Metrics {
+        int candidateRows, candidateFixes, pathSearches, graphNodes, nodeLimitHits;
+        int accuracyRejected, noEligibleRail, ambiguousRail, roadPreferred, invalidPairs;
+        int candidatePairs, disconnectedPairs, heldPairs, shortRuns;
+        int supportedRuns;
+        final StringBuilder spans = new StringBuilder();
+
+        void supported(long start, long from, long to, String ref) {
+            if (++supportedRuns > 12) return;
+            if (spans.length() > 0) spans.append(',');
+            spans.append(ref).append(':').append(from-start).append('-').append(to-start);
+        }
+
+        String summary() {
+            return "candidate_rows="+candidateRows+" candidate_fixes="+candidateFixes
+                    +" path_searches="+pathSearches+" graph_nodes="+graphNodes
+                    +" node_limit_hits="+nodeLimitHits+" accuracy_rejected="+accuracyRejected
+                    +" no_eligible_rail="+noEligibleRail+" ambiguous_rail="+ambiguousRail
+                    +" road_preferred="+roadPreferred+" invalid_pairs="+invalidPairs
+                    +" candidate_pairs="+candidatePairs+" disconnected_pairs="+disconnectedPairs
+                    +" held_or_axis_rejected="+heldPairs+" short_runs="+shortRuns+" supported_runs="+supportedRuns
+                    +" supported_offsets_ms="+(spans.length()==0?"none":spans);
+        }
+    }
+
+    Metrics metrics;
     private final Graph graph;
     private final BooleanSupplier cancelled;
     RailwayMatcher(Graph graph, BooleanSupplier cancelled) {
@@ -51,6 +77,7 @@ final class RailwayMatcher {
     }
 
     Result match(List<Fix> fixes, long start, long end) {
+        metrics = new Metrics();
         if (fixes.size() > MAX_FIXES) return new Result("unresolved","input_limit",0,0,0);
         if (fixes.isEmpty() || end <= start)
             return new Result("unresolved","insufficient_fixes",0,0,0);
@@ -88,11 +115,12 @@ final class RailwayMatcher {
                 if (measured >= 3 && witnessMetres >= 100) {
                     firstSupported = firstSupported < 0 ? fixes.get(runStart+left).time : firstSupported;
                     lastSupported = fixes.get(runStart+right+1).time;
+                    metrics.supported(start, fixes.get(runStart+left).time, lastSupported, run.get(left).start.edge.ref);
                     for (int j = left; j <= right; j++) metres += run.get(j).metres;
                     witnesses += count;
                     pairs += right-left+1;
                     runs++;
-                }
+                } else if (!run.isEmpty()) metrics.shortRuns++;
                 run.clear();
             }
             if (pair != null) run.add(pair);
@@ -139,25 +167,37 @@ final class RailwayMatcher {
     }
 
     private Candidates candidates(Fix p) {
-        if (!(p.accuracy > 0 && p.accuracy <= RADIUS)) return new Candidates(List.of(),0);
-        List<Hit> all = hits(graph.nearby(p,RADIUS,false),p,RADIUS);
+        if (!(p.accuracy > 0 && p.accuracy <= RADIUS)) {
+            metrics.accuracyRejected++;
+            return new Candidates(List.of(),0);
+        }
+        List<Edge> nearby = graph.nearby(p,RADIUS,false);
+        metrics.candidateRows += nearby.size();
+        List<Hit> all = hits(nearby,p,RADIUS);
         Hit best = all.stream().filter(h -> h.edge.eligible).findFirst().orElse(null);
-        if (best == null) return new Candidates(List.of(),0);
+        if (best == null) {
+            metrics.noEligibleRail++;
+            return new Candidates(List.of(),0);
+        }
         for (Hit other : all) {
             if (!other.edge.ref.equals(best.edge.ref) && !"OTHER".equals(other.edge.ref)
                     && other.residual < best.residual+Math.max(6,Math.min(14,p.accuracy*.45))) {
+                metrics.ambiguousRail++;
                 return new Candidates(List.of(),0);
             }
         }
         List<Hit> roads = hits(graph.nearby(p,65,true),p,65);
         double road = roads.isEmpty()?65:roads.get(0).residual;
-        if (road+Math.max(3,Math.min(8,p.accuracy*.4)) < best.residual)
+        if (road+Math.max(3,Math.min(8,p.accuracy*.4)) < best.residual) {
+            metrics.roadPreferred++;
             return new Candidates(List.of(),road);
+        }
         List<Hit> selected = new ArrayList<>(4);
         for (Hit h : all) {
             if (h.edge.eligible && h.edge.ref.equals(best.edge.ref)) selected.add(h);
             if (selected.size() == 4) break;
         }
+        metrics.candidateFixes++;
         return new Candidates(selected,road);
     }
 
@@ -174,20 +214,33 @@ final class RailwayMatcher {
     private Pair pair(Fix a, Fix b, Candidates first, Candidates last, Pair previous) {
         double dx = b.x-a.x, dy = b.y-a.y, chord = Math.hypot(dx,dy);
         double seconds = (b.time-a.time)/1000.0;
-        if (seconds <= 0 || seconds > 18 || chord < 5 || chord/seconds > 65) return null;
+        if (seconds <= 0 || seconds > 18 || chord < 5 || chord/seconds > 65) {
+            metrics.invalidPairs++;
+            return null;
+        }
         Pair best = null, continuous = null;
         double min = chord*.62, max = chord*1.35+15;
         for (Hit start : first.hits) {
             if (!start.heading(dx,dy,chord)) continue;
             for (Hit end : last.hits) {
                 check();
+                metrics.candidatePairs++;
                 if (!start.edge.ref.equals(end.edge.ref) || !end.heading(dx,dy,chord)) continue;
                 double length = path(start,end,max);
-                if (!(length >= min && length <= max)) continue;
+                if (!(length >= min && length <= max)) {
+                    metrics.disconnectedPairs++;
+                    continue;
+                }
                 Axis s = graph.axis(start.edge.ref,start), t = graph.axis(start.edge.ref,end);
-                if (s == null || t == null || !s.assessable || !t.assessable) continue;
+                if (s == null || t == null || !s.assessable || !t.assessable) {
+                    metrics.heldPairs++;
+                    continue;
+                }
                 double lo = Math.min(s.offset,t.offset), hi = Math.max(s.offset,t.offset);
-                if (hi-lo < Math.max(3,min) || hi-lo > max || graph.held(start.edge.ref,lo,hi)) continue;
+                if (hi-lo < Math.max(3,min) || hi-lo > max || graph.held(start.edge.ref,lo,hi)) {
+                    metrics.heldPairs++;
+                    continue;
+                }
                 Pair pair = new Pair(start,end,s,t,chord/seconds >= 7.5
                         && witness(start,a,first.road) && witness(end,b,last.road),length);
                 if (preferred(pair,best)) best = pair;
@@ -226,6 +279,7 @@ final class RailwayMatcher {
 
     private record Node(long id, double distance) {}
     private double path(Hit start, Hit end, double limit) {
+        metrics.pathSearches++;
         if (start.edge.id == end.edge.id) return Math.abs(start.fraction-end.fraction)*start.edge.length;
         PriorityQueue<Node> queue = new PriorityQueue<>(Comparator.comparingDouble(Node::distance));
         queue.add(new Node(start.edge.a,start.fraction*start.edge.length));
@@ -245,6 +299,8 @@ final class RailwayMatcher {
                     queue.add(new Node(target,n.distance+edge.length));
             }
         }
+        metrics.graphNodes += seen.size();
+        if (seen.size() == 55 && !queue.isEmpty()) metrics.nodeLimitHits++;
         return best;
     }
 

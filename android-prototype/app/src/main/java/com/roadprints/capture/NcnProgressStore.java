@@ -17,7 +17,8 @@ final class NcnProgressStore {
     private static final int ASSESSMENT_VERSION=2;
     private static final String PREFS="roadprints_ncn_national_v2";
     private static final ExecutorService WORKER=Executors.newSingleThreadExecutor(task->{Thread t=new Thread(()->{android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);task.run();},"roadprints-ncn-assessment");return t;});
-    private static boolean running;
+    private static volatile boolean running;
+    static boolean isAssessing(){return running;}
     private static volatile int coalesced;
     private static long failedRevision=Long.MIN_VALUE;
     private static final java.util.concurrent.atomic.AtomicBoolean changeQueued=new java.util.concurrent.atomic.AtomicBoolean();

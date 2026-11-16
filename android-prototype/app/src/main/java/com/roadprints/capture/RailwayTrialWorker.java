@@ -24,6 +24,8 @@ final class RailwayTrialWorker {
     private static final int BATCH = 8;
     private static final long BATCH_MS = 180;
     private static final long BATCH_DELAY_MS = 150;
+    // Bound mixed-provider parsing separately from the number of fixes sent to the graph.
+    private static final int MAX_RAW_SAMPLES = 8192;
     private static final int MAX_BYTES = 8*1024*1024;
     private static final ExecutorService WORK = Executors.newSingleThreadExecutor(task -> {
         Thread t = new Thread(() -> {
@@ -104,7 +106,10 @@ final class RailwayTrialWorker {
         String priority = detailPending ? observedId : null;
         detailPending = false;
         long generation = foregroundGeneration;
+        long queuedAt = SystemClock.elapsedRealtime();
         WORK.execute(() -> {
+            long started = SystemClock.elapsedRealtime();
+            boolean ncnAtStart = NcnProgressStore.isAssessing();
             BooleanSupplier stop = () -> !foreground || generation != foregroundGeneration
                     || CaptureService.isActive(app);
             boolean more = false;
@@ -114,7 +119,7 @@ final class RailwayTrialWorker {
                 check(stop);
                 if (priority != null) {
                     File source = JourneyStore.archiveFile(app, priority);
-                    JSONObject row = source.isFile() ? assess(app, source, priority, stop) : null;
+                    JSONObject row = source.isFile() ? assess(app, source, priority, stop, true) : null;
                     MainThread.HANDLER.post(() -> {
                         if (observer != null && priority.equals(observedId) && foreground
                                 && generation == foregroundGeneration) observer.accept(row);
@@ -134,6 +139,14 @@ final class RailwayTrialWorker {
                 });
             }
             if (!more) closeCatalogue();
+            long elapsed = SystemClock.elapsedRealtime() - started;
+            if (priority != null || !more || elapsed >= BATCH_MS) {
+                PerformanceDiagnostics.timing("railway_worker", elapsed,
+                        "queue_ms="+(started-queuedAt)+" detail="+(priority!=null)
+                                +" more="+more+" interrupted="+cancelled+" failed="+failed
+                                +" ncn_at_start="+ncnAtStart+" ncn_at_end="+NcnProgressStore.isAssessing()
+                                +" heap_mib="+((Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())/1048576));
+            }
             boolean remaining = more;
             boolean retryOnNextVisit = failed;
             boolean interrupted = cancelled;
@@ -175,7 +188,7 @@ final class RailwayTrialWorker {
                 File source = pending.get(nextIndex);
                 JSONObject metadata = modes.get(source, file -> readMode(file, stop));
                 if (metadata != null && eligible(metadata.optString("mode"))) {
-                    assess(app, source, JourneyStore.archiveId(source), stop);
+                    assess(app, source, JourneyStore.archiveId(source), stop, false);
                 }
                 nextIndex++;
                 count++;
@@ -209,17 +222,29 @@ final class RailwayTrialWorker {
         return new File(context.getFilesDir(), "railway-comparisons");
     }
 
-    private static JSONObject assess(Context app, File source, String id, BooleanSupplier stop) throws Exception {
+    private static JSONObject assess(Context app, File source, String id, BooleanSupplier stop, boolean report) throws Exception {
         File output = results(app);
         if (!output.isDirectory() && !output.mkdir()) throw new IOException("Railway comparison directory");
-        return assess(source, output, id, () -> {
+        JSONObject row = assess(source, output, id, () -> {
             if (catalogue == null) {
                 long opened = SystemClock.elapsedRealtime();
                 catalogue = RegionalRailwayCatalogue.open(app, app.getFilesDir(), stop);
-                Log.i(TAG, "catalogue_open_or_install_ms=" + (SystemClock.elapsedRealtime() - opened));
+                PerformanceDiagnostics.timing("railway_catalogue", SystemClock.elapsedRealtime()-opened,
+                        "version="+RegionalRailwayCatalogue.VERSION+" bounds="+RegionalRailwayCatalogue.COVERAGE);
             }
             return new RailwayMatcher(catalogue, stop);
         }, stop);
+        if (report && row != null) {
+            PerformanceDiagnostics.timing("railway_comparison", row.optLong("match_ms"),
+                    "reason="+row.optString("reason")+" limit="+row.optString("limit","none")
+                            +" confidence="+row.optString("confidence")+" raw="+row.optInt("raw_samples")
+                            +" fixes="+row.optInt("input_fixes")+" read_ms="+row.optLong("read_ms")
+                            +" cpu_ms="+row.optLong("match_cpu_ms")+" window_ms="
+                            +(row.optLong("window_ended_ms")-row.optLong("window_started_ms"))
+                            +" supported_m="+Math.round(row.optDouble("supported_rail_m",0))
+                            +" "+row.optString("work"));
+        }
+        return row;
     }
 
     private static void closeCatalogue() {
@@ -265,6 +290,7 @@ final class RailwayTrialWorker {
 
     private static void evaluate(File source, File output, String id, String token, JSONObject previous,
                                  MatcherProvider provider, BooleanSupplier stop) throws Exception {
+        long readStarted = SystemClock.elapsedRealtime();
         Evidence evidence;
         try {
             evidence = read(source, stop);
@@ -273,24 +299,38 @@ final class RailwayTrialWorker {
         } catch (IOException | IllegalStateException | IllegalArgumentException error) {
             write(output, id, KEY + ":" + token, new JSONObject()
                     .put("journey_id", id).put("confidence", "unresolved")
-                    .put("reason", error instanceof Limit ? "input_limit" : "malformed_input"), source, token, stop);
+                    .put("reason", error instanceof Limit ? "input_limit" : "malformed_input")
+                    .put("limit", error instanceof Limit limit ? limit.kind : "none")
+                    .put("raw_samples", error instanceof Limit limit ? limit.rawSamples : 0)
+                    .put("input_fixes", error instanceof Limit limit ? limit.fixes : 0)
+                    .put("read_ms", SystemClock.elapsedRealtime()-readStarted), source, token, stop);
             return;
         }
         if (!eligible(evidence.mode) || !id.equals(evidence.id)) return;
+        long readMs = SystemClock.elapsedRealtime() - readStarted;
         String fingerprint = KEY + ":" + evidence.fingerprint;
         boolean unchanged = previous != null && fingerprint.equals(previous.optString("fingerprint"));
         long started = SystemClock.elapsedRealtime();
         long cpuStarted = SystemClock.currentThreadTimeMillis();
         RailwayMatcher.Result match = null;
+        RailwayMatcher matcher = null;
+        String limitName = "none";
         if (!unchanged) {
             try {
-                match = evidence.fixes.size() < 4
-                        ? new RailwayMatcher.Result("unresolved", "insufficient_fixes", 0, 0, 0)
-                        : provider.open().match(evidence.fixes, evidence.start, evidence.end);
+                if (evidence.fixes.size() < 4) {
+                    match = new RailwayMatcher.Result("unresolved", "insufficient_fixes", 0, 0, 0);
+                } else {
+                    matcher = provider.open();
+                    started = SystemClock.elapsedRealtime();
+                    cpuStarted = SystemClock.currentThreadTimeMillis();
+                    match = matcher.match(evidence.fixes, evidence.start, evidence.end);
+                }
             } catch (RegionalRailwayCatalogue.QueryLimit limit) {
                 match = new RailwayMatcher.Result("unresolved","catalogue_query_limit",0,0,0);
+                limitName = limit.query+"_rows_256";
             }
         }
+        long matchCpuMs = SystemClock.currentThreadTimeMillis() - cpuStarted;
         long matchMs = unchanged ? 0 : SystemClock.elapsedRealtime() - started;
         JSONObject row = unchanged?previous:new JSONObject()
                 .put("journey_id",evidence.id)
@@ -300,16 +340,21 @@ final class RailwayTrialWorker {
                 .put("supported_pairs",match.supportedPairs())
                 .put("supported_rail_m",match.supportedMetres())
                 .put("source",evidence.provider)
+                .put("raw_samples",evidence.rawSamples)
                 .put("input_fixes",evidence.fixes.size())
+                .put("read_ms",readMs)
+                .put("match_cpu_ms",matchCpuMs)
+                .put("limit",limitName)
+                .put("work",matcher==null?"":matcher.metrics.summary())
                 .put("window_started_ms",evidence.start)
                 .put("window_ended_ms",evidence.end)
                 .put("distance_provenance",match.complete()?"connected_physical_rail_path":"saved_fallback")
                 .put("match_ms",matchMs);
-        row.put("baseline_m",evidence.baseline);
+        row.put("baseline_m",evidence.baseline).put("raw_samples",evidence.rawSamples);
         boolean complete = "full".equals(row.optString("confidence"));
         row.put("proposed_m",complete?row.get("supported_rail_m"):evidence.baseline);
         if (!unchanged) Log.i(TAG, "match_ms=" + matchMs + " cpu_ms="
-                + (SystemClock.currentThreadTimeMillis() - cpuStarted) + " fixes=" + evidence.fixes.size()
+                + matchCpuMs + " fixes=" + evidence.fixes.size()
                 + " confidence=" + match.confidence());
         write(output, id, fingerprint, row, source, token, stop);
     }
@@ -350,11 +395,19 @@ final class RailwayTrialWorker {
 
     private record Raw(double lon,double lat,double accuracy,long time,String provider) {}
     private record Evidence(String id,String mode,long start,long end,Object baseline,String provider,
-                            List<RailwayMatcher.Fix> fixes,String fingerprint) {}
-    private static final class Limit extends IOException {}
+                            List<RailwayMatcher.Fix> fixes,int rawSamples,String fingerprint) {}
+    private static final class Limit extends IOException {
+        final String kind;
+        final int rawSamples, fixes;
+        Limit(String kind, int rawSamples, int fixes) {
+            this.kind = kind;
+            this.rawSamples = rawSamples;
+            this.fixes = fixes;
+        }
+    }
 
     private static Evidence read(File file,BooleanSupplier stop) throws Exception {
-        if (file.length() > MAX_BYTES) throw new Limit();
+        if (file.length() > MAX_BYTES) throw new Limit("input_bytes_8388608",0,0);
         List<Raw> raw = new ArrayList<>();
         String id = "", mode = "", start = "", end = "";
         Object baseline = JSONObject.NULL;
@@ -400,6 +453,8 @@ final class RailwayTrialWorker {
                 if (p.time < from - RailwayMatcher.BOUNDARY_MS || p.time > to + RailwayMatcher.BOUNDARY_MS
                         || !provider.equals(p.provider)) continue;
                 Raw old = ordered.putIfAbsent(p.time,p);
+                if (ordered.size() > RailwayMatcher.MAX_FIXES)
+                    throw new Limit("selected_fixes_2048",raw.size(),ordered.size());
                 if (old != null && !p.equals(old)) conflicts.add(p.time);
             }
         }
@@ -413,7 +468,7 @@ final class RailwayTrialWorker {
             // Conflicting observations remain a barrier, even if adjacent times fit.
             fixes.add(RailwayProjection.fix(p.lon,p.lat,conflict?0:p.accuracy,p.time));
         }
-        return new Evidence(id,mode,from,to,baseline,provider,fixes,RegionalRailwayCatalogue.hex(digest.digest()));
+        return new Evidence(id,mode,from,to,baseline,provider,fixes,raw.size(),RegionalRailwayCatalogue.hex(digest.digest()));
     }
 
     private static JsonReader reader(File file, BooleanSupplier stop) throws IOException {
@@ -422,7 +477,7 @@ final class RailwayTrialWorker {
             @Override public int read(byte[] b, int off, int len) throws IOException {
                 check(stop);
                 int n = super.read(b, off, Math.min(8192, len));
-                if (n > 0 && (bytes += n) > MAX_BYTES) throw new Limit();
+                if (n > 0 && (bytes += n) > MAX_BYTES) throw new Limit("input_bytes_8388608",0,0);
                 return n;
             }
         }, StandardCharsets.UTF_8));
@@ -432,7 +487,7 @@ final class RailwayTrialWorker {
         json.beginArray();
         while (json.hasNext()) {
             check(stop);
-            if (raw.size() >= RailwayMatcher.MAX_FIXES) throw new Limit();
+            if (raw.size() >= MAX_RAW_SAMPLES) throw new Limit("raw_samples_8192",raw.size()+1,0);
             json.beginArray();
             double lon = json.nextDouble(), lat = json.nextDouble(), accuracy = json.nextDouble();
             long time = json.nextLong();
