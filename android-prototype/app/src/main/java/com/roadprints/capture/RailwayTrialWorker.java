@@ -59,7 +59,10 @@ final class RailwayTrialWorker {
     private static int nextIndex;
     private static RegionalRailwayCatalogue catalogue;
     private static NetworkFirstRailway network;
-    private static final String KEY = RegionalRailwayCatalogue.SHA256+":"+NetworkFirstRailway.SHA256+":"+RailwayMatcher.VERSION;
+    private static NationalRailwayCatalogue national;
+    private static final String KEY = RegionalRailwayCatalogue.SHA256+":"+NetworkFirstRailway.SHA256+":"
+            +NationalRailwayCatalogue.VERSION+":"+NationalRailwayCatalogue.SOURCE_SHA256+":"
+            +NationalRailway.INFERENCE_VERSION+":"+RailwayMatcher.VERSION;
 
     private RailwayTrialWorker() {}
 
@@ -313,7 +316,17 @@ final class RailwayTrialWorker {
                         "version="+NetworkFirstRailway.VERSION);
             }
             return network;
-        }, true);
+        }, true, (fixes, start, end) -> {
+            if (!NationalRailway.supports(fixes,start,end))
+                return new NationalResult(NationalRailway.unavailableEndpoints(),"");
+            if (national == null) {
+                long opened = SystemClock.elapsedRealtime();
+                national = NationalRailwayCatalogue.open(app, stop);
+                PerformanceDiagnostics.timing("railway_network_catalogue", SystemClock.elapsedRealtime()-opened,
+                        "version="+NationalRailwayCatalogue.VERSION);
+            }
+            return new NationalResult(new NationalRailway(national).infer(fixes,start,end,stop),national.sha256);
+        });
         if (row == null || !RailwayMileage.qualifies(row)) return false;
         long started = SystemClock.elapsedRealtime();
         boolean committed = JourneyStore.applyRailwayDistance(app, id, row, stop);
@@ -324,10 +337,19 @@ final class RailwayTrialWorker {
 
     private static void closeCatalogue() {
         network = null;
+        if (national != null) {
+            national.close();
+            national = null;
+        }
         if (catalogue != null) {
             catalogue.close();
             catalogue = null;
         }
+    }
+
+    record NationalResult(NetworkFirstRailway.Outcome outcome, String sha256) {}
+    interface NationalProvider {
+        NationalResult infer(List<RailwayMatcher.Fix> fixes, long start, long end) throws Exception;
     }
 
     interface MatcherProvider { RailwayMatcher open() throws Exception; }
@@ -342,12 +364,12 @@ final class RailwayTrialWorker {
 
     static JSONObject assess(File source, File output, String id, MatcherProvider provider,
                              BooleanSupplier stop, NetworkProvider networkProvider) throws Exception {
-        return assess(source, output, id, provider, stop, networkProvider, false);
+        return assess(source, output, id, provider, stop, networkProvider, false, null);
     }
 
     private static JSONObject assess(File source, File output, String id, MatcherProvider provider,
                                       BooleanSupplier stop, NetworkProvider networkProvider,
-                                      boolean networkOnly) throws Exception {
+                                      boolean networkOnly, NationalProvider nationalProvider) throws Exception {
         check(stop);
         if (!source.isFile()) return null;
         String token = JourneyStore.fileToken(source);
@@ -357,7 +379,7 @@ final class RailwayTrialWorker {
                 && previous.optString("fingerprint").startsWith(KEY + ":")) {
             return token.equals(JourneyStore.fileToken(source)) ? previous : null;
         }
-        evaluate(source, output, id, token, previous, provider, stop, networkProvider, networkOnly);
+        evaluate(source, output, id, token, previous, provider, stop, networkProvider, networkOnly, nationalProvider);
         JSONObject row = previous(result);
         return source.isFile() && token.equals(JourneyStore.fileToken(source))
                 && row != null && token.equals(row.optString("archive_token")) ? row : null;
@@ -381,7 +403,7 @@ final class RailwayTrialWorker {
 
     private static void evaluate(File source, File output, String id, String token, JSONObject previous,
                                  MatcherProvider provider, BooleanSupplier stop, NetworkProvider networkProvider,
-                                 boolean networkOnly) throws Exception {
+                                 boolean networkOnly, NationalProvider nationalProvider) throws Exception {
         long readStarted = SystemClock.elapsedRealtime();
         Evidence evidence;
         try {
@@ -406,6 +428,7 @@ final class RailwayTrialWorker {
         long cpuStarted = SystemClock.currentThreadTimeMillis();
         RailwayMatcher.Result match = null;
         RailwayMatcher matcher = null;
+        NationalResult nationalResult = null;
         String limitName = "none";
         if (!unchanged) {
             try {
@@ -413,7 +436,12 @@ final class RailwayTrialWorker {
                     match = new RailwayMatcher.Result("unresolved", "insufficient_fixes", 0, 0, 0);
                 } else {
                     NetworkFirstRailway routes = networkProvider.open(evidence.fixes, evidence.start, evidence.end);
-                    if (networkOnly && routes == null) {
+                    if (routes == null && nationalProvider != null) {
+                        nationalResult = nationalProvider.infer(evidence.fixes,evidence.start,evidence.end);
+                        var inferred = nationalResult.outcome();
+                        match = new RailwayMatcher.Result(inferred.confidence(),inferred.reason(),
+                                0,inferred.witnesses(),0);
+                    } else if (networkOnly && routes == null) {
                         match = new RailwayMatcher.Result("unresolved", "outside_reviewed_routes", 0, 0, 0);
                     } else {
                         matcher = provider.open();
@@ -448,10 +476,13 @@ final class RailwayTrialWorker {
                 .put("window_ended_ms",evidence.end)
                 .put("distance_provenance",match.complete()?"connected_physical_rail_path":"saved_fallback")
                 .put("match_ms",matchMs);
-        NetworkFirstRailway.Outcome inference = matcher == null ? null : matcher.inference;
+        NetworkFirstRailway.Outcome inference = nationalResult != null ? nationalResult.outcome()
+                : matcher == null ? null : matcher.inference;
         if (!unchanged && inference != null) {
-            row.put("network_catalogue", NetworkFirstRailway.VERSION)
-                    .put("network_catalogue_sha256", NetworkFirstRailway.SHA256)
+            row.put("network_inference_version", nationalResult == null ? NetworkFirstRailway.VERSION : NationalRailway.INFERENCE_VERSION)
+                    .put("network_catalogue", nationalResult == null ? NetworkFirstRailway.VERSION : NationalRailwayCatalogue.VERSION)
+                    .put("network_catalogue_sha256", nationalResult == null ? NetworkFirstRailway.SHA256 : nationalResult.sha256())
+                    .put("network_source_sha256", nationalResult == null ? "" : NationalRailwayCatalogue.SOURCE_SHA256)
                     .put("network_branch", inference.branch())
                     .put("network_alternatives", inference.alternatives())
                     .put("inferred_endpoints", inference.endpoints())

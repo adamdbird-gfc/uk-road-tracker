@@ -6,7 +6,9 @@ import android.content.Context;
 import android.os.SystemClock;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
+import java.io.BufferedReader;
 import java.io.DataInputStream;
+import java.io.InputStreamReader;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -35,7 +37,13 @@ public class RailwayMileageRuntimeTest {
         File source = JourneyStore.archiveFile(app, ID);
         var preferences = app.getSharedPreferences("roadprints_journeys_v1", 0);
         if ("verify".equals(InstrumentationRegistry.getArguments().getString("phase"))) {
-            assertEquals(39_228, JourneyStore.readSummary(source).getDouble("distance_meters"), 150);
+            double distance = JourneyStore.readSummary(source).getDouble("distance_meters");
+            assertEquals(39_228, distance, 150);
+            var receipt = new JSONObject(new String(Files.readAllBytes(source.toPath()), StandardCharsets.UTF_8)).getJSONObject("railway_distance");
+            assertTrue(receipt.getLong("migration_committed_at_ms") > 0);
+            assertEquals("committed", receipt.getString("migration_status"));
+            assertEquals(distance - 43_900, receipt.getDouble("train_total_change_meters"), 0);
+            assertEquals(distance - 43_900, receipt.getDouble("overall_total_change_meters"), 0);
             long revision = preferences.getLong("journey_archive_revision", 0);
             JourneyStore.recoverRailwayWrite(app);
             assertEquals(revision + 1, JourneyStore.dataRevision(app));
@@ -86,16 +94,27 @@ public class RailwayMileageRuntimeTest {
         var controls = app.getSharedPreferences("roadprints_capture_state", 0);
         controls.edit().putBoolean("active", true).commit();
         var trace = sample(publicRoute(app));
+        var nationalTrace = new JSONArray();
+        try (var input = new BufferedReader(new InputStreamReader(instrumentation.getContext()
+                .getAssets().open("railway/belfast-bangor.csv"), StandardCharsets.UTF_8))) {
+            for (String line; (line=input.readLine())!=null;) {
+                String[] point = line.split(",");
+                nationalTrace.put(new JSONArray().put(Double.parseDouble(point[0]))
+                        .put(Double.parseDouble(point[1])).put(8).put(START+Long.parseLong(point[2]))
+                        .put(0).put("gps"));
+            }
+        }
         for (int index = 0; index < 1652; index++) {
             boolean train = index < 24;
+            boolean national = train && index%2!=0;
             String id = "navigation-" + index;
             var journey = new JSONObject().put("journey_id", id)
                     .put("mode", train ? "train" : "unknown").put("title", "Saved journey " + index)
                     .put("distance_meters", train ? 43_900 : 200)
                     .put("started_at", Instant.ofEpochMilli(START - (train ? 0 : index * 60000L)).toString())
-                    .put("ended_at", Instant.ofEpochMilli(END).toString());
+                    .put("ended_at", Instant.ofEpochMilli(national ? START+1_050_000 : END).toString());
             if (train) {
-                journey.put("raw_capture_samples", trace);
+                journey.put("raw_capture_samples", national ? nationalTrace : trace);
             } else if (index % 3 == 0) {
                 var coordinates = new JSONArray();
                 for (int point = 0; point < 24; point++)
@@ -123,7 +142,7 @@ public class RailwayMileageRuntimeTest {
                     String message = RailwayTrialWorker.activityMessage();
                     return message != null && message.equals("Checking past train journeys…");
                 }, 3000);
-                assertTrue("A first journey must commit", waitForDistance(app, "navigation-0", 30_000));
+                assertTrue("A first journey must commit", waitForDistance(app, "navigation-0", 39_228, 30_000));
             }
             for (int i = 0; i < 2; i++) {
                 exerciseScreen(ProgressActivity.class);
@@ -131,14 +150,23 @@ public class RailwayMileageRuntimeTest {
                 exerciseScreen(JourneyListActivity.class);
             }
             try (var screen = androidx.test.core.app.ActivityScenario.launch(JourneyListActivity.class)) {
-                assertTrue("Railway history should resume and finish", waitForDistance(app, "navigation-23", 70_000));
+                assertTrue("Railway history should resume and finish", waitForDistance(app, "navigation-22", 39_228, 90_000));
                 awaitOnMain(() -> !RailwayTrialWorker.isChecking(), 120_000);
             }
             double expectedTrain = 0;
             for (int i = 0; i < 24; i++) {
                 var saved = JourneyStore.readSummary(JourneyStore.archiveFile(app, "navigation-" + i));
                 double distance = saved.getDouble("distance_meters");
-                assertEquals(39_228, distance, 150);
+                assertEquals(i%2==0 ? 39_228 : 43_900, distance, 150);
+                if (i%2 != 0) {
+                    String id = "navigation-" + i;
+                    byte[] digest = java.security.MessageDigest.getInstance("SHA-256")
+                            .digest(id.getBytes(StandardCharsets.UTF_8));
+                    var comparison = new File(app.getFilesDir(), "railway-comparisons/"
+                            + RegionalRailwayCatalogue.hex(digest) + ".json");
+                    var receipt = new JSONObject(new String(Files.readAllBytes(comparison.toPath()), StandardCharsets.UTF_8));
+                    assertEquals("independent_distance_pending", receipt.getString("reason"));
+                }
                 expectedTrain += distance;
             }
             try (var screen = androidx.test.core.app.ActivityScenario.launch(ProgressActivity.class)) {
@@ -149,8 +177,11 @@ public class RailwayMileageRuntimeTest {
                         var summary = new JSONObject(prefs.getString("summary", "{}"));
                         if (summary.optLong("revision", -1) != JourneyStore.dataRevision(app)) return false;
                         assertEquals(total, summary.getDouble("trainMetres"), .01);
-                        assertEquals(1628 * 200, summary.getDouble("drivingMetres")
-                                + summary.getDouble("unknownMetres"), .01);
+                        double overall = 0;
+                        for (String field : List.of("drivingMetres", "footMetres", "trainMetres",
+                                "ferryMetres", "flightMetres", "transitMetres", "cyclingMetres", "unknownMetres"))
+                            overall += summary.getDouble(field);
+                        assertEquals(total + 1628 * 200, overall, .01);
                         return true;
                     } catch (org.json.JSONException unavailable) {
                         return false;
@@ -163,6 +194,64 @@ public class RailwayMileageRuntimeTest {
             controls.edit().remove("active").commit();
             for (File file : JourneyStore.archiveFiles(app))
                 if (file.getName().startsWith("journey_navigation-")) Files.deleteIfExists(file.toPath());
+        }
+    }
+
+    @Test public void reconstructsCardiffInterchangeInBothDirections() throws Exception {
+        var instrumentation = InstrumentationRegistry.getInstrumentation();
+        Context app = instrumentation.getTargetContext();
+        assertTrue(app.getPackageName().endsWith(".milepostacceptance"));
+        var trace = new ArrayList<RailwayMatcher.Fix>();
+        try (var input = new BufferedReader(new InputStreamReader(instrumentation.getContext()
+                .getAssets().open("railway/paddington-swansea.csv"), StandardCharsets.UTF_8))) {
+            for (String line; (line = input.readLine()) != null;) {
+                var fields = line.split(",");
+                trace.add(new RailwayMatcher.Fix(Double.parseDouble(fields[0]), Double.parseDouble(fields[1]),
+                        8, START + Long.parseLong(fields[2]) * 72 / 100));
+            }
+        }
+        // The sampled trace represents roughly 2h 7m to Cardiff and 40m onward to Swansea.
+        long interchange = START + 10_610_000L * 72 / 100;
+        var platform = trace.stream().filter(fix -> fix.time() == interchange).findFirst().orElseThrow();
+        var memory = new android.os.Debug.MemoryInfo();
+        android.os.Debug.getMemoryInfo(memory);
+        int baselinePss = memory.getTotalPss();
+        try (var graph = NationalRailwayCatalogue.open(app, () -> false)) {
+            var matcher = new NationalRailway(graph);
+            for (boolean timed : new boolean[]{false, true}) {
+                var fixes = new ArrayList<RailwayMatcher.Fix>();
+                for (var fix : trace) {
+                    long time = fix.time();
+                    fixes.add(new RailwayMatcher.Fix(fix.x(), fix.y(), fix.accuracy(),
+                            timed && time > interchange ? time + 600_000 : time));
+                    if (timed && time == interchange) {
+                        // Same-platform interchange with intermittent GPS while waiting.
+                        for (int seconds : new int[]{30, 80, 150, 310, 550})
+                            fixes.add(new RailwayMatcher.Fix(platform.x() + seconds % 7,
+                                    platform.y() - seconds % 5, 8, time + seconds * 1000L));
+                    }
+                }
+                long end = fixes.get(fixes.size() - 1).time();
+                for (boolean reverse : new boolean[]{false, true}) {
+                    long cpu = SystemClock.currentThreadTimeMillis();
+                    var result = matcher.infer(fixes, START, end, () -> false);
+                    long elapsed = SystemClock.currentThreadTimeMillis() - cpu;
+                    String label = "Cardiff interchange timed=" + timed + " reverse=" + reverse;
+                    android.util.Log.i("RoadprintsRailwayRuntime", label + " cpu_ms=" + elapsed
+                            + " candidates_ms=" + result.candidateMs() + " evidence_ms=" + result.evidenceMs());
+                    assertEquals(label + " " + result.reason(), "inferred", result.confidence());
+                    assertEquals(label, reverse ? "Swansea → London Paddington" : "London Paddington → Swansea",
+                            result.endpoints());
+                    assertEquals(label, 307_009, result.metres(), 40);
+                    assertTrue(label + " exceeded 10 s CPU: " + elapsed, elapsed < 10_000);
+                    android.os.Debug.getMemoryInfo(memory);
+                    android.util.Log.i("RoadprintsRailwayRuntime", label + " pss_kib="
+                            + memory.getTotalPss() + " baseline_pss_kib=" + baselinePss);
+                    java.util.Collections.reverse(fixes);
+                    fixes.replaceAll(fix -> new RailwayMatcher.Fix(fix.x(), fix.y(), fix.accuracy(),
+                            START + end - fix.time()));
+                }
+            }
         }
     }
 
@@ -189,11 +278,11 @@ public class RailwayMileageRuntimeTest {
         fail("Expected foreground state did not arrive");
     }
 
-    private static boolean waitForDistance(Context app, String id, long timeout) throws Exception {
+    private static boolean waitForDistance(Context app, String id, double expected, long timeout) throws Exception {
         long deadline = SystemClock.elapsedRealtime() + timeout;
         do {
             var row = JourneyStore.readSummary(JourneyStore.archiveFile(app, id));
-            if (row != null && Math.abs(row.optDouble("distance_meters") - 39_228) < 150) return true;
+            if (row != null && Math.abs(row.optDouble("distance_meters") - expected) < 150) return true;
             Thread.sleep(100);
         } while (SystemClock.elapsedRealtime() < deadline);
         return false;

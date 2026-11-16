@@ -12,7 +12,12 @@ for phase in prepare verify; do
   printf '%s\n' "$output"
   grep -F 'OK (1 test)' <<< "$output"
 done
-if [[ "${1:-}" == navigation ]]; then
+if [[ "${1:-}" == national ]]; then
+  output=$(adb shell am instrument -w -e class "$test_class#reconstructsCardiffInterchangeInBothDirections" "$package.test/androidx.test.runner.AndroidJUnitRunner")
+  printf '%s\n' "$output"
+  grep -F 'OK (1 test)' <<< "$output"
+fi
+if [[ "${1:-}" == navigation || "${1:-}" == national ]]; then
   adb shell pm clear "$package"
   output=$(adb shell am instrument -w -e class "$test_class#repeatedNavigationRemainsResponsiveDuringHistoricalChecks" "$package.test/androidx.test.runner.AndroidJUnitRunner")
   printf '%s\n' "$output"

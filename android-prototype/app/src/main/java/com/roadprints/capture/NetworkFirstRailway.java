@@ -25,16 +25,22 @@ final class NetworkFirstRailway {
     private record Stop(long id, double x, double y) {}
     private record Route(int branch, boolean qualified, int start, int end, short[] order,
                          double[] offset, double metres, String pathId) {}
-    private record Score(Route route, int contradictions, int progression, int witnesses,
-                         double witnessMetres, int thirds, double median) {
+    private record Score(Route route, EvidenceScore evidence) {}
+    record EvidenceScore(int contradictions, int progression, int witnesses,
+                         double witnessMetres, int thirds, double median) implements Comparable<EvidenceScore> {
         boolean plausible() {
             return contradictions <= 2 && progression <= 8 && witnesses >= 3 && witnessMetres >= 100 && thirds >= 2;
         }
+
+        @Override public int compareTo(EvidenceScore other) {
+            return QUALITY.compare(this, other);
+        }
+
+        private static final Comparator<EvidenceScore> QUALITY = Comparator.comparingInt(EvidenceScore::contradictions)
+                .thenComparingInt(EvidenceScore::progression)
+                .thenComparing(Comparator.comparingDouble(EvidenceScore::witnessMetres).reversed())
+                .thenComparingDouble(EvidenceScore::median);
     }
-    private static final Comparator<Score> QUALITY = Comparator.comparingInt(Score::contradictions)
-            .thenComparingInt(Score::progression)
-            .thenComparing(Comparator.comparingDouble(Score::witnessMetres).reversed())
-            .thenComparingDouble(Score::median);
     private final RailwayMatcher.Edge[] edges;
     private final boolean[] tunnels;
     private final Stop[] stops;
@@ -132,7 +138,7 @@ final class NetworkFirstRailway {
                 || near(first, CHARING_CROSS) && near(last, GRAVESEND);
     }
 
-    private static RailwayMatcher.Fix endpointFix(List<RailwayMatcher.Fix> fixes, long start, long end, boolean last) {
+    static RailwayMatcher.Fix endpointFix(List<RailwayMatcher.Fix> fixes, long start, long end, boolean last) {
         for (int i = 0; i < fixes.size(); i++) {
             var fix = fixes.get(last ? fixes.size()-1-i : i);
             if (usable(fix, start, end) && (last ? end-fix.time() : fix.time()-start) <= 120_000) return fix;
@@ -144,7 +150,7 @@ final class NetworkFirstRailway {
         return fix != null && Math.hypot(fix.x()-station.x(), fix.y()-station.y()) <= 550;
     }
 
-    private static boolean usable(RailwayMatcher.Fix fix, long start, long end) {
+    static boolean usable(RailwayMatcher.Fix fix, long start, long end) {
         return fix.time() >= start && fix.time() <= end && fix.accuracy() > 0 && fix.accuracy() <= 40;
     }
 
@@ -179,7 +185,7 @@ final class NetworkFirstRailway {
             check(stop);
             routeFamilies |= 1 << route.branch;
             Score score = score(route, observations, start, end, reverse, stop);
-            if (!score.plausible()) continue;
+            if (!score.evidence.plausible()) continue;
             if (better(score, plausible[route.branch])) plausible[route.branch] = score;
             if (route.qualified && better(score, qualified[route.branch])) qualified[route.branch] = score;
         }
@@ -202,9 +208,9 @@ final class NetworkFirstRailway {
         // identify uncertainty, but cannot issue a distance on this data revision.
         Score selected = reverse ? null : qualified[winner];
         if (selected == null) return new Outcome("partial", "network_catalogue_held", BRANCHES[winner], "",
-                0, plausible[winner].witnesses, endpoints, "", candidateMs, evidenceMs, hypotheses.length);
+                0, plausible[winner].evidence.witnesses, endpoints, "", candidateMs, evidenceMs, hypotheses.length);
         return new Outcome("inferred", "network_route_inferred", BRANCHES[winner], "",
-                selected.route.metres, selected.witnesses, endpoints, selected.route.pathId,
+                selected.route.metres, selected.evidence.witnesses, endpoints, selected.route.pathId,
                 candidateMs, evidenceMs, hypotheses.length);
     }
 
@@ -213,7 +219,7 @@ final class NetworkFirstRailway {
         return Math.hypot(fix.x()-stop.x, fix.y()-stop.y) <= 600;
     }
     private static boolean better(Score score, Score old) {
-        return old == null || QUALITY.compare(score, old) < 0;
+        return old == null || score.evidence.compareTo(old.evidence) < 0;
     }
 
     private record Observation(RailwayMatcher.Fix fix, int sequence, int[] candidates, double[] residual,
@@ -247,13 +253,7 @@ final class NetworkFirstRailway {
 
     private Score score(Route route, List<Observation> observations, long start, long end, boolean reverse,
                         BooleanSupplier stop) {
-        int minuteCount = (int) ((end-start)/60_000)+1;
-        int[] minutes = new int[minuteCount], bad = new int[minuteCount];
-        double[] residuals = new double[observations.size()];
-        double witnessMetres = 0, previousOffset = 0;
-        int witnesses = 0, thirds = 0, conflicts = 0;
-        boolean previousWitness = false, previousClose = false;
-        Observation previous = null;
+        Evidence evidence = new Evidence(start,end,route.metres);
         Witness nearest = new Witness();
         for (int i = 0; i < observations.size(); i++) {
             if ((i & 15) == 0) check(stop);
@@ -274,43 +274,73 @@ final class NetworkFirstRailway {
             }
             double residual = nearest.residual;
             double offset = reverse ? route.metres-nearest.offset : nearest.offset;
-            double accuracy = o.fix.accuracy();
-            residuals[i] = residual;
-            int minute = (int) ((o.fix.time()-start)/60_000);
+            evidence.add(o.fix, o.sequence, residual, offset, nearest.tunnel, o.road);
+        }
+        return new Score(route, evidence.finish());
+    }
+
+    /** Shared evidence rules for pinned and dynamically generated physical paths. */
+    static final class Evidence {
+        private final long start, end;
+        private final double metres;
+        private final int[] minutes, bad;
+        private final double[] residuals = new double[RailwayMatcher.MAX_FIXES];
+        private int count, witnesses, thirds, conflicts, previousSequence;
+        private double witnessMetres, previousOffset;
+        private boolean previousWitness, previousClose;
+        private RailwayMatcher.Fix previous;
+
+        Evidence(long start,long end,double metres) {
+            this.start = start;
+            this.end = end;
+            this.metres = metres;
+            minutes = new int[(int)((end-start)/60_000)+1];
+            bad = new int[minutes.length];
+        }
+
+        void add(RailwayMatcher.Fix fix,int sequence,double residual,double offset,boolean tunnel,double road) {
+            double accuracy = fix.accuracy();
+            residuals[count++] = residual;
+            int minute = (int)((fix.time()-start)/60_000);
             minutes[minute]++;
-            if (o.fix.time() > start+120_000 && o.fix.time() < end-120_000
-                    && residual > Math.max(100, 3*accuracy)) bad[minute]++;
-            boolean close = residual <= Math.max(35, 2*accuracy);
-            boolean witness = !nearest.tunnel && residual <= clamp(accuracy*.85, 3, 12)
-                    && o.road-residual >= clamp(accuracy/2, 5, 12);
+            if (fix.time()>start+120_000 && fix.time()<end-120_000
+                    && residual>Math.max(100,3*accuracy)) bad[minute]++;
+            boolean close = residual<=Math.max(35,2*accuracy);
+            boolean witness = !fix.estimated() && !tunnel && residual<=clamp(accuracy*.85,3,12)
+                    && road-residual>=clamp(accuracy/2,5,12);
             if (previous != null) {
-                double seconds = (o.fix.time()-previous.fix.time())/1000.0;
+                double seconds = (fix.time()-previous.time())/1000.0;
                 double advance = offset-previousOffset;
-                boolean progresses = advance >= -25 && advance <= 65*seconds+50;
+                boolean progresses = advance>=-25 && advance<=65*seconds+50;
                 if (close && previousClose && !progresses) conflicts++;
-                if (witness && previousWitness && o.sequence == previous.sequence+1
-                        && progresses && advance > 0 && seconds > 0 && seconds <= 18) {
-                    double chord = Math.hypot(o.fix.x()-previous.fix.x(), o.fix.y()-previous.fix.y());
-                    if (chord >= 7.5*seconds && chord <= 65*seconds) {
+                if (witness && previousWitness && sequence==previousSequence+1
+                        && progresses && advance>0 && seconds>0 && seconds<=18) {
+                    double chord = Math.hypot(fix.x()-previous.x(),fix.y()-previous.y());
+                    if (chord>=7.5*seconds && chord<=65*seconds) {
                         witnesses++;
                         witnessMetres += chord;
-                        thirds |= 1 << Math.min(2, (int) (3*(previous.fix.time()-start)/(end-start)));
+                        thirds |= 1 << Math.min(2,(int)(3*(previous.time()-start)/(end-start)));
                     }
                 }
             }
-            previous = o;
+            previous = fix;
+            previousSequence = sequence;
             previousOffset = offset;
             previousClose = close;
             previousWitness = witness;
         }
-        int contradictions = 0;
-        for (int i = 0; i < minutes.length; i++) {
-            if (minutes[i] > 0 && 2*bad[i] >= minutes[i]) contradictions++;
+
+        EvidenceScore finish() {
+            int contradictions = metres>65*(end-start)/1000.0+50 ? 3 : 0;
+            for (int i=0; i<minutes.length; i++) {
+                if (minutes[i]>0 && 2*bad[i]>=minutes[i]) contradictions++;
+            }
+            Arrays.sort(residuals,0,count);
+            int middle = count/2;
+            double median = count==0 ? SEARCH : count%2==0
+                    ? (residuals[middle-1]+residuals[middle])/2 : residuals[middle];
+            return new EvidenceScore(contradictions,conflicts,witnesses,witnessMetres,Integer.bitCount(thirds),median);
         }
-        Arrays.sort(residuals);
-        int middle = residuals.length/2;
-        double median = residuals.length % 2 == 0 ? (residuals[middle-1]+residuals[middle])/2 : residuals[middle];
-        return new Score(route, contradictions, conflicts, witnesses, witnessMetres, Integer.bitCount(thirds), median);
     }
 
     private static double clamp(double value, double min, double max) {

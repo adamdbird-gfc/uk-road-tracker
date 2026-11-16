@@ -34,9 +34,7 @@ final class JourneyCardHeader {
     }
     static String distanceLabel(Context context, JSONObject journey) {
         double metres = journey.optDouble("distance_meters");
-        JSONObject quality = journey.optJSONObject("recording_quality");
-        boolean withheld = "train".equals(journey.optString("mode")) && metres == 0
-                && quality != null && !quality.optBoolean("resolved", true);
+        boolean withheld = "train".equals(journey.optString("mode")) && metres <= 0;
         return !Double.isFinite(metres) || withheld
                 ? "Distance unavailable" : DistanceUnits.format(context, metres);
     }

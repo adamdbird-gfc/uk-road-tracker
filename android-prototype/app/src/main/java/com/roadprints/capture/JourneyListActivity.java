@@ -1172,9 +1172,11 @@ public class JourneyListActivity extends Activity {
         java.util.function.Consumer<JSONObject> railwayObserver = saved -> {
             if (saved != null) distanceValue.setText(JourneyCardHeader.distanceLabel(this, saved));
         };
-        fields.addView(detailRow("GPS route points", DistanceUnits.formatPointCount(points)));
-        if (journey.optJSONArray("raw_capture_samples") != null)
-            fields.addView(detailRow("Original GPS samples", DistanceUnits.formatPointCount(JourneySizeGuard.rawCount(journey))));
+        if (!railwayEligible) {
+            fields.addView(detailRow("GPS route points", DistanceUnits.formatPointCount(points)));
+            if (journey.optJSONArray("raw_capture_samples") != null)
+                fields.addView(detailRow("Original GPS samples", DistanceUnits.formatPointCount(JourneySizeGuard.rawCount(journey))));
+        }
         fields.addView(detailRow("Transport", displayMode(journey.optString("mode", "unknown"))));
         addPlaceReviewFields(fields,journey);
 
@@ -1963,6 +1965,7 @@ public class JourneyListActivity extends Activity {
         if(walkingLabel!=null)return walkingLabel;
         String status = journey.optString("processing_status", "pending");
         String mode = journey.optString("mode", "unknown");
+        if (RailwayTrialWorker.eligible(mode)) return "";
         if (!isFootMode(mode) && !isRoadMode(mode) && !MatchingCoordinator.isCycle(mode)) return "No route matching required";
         if (!hasEnoughMatchingEvidence(journey)) {
             return isRoadMode(mode)
