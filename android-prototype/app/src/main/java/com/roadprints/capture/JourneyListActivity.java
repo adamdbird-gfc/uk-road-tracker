@@ -1085,6 +1085,8 @@ public class JourneyListActivity extends Activity {
         String reason = result.optString("reason");
         panel.addView(detailRow("Status", switch (confidence) {
             case "full" -> "Full match";
+            case "inferred" -> "Complete inferred route";
+            case "ambiguous" -> "Ambiguous route";
             case "partial" -> "Partial match";
             default -> "Unresolved";
         }));
@@ -1092,12 +1094,20 @@ public class JourneyListActivity extends Activity {
             panel.addView(detailRow("Proposed distance", DistanceUnits.format(this, result.optDouble("proposed_m"))));
             return;
         }
-        if ("partial".equals(confidence)) {
+        if ("inferred".equals(confidence)) {
+            panel.addView(detailRow("Inferred railway distance", DistanceUnits.format(this, result.optDouble("inferred_m"))));
+            panel.addView(detailRow("Likely route", result.optString("inferred_endpoints")
+                    + " via " + result.optString("network_branch")));
+        }
+        if ("partial".equals(confidence) && result.optDouble("supported_rail_m", 0) > 0) {
             panel.addView(detailRow("Supported distance", DistanceUnits.format(this, result.optDouble("supported_rail_m"))));
         }
         TextView explanation = new TextView(this);
         explanation.setText(switch (reason) {
             case "insufficient_fixes" -> "There are too few usable GPS fixes.";
+            case "network_route_inferred" -> "Movement and GPS evidence support this connected railway route.";
+            case "multiple_rail_routes" -> "Several railway routes remain plausible.";
+            case "network_catalogue_held" -> "Part of the likely route is outside the qualified comparison data.";
             case "incomplete_route" -> "GPS evidence supports only part of the recorded route.";
             case "input_limit", "catalogue_query_limit" -> "This recording exceeded the assessment limits.";
             case "malformed_input" -> "The saved recording could not be read for comparison.";

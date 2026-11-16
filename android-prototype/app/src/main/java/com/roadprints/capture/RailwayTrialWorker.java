@@ -44,13 +44,14 @@ final class RailwayTrialWorker {
     private static volatile boolean foreground;
     private static String observedId;
     private static Consumer<JSONObject> observer;
-    private static boolean detailPending;
+    private static volatile boolean detailPending;
     private static long completedRevision = -1;
     private static long scanRevision = -1;
     private static List<File> pending = Collections.emptyList();
     private static int nextIndex;
     private static RegionalRailwayCatalogue catalogue;
-    private static final String KEY = RegionalRailwayCatalogue.SHA256+":"+RailwayMatcher.VERSION;
+    private static NetworkFirstRailway network;
+    private static final String KEY = RegionalRailwayCatalogue.SHA256+":"+NetworkFirstRailway.SHA256+":"+RailwayMatcher.VERSION;
 
     private RailwayTrialWorker() {}
 
@@ -158,7 +159,8 @@ final class RailwayTrialWorker {
                 } else if (retryOnNextVisit) {
                     completedRevision = revision;
                 } else if (remaining) {
-                    MainThread.HANDLER.postDelayed(() -> schedule(app), BATCH_DELAY_MS);
+                    if (detailPending) schedule(app);
+                    else MainThread.HANDLER.postDelayed(() -> schedule(app), BATCH_DELAY_MS);
                 } else {
                     completedRevision = revision;
                     schedule(app);
@@ -183,7 +185,7 @@ final class RailwayTrialWorker {
         }
         int count = 0;
         try (CompactJourneyCache modes = new CompactJourneyCache(app, "railway-modes-v1")) {
-            while (nextIndex < pending.size() && count < BATCH) {
+            while (nextIndex < pending.size() && count < BATCH && !detailPending) {
                 check(stop);
                 File source = pending.get(nextIndex);
                 JSONObject metadata = modes.get(source, file -> readMode(file, stop));
@@ -233,7 +235,16 @@ final class RailwayTrialWorker {
                         "version="+RegionalRailwayCatalogue.VERSION+" bounds="+RegionalRailwayCatalogue.COVERAGE);
             }
             return new RailwayMatcher(catalogue, stop);
-        }, stop);
+        }, stop, (fixes, start, end) -> {
+            if (!NetworkFirstRailway.supports(fixes, start, end)) return null;
+            if (network == null) {
+                long opened = SystemClock.elapsedRealtime();
+                network = NetworkFirstRailway.open(app.getAssets().open("railway/network-first-r1.bin.gzip"), stop);
+                PerformanceDiagnostics.timing("railway_network_catalogue", SystemClock.elapsedRealtime()-opened,
+                        "version="+NetworkFirstRailway.VERSION);
+            }
+            return network;
+        });
         if (report && row != null) {
             PerformanceDiagnostics.timing("railway_comparison", row.optLong("match_ms"),
                     "reason="+row.optString("reason")+" limit="+row.optString("limit","none")
@@ -242,21 +253,34 @@ final class RailwayTrialWorker {
                             +" cpu_ms="+row.optLong("match_cpu_ms")+" window_ms="
                             +(row.optLong("window_ended_ms")-row.optLong("window_started_ms"))
                             +" supported_m="+Math.round(row.optDouble("supported_rail_m",0))
+                            +" network_candidates="+row.optInt("network_candidates")
+                            +" candidate_ms="+row.optLong("candidate_ms")
+                            +" network_evidence_ms="+row.optLong("network_evidence_ms")
                             +" "+row.optString("work"));
         }
         return row;
     }
 
     private static void closeCatalogue() {
-        if (catalogue == null) return;
-        catalogue.close();
-        catalogue = null;
+        network = null;
+        if (catalogue != null) {
+            catalogue.close();
+            catalogue = null;
+        }
     }
 
     interface MatcherProvider { RailwayMatcher open() throws Exception; }
+    interface NetworkProvider {
+        NetworkFirstRailway open(List<RailwayMatcher.Fix> fixes, long start, long end) throws Exception;
+    }
 
     static JSONObject assess(File source, File output, String id, MatcherProvider provider,
                              BooleanSupplier stop) throws Exception {
+        return assess(source, output, id, provider, stop, (fixes, start, end) -> null);
+    }
+
+    static JSONObject assess(File source, File output, String id, MatcherProvider provider,
+                             BooleanSupplier stop, NetworkProvider networkProvider) throws Exception {
         check(stop);
         if (!source.isFile()) return null;
         String token = JourneyStore.fileToken(source);
@@ -266,7 +290,7 @@ final class RailwayTrialWorker {
                 && previous.optString("fingerprint").startsWith(KEY + ":")) {
             return token.equals(JourneyStore.fileToken(source)) ? previous : null;
         }
-        evaluate(source, output, id, token, previous, provider, stop);
+        evaluate(source, output, id, token, previous, provider, stop, networkProvider);
         JSONObject row = previous(result);
         return source.isFile() && token.equals(JourneyStore.fileToken(source))
                 && row != null && token.equals(row.optString("archive_token")) ? row : null;
@@ -289,7 +313,7 @@ final class RailwayTrialWorker {
     }
 
     private static void evaluate(File source, File output, String id, String token, JSONObject previous,
-                                 MatcherProvider provider, BooleanSupplier stop) throws Exception {
+                                 MatcherProvider provider, BooleanSupplier stop, NetworkProvider networkProvider) throws Exception {
         long readStarted = SystemClock.elapsedRealtime();
         Evidence evidence;
         try {
@@ -323,7 +347,8 @@ final class RailwayTrialWorker {
                     matcher = provider.open();
                     started = SystemClock.elapsedRealtime();
                     cpuStarted = SystemClock.currentThreadTimeMillis();
-                    match = matcher.match(evidence.fixes, evidence.start, evidence.end);
+                    NetworkFirstRailway routes = networkProvider.open(evidence.fixes, evidence.start, evidence.end);
+                    match = matcher.compare(evidence.fixes, evidence.start, evidence.end, routes);
                 }
             } catch (RegionalRailwayCatalogue.QueryLimit limit) {
                 match = new RailwayMatcher.Result("unresolved","catalogue_query_limit",0,0,0);
@@ -350,9 +375,30 @@ final class RailwayTrialWorker {
                 .put("window_ended_ms",evidence.end)
                 .put("distance_provenance",match.complete()?"connected_physical_rail_path":"saved_fallback")
                 .put("match_ms",matchMs);
+        NetworkFirstRailway.Outcome inference = matcher == null ? null : matcher.inference;
+        if (!unchanged && inference != null) {
+            row.put("network_catalogue", NetworkFirstRailway.VERSION)
+                    .put("network_catalogue_sha256", NetworkFirstRailway.SHA256)
+                    .put("network_branch", inference.branch())
+                    .put("network_alternatives", inference.alternatives())
+                    .put("inferred_endpoints", inference.endpoints())
+                    .put("network_candidates", inference.paths())
+                    .put("network_witness_pairs", inference.witnesses())
+                    .put("candidate_ms", inference.candidateMs())
+                    .put("network_evidence_ms", inference.evidenceMs());
+            if ("inferred".equals(inference.confidence())) {
+                row.put("inferred_m", inference.metres())
+                        .put("network_path_sha256", inference.pathId())
+                        .put("distance_provenance", "inferred_physical_rail_path");
+            }
+        }
         row.put("baseline_m",evidence.baseline).put("raw_samples",evidence.rawSamples);
-        boolean complete = "full".equals(row.optString("confidence"));
-        row.put("proposed_m",complete?row.get("supported_rail_m"):evidence.baseline);
+        Object proposal = switch (row.optString("confidence")) {
+            case "inferred" -> row.get("inferred_m");
+            case "full" -> row.get("supported_rail_m");
+            default -> evidence.baseline;
+        };
+        row.put("proposed_m", proposal);
         if (!unchanged) Log.i(TAG, "match_ms=" + matchMs + " cpu_ms="
                 + matchCpuMs + " fixes=" + evidence.fixes.size()
                 + " confidence=" + match.confidence());

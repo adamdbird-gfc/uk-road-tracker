@@ -5,7 +5,7 @@ import java.util.function.BooleanSupplier;
 
 /** Regional rail matcher. The graph uses the catalogue's EPSG:32630 coordinates. */
 final class RailwayMatcher {
-    static final String VERSION = "railway-android-3";
+    static final String VERSION = "railway-android-4";
     static final long BOUNDARY_MS = 5_000;
     private static final double MAX_BOUNDARY_PAIR_METRES = 100;
     static final double RADIUS = 40;
@@ -69,11 +69,26 @@ final class RailwayMatcher {
     }
 
     Metrics metrics;
+    NetworkFirstRailway.Outcome inference;
     private final Graph graph;
     private final BooleanSupplier cancelled;
     RailwayMatcher(Graph graph, BooleanSupplier cancelled) {
         this.graph = graph;
         this.cancelled = cancelled;
+    }
+
+    Result compare(List<Fix> fixes, long start, long end, NetworkFirstRailway network) {
+        inference = network == null ? null : network.infer(fixes, start, end, graph, cancelled);
+        if (inference != null && ("inferred".equals(inference.confidence())
+                || "ambiguous".equals(inference.confidence()))) {
+            metrics = new Metrics();
+            return new Result(inference.confidence(), inference.reason(), 0, inference.witnesses(), 0);
+        }
+        Result local = match(fixes, start, end);
+        if (inference != null && "partial".equals(inference.confidence())) {
+            return new Result("partial", inference.reason(), local.supportedMetres, local.witnesses, local.supportedPairs);
+        }
+        return local;
     }
 
     Result match(List<Fix> fixes, long start, long end) {
