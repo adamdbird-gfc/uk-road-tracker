@@ -226,8 +226,8 @@ final class DiscoveryReplay {
         JSONArray features = collection == null ? null : collection.optJSONArray("features");
         if (features == null) return result;
         for (int i = 0; i < features.length(); i++) {
-            JSONObject feature = features.optJSONObject(i);
-            if (feature == null || JourneyCorrectionUtils.excludesRoadFeature(journey, feature)) continue;
+            JSONObject feature = JourneyCorrectionUtils.retainedRoadFeature(journey, features.optJSONObject(i));
+            if (feature == null) continue;
             JSONObject props = feature.optJSONObject("properties");
             if (props == null) continue;
             String ref = props.optString("road_ref", props.optString("ref")).trim();

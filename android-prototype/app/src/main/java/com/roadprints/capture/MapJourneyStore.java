@@ -11,7 +11,7 @@ import java.util.function.BooleanSupplier;
 
 /** Disposable compact records. Original journeys stay authoritative; each complete row is atomic. */
 final class MapJourneyStore implements AutoCloseable {
-    static final int FORMAT=1;
+    static final int FORMAT=2;
     interface Factory { JSONObject build(JSONObject journey) throws Exception; }
     interface Visitor { void visit(Record record) throws Exception; }
     final Context context;

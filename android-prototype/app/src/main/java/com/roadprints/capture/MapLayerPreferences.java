@@ -2,6 +2,7 @@ package com.roadprints.capture;
 import android.content.Context;
 /** Visual preferences only; hiding a layer never changes evidence or progress. */
 final class MapLayerPreferences {
+    static final int LOCAL_ROAD_COLOR = 0xFFA01662;
     static final String PREFS="roadprints_map_layers_v1";
     enum Layer {
         TRAVEL("Recorded travel",0xFF000000,"Matched travel traces, including roads and paths."),

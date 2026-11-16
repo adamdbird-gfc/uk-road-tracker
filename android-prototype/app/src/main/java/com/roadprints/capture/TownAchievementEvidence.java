@@ -36,7 +36,7 @@ final class TownAchievementEvidence {
             }
         }
         for(int i=0;i<features.length();i++) {
-            JSONObject f=features.optJSONObject(i);if(f==null||JourneyCorrectionUtils.excludesRoadFeature(journey,f))continue;
+            JSONObject f = JourneyCorrectionUtils.retainedRoadFeature(journey, features.optJSONObject(i));if(f==null)continue;
             JSONObject props=f.optJSONObject("properties"),geometry=f.optJSONObject("geometry");if(props==null||geometry==null)continue;
             String kind=props.optString("highway").toLowerCase(Locale.ROOT);
             if(kind.endsWith("_link")||Arrays.asList("service","footway","path","steps","cycleway").contains(kind))continue;

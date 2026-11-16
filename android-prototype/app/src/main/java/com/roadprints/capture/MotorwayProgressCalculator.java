@@ -230,8 +230,8 @@ final class MotorwayProgressCalculator {
         if (features == null) return;
         String journeyId = journey.optString("journey_id", "");
         for (int index = 0; index < features.length(); index++) {
-            JSONObject feature = features.optJSONObject(index);
-            if (feature == null || !UkRoadScope.candidateFeature(feature) || JourneyCorrectionUtils.excludesRoadFeature(journey, feature)) continue;
+            JSONObject feature = JourneyCorrectionUtils.retainedRoadFeature(journey, features.optJSONObject(index));
+            if (feature == null || !UkRoadScope.candidateFeature(feature)) continue;
             JSONObject properties = feature.optJSONObject("properties");
             if (properties == null) continue;
             String rawRef = properties.optString("road_ref", "");

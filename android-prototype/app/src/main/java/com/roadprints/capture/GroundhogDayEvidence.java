@@ -61,7 +61,7 @@ final class GroundhogDayEvidence {
         }catch(Exception uncertain){return null;}
         JSONObject edits=journey.optJSONObject("journey_corrections");
         JSONArray removed=edits==null?null:edits.optJSONArray("removed_matched_segments");
-        if((removed!=null&&removed.length()>0)||!JourneyCorrectionUtils.removedRoadIds(journey).isEmpty())return null;
+        if((removed!=null&&removed.length()>0)||!JourneyCorrectionUtils.savedRoadIds(edits).isEmpty())return null;
         List<List<double[]>> parts=TravelAchievementRoutes.matched(journey);
         if(parts.isEmpty()&&"train".equals(mode)) {
             JSONObject raw=journey.optJSONObject("route_geometry");

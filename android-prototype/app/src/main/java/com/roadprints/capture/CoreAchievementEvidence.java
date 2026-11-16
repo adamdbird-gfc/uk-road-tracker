@@ -64,8 +64,8 @@ final class CoreAchievementEvidence {
             JSONArray features=collection==null?null:collection.optJSONArray("features");
             if(features==null)continue;
             for(int i=0;i<features.length();i++) {
-                JSONObject feature=features.optJSONObject(i);
-                if(feature==null||JourneyCorrectionUtils.excludesRoadFeature(journey,feature))continue;
+                JSONObject feature = JourneyCorrectionUtils.retainedRoadFeature(journey, features.optJSONObject(i));
+                if(feature==null)continue;
                 JSONObject props=feature.optJSONObject("properties");
                 JSONObject geometry=feature.optJSONObject("geometry");
                 if(props==null||geometry==null)continue;
