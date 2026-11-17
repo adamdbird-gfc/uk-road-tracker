@@ -11,7 +11,10 @@ import java.util.function.BooleanSupplier;
 
 /** Disposable compact records. Original journeys stay authoritative; each complete row is atomic. */
 final class MapJourneyStore implements AutoCloseable {
-    static final int FORMAT=2;
+    // Format 3 invalidates compact major-road contributions generated before
+    // accepted walking/running/cycling modes became eligible. Otherwise the
+    // unchanged journey token silently reuses empty driving-only cache rows.
+    static final int FORMAT=3;
     interface Factory { JSONObject build(JSONObject journey) throws Exception; }
     interface Visitor { void visit(Record record) throws Exception; }
     final Context context;
