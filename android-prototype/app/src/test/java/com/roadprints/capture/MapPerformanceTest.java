@@ -51,6 +51,71 @@ public class MapPerformanceTest {
             .put("processing_result",new JSONObject().put("geojson",collection(feature("M2",motorway)))
                 .put("motorway_geojson",collection(feature("M2",motorway))).put("a_road_geojson",collection(feature("A2",aRoad))));
     }
+    @Test public void networkOnlyPreparedRowsAreReusedWithoutLegacyGeometry() throws Exception {
+        JourneyStore.save(app, trip("network-cache"));
+        MapJourneyStore.Factory factory = raw -> new JSONObject()
+                .put("motorway", new JSONArray()).put("a_road", new JSONArray());
+        try (MapJourneyStore records = new MapJourneyStore(app)) {
+            records.forEach(() -> false, record -> record.prepared(factory));
+            assertEquals(1, records.rebuilt);
+        }
+        try (MapJourneyStore records = new MapJourneyStore(app)) {
+            records.forEach(() -> false, record -> {
+                JSONObject prepared = record.prepared(raw -> {
+                    throw new AssertionError("Warm Map rebuilt a valid network contribution");
+                });
+                assertFalse(prepared.has("roads"));
+                assertFalse(prepared.has("motorways"));
+            });
+            assertEquals(1, records.reused);
+            assertEquals(0, records.rebuilt);
+            assertEquals(0, records.sourceReads);
+        }
+    }
+
+    @Test public void legacyMapPayloadReusesMajorCoverageWithoutDecodingHiddenLines() throws Exception {
+        JourneyStore.save(app, trip("legacy-network-cache"));
+        try (MapJourneyStore records = new MapJourneyStore(app)) {
+            records.forEach(() -> false, record -> record.prepared(raw ->
+                    emptyPrepared().put("roads", new JSONArray().put(new JSONArray("[[0,0],[1,1]]")))));
+        }
+        try (MapJourneyStore records = new MapJourneyStore(app)) {
+            records.forEach(() -> false, record -> {
+                JSONObject prepared = record.prepared(raw -> {
+                    throw new AssertionError("Valid major-road contributions were rebuilt");
+                });
+                assertEquals(0, prepared.getJSONArray("motorway").length());
+                assertEquals(0, prepared.getJSONArray("a_road").length());
+                assertFalse(prepared.has("roads"));
+                assertFalse(prepared.has("motorways"));
+            });
+            assertEquals(1, records.reused);
+            assertEquals(0, records.sourceReads);
+        }
+    }
+
+    @Test public void cancellingCachedPayloadDecodeDoesNotRebuildTheRow() throws Exception {
+        JourneyStore.save(app, trip("cancel-network-cache"));
+        try (MapJourneyStore records = new MapJourneyStore(app)) {
+            records.forEach(() -> false, record -> record.prepared(raw -> emptyPrepared()));
+        }
+        try (MapJourneyStore records = new MapJourneyStore(app)) {
+            records.forEach(() -> false, record -> {
+                record.raw();
+                Thread.currentThread().interrupt();
+                try {
+                    assertThrows(java.util.concurrent.CancellationException.class,
+                            () -> record.prepared(raw -> {
+                                throw new AssertionError("Cancellation rebuilt a cached row");
+                            }));
+                } finally {
+                    Thread.interrupted();
+                }
+            });
+            assertEquals(0, records.rebuilt);
+        }
+    }
+
     @Test public void compactContributionsEqualUncachedRoadCreditAndAttribution() throws Exception {
         MotorwayProgressCalculator rawM=new MotorwayProgressCalculator(app),cachedM=new MotorwayProgressCalculator(app);
         ARoadProgressCalculator rawA=new ARoadProgressCalculator(app),cachedA=new ARoadProgressCalculator(app);

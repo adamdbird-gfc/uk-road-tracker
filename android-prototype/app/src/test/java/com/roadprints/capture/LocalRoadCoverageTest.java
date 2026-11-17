@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28)
@@ -31,6 +32,24 @@ public class LocalRoadCoverageTest {
     private static final String START = "2026-11-15T12:00:00Z";
     private static final String END = "2026-11-15T12:10:00Z";
     private static final long TIME = Instant.parse(START).toEpochMilli();
+
+    @Test public void cachedContributionRejectsMalformedIntervalsRatherThanSilentlyFallingBack()
+            throws Exception {
+        JSONArray valid = new JSONArray().put(9).put(1).put(2).put("Road")
+                .put(.1).put(51.4).put(.2).put(51.4).put(1000).put(100).put(900);
+        assertEquals(List.of(new Interval(100, 900)),
+                LocalRoadCoverage.decodeCachedIntervals(valid, 1000));
+        JSONArray outside = new JSONArray(valid.toString()).put(900).put(1100);
+        assertThrows(IllegalArgumentException.class,
+                () -> LocalRoadCoverage.decodeCachedIntervals(outside, 1000));
+        JSONArray truncated = new JSONArray(valid.toString()).put(950);
+        assertThrows(IllegalArgumentException.class,
+                () -> LocalRoadCoverage.decodeCachedIntervals(truncated, 1000));
+        JSONArray inverted = new JSONArray().put(9).put(1).put(2).put("Road")
+                .put(.1).put(51.4).put(.2).put(51.4).put(1000).put(900).put(100);
+        assertThrows(IllegalArgumentException.class,
+                () -> LocalRoadCoverage.decodeCachedIntervals(inverted, 1000));
+    }
 
     @Test public void nineMileCoverageRepeatsAndSeparatedIntervals() throws Exception {
         LocalRoadNetwork network = new LocalRoadNetwork(0, 0, 1, 1);
@@ -115,6 +134,47 @@ public class LocalRoadCoverageTest {
         assertNull(LocalRoadCoverage.open(missing));
     }
 
+    @Test public void incompleteDerivedRowIsInvalidatedAndRecalculatedFromSavedEvidence() throws Exception {
+        Context context = RuntimeEnvironment.getApplication();
+        File source = new File(context.getCacheDir(), "incomplete-road-contribution.json");
+        byte[] original = """
+                {"mode":"driving","processing_status":"complete","processing_result":{
+                  "geojson":{"features":[{"geometry":{"type":"LineString","coordinates":[
+                    [0.3753447,51.44112821],[0.3753871,51.44128429]]}}]}}}
+                """.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        Files.write(source.toPath(), original);
+        try (MapJourneyStore records = new MapJourneyStore(context);
+             LocalRoadCoverage coverage = LocalRoadCoverage.open(context)) {
+            assertNotNull(coverage);
+            var record = records.new Record(source, JourneyStore.fileToken(source),
+                    new JSONObject().put("mode", "driving"), null, true);
+            java.lang.reflect.Field field = LocalRoadCoverage.class.getDeclaredField("cache");
+            field.setAccessible(true);
+            CompactJourneyCache cache = (CompactJourneyCache) field.get(coverage);
+            cache.get(source, file -> new JSONObject());
+            assertNull(coverage.contribution(record));
+            assertEquals(1, coverage.held);
+            assertEquals(0, coverage.reused);
+            assertTrue(coverage.failureBreakdown().contains("decode_contribution"));
+            assertFalse(coverage.contribution(record).spans().isEmpty());
+            assertEquals(1, coverage.calculated);
+
+            JSONObject valid = cache.get(source, file -> {
+                throw new AssertionError("Expected the recalculated cached contribution");
+            });
+            valid.put("intervals", valid.getInt("intervals") + 1);
+            cache.invalidate(source);
+            cache.get(source, file -> valid);
+            assertNull(coverage.contribution(record));
+            assertEquals(2, coverage.held);
+            assertFalse(coverage.contribution(record).spans().isEmpty());
+            assertEquals(2, coverage.calculated);
+            assertArrayEquals(original, Files.readAllBytes(source.toPath()));
+        } finally {
+            Files.deleteIfExists(source.toPath());
+        }
+    }
+
     @Test public void heldArchiveRowsReportTheirOriginWithoutLoggingFileDetails() throws Exception {
         Context context = RuntimeEnvironment.getApplication();
         File source = new File(context.getCacheDir(), "private-journey-marker.json");
@@ -160,12 +220,14 @@ public class LocalRoadCoverageTest {
         MapActivity.MapRoutes all = (MapActivity.MapRoutes) read.invoke(screen, JourneyFilters.all(), day, ZoneOffset.UTC);
         assertEquals(5, all.matchedJourneys);
         assertEquals(1, all.localRoadLines.size());
-        assertEquals(3, all.sections.size());
-        assertEquals(2, all.localRoadByLine.get(all.localRoadLines.get(0)).contributors(.5).size());
+        assertTrue(all.sections.isEmpty());
+        assertEquals(Set.of("drive-one", "drive-two"),
+                Set.copyOf(all.localRoadByLine.get(all.localRoadLines.get(0)).contributors(.5)));
+        assertTrue(all.localRoadMillimetres > 0);
         JourneyFilters onFoot = new JourneyFilters(2, "matched", JourneyDateFilter.all());
         MapActivity.MapRoutes foot = (MapActivity.MapRoutes) read.invoke(screen, onFoot, day, ZoneOffset.UTC);
         assertTrue(foot.localRoadLines.isEmpty());
-        assertEquals(2, foot.sections.size());
+        assertTrue(foot.sections.isEmpty());
 
         try (MapJourneyStore records = new MapJourneyStore(context);
              LocalRoadCoverage projection = LocalRoadCoverage.open(context)) {

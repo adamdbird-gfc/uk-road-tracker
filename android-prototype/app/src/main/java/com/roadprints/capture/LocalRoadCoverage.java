@@ -28,14 +28,19 @@ final class LocalRoadCoverage implements AutoCloseable {
     private static final int MAX_CONTRIBUTION_INTERVALS = 600_000;
 
     private final RoadReference reference;
+    // Android's asset stream can delegate getChannel() to a different stream.
+    // Retain the outer owner so its finalizer cannot close an active reference.
+    private final java.io.FileInputStream referenceStream;
     private final CompactJourneyCache cache;
     private final Map<Edge, Map<String, int[]>> contributors = new LinkedHashMap<>();
     private int intervalCount;
     int reused, calculated, held;
     private final Map<String, Integer> failureCounts = new LinkedHashMap<>();
 
-    private LocalRoadCoverage(RoadReference reference, CompactJourneyCache cache) {
+    private LocalRoadCoverage(RoadReference reference, CompactJourneyCache cache,
+                              java.io.FileInputStream referenceStream) {
         this.reference = reference;
+        this.referenceStream = referenceStream;
         this.cache = cache;
     }
 
@@ -47,7 +52,7 @@ final class LocalRoadCoverage implements AutoCloseable {
                 RoadReference reference = new RoadReference(stream.getChannel(), asset.getStartOffset(),
                         asset.getDeclaredLength());
                 return new LocalRoadCoverage(reference,
-                        new CompactJourneyCache(context, RoadReference.ALGORITHM + "-" + reference.version));
+                        new CompactJourneyCache(context, RoadReference.ALGORITHM + "-" + reference.version), stream);
             } catch (Exception unavailable) {
                 stream.close();
                 throw unavailable;
@@ -66,47 +71,78 @@ final class LocalRoadCoverage implements AutoCloseable {
     Prepared contribution(MapJourneyStore.Record record) {
         String mode = record.header.optString("mode");
         if (!"driving".equals(mode) && !"bus".equals(mode)) return null;
+        String phase = "read_or_compute";
         try {
             int hits = cache.hits;
             JSONObject row = cache.get(record.source, file -> readAcceptedContribution(reference, file));
             if (row == null || !record.token.equals(JourneyStore.fileToken(record.source))) return null;
-            if (cache.hits != hits) reused++;
-            else calculated++;
-            if (!row.has("residual")) return null;
-            unresolvedMm += row.getLong("unresolvedMm");
-            excludedMm += row.getLong("excludedMm");
+            boolean reusedRow = cache.hits != hits;
+            phase = "decode_contribution";
+            JSONArray residual = row.getJSONArray("residual");
             Map<Edge, List<Interval>> result = new LinkedHashMap<>();
             JSONArray spans = row.getJSONArray("spans");
             int count = row.getInt("intervals");
-            if (count > MAX_INTERVALS_PER_JOURNEY || intervalCount + count > MAX_CONTRIBUTION_INTERVALS) {
+            if (count < 0 || count > MAX_INTERVALS_PER_JOURNEY)
+                throw new IllegalArgumentException("Invalid local-road interval count");
+            if (intervalCount + count > MAX_CONTRIBUTION_INTERVALS) {
                 overBudget++;
                 return null;
             }
+            int decodedCount = 0;
             for (int i = 0; i < spans.length(); i++) {
                 JSONArray span = spans.getJSONArray(i);
                 long way = span.getLong(0), from = span.getLong(1), to = span.getLong(2);
                 Point a = RoadReference.point(span.getDouble(4), span.getDouble(5));
                 Point b = RoadReference.point(span.getDouble(6), span.getDouble(7));
                 Edge edge = new Edge(way, from, to, span.getString(3), a, b, 0, true, span.getInt(8), -1);
-                List<Interval> intervals = new ArrayList<>();
-                for (int offset = 9; offset < span.length(); offset += 2) {
-                    int start = span.getInt(offset), end = span.getInt(offset + 1);
-                    if (start < 0 || end <= start || end > edge.mm) return null;
-                    intervals.add(new Interval(start, end));
-                }
-                result.put(edge, intervals);
+                List<Interval> intervals = decodeCachedIntervals(span, edge.mm);
+                if (result.put(edge, intervals) != null)
+                    throw new IllegalArgumentException("Duplicate cached local-road section");
+                decodedCount += intervals.size();
             }
-            return new Prepared(result, row.getJSONArray("residual"));
+            if (decodedCount != count)
+                throw new IllegalArgumentException("Invalid cached local-road interval total");
+            long unresolved = row.getLong("unresolvedMm"), excluded = row.getLong("excludedMm");
+            if (unresolved < 0 || excluded < 0)
+                throw new IllegalArgumentException("Invalid cached local-road distance");
+            unresolvedMm += unresolved;
+            excludedMm += excluded;
+            if (reusedRow) reused++;
+            else calculated++;
+            return new Prepared(result, residual);
         } catch (CancellationException cancelled) {
             throw cancelled;
         } catch (Exception unavailable) {
             if (Thread.currentThread().isInterrupted()) throw new CancellationException();
+            // A malformed derived row should never poison the next Map refresh.
+            // The original journey remains authoritative and is never modified.
+            if ("decode_contribution".equals(phase)) {
+                try { cache.invalidate(record.source); }
+                catch (android.database.sqlite.SQLiteException ignored) {
+                    // Continue reporting the original failure, not a cache-cleanup failure.
+                }
+            }
             held++;
-            String signature = failureSignature(unavailable);
+            String signature = phase + ":" + failureSignature(unavailable);
             if (!failureCounts.containsKey(signature) && failureCounts.size() >= 8) signature = "other";
             failureCounts.merge(signature, 1, Integer::sum);
             return null;
         }
+    }
+
+    /** Validates disposable cache rows before they may suppress legacy route geometry. */
+    static List<Interval> decodeCachedIntervals(JSONArray span, int sectionMm)
+            throws org.json.JSONException {
+        if (sectionMm <= 0 || span == null || span.length() < 11 || span.length() % 2 != 1)
+            throw new IllegalArgumentException("Invalid cached local-road interval format");
+        List<Interval> intervals = new ArrayList<>();
+        for (int offset = 9; offset < span.length(); offset += 2) {
+            int start = span.getInt(offset), end = span.getInt(offset + 1);
+            if (start < 0 || end <= start || end > sectionMm)
+                throw new IllegalArgumentException("Invalid cached local-road interval bounds");
+            intervals.add(new Interval(start, end));
+        }
+        return intervals;
     }
 
     String failureBreakdown() {
@@ -156,15 +192,17 @@ final class LocalRoadCoverage implements AutoCloseable {
         for (Map.Entry<Edge, List<Interval>> section : projection.sections().entrySet()) {
             Edge edge = section.getKey();
             count += section.getValue().size();
-            if (count > MAX_INTERVALS_PER_JOURNEY) return new JSONObject();
+            if (count > MAX_INTERVALS_PER_JOURNEY)
+                throw new IllegalArgumentException("Matched route exceeds per-journey interval limit");
             JSONArray row = new JSONArray().put(edge.way).put(edge.from).put(edge.to).put(edge.label)
                     .put(ukLongitude(edge.a)).put(ukLatitude(edge.a)).put(ukLongitude(edge.b))
                     .put(ukLatitude(edge.b)).put(edge.mm);
             for (Interval interval : section.getValue()) row.put(interval.start()).put(interval.end());
             spans.put(row);
         }
+        // Preserve the disposable cache schema without preparing hidden overview polylines.
         return new JSONObject().put("spans", spans).put("intervals", count)
-                .put("residual", MapActivity.preparedLines(projection.residual()))
+                .put("residual", new JSONArray())
                 .put("unresolvedMm", projection.unresolvedMm()).put("excludedMm", projection.excludedMm());
     }
 
@@ -423,6 +461,10 @@ final class LocalRoadCoverage implements AutoCloseable {
             reference.close();
         } catch (java.io.IOException optional) {
             android.util.Log.w("RoadprintsTiming", "local_road_reference_close=failed");
+        }
+        try { referenceStream.close(); }
+        catch (java.io.IOException optional) {
+            android.util.Log.w("RoadprintsTiming", "local_road_stream_close=failed");
         }
         try { cache.close(); }
         catch (android.database.sqlite.SQLiteException optional) {
