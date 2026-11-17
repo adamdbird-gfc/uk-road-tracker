@@ -91,7 +91,31 @@ adb shell dumpsys package "$package" > "$RUNNER_TEMP/installed-roadprints.txt"
 grep -F "versionCode=292 " "$RUNNER_TEMP/installed-roadprints.txt"
 grep -F "versionName=0.25.246" "$RUNNER_TEMP/installed-roadprints.txt"
 for file in "$fixtures"/journey_*.json; do verify "files/${file##*/}" "$file"; done
-for file in "$fixtures"/*.xml; do verify "shared_prefs/${file##*/}" "$file"; done
+# Android may rewrite SharedPreferences XML with a declaration, indentation,
+# or changed element order. Verify camera IEEE-754 values, not serializer bytes.
+for file in "$fixtures"/*.xml; do
+    if [[ "${file##*/}" == "roadprints_map_camera.xml" ]]; then
+        adb exec-out run-as "$package" cat "shared_prefs/roadprints_map_camera.xml" > "$RUNNER_TEMP/actual-map-camera.xml"
+        python - "$file" "$RUNNER_TEMP/actual-map-camera.xml" <<'PYCAMERA'
+import struct, sys, xml.etree.ElementTree as ET
+def camera(path):
+    root = ET.parse(path).getroot()
+    assert root.tag == 'map', root.tag
+    values = {node.attrib['name']: int(node.attrib['value'])
+              for node in root if node.tag == 'long'}
+    assert all(key in values for key in ('longitude', 'latitude', 'zoom')), values
+    return {key: struct.unpack('>d', struct.pack('>q', values[key]))[0]
+            for key in ('longitude', 'latitude', 'zoom')}
+expected, actual = camera(sys.argv[1]), camera(sys.argv[2])
+for key in expected:
+    # Android may rewrite the XML, but must retain the actual camera settings.
+    assert actual[key] == expected[key], (key, expected[key], actual[key])
+print('Verified restored Map camera settings semantically', actual)
+PYCAMERA
+    else
+        verify "shared_prefs/${file##*/}" "$file"
+    fi
+done
 
 wait_log() {
     for ((attempt = 0; attempt < 60; attempt++)); do
