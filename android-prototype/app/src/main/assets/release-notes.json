@@ -2,6 +2,22 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.251",
+      "version_code": 297,
+      "release_date": "2026-11-17",
+      "since": "0.25.250",
+      "changes": [
+        {
+          "title": "Understand missing portions of accepted walking routes",
+          "description": "Roadprints keeps on-foot unmatched geometry classified by reason, so the next cumulative network update can distinguish missing reference roads, ambiguous alignments and major-road sections."
+        },
+        {
+          "title": "No invented road completion",
+          "description": "This diagnostic foundation preserves the current coverage map, journeys and corrections. It does not yet add unmatched pedestrian paths to the overview."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.250",
       "version_code": 296,
       "release_date": "2026-11-17",
