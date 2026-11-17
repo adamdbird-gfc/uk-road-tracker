@@ -158,7 +158,7 @@ final class ARoadProgressCalculator {
         if(completedSummary!=null) throw new IllegalStateException("Coverage calculation is already finished");
         if (journey==null || !"complete".equals(journey.optString("processing_status",""))) return;
         String mode=journey.optString("mode","").toLowerCase(Locale.ROOT);
-        if (!("driving".equals(mode)||"bus".equals(mode))) return;
+        if (!AcceptedRoadRoute.eligibleMode(mode)) return;
         JSONObject result=journey.optJSONObject("processing_result");
         JSONObject collection=result==null?null:result.optJSONObject("a_road_geojson");
         JSONArray features=collection==null?null:collection.optJSONArray("features");

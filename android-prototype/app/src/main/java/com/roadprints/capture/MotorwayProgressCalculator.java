@@ -223,7 +223,7 @@ final class MotorwayProgressCalculator {
         if (completedSummary != null) throw new IllegalStateException("Coverage calculation is already finished");
         if (journey == null || !"complete".equals(journey.optString("processing_status", ""))) return;
         String mode = journey.optString("mode", "unknown").toLowerCase(Locale.ROOT);
-        if (!("driving".equals(mode) || "bus".equals(mode))) return;
+        if (!AcceptedRoadRoute.eligibleMode(mode)) return;
         JSONObject result = journey.optJSONObject("processing_result");
         JSONObject geojson = result == null ? null : result.optJSONObject("motorway_geojson");
         JSONArray features = geojson == null ? null : geojson.optJSONArray("features");

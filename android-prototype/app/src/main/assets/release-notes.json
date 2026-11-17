@@ -2,6 +2,22 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.248",
+      "version_code": 294,
+      "release_date": "2026-11-17",
+      "since": "0.25.247",
+      "changes": [
+        {
+          "title": "Walking and cycling can contribute A-road coverage",
+          "description": "When accepted saved walking, running or cycling matches contain verified A-road segments, those segments contribute to the same A-road coverage as driving. Existing journeys and corrections are preserved."
+        },
+        {
+          "title": "Further walking coverage review",
+          "description": "Unmatched paths and parts of walking routes without A-road identifiers may still be absent from the network-only overview. Roadprints continues to show an incomplete-coverage notice where attribution is unresolved."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.247",
       "version_code": 293,
       "release_date": "2026-11-17",
