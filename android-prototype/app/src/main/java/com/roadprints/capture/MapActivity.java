@@ -933,17 +933,11 @@ public class MapActivity extends Activity {
             boolean selected=selection.matches(journey,today,zone);
             work[0]+=System.nanoTime()-filterStarted;
             if(!selected){counts[1]++;return;}
-            if("ferry".equals(journey.optString("mode"))) {
-                JSONObject prepared=record.prepared(this::prepareFerryRecord);
-                if(!prepared.has("ferries"))prepared=record.rebuild(this::prepareFerryRecord);
-                JSONArray ferries=prepared.getJSONArray("ferries");
-                for(int i=0;i<ferries.length()&&output.ferryPoints<20000&&output.ferrySections.size()<MAX_MAP_ROUTES;i++) {
-                    JSONArray line=ferries.getJSONObject(i).getJSONArray("points");
-                    if(output.ferryPoints+line.length()>20000){output.simplified=true;break;}
-                    output.ferrySections.add(line);output.ferryPoints+=line.length();
-                }
-                if(ferries.length()>0){output.matchedJourneys++;counts[5]++;}else counts[4]++;
-                return; // Display only: never enter road coverage preparation or attribution.
+            // This network-only overview does not render individual ferry routes.
+            // Ferry recordings and detail views are unchanged.
+            if ("ferry".equals(journey.optString("mode"))) {
+                counts[3]++;
+                return;
             }
             if (!"complete".equals(journey.optString("processing_status", ""))) {
                 counts[2]++;
