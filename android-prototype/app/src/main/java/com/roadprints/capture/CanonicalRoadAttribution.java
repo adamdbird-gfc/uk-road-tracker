@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Converts measured GPS pairs into intervals on a supplied versioned road reference.
- * This is deliberately conservative: inferred/matched lines must never be passed in
- * place of raw fixes. It does not mutate historical completion or Android Map state.
+ * Resolves saved matched-route vertices OR measured GPS pairs into intervals on a
+ * supplied versioned road reference. Saved matched routes are accepted by default;
+ * raw fixes provide independent quality checks and help investigate anomalies. It does not mutate historical completion or Android Map state.
  * Callers must pass coordinates in the SAME locally projected metre frame as edges.
  */
 final class CanonicalRoadAttribution {
@@ -50,9 +50,8 @@ final class CanonicalRoadAttribution {
     }
 
     /**
-     * Requires measured fixes from a real capture. Reconstructed route vertices
-     * and sparse Timeline control points are not eligible for automatic credit.
-     * A separate reference-aware continuity solver is needed across junctions.
+     * Secondary evidence pathway using actual, accuracy-bearing capture fixes.
+     * This is NOT a prerequisite for accepted matched-route coverage.
      */
     Report attributeCaptured(List<Fix> fixes) {
         if (fixes == null) throw new IllegalArgumentException("Fixes required");
@@ -75,6 +74,41 @@ final class CanonicalRoadAttribution {
         }
         return new Report(accepted, Math.max(0, fixes.size() - 1), passed,
                 quality, ambiguous, missing);
+    }
+
+    /**
+     * Primary coverage pathway: the journey's final saved map-matched geometry,
+     * AFTER owner corrections have been applied. The caller must establish that
+     * matching succeeded; never pass original sparse Timeline control points,
+     * an unprocessed straight-line fallback or a known failed reconstruction.
+     * The resulting intervals use accepted-match evidence in CumulativeRoadUnion.
+     * This method does not itself infer roads across gaps or missing network tiles.
+     */
+    Report attributeAcceptedRoute(List<Point> correctedMatchedVertices) {
+        if (correctedMatchedVertices == null)
+            throw new IllegalArgumentException("Matched route required");
+        List<Match> accepted = new ArrayList<>();
+        int quality = 0, ambiguous = 0, missing = 0;
+        for (int i = 1; i < correctedMatchedVertices.size(); i++) {
+            Point first = correctedMatchedVertices.get(i - 1);
+            Point last = correctedMatchedVertices.get(i);
+            if (first == null || last == null || first.distance(last) < .001) {
+                quality++;
+                continue;
+            }
+            List<Match> alternatives = new ArrayList<>();
+            for (Edge edge : edges) {
+                Match match = match(first, last, edge);
+                if (match != null) alternatives.add(match);
+            }
+            if (alternatives.size() != 1) {
+                if (alternatives.isEmpty()) missing++; else ambiguous++;
+                continue;
+            }
+            accepted.add(alternatives.get(0));
+        }
+        return new Report(accepted, Math.max(0, correctedMatchedVertices.size() - 1),
+                accepted.size(), quality, ambiguous, missing);
     }
 
     private static boolean credible(Fix a, Fix b) {
