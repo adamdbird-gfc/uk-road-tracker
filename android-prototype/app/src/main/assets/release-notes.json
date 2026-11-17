@@ -2,6 +2,22 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.246",
+      "version_code": 292,
+      "release_date": "2026-11-17",
+      "since": "0.25.245",
+      "changes": [
+        {
+          "title": "Cumulative road network",
+          "description": "The overview combines motorway, A-road and cumulative minor-road coverage."
+        },
+        {
+          "title": "Road Summary",
+          "description": "Tap a cumulative road to see its summary and contributing journeys."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.245",
       "version_code": 291,
       "release_date": "2026-11-17",

@@ -697,6 +697,13 @@ public class MapActivity extends Activity {
                     mapRoutes.coveredMotorwaySections);
             map.setARoadCoverageSegments(mapRoutes.incompleteARoadSections,
                     mapRoutes.coveredARoadSections);
+            PerformanceDiagnostics.timing("map_network_layers", 0,
+                    "covered_motorways=" + mapRoutes.coveredMotorwaySections.size()
+                            + " uncovered_motorways=" + mapRoutes.incompleteMotorwaySections.size()
+                            + " covered_a_roads=" + mapRoutes.coveredARoadSections.size()
+                            + " uncovered_a_roads=" + mapRoutes.incompleteARoadSections.size()
+                            + " cumulative_minor=" + mapRoutes.localRoadLines.size()
+                            + " historical=0");
             mapView=map;
             applyCollectionLayer();
             roadPercentages = new HashMap<>(mapRoutes.roadPercentages);
