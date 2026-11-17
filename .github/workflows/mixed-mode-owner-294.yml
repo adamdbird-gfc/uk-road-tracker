@@ -11,7 +11,7 @@ permissions:
   contents: write
   pull-requests: write
 concurrency:
-  group: owner-293-${{ github.ref }}
+  group: owner-294-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   validate-and-release:
@@ -28,7 +28,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
-      - name: Restore exact build 292 reference data
+      - name: Restore exact build 293 reference data
         run: |
           set -euo pipefail
           gh release download roadprints-0.25.247-293 --pattern Roadprints-0.25.247-293.apk --output "$RUNNER_TEMP/build293.apk"
