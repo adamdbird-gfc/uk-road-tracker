@@ -212,8 +212,10 @@ public class LocalRoadCoverageTest {
 
     private static LocalRoadCoverage.Section section(LocalRoadNetwork network, Edge edge,
             Map<String, List<Interval>> history) throws Exception {
+        Map<String, int[]> compact = new LinkedHashMap<>();
+        history.forEach((id, intervals) -> compact.put(id, LocalRoadCoverage.endpoints(intervals)));
         return new LocalRoadCoverage.Section(edge.id(), edge.label, edge.mm,
-                network.coordinates(edge.a), network.coordinates(edge.b), history);
+                network.coordinates(edge.a), network.coordinates(edge.b), compact);
     }
 
     private static List<Span> match(LocalRoadNetwork network, double x, double y, double endX,

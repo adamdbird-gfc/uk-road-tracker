@@ -25,11 +25,11 @@ import java.util.concurrent.CancellationException;
 /** Read-only journey attribution and disposable projection for the overview Map. */
 final class LocalRoadCoverage implements AutoCloseable {
     private static final int MAX_INTERVALS_PER_JOURNEY = 4096;
-    private static final int MAX_CONTRIBUTION_INTERVALS = 240_000;
+    private static final int MAX_CONTRIBUTION_INTERVALS = 600_000;
 
     private final RoadReference reference;
     private final CompactJourneyCache cache;
-    private final Map<Edge, Map<String, List<Interval>>> contributors = new LinkedHashMap<>();
+    private final Map<Edge, Map<String, int[]>> contributors = new LinkedHashMap<>();
     private int intervalCount;
     int reused, calculated, held;
 
@@ -250,16 +250,26 @@ final class LocalRoadCoverage implements AutoCloseable {
 
     void add(String journeyId, Map<Edge, List<Interval>> contribution) {
         for (Map.Entry<Edge, List<Interval>> section : contribution.entrySet()) {
-            Map<String, List<Interval>> history = contributors.computeIfAbsent(section.getKey(),
+            Map<String, int[]> history = contributors.computeIfAbsent(section.getKey(),
                     ignored -> new LinkedHashMap<>());
-            List<Interval> previous = history.put(journeyId, section.getValue());
-            intervalCount += section.getValue().size() - (previous == null ? 0 : previous.size());
+            int[] previous = history.put(journeyId, endpoints(section.getValue()));
+            intervalCount += section.getValue().size() - (previous == null ? 0 : previous.length / 2);
         }
+    }
+
+    static int[] endpoints(List<Interval> intervals) {
+        int[] result = new int[intervals.size() * 2];
+        int i = 0;
+        for (Interval interval : intervals) {
+            result[i++] = interval.start();
+            result[i++] = interval.end();
+        }
+        return result;
     }
 
     List<Section> sections() throws Exception {
         List<Section> sections = new ArrayList<>();
-        for (Map.Entry<Edge, Map<String, List<Interval>>> entry : contributors.entrySet()) {
+        for (Map.Entry<Edge, Map<String, int[]>> entry : contributors.entrySet()) {
             Edge edge = entry.getKey();
             sections.add(new Section(edge.id(), edge.label, edge.mm, new JSONArray().put(ukLongitude(edge.a)).put(ukLatitude(edge.a)),
                     new JSONArray().put(ukLongitude(edge.b)).put(ukLatitude(edge.b)), entry.getValue()));
@@ -271,9 +281,14 @@ final class LocalRoadCoverage implements AutoCloseable {
         List<String> contributors(double fraction) {
             int offset = interval.start() + (int) Math.round(fraction * (interval.end() - interval.start()));
             List<String> ids = new ArrayList<>();
-            for (Map.Entry<String, List<Interval>> journey : section.history.entrySet()) {
-                if (journey.getValue().stream().anyMatch(span -> span.start() <= offset && offset <= span.end()))
-                    ids.add(journey.getKey());
+            for (Map.Entry<String, int[]> journey : section.history.entrySet()) {
+                int[] endpoints = journey.getValue();
+                for (int i = 0; i < endpoints.length; i += 2) {
+                    if (endpoints[i] <= offset && offset <= endpoints[i + 1]) {
+                        ids.add(journey.getKey());
+                        break;
+                    }
+                }
             }
             return ids;
         }
@@ -283,12 +298,12 @@ final class LocalRoadCoverage implements AutoCloseable {
         final String id, label;
         final int length;
         final JSONArray first, last;
-        final Map<String, List<Interval>> history;
+        final Map<String, int[]> history;
         final List<Line> lines;
         final long uniqueMillimetres;
 
         Section(String id, String label, int length, JSONArray first, JSONArray last,
-                Map<String, List<Interval>> history) throws Exception {
+                Map<String, int[]> history) throws Exception {
             this.id = id;
             this.label = label;
             this.length = length;
@@ -296,7 +311,9 @@ final class LocalRoadCoverage implements AutoCloseable {
             this.last = last;
             this.history = history;
             List<Interval> intervals = new ArrayList<>();
-            for (List<Interval> values : history.values()) intervals.addAll(values);
+            for (int[] values : history.values())
+                for (int i = 0; i < values.length; i += 2)
+                    intervals.add(new Interval(values[i], values[i + 1]));
             lines = new ArrayList<>();
             long unique = 0;
             for (Interval interval : union(intervals)) {
@@ -310,9 +327,9 @@ final class LocalRoadCoverage implements AutoCloseable {
 
         JSONObject encode() throws Exception {
             JSONArray journeys = new JSONArray();
-            for (Map.Entry<String, List<Interval>> journey : history.entrySet()) {
+            for (Map.Entry<String, int[]> journey : history.entrySet()) {
                 JSONArray row = new JSONArray().put(journey.getKey());
-                for (Interval interval : journey.getValue()) row.put(interval.start()).put(interval.end());
+                for (int endpoint : journey.getValue()) row.put(endpoint);
                 journeys.put(row);
             }
             return new JSONObject().put("id", id).put("label", label).put("length", length)
@@ -320,16 +337,19 @@ final class LocalRoadCoverage implements AutoCloseable {
         }
 
         static Section decode(JSONObject data) throws Exception {
-            Map<String, List<Interval>> history = new LinkedHashMap<>();
+            Map<String, int[]> history = new LinkedHashMap<>();
             int length = data.getInt("length");
             JSONArray journeys = data.getJSONArray("journeys");
             for (int i = 0; i < journeys.length(); i++) {
                 JSONArray row = journeys.getJSONArray(i);
-                List<Interval> intervals = new ArrayList<>();
+                if (row.length() < 3 || row.length() % 2 != 1)
+                    throw new IllegalArgumentException("Invalid contributor intervals");
+                int[] intervals = new int[row.length() - 1];
                 for (int j = 1; j < row.length(); j += 2) {
                     int start = row.getInt(j), end = row.getInt(j + 1);
                     if (start < 0 || start >= end || end > length) throw new IllegalArgumentException("Invalid coverage");
-                    intervals.add(new Interval(start, end));
+                    intervals[j - 1] = start;
+                    intervals[j] = end;
                 }
                 history.put(row.getString(0), intervals);
             }

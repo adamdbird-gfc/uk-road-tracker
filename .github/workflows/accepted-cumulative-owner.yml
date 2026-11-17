@@ -9,7 +9,7 @@ permissions:
   contents: write
 concurrency:
   group: roadprints-build-291-owner
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   owner-apk:
     if: github.repository == 'adamdbird-gfc/uk-road-tracker' && github.ref == 'refs/heads/codex/accepted-cumulative-road-coverage'
@@ -90,7 +90,7 @@ jobs:
           if [[ ! -s "$NCN_TEST_DATABASE" ]]; then unset NCN_TEST_DATABASE; fi
           gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false \
             :app:testDebugUnitTest --tests '*AcceptedRoadRouteTest' --tests '*LocalRoadCoverageTest' --tests '*JourneyCorrectionUtilsTest' --tests '*Map*Test' \
-            --tests '*WhatsNewActivityTest' --tests '*JourneyStore*Test' --tests '*CaptureRecoveryIntegrationTest' \
+            --tests '*AchievementGeometryMemoryTest' --tests '*WhatsNewActivityTest' --tests '*JourneyStore*Test' --tests '*CaptureRecoveryIntegrationTest' \
             --tests '*MotorwayProgressCalculatorTest' --tests '*ARoadProgressCalculatorTest' \
             --tests '*NcnAndroidTest' --tests '*NcnPresentationTest' --tests '*MultimodalFerryTest' \
             --tests '*Milepost*Test' --tests '*Railway*Test' --tests '*JourneyIntelligence*Test' \
@@ -171,6 +171,7 @@ jobs:
         run: |
           set -euo pipefail
           apk="$RUNNER_TEMP/$APK"
+          test "$(gh api "repos/$GH_REPO/git/ref/heads/${GITHUB_REF_NAME}" --jq .object.sha)" = "$GITHUB_SHA"
           gh release create "$TAG" "$apk" --target "$GITHUB_SHA" --prerelease --latest=false \
             --title "Roadprints 0.25.245 (291) • Cumulative road coverage" \
             --notes "Owner test. Install over signed build 290. The overview uses accepted saved routes, including Timeline imports, with owner edits applied. Travelled minor-road coverage appears in black and supports journey inspection. Pixel 10 acceptance is pending. Source: $GITHUB_SHA. APK SHA-256: $APK_SHA256."

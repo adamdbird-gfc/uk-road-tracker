@@ -28,6 +28,10 @@ The executable accepted-route attribution was run against the seven original bui
 
 The 5 November export was pending and contained no stored successful match. Of the final cumulative coverage, 4,809.711 m have one contributing journey, 1,460.788 m have two, 2,720.287 m have three and 512.133 m have four. The replay measures attribution to the versioned road reference. Whether a specific historic match accurately reflects the drive remains subject to review against original evidence. The separate disputed historical case in [#322](https://github.com/adamdbird-gfc/uk-road-tracker/issues/322) remains open.
 
+## Archive workload measurement
+
+A host JVM projected a 1,600-journey workload formed by repeating the six successful private matches. It calculated 329,593 contribution intervals in 3.517 seconds and aggregated them to the same 9,502.919 unique metres in 0.377 seconds. Android stores each journey's section endpoints in compact integer arrays to retain repeated contributors. The host workload tests attribution and interval union. Android archive I/O, rendering and Pixel 10 heap use have separate checks.
+
 ## Owner release validation
 
 [Issue #323](https://github.com/adamdbird-gfc/uk-road-tracker/issues/323) tracks the unified Map and [issue #321](https://github.com/adamdbird-gfc/uk-road-tracker/issues/321) tracks correction precision. The GitHub workflow gates release on Android regressions, exact asset and signing checks, and an API 35 emulator upgrade seeded with accepted native and reverse Timeline routes. The Pixel 10 archive and physical-device responsiveness require owner acceptance.

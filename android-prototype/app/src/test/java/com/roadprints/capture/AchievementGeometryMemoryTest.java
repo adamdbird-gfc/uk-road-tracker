@@ -39,6 +39,10 @@ public class AchievementGeometryMemoryTest {
     }
     @Test public void correctionsStillExcludeRoadsAndMatchedEdges() throws Exception {
         JSONObject j=journey(3,5).put("journey_corrections",new JSONObject().put("removed_road_ids",new JSONArray().put("name:test lane 3")).put("removed_matched_segments",new JSONArray().put(0)));
+        JSONArray road = geometry(j).getJSONArray("coordinates");
+        JSONObject match = j.getJSONObject("processing_result").getJSONObject("geojson")
+                .getJSONArray("features").getJSONObject(0).getJSONObject("geometry");
+        match.put("coordinates", new JSONArray().put(road.getJSONArray(0)).put(road.getJSONArray(road.length() - 1)));
         CoreAchievementEvidence core=new CoreAchievementEvidence();core.add(j);
         assertTrue(core.named.isEmpty());assertTrue(core.townRoads.isEmpty());assertEquals(0,core.roadCoverage.metres(),0);
     }
