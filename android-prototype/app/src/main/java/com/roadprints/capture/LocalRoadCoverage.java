@@ -128,11 +128,15 @@ final class LocalRoadCoverage implements AutoCloseable {
                 footMajorOrOtherMm += major;
             }
             JSONObject reasons = row.optJSONObject("unresolvedLegs");
-            if (reasons != null) for (String reason : reasons.keySet()) {
-                int occurrences = reasons.optInt(reason, 0);
-                if (occurrences < 0) throw new IllegalArgumentException("Negative unresolved reason count");
-                unresolvedLegReasons.merge(reason, occurrences, Integer::sum);
-                if (onFoot) footUnresolvedLegReasons.merge(reason, occurrences, Integer::sum);
+            if (reasons != null) {
+                java.util.Iterator<String> keys = reasons.keys();
+                while (keys.hasNext()) {
+                    String reason = keys.next();
+                    int occurrences = reasons.optInt(reason, 0);
+                    if (occurrences < 0) throw new IllegalArgumentException("Negative unresolved reason count");
+                    unresolvedLegReasons.merge(reason, occurrences, Integer::sum);
+                    if (onFoot) footUnresolvedLegReasons.merge(reason, occurrences, Integer::sum);
+                }
             }
             if (reusedRow) reused++;
             else calculated++;
