@@ -31,7 +31,7 @@ jobs:
       - name: Restore exact build 292 reference data
         run: |
           set -euo pipefail
-          gh release download roadprints-0.25.248-294 --pattern Roadprints-0.25.248-294.apk --output "$RUNNER_TEMP/build293.apk"
+          gh release download roadprints-0.25.247-293 --pattern Roadprints-0.25.247-293.apk --output "$RUNNER_TEMP/build293.apk"
           assets=android-prototype/app/src/main/assets
           for asset in historic-counties/boundaries.bin railway/national.json railway/national.sqlite.gzip; do
             unzip -p "$RUNNER_TEMP/build293.apk" "assets/$asset" > "$assets/$asset"
@@ -181,10 +181,10 @@ jobs:
           test "$current" = "$GITHUB_SHA"
           cat > "$RUNNER_TEMP/owner-notes.md" <<NOTES
           Roadprints 0.25.248 (294) — private integrated owner-test prerelease.
-          Accepted matched driving, walking, running and cycling routes now contribute to one physical minor-road network.
+          Accepted walking, running, cycling and driving A-road evidence now contributes to one A-road coverage ledger, when the saved match contains identified A-road features.
           Focused regressions, signed package identity, immutable reference assets and an Android emulator in-place upgrade with mixed-mode Map coverage passed.
           Full 1,600-journey performance/stress validation has not been run for this fast owner-test release.
-          Pixel 10 owner acceptance remains pending. Existing motorway/A-road geometry and separate off-road paths are unchanged.
+          Pixel 10 owner acceptance remains pending. Existing reference geometry and separate off-road paths are unchanged; missing A-road identifiers can still prevent attribution.
           Source $GITHUB_SHA. SHA-256 $APK_SHA256.
           NOTES
           gh release create "$TAG" "$RUNNER_TEMP/$APK" --target "$GITHUB_SHA" --prerelease --latest=false --title "Roadprints 0.25.248 (294) owner test" --notes-file "$RUNNER_TEMP/owner-notes.md"
