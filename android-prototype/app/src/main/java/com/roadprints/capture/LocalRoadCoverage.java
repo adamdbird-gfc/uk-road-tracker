@@ -66,7 +66,8 @@ final class LocalRoadCoverage implements AutoCloseable {
 
     record Prepared(Map<Edge, List<Interval>> spans, JSONArray residual) {}
     int overBudget;
-    long unresolvedMm, excludedMm;
+    long unresolvedMm, excludedMm, majorOrOtherMm;
+    final Map<String, Integer> unresolvedLegReasons = new LinkedHashMap<>();
 
     Prepared contribution(MapJourneyStore.Record record) {
         if (!AcceptedRoadRoute.eligibleMode(record.header.optString("mode"))) return null;
@@ -106,6 +107,13 @@ final class LocalRoadCoverage implements AutoCloseable {
                 throw new IllegalArgumentException("Invalid cached local-road distance");
             unresolvedMm += unresolved;
             excludedMm += excluded;
+            majorOrOtherMm += row.optLong("majorOrOtherMm", 0);
+            JSONObject reasons = row.optJSONObject("unresolvedLegs");
+            if (reasons != null) for (String reason : reasons.keySet()) {
+                int occurrences = reasons.optInt(reason, 0);
+                if (occurrences < 0) throw new IllegalArgumentException("Negative unresolved reason count");
+                unresolvedLegReasons.merge(reason, occurrences, Integer::sum);
+            }
             if (reusedRow) reused++;
             else calculated++;
             return new Prepared(result, residual);
@@ -202,7 +210,9 @@ final class LocalRoadCoverage implements AutoCloseable {
         // Preserve the disposable cache schema without preparing hidden overview polylines.
         return new JSONObject().put("spans", spans).put("intervals", count)
                 .put("residual", new JSONArray())
-                .put("unresolvedMm", projection.unresolvedMm()).put("excludedMm", projection.excludedMm());
+                .put("unresolvedMm", projection.unresolvedMm()).put("excludedMm", projection.excludedMm())
+                .put("majorOrOtherMm", projection.majorOrOtherMm())
+                .put("unresolvedLegs", new JSONObject(projection.unresolvedLegs()));
     }
 
     static JSONObject readContribution(LocalRoadNetwork network, File source, String started, String ended)
