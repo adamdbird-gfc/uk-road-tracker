@@ -88,16 +88,7 @@ final class LocalRoadCoverage implements AutoCloseable {
                 Point a = RoadReference.point(span.getDouble(4), span.getDouble(5));
                 Point b = RoadReference.point(span.getDouble(6), span.getDouble(7));
                 Edge edge = new Edge(way, from, to, span.getString(3), a, b, 0, true, span.getInt(8), -1);
-                List<Interval> intervals = new ArrayList<>();
-                if (span.length() < 11 || span.length() % 2 != 1)
-                    throw new IllegalArgumentException("Invalid cached local-road interval format");
-                for (int offset = 9; offset < span.length(); offset += 2) {
-                    int start = span.getInt(offset), end = span.getInt(offset + 1);
-                    if (start < 0 || end <= start || end > edge.mm)
-                        throw new IllegalArgumentException("Invalid cached local-road interval bounds");
-                    intervals.add(new Interval(start, end));
-                }
-                result.put(edge, intervals);
+                result.put(edge, decodeCachedIntervals(span, edge.mm));
             }
             unresolvedMm += row.getLong("unresolvedMm");
             excludedMm += row.getLong("excludedMm");
@@ -112,6 +103,21 @@ final class LocalRoadCoverage implements AutoCloseable {
             failureCounts.merge(signature, 1, Integer::sum);
             return null;
         }
+    }
+
+    /** Validates disposable cache rows before they may suppress legacy route geometry. */
+    static List<Interval> decodeCachedIntervals(JSONArray span, int sectionMm)
+            throws org.json.JSONException {
+        if (sectionMm <= 0 || span == null || span.length() < 11 || span.length() % 2 != 1)
+            throw new IllegalArgumentException("Invalid cached local-road interval format");
+        List<Interval> intervals = new ArrayList<>();
+        for (int offset = 9; offset < span.length(); offset += 2) {
+            int start = span.getInt(offset), end = span.getInt(offset + 1);
+            if (start < 0 || end <= start || end > sectionMm)
+                throw new IllegalArgumentException("Invalid cached local-road interval bounds");
+            intervals.add(new Interval(start, end));
+        }
+        return intervals;
     }
 
     String failureBreakdown() {
