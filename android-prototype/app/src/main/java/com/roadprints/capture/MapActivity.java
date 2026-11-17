@@ -980,8 +980,9 @@ public class MapActivity extends Activity {
             // A successful saved match is accepted for cumulative attribution.
             // Do not restore individual black journey traces when attribution
             // is unavailable: absence of a canonical line must remain visible.
-            if (local == null && JourneyFilters.isRoadMode(mode)) output.localCoverageDegraded = true;
-            if (local != null && JourneyFilters.isRoadMode(mode)) {
+            boolean eligibleRoadTravel = AcceptedRoadRoute.eligibleMode(mode);
+            if (local == null && eligibleRoadTravel) output.localCoverageDegraded = true;
+            if (local != null && eligibleRoadTravel) {
                 long started = System.nanoTime();
                 LocalRoadCoverage.Prepared coverage = local.contribution(record);
                 String journeyId = journey.optString("journey_id");
