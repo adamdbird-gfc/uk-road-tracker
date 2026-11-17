@@ -94,10 +94,10 @@ jobs:
             # Surface concise test failures through the PR, even when the
             # connector cannot enumerate push-triggered workflow run logs.
             {
-              printf 'Build 293 focused validation failed on commit \`%s\` (attempt %s).\\n\\n' "$GITHUB_SHA" "$attempt"
-              printf '\`\`\`text\\n'
+              printf 'Build 293 focused validation failed on commit %s (attempt %s).\n\n' "$GITHUB_SHA" "$attempt"
+              echo '~~~text'
               grep -E '(^> Task .*FAILED|^FAILURE:|^\\* What went wrong:|^Execution failed|^> .*[Ff]ailed|^Caused by:|^.*(AssertionError|Compilation failed|error: |No tests found|tests completed|There were failing tests))' "$RUNNER_TEMP/focused-$attempt.log" | head -25 || true
-              printf '\`\`\`\\n'
+              echo '~~~'
             } > "$RUNNER_TEMP/owner-test-failure.md"
             gh pr comment 327 --body-file "$RUNNER_TEMP/owner-test-failure.md" || true
             if ! grep -Eq '(Received status code (429|502|503|504)|HTTP (429|502|503|504)|Too Many Requests|Read timed out|Connect timed out)' "$RUNNER_TEMP/focused-$attempt.log"; then
