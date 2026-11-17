@@ -9,6 +9,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
+  pull-requests: write
 concurrency:
   group: owner-293-${{ github.ref }}
   cancel-in-progress: true
@@ -90,6 +91,15 @@ jobs:
               echo '```'
               echo 'See **mixed-mode-293-test-logs** for full reports.'
             } >> "$GITHUB_STEP_SUMMARY"
+            # Surface concise test failures through the PR, even when the
+            # connector cannot enumerate push-triggered workflow run logs.
+            {
+              printf 'Build 293 focused validation failed on commit \`%s\` (attempt %s).\\n\\n' "$GITHUB_SHA" "$attempt"
+              printf '\`\`\`text\\n'
+              grep -E '(^> Task .*FAILED|^FAILURE:|^\\* What went wrong:|^Execution failed|^> .*[Ff]ailed|^Caused by:|^.*(AssertionError|Compilation failed|error: |No tests found|tests completed|There were failing tests))' "$RUNNER_TEMP/focused-$attempt.log" | head -25 || true
+              printf '\`\`\`\\n'
+            } > "$RUNNER_TEMP/owner-test-failure.md"
+            gh pr comment 327 --body-file "$RUNNER_TEMP/owner-test-failure.md" || true
             if ! grep -Eq '(Received status code (429|502|503|504)|HTTP (429|502|503|504)|Too Many Requests|Read timed out|Connect timed out)' "$RUNNER_TEMP/focused-$attempt.log"; then
               tail -n 80 "$RUNNER_TEMP/focused-$attempt.log"
               exit 1
