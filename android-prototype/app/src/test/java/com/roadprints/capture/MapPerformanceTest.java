@@ -51,6 +51,28 @@ public class MapPerformanceTest {
             .put("processing_result",new JSONObject().put("geojson",collection(feature("M2",motorway)))
                 .put("motorway_geojson",collection(feature("M2",motorway))).put("a_road_geojson",collection(feature("A2",aRoad))));
     }
+    @Test public void networkOnlyPreparedRowsAreReusedWithoutLegacyGeometry() throws Exception {
+        JourneyStore.save(app, trip("network-cache"));
+        MapJourneyStore.Factory factory = raw -> new JSONObject()
+                .put("motorway", new JSONArray()).put("a_road", new JSONArray());
+        try (MapJourneyStore records = new MapJourneyStore(app)) {
+            records.forEach(() -> false, record -> record.prepared(factory));
+            assertEquals(1, records.rebuilt);
+        }
+        try (MapJourneyStore records = new MapJourneyStore(app)) {
+            records.forEach(() -> false, record -> {
+                JSONObject prepared = record.prepared(raw -> {
+                    throw new AssertionError("Warm Map rebuilt a valid network contribution");
+                });
+                assertFalse(prepared.has("roads"));
+                assertFalse(prepared.has("motorways"));
+            });
+            assertEquals(1, records.reused);
+            assertEquals(0, records.rebuilt);
+            assertEquals(0, records.sourceReads);
+        }
+    }
+
     @Test public void compactContributionsEqualUncachedRoadCreditAndAttribution() throws Exception {
         MotorwayProgressCalculator rawM=new MotorwayProgressCalculator(app),cachedM=new MotorwayProgressCalculator(app);
         ARoadProgressCalculator rawA=new ARoadProgressCalculator(app),cachedA=new ARoadProgressCalculator(app);

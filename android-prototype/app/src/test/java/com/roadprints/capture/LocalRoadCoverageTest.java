@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28)
@@ -178,12 +179,14 @@ public class LocalRoadCoverageTest {
         MapActivity.MapRoutes all = (MapActivity.MapRoutes) read.invoke(screen, JourneyFilters.all(), day, ZoneOffset.UTC);
         assertEquals(5, all.matchedJourneys);
         assertEquals(1, all.localRoadLines.size());
-        assertEquals(3, all.sections.size());
-        assertEquals(2, all.localRoadByLine.get(all.localRoadLines.get(0)).contributors(.5).size());
+        assertTrue(all.sections.isEmpty());
+        assertEquals(Set.of("drive-one", "drive-two"),
+                Set.copyOf(all.localRoadByLine.get(all.localRoadLines.get(0)).contributors(.5)));
+        assertTrue(all.localRoadMillimetres > 0);
         JourneyFilters onFoot = new JourneyFilters(2, "matched", JourneyDateFilter.all());
         MapActivity.MapRoutes foot = (MapActivity.MapRoutes) read.invoke(screen, onFoot, day, ZoneOffset.UTC);
         assertTrue(foot.localRoadLines.isEmpty());
-        assertEquals(2, foot.sections.size());
+        assertTrue(foot.sections.isEmpty());
 
         try (MapJourneyStore records = new MapJourneyStore(context);
              LocalRoadCoverage projection = LocalRoadCoverage.open(context)) {

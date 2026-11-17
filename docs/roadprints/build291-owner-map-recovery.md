@@ -54,3 +54,17 @@ At the owner's request, the existing overview Map is **network-only by default**
 6. Only after these checks, create signed same-app-ID in-place build 292 and direct GitHub Releases APK.
 
 No new private owner exports required to understand these measurements. The 1,600+ archive on physical Pixel 10 remains the final acceptance test.
+
+## Work recovery checkpoint — 17 November 2026
+
+The remote recovery head was verified as 5f9ef9492643f05f4b1c19cec3d13bbf69041c79, with PR #325 head 82da5d37e20d85d5e610cf062c79c8b84494404d as an ancestor.
+
+Before the workspace reset, the seven original exports were recovered privately and replayed through the compiled accepted-route projection against the full reference extracted from the published build 291 APK. Six completed matches produced a union of 752 physical sections and 9,502,919 mm. The 5 November pending journey contributed nothing. This reproduces the reported 9.503 km, with original saved corrections applied. It exercises attribution directly on the JVM. Android archive ingestion, rendering, contributor interaction and the 648 device holds remain unverified. Private exports and coordinates are excluded from this commit.
+
+The downloaded build 291 APK had SHA-256 f2220aed2421f055300d33181d354731a5fca2edf7b2004a992c3a6c715e2960. Its signing certificate SHA-256 was verified as 5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031. The packaged road reference was 739,770,815 bytes.
+
+A confirmed cache compatibility defect was found in the recovery implementation. MapActivity now writes only motorway and a_road prepared arrays, while MapJourneyStore still required the removed roads and motorways arrays when reading them. Every new network-only prepared row therefore rebuilt on a subsequent archive pass. The reader now validates the two arrays it consumes. Existing rows containing legacy arrays remain readable. A regression verifies warm reuse without source decoding or legacy arrays.
+
+Overview expectations in LocalRoadCoverageTest and MultimodalFerryTest now follow the approved presentation. The latter also verifies that the saved ferry geometry remains available. These source changes require fresh execution of the Android JVM suite.
+
+The interrupted environment lost its Gradle logs and Android runtime. No full-suite pass, integrated Android result, performance measurement or build 292 release is claimed. The cause of the original 648 held contributions remains open. No backend or Firebase changes, main integration or issue closures occurred.

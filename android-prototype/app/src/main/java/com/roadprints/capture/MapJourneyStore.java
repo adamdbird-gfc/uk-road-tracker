@@ -63,7 +63,7 @@ final class MapJourneyStore implements AutoCloseable {
                         payloadBytes += bytes.length;
                         if (NcnJson.hash(bytes).equals(expected)) {
                             JSONObject value = new JSONObject(new String(bytes, StandardCharsets.UTF_8));
-                            for (String key : new String[]{"motorway", "a_road", "roads", "motorways"}) value.getJSONArray(key);
+                            for (String key : new String[]{"motorway", "a_road"}) value.getJSONArray(key);
                             reused++;
                             return value;
                         }
