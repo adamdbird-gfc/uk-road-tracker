@@ -79,11 +79,22 @@ jobs:
               cat "$RUNNER_TEMP/focused-$attempt.log"
               break
             fi
-            cat "$RUNNER_TEMP/focused-$attempt.log"
+            echo "::group::Gradle failure summary (attempt $attempt)"
+            grep -nE '(^> Task .*FAILED|^FAILURE:|^\\* What went wrong:|^Execution failed|^> .*[Ff]ailed|^Caused by:|^.*(AssertionError|Compilation failed|error: |No tests found|tests completed|There were failing tests))' "$RUNNER_TEMP/focused-$attempt.log" | head -65 || true
+            echo "::endgroup::"
+            {
+              echo "### Focused validation attempt $attempt failed"
+              echo 'Recorded failure lines:'
+              echo '\`\`\`text'
+              grep -E '(^> Task .*FAILED|^FAILURE:|^\\* What went wrong:|^Execution failed|^> .*[Ff]ailed|^Caused by:|^.*(AssertionError|Compilation failed|error: |No tests found|tests completed|There were failing tests))' "$RUNNER_TEMP/focused-$attempt.log" | head -30 || true
+              echo '\`\`\`'
+              echo 'See **mixed-mode-293-test-logs** for full reports.'
+            } >> "$GITHUB_STEP_SUMMARY"
             if ! grep -Eq '(Received status code (429|502|503|504)|HTTP (429|502|503|504)|Too Many Requests|Read timed out|Connect timed out)' "$RUNNER_TEMP/focused-$attempt.log"; then
+              tail -n 80 "$RUNNER_TEMP/focused-$attempt.log"
               exit 1
             fi
-            if [ "$attempt" -eq 3 ]; then exit 1; fi
+            if [ "$attempt" -eq 3 ]; then tail -n 80 "$RUNNER_TEMP/focused-$attempt.log"; exit 1; fi
             sleep $((attempt*40))
           done
       - name: Assemble signed integrated in-place APK
@@ -147,6 +158,7 @@ jobs:
           name: mixed-mode-293-test-logs
           path: |
             android-prototype/app/build/test-results/testDebugUnitTest/
+            ${{ runner.temp }}/focused-*.log
             ${{ runner.temp }}/mixed-mode-*.log
             ${{ runner.temp }}/mixed-mode-*.txt
           if-no-files-found: warn
