@@ -77,6 +77,30 @@ public class MapLegendTest {
         assertArrayEquals(new double[]{.36,51.44,14},map.cameraState(),1e-9);
         MapLayerPreferences.set(app,MapLayerPreferences.Layer.MOTORWAYS,true);map.setMapLayersFromPreferences();assertEquals(true,tap.invoke(map,400f,400f));
     }
+    @Test public void cumulativeStrokeWinsOverlapAndDistinctTravelRemainsSelectable() throws Exception {
+        RoutePreviewView map = RoutePreviewView.overview(app);
+        map.layout(0, 0, 800, 800);
+        JSONArray cumulative = new JSONArray("[[0.34,51.44],[0.38,51.44]]");
+        JSONArray overlapping = new JSONArray("[[0.34,51.440005],[0.38,51.440005]]");
+        JSONArray distinct = new JSONArray("[[0.34,51.4401],[0.38,51.4401]]");
+        map.setRouteData(null, java.util.List.of(overlapping, distinct));
+        map.setLocalRoadLayer(new LocalRoadLayer(java.util.List.of(cumulative)));
+        map.restoreCameraState(.36, 51.44, 17);
+        int[] taps = {0, 0};
+        map.setMapRoadTapListener((lat, lon) -> taps[0]++);
+        map.setLocalRoadTapListener((line, fraction) -> {
+            assertSame(cumulative, line);
+            taps[1]++;
+        });
+        var tap = RoutePreviewView.class.getDeclaredMethod("tapMapRoad", float.class, float.class);
+        tap.setAccessible(true);
+        var screenY = RoutePreviewView.class.getDeclaredMethod("screenY", double.class);
+        screenY.setAccessible(true);
+        assertEquals(true, tap.invoke(map, 400f, screenY.invoke(map, 51.440005)));
+        assertEquals(true, tap.invoke(map, 400f, screenY.invoke(map, 51.4401)));
+        assertArrayEquals(new int[]{1, 1}, taps);
+    }
+
     @Test public void townLegendIncludesBoundaryKeyAndUsesScrollableSharedDialog(){
         Activity activity=Robolectric.buildActivity(Activity.class).create().get();AlertDialog dialog=MapLegendPanel.show(activity,true,()->{});
         assertNotNull(dialog.getWindow().getDecorView().findViewWithTag("map_layer:BOUNDARIES"));

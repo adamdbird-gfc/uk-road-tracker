@@ -1205,6 +1205,10 @@ public class RoutePreviewView extends View {
         if(remainingVisible) groups.add(incompleteARoadSegments);
         if(aRoadVisible) groups.add(coveredARoadSegments);
         for (List<JSONArray> group : groups) {
+            // The cumulative stroke is drawn over saved journey traces. Honour
+            // that order for a tap inside the stroke while keeping distinct lines selectable.
+            if (selectedLocalRoad != null && nearest <= localRoadPaint.getStrokeWidth() / 2
+                    && (group == matchedSegments || group == routeExtensions)) continue;
             for (JSONArray route : group) {
                 for (int i = 1; i < route.length(); i++) {
                     JSONArray a = route.optJSONArray(i - 1);

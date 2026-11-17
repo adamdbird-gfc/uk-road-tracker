@@ -1667,39 +1667,29 @@ public class MapActivity extends Activity {
     }
 
     private void loadLocalRoadSummary(LocalRoadCoverage.Line line, double fraction) {
-        if (!mapReady || recapVisible || line == null) return;
-        int request = ++roadSummaryRequestId;
-        showRoadSummaryLoadingCard();
-        ScreenDataLoader.interactive(() -> {
-            List<JSONObject> journeys = new ArrayList<>();
-            for (String id : line.contributors(fraction)) {
-                if (request != roadSummaryRequestId) return;
-                try {
-                    JSONObject summary = JourneyStore.readSummary(JourneyStore.archiveFile(getApplicationContext(), id));
-                    if (summary != null) journeys.add(summary);
-                } catch (java.io.IOException | org.json.JSONException unavailable) {
-                    // A journey can be deleted while the selection is loading.
-                }
-            }
-            journeys.sort(java.util.Comparator.comparing((JSONObject row) -> row.optString("started_at")).reversed());
-            LocalRoadCoverage.Section section = line.section();
-            double metres = section.uniqueMillimetres / 1000.0;
-            double percent = 100.0 * section.uniqueMillimetres / section.length;
-            mainHandler.post(() -> {
-                if (isFinishing() || isDestroyed() || request != roadSummaryRequestId) return;
-                showRoadSummaryCard(section.label.isEmpty() ? "Unnamed road" : section.label,
-                        metres, journeys.size(), percent, journeys, null, true);
-            });
-        });
+        if (line == null) return;
+        JSONArray first = line.points().optJSONArray(0), last = line.points().optJSONArray(1);
+        if (first == null || last == null) return;
+        double latitude = first.optDouble(1) + (last.optDouble(1) - first.optDouble(1)) * fraction;
+        double longitude = first.optDouble(0) + (last.optDouble(0) - first.optDouble(0)) * fraction;
+        String label = line.section().label;
+        loadRoadSummaryAt(latitude, longitude, label.isEmpty() ? "Unnamed road" : label,
+                line.contributors(fraction));
     }
 
     private void loadRoadSummaryAt(double latitude, double longitude) {
+        loadRoadSummaryAt(latitude, longitude, null, java.util.Collections.emptyList());
+    }
+
+    private void loadRoadSummaryAt(double latitude, double longitude, String selectedRoad,
+                                   List<String> sectionContributors) {
         if(!mapReady||recapVisible)return; // Panning can continue; summaries require the committed selection.
         final JourneyFilters selection = mapFilters;
         final int requestId = ++roadSummaryRequestId;
         showRoadSummaryLoadingCard();
         ScreenDataLoader.execute(() -> {
-            RoadCoverageSegment incomplete = nearestIncompleteRoad(latitude, longitude);
+            RoadCoverageSegment incomplete = selectedRoad == null
+                    ? nearestIncompleteRoad(latitude, longitude) : null;
             if (incomplete != null && incomplete.distanceMetres <= 85.0) {
                 mainHandler.post(() -> {
                     if (isFinishing() || requestId != roadSummaryRequestId) return;
@@ -1746,17 +1736,19 @@ public class MapActivity extends Activity {
                 android.util.Log.w("Roadprints", "Could not calculate the tapped road summary", error);
             }
 
+            String selectedKey = selectedRoad == null ? null : selectedRoad.toUpperCase(java.util.Locale.ROOT);
             RoadFeatureMatch nearest = null;
             for (RoadFeatureMatch candidate : candidates) {
+                if (selectedKey != null && !selectedKey.equals(candidate.key)) continue;
                 if (nearest == null || candidate.distanceFromTap < nearest.distanceFromTap)
                     nearest = candidate;
             }
-            final String roadName = nearest == null ? null : nearest.label;
-            final String roadKey = nearest == null ? null : nearest.key;
+            final String roadName = selectedRoad != null ? selectedRoad : nearest == null ? null : nearest.label;
+            final String roadKey = selectedKey != null ? selectedKey : nearest == null ? null : nearest.key;
             final List<JSONObject> related = new ArrayList<>();
             double totalMetres = 0;
+            Map<String, JSONObject> journeysById = new java.util.LinkedHashMap<>();
             if (nearest != null) {
-                Map<String, JSONObject> journeysById = new java.util.LinkedHashMap<>();
                 Map<String, Double> distancesById = new HashMap<>();
                 for (RoadFeatureMatch candidate : candidates) {
                     if (!roadKey.equals(candidate.key) || candidate.distanceFromTap > 120.0
@@ -1766,10 +1758,26 @@ public class MapActivity extends Activity {
                             distancesById.getOrDefault(candidate.journeyId, 0d)
                                     + candidate.travelledMetres);
                 }
-                related.addAll(journeysById.values());
                 for (double distance : distancesById.values()) totalMetres += distance;
             }
-            final double travelled = totalMetres;
+            boolean distancesComplete = true;
+            for (String id : sectionContributors) {
+                if (requestId != roadSummaryRequestId) return;
+                if (journeysById.containsKey(id)) continue;
+                try {
+                    JSONObject summary = JourneyStore.readSummary(JourneyStore.archiveFile(getApplicationContext(), id));
+                    if (summary != null) {
+                        journeysById.put(id, summary);
+                        distancesComplete = false;
+                    }
+                } catch (java.io.IOException | org.json.JSONException unavailable) {
+                    // The journey may have been removed while the summary was loading.
+                }
+            }
+            related.addAll(journeysById.values());
+            if (selectedRoad != null)
+                related.sort(java.util.Comparator.comparing((JSONObject row) -> row.optString("started_at")).reversed());
+            final double travelled = distancesComplete ? totalMetres : Double.NaN;
             final int times = related.size();
             final double percent = roadKey == null ? Double.NaN
                     : roadPercentages.getOrDefault(roadKey, Double.NaN);
@@ -1903,20 +1911,16 @@ public class MapActivity extends Activity {
 
     private void showRoadSummaryCard(String road, double metres, int times,
                                     double percent, List<JSONObject> journeys, String note) {
-        showRoadSummaryCard(road, metres, times, percent, journeys, note, false);
-    }
-
-    private void showRoadSummaryCard(String road, double metres, int times, double percent,
-                                     List<JSONObject> journeys, String note, boolean localSection) {
         LinearLayout content = cardContainer();
-        addCardLabel(content, localSection ? "ROAD SECTION" : "ROAD SUMMARY");
+        addCardLabel(content, "ROAD SUMMARY");
         addCardTitle(content, road);
         if (note != null) {
             addCardBody(content, note);
         } else {
-            addRoadMetric(content, localSection ? "Covered distance" : "Distance travelled", DistanceUnits.format(this, metres));
-            addRoadMetric(content, localSection ? "Journeys at this point" : "Times travelled", Integer.toString(times));
-            addRoadMetric(content, localSection ? "Section covered" : "Road completed",
+            addRoadMetric(content, "Distance travelled",
+                    Double.isFinite(metres) ? DistanceUnits.format(this, metres) : "Distance unavailable");
+            addRoadMetric(content, "Times travelled", Integer.toString(times));
+            addRoadMetric(content, "Road completed",
                     Double.isFinite(percent) ? String.format(java.util.Locale.UK, "%.1f%%", percent)
                             : "Percentage unavailable");
         }
