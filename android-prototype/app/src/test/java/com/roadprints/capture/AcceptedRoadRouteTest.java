@@ -81,6 +81,38 @@ public class AcceptedRoadRouteTest {
         }
     }
 
+    @Test public void savedWalkingRouteUsesSameCanonicalRoadIdsAndRespectsRemovedSegments()
+            throws Exception {
+        Path pack = Files.createTempFile("roadprints-foot-reconciliation", ".bin");
+        try {
+            Files.write(pack, testPack());
+            try (RoadReference reference = new RoadReference(
+                    FileChannel.open(pack), 0, Files.size(pack))) {
+                JSONObject walk = new JSONObject("""
+                        {"mode":"walking","processing_status":"complete",
+                         "processing_result":{"status":"ok","geojson":{"features":[{
+                         "geometry":{"type":"LineString","coordinates":[
+                         [0.0015,51.001],[0.002,51.001],[0.003,51.001]]}}]}}}
+                        """);
+                JSONObject drive = new JSONObject(walk.toString()).put("mode", "driving");
+                var walked = AcceptedRoadRoute.project(reference, walk);
+                var driven = AcceptedRoadRoute.project(reference, drive);
+                assertNotNull(walked);
+                assertEquals(driven.sections().keySet(), walked.sections().keySet());
+                assertEquals(driven.sections(), walked.sections());
+                walk.put("journey_corrections", new JSONObject()
+                        .put("removed_matched_segments", new JSONArray().put(0)));
+                var edited = AcceptedRoadRoute.project(reference, walk);
+                assertNotNull(edited);
+                assertTrue(edited.excludedMm() > 0);
+                assertTrue(edited.sections().size() <= walked.sections().size());
+                assertEquals(0, edited.unresolvedMm());
+            }
+        } finally {
+            Files.deleteIfExists(pack);
+        }
+    }
+
     private static byte[] testPack() throws Exception {
         ByteArrayOutputStream compressedBytes = new ByteArrayOutputStream();
         try (DataOutputStream compressed = new DataOutputStream(new GZIPOutputStream(compressedBytes))) {
