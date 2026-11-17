@@ -105,7 +105,27 @@ jobs:
       - name: Run complete Android JVM suite
         run: |
           set -euo pipefail
-          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:testDebugUnitTest
+          # Maven Central may temporarily return HTTP 429 from shared hosted runners.
+          # Retry only transient dependency transport failures; never retry or mask
+          # an actual failed compilation, assertion, or test suite.
+          for attempt in 1 2 3; do
+            if gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:testDebugUnitTest                 > "$RUNNER_TEMP/android-jvm-attempt-$attempt.log" 2>&1; then
+              cat "$RUNNER_TEMP/android-jvm-attempt-$attempt.log"
+              break
+            fi
+            cat "$RUNNER_TEMP/android-jvm-attempt-$attempt.log"
+            if ! grep -Eq '(Received status code (429|502|503|504)|HTTP (429|502|503|504)|Too Many Requests|Read timed out|Connect timed out)'                 "$RUNNER_TEMP/android-jvm-attempt-$attempt.log"; then
+              echo "Android JVM suite failed with a non-transient error; stopping." >&2
+              exit 1
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "Transient dependency download failure persisted after three bounded attempts." >&2
+              exit 1
+            fi
+            delay=$(( attempt * 60 ))
+            echo "Dependency repository temporarily unavailable; retrying Gradle in ${delay}s (attempt $(( attempt + 1 ))/3)."
+            sleep "$delay"
+          done
       - name: Build the signed recovery and controlled reference-lifetime comparison
         env:
           ROADPRINTS_DEBUG_KEYSTORE_B64: ${{ secrets.ROADPRINTS_DEBUG_KEYSTORE_B64 }}
