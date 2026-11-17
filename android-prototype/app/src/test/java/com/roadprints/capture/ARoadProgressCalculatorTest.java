@@ -52,6 +52,46 @@ public class ARoadProgressCalculatorTest {
         assertEquals(1000,road.matchedMetres,0.001);
     }
 
+    @Test public void mixedModeAcceptedARoadEvidenceAddsToOneCanonicalRoad() throws Exception {
+        Context app = RuntimeEnvironment.getApplication();
+        JSONObject reference;
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                app.getAssets().open("GB-A1.json"), StandardCharsets.UTF_8))) {
+            StringBuilder buffer = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) buffer.append(line);
+            reference = new JSONObject(buffer.toString());
+        }
+        JSONArray coordinates = reference.getJSONArray("paths").getJSONArray(0);
+        JSONObject feature = new JSONObject().put("type", "Feature")
+                .put("properties", new JSONObject().put("road_ref", "A1")
+                        .put("road_region", "GB").put("distance_m", 1000))
+                .put("geometry", new JSONObject().put("type", "LineString")
+                        .put("coordinates", coordinates));
+        ARoadProgressCalculator calculator = new ARoadProgressCalculator(app, false);
+        java.util.Map<String, JSONArray> byMode = new java.util.LinkedHashMap<>();
+        for (String mode : java.util.List.of("driving", "walking", "running", "cycling")) {
+            JSONObject journey = new JSONObject().put("journey_id", mode + "-a1")
+                    .put("mode", mode).put("processing_status", "complete")
+                    .put("processing_result", new JSONObject().put("a_road_geojson",
+                            new JSONObject().put("type", "FeatureCollection")
+                                    .put("features", new JSONArray().put(feature))));
+            JSONArray contribution = calculator.contribution(journey);
+            assertEquals("Expected accepted " + mode + " A-road evidence", 1, contribution.length());
+            assertTrue(calculator.accepts(contribution));
+            byMode.put(mode, contribution);
+            calculator.addContribution(mode + "-a1", contribution);
+        }
+        ARoadProgressCalculator.Summary result = calculator.finish();
+        assertEquals(1, result.roads.size());
+        ARoadProgressCalculator.Road road = result.roads.get(0);
+        assertEquals(4, road.journeyIds.size());
+        assertTrue(road.percent() > 0);
+        ARoadProgressCalculator drivingOnly = new ARoadProgressCalculator(app, false);
+        drivingOnly.addContribution("driving-a1", byMode.get("driving"));
+        assertEquals(drivingOnly.finish().roads.get(0).percent(), road.percent(), 0.000001);
+    }
+
     @Test public void statisticsCoverageMatchesMapWithoutRetainingGeometryOrLookupData() throws Exception {
         Context app=RuntimeEnvironment.getApplication();
         JSONObject reference;
