@@ -2,6 +2,22 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.250",
+      "version_code": 296,
+      "release_date": "2026-11-17",
+      "since": "0.25.249",
+      "changes": [
+        {
+          "title": "Keep road attribution diagnostics available",
+          "description": "Latest counts for accepted driving, walking, running and cycling contributions remain in the performance report even when the busy Map rotates earlier timing entries out of the log."
+        },
+        {
+          "title": "No change to road matching or coverage",
+          "description": "Roadprints preserves your original journeys, accepted corrections and existing network-only map while investigating missing walking contributions and map memory usage."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.249",
       "version_code": 295,
       "release_date": "2026-11-17",
