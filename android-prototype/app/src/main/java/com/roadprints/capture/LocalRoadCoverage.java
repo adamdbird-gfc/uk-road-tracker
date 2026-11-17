@@ -73,12 +73,12 @@ final class LocalRoadCoverage implements AutoCloseable {
             if (cache.hits != hits) reused++;
             else calculated++;
             if (!row.has("residual")) return null;
-            unresolvedMm += row.getLong("unresolvedMm");
-            excludedMm += row.getLong("excludedMm");
             Map<Edge, List<Interval>> result = new LinkedHashMap<>();
             JSONArray spans = row.getJSONArray("spans");
             int count = row.getInt("intervals");
-            if (count > MAX_INTERVALS_PER_JOURNEY || intervalCount + count > MAX_CONTRIBUTION_INTERVALS) {
+            if (count < 0 || count > MAX_INTERVALS_PER_JOURNEY)
+                throw new IllegalArgumentException("Invalid local-road interval count");
+            if (intervalCount + count > MAX_CONTRIBUTION_INTERVALS) {
                 overBudget++;
                 return null;
             }
@@ -89,13 +89,18 @@ final class LocalRoadCoverage implements AutoCloseable {
                 Point b = RoadReference.point(span.getDouble(6), span.getDouble(7));
                 Edge edge = new Edge(way, from, to, span.getString(3), a, b, 0, true, span.getInt(8), -1);
                 List<Interval> intervals = new ArrayList<>();
+                if (span.length() < 11 || span.length() % 2 != 1)
+                    throw new IllegalArgumentException("Invalid cached local-road interval format");
                 for (int offset = 9; offset < span.length(); offset += 2) {
                     int start = span.getInt(offset), end = span.getInt(offset + 1);
-                    if (start < 0 || end <= start || end > edge.mm) return null;
+                    if (start < 0 || end <= start || end > edge.mm)
+                        throw new IllegalArgumentException("Invalid cached local-road interval bounds");
                     intervals.add(new Interval(start, end));
                 }
                 result.put(edge, intervals);
             }
+            unresolvedMm += row.getLong("unresolvedMm");
+            excludedMm += row.getLong("excludedMm");
             return new Prepared(result, row.getJSONArray("residual"));
         } catch (CancellationException cancelled) {
             throw cancelled;
@@ -156,7 +161,8 @@ final class LocalRoadCoverage implements AutoCloseable {
         for (Map.Entry<Edge, List<Interval>> section : projection.sections().entrySet()) {
             Edge edge = section.getKey();
             count += section.getValue().size();
-            if (count > MAX_INTERVALS_PER_JOURNEY) return new JSONObject();
+            if (count > MAX_INTERVALS_PER_JOURNEY)
+                throw new IllegalArgumentException("Matched route exceeds per-journey interval limit");
             JSONArray row = new JSONArray().put(edge.way).put(edge.from).put(edge.to).put(edge.label)
                     .put(ukLongitude(edge.a)).put(ukLatitude(edge.a)).put(ukLongitude(edge.b))
                     .put(ukLatitude(edge.b)).put(edge.mm);
