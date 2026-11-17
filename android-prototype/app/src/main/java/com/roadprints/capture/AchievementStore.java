@@ -480,8 +480,8 @@ final class AchievementStore {
             JSONArray features=collection == null ? null : collection.optJSONArray("features");
             if (features == null) return;
             for (int index=0; index<features.length(); index++) {
-                JSONObject feature=features.optJSONObject(index);
-                if (JourneyCorrectionUtils.excludesRoadFeature(journey, feature)) continue;
+                JSONObject feature = JourneyCorrectionUtils.retainedRoadFeature(journey, features.optJSONObject(index));
+                if (feature == null) continue;
                 JSONObject geometry=feature == null ? null : feature.optJSONObject("geometry");
                 if (geometry == null) continue;
                 String type=geometry.optString("type", "");

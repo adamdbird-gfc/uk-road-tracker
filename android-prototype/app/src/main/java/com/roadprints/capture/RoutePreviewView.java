@@ -351,8 +351,25 @@ public class RoutePreviewView extends View {
         routeFitPending = false;
     }
 
+    private LocalRoadLayer localRoadLayer;
+    private final float[] localRoadBatch = new float[4096];
+    private final Paint localRoadPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final List<JSONArray> ferrySegments=new ArrayList<>();
     private final Paint ferryPaint=new Paint(Paint.ANTI_ALIAS_FLAG);
+    void setLocalRoadLayer(LocalRoadLayer layer) {
+        localRoadLayer = layer;
+        localRoadPaint.setColor(MapLayerPreferences.LOCAL_ROAD_COLOR);
+        localRoadPaint.setStyle(Paint.Style.STROKE);
+        localRoadPaint.setStrokeWidth(dp(4));
+        localRoadPaint.setStrokeCap(Paint.Cap.BUTT);
+        if (layer != null && !layer.isEmpty()) {
+            coordinatesValid = true;
+            routeFitPending = true;
+            fitRouteIfReady();
+        }
+        invalidate();
+    }
+
     public void setFerrySegments(List<JSONArray> routes) {
         renderGeometry.invalidateLayer(ferrySegments);
         ferrySegments.clear();
@@ -391,6 +408,16 @@ public class RoutePreviewView extends View {
 
     public interface OnMapRoadTapListener {
         void onMapRoadTap(double latitude, double longitude);
+    }
+
+    interface OnLocalRoadTapListener {
+        void onLocalRoadTap(JSONArray line, double fraction);
+    }
+
+    private OnLocalRoadTapListener localRoadTapListener;
+
+    void setLocalRoadTapListener(OnLocalRoadTapListener listener) {
+        localRoadTapListener = listener;
     }
 
     private OnMapRoadTapListener mapRoadTapListener;
@@ -732,6 +759,13 @@ public class RoutePreviewView extends View {
                 drawRoute(canvas, coordinates, routePaint,
                         flatRoadMapStyle ? null : routeHaloPaint);
             }
+            if (travelVisible && localRoadLayer != null && !localRoadLayer.isEmpty()) {
+                double world = mapTileSize() * Math.pow(2.0, cameraZoom);
+                localRoadLayer.draw(canvas, localRoadPaint,
+                        getWidth() / 2.0 - longitudeToUnitX(centerLongitude) * world,
+                        getHeight() / 2.0 - latitudeToUnitY(centerLatitude) * world,
+                        world, getWidth(), getHeight(), localRoadBatch);
+            }
             if (remainingVisible) {
                 drawRoadLayer(canvas, incompleteMotorwaySegments, motorwayIncompletePaint);
                 drawRoadLayer(canvas, incompleteARoadSegments, aRoadIncompletePaint);
@@ -892,6 +926,12 @@ public class RoutePreviewView extends View {
             } else {
                 fitRoutes.addAll(ferrySegments);
                 fitRoutes.addAll(matchedSegments);
+                if (localRoadLayer != null && !localRoadLayer.isEmpty()) {
+                    minX = longitudeToUnitX(localRoadLayer.west);
+                    maxX = longitudeToUnitX(localRoadLayer.east);
+                    minY = latitudeToUnitY(localRoadLayer.north);
+                    maxY = latitudeToUnitY(localRoadLayer.south);
+                }
                 fitRoutes.addAll(routeExtensions);
                 if (hasRoutePoints(coordinates)) fitRoutes.add(coordinates);
                 fitRoutes.addAll(motorwaySegments);
@@ -1076,6 +1116,7 @@ public class RoutePreviewView extends View {
     private void tapNearestRouteEdge(float tapX, float tapY) {
         int nearestIndex = -1;
         float nearestDistance = Float.MAX_VALUE;
+        RouteRemoval.Segment nearest = null;
         int edgeIndex = 0;
         for (JSONArray route : matchedSegments) {
             for (int index = 1; index < route.length(); index++, edgeIndex++) {
@@ -1085,6 +1126,7 @@ public class RoutePreviewView extends View {
                         && distance < nearestDistance) {
                     nearestDistance = distance;
                     nearestIndex = edgeIndex;
+                    nearest = RouteRemoval.segment(route.optJSONArray(index - 1), route.optJSONArray(index));
                 }
             }
         }
@@ -1093,19 +1135,19 @@ public class RoutePreviewView extends View {
         // too far from a matched edge instead of snapping to another line.
         if (nearestIndex < 0 || nearestDistance > dp(32) || routeEdgeTapListener == null) return;
 
-        // Select only truly coincident strokes. A narrow tolerance preserves the
-        // one-tap stacked-line removal without catching a neighbouring road below.
-        float stackTolerance = dp(4);
-        float stackLimit = nearestDistance + stackTolerance;
         Set<Integer> selected = new java.util.LinkedHashSet<>();
-        edgeIndex = 0;
-        for (JSONArray route : matchedSegments) {
-            for (int index = 1; index < route.length(); index++, edgeIndex++) {
-                float distance = editableEdgeDistance(route, index, tapX, tapY);
-                if (Float.isFinite(distance)
-                        && removedRouteEdges.contains(edgeIndex) == restoreRouteMode
-                        && distance <= stackLimit) {
-                    selected.add(edgeIndex);
+        selected.add(nearestIndex);
+        if (nearest != null) {
+            double scaleX = 111_195.08 * Math.cos(Math.toRadians(nearest.a().y()));
+            RouteRemoval.Segment target = RouteRemoval.metres(nearest, scaleX, 111_195.08);
+            edgeIndex = 0;
+            for (JSONArray route : matchedSegments) {
+                for (int index = 1; index < route.length(); index++, edgeIndex++) {
+                    if (edgeIndex == nearestIndex || removedRouteEdges.contains(edgeIndex) != restoreRouteMode
+                            || editableEdgeDistance(route, index, tapX, tapY) > nearestDistance + dp(4)) continue;
+                    RouteRemoval.Segment edge = RouteRemoval.segment(route.optJSONArray(index - 1), route.optJSONArray(index));
+                    if (edge != null && RouteRemoval.sameSection(target, RouteRemoval.metres(edge, scaleX, 111_195.08)))
+                        selected.add(edgeIndex);
                 }
             }
         }
@@ -1139,7 +1181,22 @@ public class RoutePreviewView extends View {
         float nearest = Float.MAX_VALUE;
         double selectedLongitude = Double.NaN;
         double selectedLatitude = Double.NaN;
+        JSONArray selectedLocalRoad = null;
+        float selectedFraction = 0;
         List<List<JSONArray>> groups = new ArrayList<>();
+        if (travelVisible && localRoadTapListener != null && localRoadLayer != null) {
+            double world = mapTileSize() * Math.pow(2.0, cameraZoom);
+            LocalRoadLayer.Hit hit = localRoadLayer.nearest(
+                    longitudeToUnitX(centerLongitude) + (x - getWidth() / 2.0) / world,
+                    latitudeToUnitY(centerLatitude) + (y - getHeight() / 2.0) / world, dp(42) / world);
+            if (hit != null) {
+                selectedLocalRoad = hit.line();
+                selectedFraction = (float) hit.fraction();
+                selectedLongitude = hit.x() * 360 - 180;
+                selectedLatitude = unitYToLatitude(hit.y());
+                nearest = (float) (hit.distance() * world);
+            }
+        }
         if(travelVisible) groups.add(matchedSegments);
         if(travelVisible) groups.add(routeExtensions);
         if(motorwayVisible) groups.add(motorwaySegments);
@@ -1148,6 +1205,10 @@ public class RoutePreviewView extends View {
         if(remainingVisible) groups.add(incompleteARoadSegments);
         if(aRoadVisible) groups.add(coveredARoadSegments);
         for (List<JSONArray> group : groups) {
+            // The cumulative stroke is drawn over saved journey traces. Honour
+            // that order for a tap inside the stroke while keeping distinct lines selectable.
+            if (selectedLocalRoad != null && nearest <= localRoadPaint.getStrokeWidth() / 2
+                    && (group == matchedSegments || group == routeExtensions)) continue;
             for (JSONArray route : group) {
                 for (int i = 1; i < route.length(); i++) {
                     JSONArray a = route.optJSONArray(i - 1);
@@ -1163,6 +1224,8 @@ public class RoutePreviewView extends View {
                     float distance = (float) Math.hypot(x - projectedX, y - projectedY);
                     if (distance >= nearest) continue;
                     nearest = distance;
+                    selectedLocalRoad = null;
+                    selectedFraction = amount;
                     double ax = longitudeToUnitX(a.optDouble(0));
                     double bx = longitudeToUnitX(b.optDouble(0));
                     double ay = latitudeToUnitY(clampLatitude(a.optDouble(1)));
@@ -1176,7 +1239,8 @@ public class RoutePreviewView extends View {
         // coordinate. This compensates for thick strokes and low zoom levels.
         if (nearest > dp(42) || !Double.isFinite(selectedLatitude)
                 || !Double.isFinite(selectedLongitude)) return false;
-        mapRoadTapListener.onMapRoadTap(selectedLatitude, selectedLongitude);
+        if (selectedLocalRoad != null) localRoadTapListener.onLocalRoadTap(selectedLocalRoad, selectedFraction);
+        else mapRoadTapListener.onMapRoadTap(selectedLatitude, selectedLongitude);
         return true;
     }
 

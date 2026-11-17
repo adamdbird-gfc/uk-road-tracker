@@ -7,12 +7,14 @@ plugins {
 android {
     namespace = "com.roadprints.capture"
     compileSdk = 35
+    buildToolsVersion = "35.0.0"
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
     androidResources { noCompress += "bin" }
     sourceSets.getByName("main").assets.srcDir("../../canonical-a-roads-v5")
+    sourceSets.getByName("main").assets.srcDir("../../reference-data/all-road-coverage")
     testOptions { unitTests.isIncludeAndroidResources = true }
     buildFeatures { buildConfig = true }
     // Private synthetic acceptance sandbox. Never changes debug/release identity or gate.
@@ -28,8 +30,8 @@ android {
         minSdk = 26
         targetSdk = 35
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        versionCode = 286
-        versionName = "0.25.240"
+        versionCode = 291
+        versionName = "0.25.245"
     }
 }
 

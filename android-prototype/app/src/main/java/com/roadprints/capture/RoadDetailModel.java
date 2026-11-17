@@ -177,8 +177,8 @@ final class RoadDetailModel {
             JSONObject collection=result.optJSONObject(field);JSONArray features=collection==null?null:collection.optJSONArray("features");
             if(features==null)continue;
             for(int i=0;i<features.length();i++) {
-                JSONObject feature=features.optJSONObject(i);
-                if(!selection.matches(feature)||JourneyCorrectionUtils.excludesRoadFeature(journey,feature))continue;
+                JSONObject feature = JourneyCorrectionUtils.retainedRoadFeature(journey, features.optJSONObject(i));
+                if(feature == null || !selection.matches(feature))continue;
                 // Cumulative calculators count retained feature contributions even if
                 // their geometry cannot be displayed. Do not lose those journeys.
                 if(cumulative&&canonical!=null){entry.contributes=true;return entry;}

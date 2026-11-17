@@ -28,11 +28,11 @@ final class TravelAchievementRoutes {
         JSONArray removed=edits==null?null:edits.optJSONArray("removed_matched_segments");
         Set<Integer> removedEdges=new HashSet<>();if(removed!=null)for(int i=0;i<removed.length();i++)removedEdges.add(removed.optInt(i,-1));
         List<JSONObject> deletedRoads=new ArrayList<>();
-        if(!JourneyCorrectionUtils.removedRoadIds(journey).isEmpty())
+        if(!JourneyCorrectionUtils.legacyRoadIds(journey).isEmpty())
             for(String field:new String[]{"road_geojson","motorway_geojson","a_road_geojson"}) {
                 JSONObject roads=result.optJSONObject(field);JSONArray rows=roads==null?null:roads.optJSONArray("features");
                 if(rows!=null)for(int i=0;i<rows.length();i++) {
-                    JSONObject row=rows.optJSONObject(i);if(row!=null&&JourneyCorrectionUtils.excludesRoadFeature(journey,row))deletedRoads.add(row);
+                    JSONObject row=rows.optJSONObject(i);if(row!=null&&JourneyCorrectionUtils.excludesLegacyRoadFeature(journey,row))deletedRoads.add(row);
                 }
             }
         int edge=0;
@@ -46,7 +46,7 @@ final class TravelAchievementRoutes {
                 for(int p=1;p<line.length();p++,edge++) {
                     if((p&255)==0)JourneyStore.checkAchievementCancellation();
                     double[] a=point(line.optJSONArray(p-1)),b=point(line.optJSONArray(p));
-                    boolean deleted=underground||removedEdges.contains(edge)||JourneyCorrectionUtils.excludesRoadFeature(journey,feature);
+                    boolean deleted=underground||removedEdges.contains(edge)||JourneyCorrectionUtils.excludesLegacyRoadFeature(journey,feature);
                     if(a!=null&&b!=null&&!deleted)for(JSONObject road:deletedRoads)
                         if(JourneyCorrectionUtils.distanceToGeometryMetres((a[0]+b[0])/2,(a[1]+b[1])/2,
                                 road.optJSONObject("geometry"))<=35){deleted=true;break;}
@@ -60,14 +60,14 @@ final class TravelAchievementRoutes {
         return parts;
     }
     static boolean hasRoad(JSONObject journey,String ref) {
-        if(JourneyCorrectionUtils.removedRoadIds(journey).contains("ref:"+ref.toUpperCase(Locale.ROOT)))return false;
         JSONObject result=journey.optJSONObject("processing_result");if(result==null)return false;
         for(String field:new String[]{"road_geojson","motorway_geojson","a_road_geojson"}) {
             JSONObject roads=result.optJSONObject(field);JSONArray features=roads==null?null:roads.optJSONArray("features");
             if(features==null)continue;
             for(int i=0;i<features.length();i++) {
-                JSONObject f=features.optJSONObject(i),p=f==null?null:f.optJSONObject("properties");
-                if(p==null||JourneyCorrectionUtils.excludesRoadFeature(journey,f))continue;
+                JSONObject f=JourneyCorrectionUtils.retainedRoadFeature(journey,features.optJSONObject(i));
+                JSONObject p=f==null?null:f.optJSONObject("properties");
+                if(p==null)continue;
                 String value=p.optString("road_ref",p.optString("ref",""));
                 for(String r:value.split("[;,]"))if(ref.equalsIgnoreCase(r.trim().replace("GB:","")))return true;
             }

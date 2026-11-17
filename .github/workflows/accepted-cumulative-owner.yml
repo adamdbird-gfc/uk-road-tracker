@@ -1,0 +1,215 @@
+name: Roadprints Build 291 owner APK
+on:
+  push:
+    branches: [codex/accepted-cumulative-road-coverage]
+    paths:
+      - .github/workflows/accepted-cumulative-owner.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: roadprints-build-291-owner
+  cancel-in-progress: true
+jobs:
+  owner-apk:
+    if: github.repository == 'adamdbird-gfc/uk-road-tracker' && github.ref == 'refs/heads/codex/accepted-cumulative-road-coverage'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: adamdbird-gfc/uk-road-tracker
+      BASELINE_SHA: d518b3eb92581b237cf556c7a01e52af93718b316cfa370e287b78e4d03a2c8a
+      CERT_SHA256: 5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031
+      APK: Roadprints-0.25.245-291.apk
+      TAG: roadprints-0.25.245-291
+      JAVA_TOOL_OPTIONS: -XX:TieredStopAtLevel=1
+      NCN_TEST_DATABASE: ${{ github.workspace }}/.cache/ncn/catalogue.db
+      MILEPOST_CANDIDATE_CATALOGUE: ${{ github.workspace }}/reference-data/millennium-mileposts/revision-1/catalogue.jsonl
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - name: Verify lineage and restore the exact build 290 reference assets
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor c4ed7fc96cc36dab7437cf6c7272594e6432c5ea "$GITHUB_SHA"
+          git merge-base --is-ancestor 8f852752ad2fe00c899d7a614f62bc415c738f14 "$GITHUB_SHA"
+          git merge-base --is-ancestor b6583371574fb478954a3eb8ede56f5be323ca8c "$GITHUB_SHA"
+          baseline="$RUNNER_TEMP/build290.apk"
+          gh release download roadprints-0.25.244-290 --pattern Roadprints-0.25.244-290.apk --output "$baseline"
+          echo "$BASELINE_SHA  $baseline" | sha256sum --check
+          assets=android-prototype/app/src/main/assets
+          for asset in historic-counties/boundaries.bin railway/national.json railway/national.sqlite.gzip; do
+            unzip -p "$baseline" "assets/$asset" > "$assets/$asset"
+          done
+          test -n "$JAVA_HOME_17_X64"
+          test -f "$ANDROID_HOME/platforms/android-35/android.jar"
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: .cache/accepted-road-reference/uk-road-reference-v1.bin
+          key: accepted-osm-road-reference-v2-858c943ffe1bbc3295cdbcbbbd8703deb08a4f6e9354723d887cbd901028e3c9
+      - name: Build the reference from the pinned OpenStreetMap snapshot
+        run: |
+          set -euo pipefail
+          temp="$RUNNER_TEMP/road-reference"
+          reference="$GITHUB_WORKSPACE/.cache/accepted-road-reference/uk-road-reference-v1.bin"
+          if [[ -s "$reference" ]]; then exit 0; fi
+          mkdir -p "$temp" "$(dirname "$reference")"
+          fetch_osm() {
+            local file="$1" output="$2" domain
+            for domain in download-ext2.geofabrik.de download.geofabrik.de download-ext1.geofabrik.de; do
+              if curl --ipv4 --fail --silent --show-error --location --retry 2 --retry-all-errors \
+                  --connect-timeout 12 --max-time 600 "https://$domain/europe/$file" --output "$output"; then
+                return
+              fi
+            done
+            return 1
+          }
+          fetch_osm great-britain-261116.osm.pbf "$temp/gb.pbf"
+          fetch_osm ireland-and-northern-ireland-261116.osm.pbf "$temp/ireland.pbf"
+          cd "$temp"
+          sha256sum --check <<'SHA'
+          f42d530603b1274bc3888a9ebb25e4a262897dc8d3e17e66e0818e8d88774b28  gb.pbf
+          d06794fcfe9fecae63e0be5bd1e7d4b38ade90eed502c1b703dc737a38e7af81  ireland.pbf
+          SHA
+          python -m venv "$temp/venv"
+          "$temp/venv/bin/pip" install osmium==4.3.2
+          "$temp/venv/bin/python" "$GITHUB_WORKSPACE/scripts/build_uk_road_reference.py" \
+            "$reference" "$temp/gb.pbf" "$temp/ireland.pbf" | tee "$RUNNER_TEMP/road-reference.log"
+          rm "$temp/gb.pbf" "$temp/ireland.pbf"
+      - name: Extract the exact Gravesend fixture for the JVM Android tests
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import pathlib, struct
+          source = pathlib.Path('.cache/accepted-road-reference/uk-road-reference-v1.bin')
+          target = pathlib.Path('android-prototype/app/src/main/assets/uk-road-reference-v1.bin')
+          with source.open('rb') as reference:
+              header = reference.read(40)
+              assert header[:8] == b'RPRD0002'
+              assert header[8:].hex() == '858c943ffe1bbc3295cdbcbbbd8703deb08a4f6e9354723d887cbd901028e3c9'
+              count, = struct.unpack('>i', reference.read(4))
+              entries = list(struct.iter_unpack('>iiii', reference.read(16 * count)))
+              selected = [entry for entry in entries if 17 <= entry[0] <= 20 and 2570 <= entry[1] <= 2573]
+              assert len(selected) > 0
+              with target.open('wb') as fixture:
+                  fixture.write(header + struct.pack('>i', len(selected)))
+                  next_offset = 44 + 16 * len(selected)
+                  for x, y, _, size in selected:
+                      fixture.write(struct.pack('>iiii', x, y, next_offset, size))
+                      next_offset += size
+                  for _, _, offset, size in selected:
+                      reference.seek(offset)
+                      fixture.write(reference.read(size))
+          PY
+      - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: .cache/ncn/catalogue.db
+          key: reference-pins-v2-${{ runner.os }}-${{ hashFiles('android-prototype/app/src/main/assets/ncn-national/manifest.json', 'android-prototype/app/src/main/assets/historic-counties/catalogue.json') }}
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.10'
+          cache-read-only: true
+      - name: Run coverage, map, archive and established progression regressions
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s scripts -p 'test_*all_road_coverage.py'
+          python -m unittest discover -s scripts -p 'test_audit_native_road_coverage.py'
+          if [[ ! -s "$NCN_TEST_DATABASE" ]]; then unset NCN_TEST_DATABASE; fi
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false \
+            :app:testDebugUnitTest --tests '*AcceptedRoadRouteTest' --tests '*LocalRoadCoverageTest' --tests '*JourneyCorrectionUtilsTest' --tests '*Map*Test' \
+            --tests '*AchievementGeometryMemoryTest' --tests '*WhatsNewActivityTest' --tests '*JourneyStore*Test' --tests '*CaptureRecoveryIntegrationTest' \
+            --tests '*MotorwayProgressCalculatorTest' --tests '*ARoadProgressCalculatorTest' \
+            --tests '*NcnAndroidTest' --tests '*NcnPresentationTest' --tests '*MultimodalFerryTest' \
+            --tests '*Milepost*Test' --tests '*Railway*Test' --tests '*JourneyIntelligence*Test' \
+            --tests '*TownAchievementsTest' --tests '*CountyCollectorTest' --tests '*FinalTravelAchievementsTest'
+      - name: Assemble with the established owner signing certificate
+        env:
+          ROADPRINTS_DEBUG_KEYSTORE_B64: ${{ secrets.ROADPRINTS_DEBUG_KEYSTORE_B64 }}
+          ROADPRINTS_DEBUG_STORE_PASSWORD: ${{ secrets.ROADPRINTS_DEBUG_STORE_PASSWORD }}
+          ROADPRINTS_DEBUG_KEY_ALIAS: ${{ secrets.ROADPRINTS_DEBUG_KEY_ALIAS }}
+          ROADPRINTS_DEBUG_KEY_PASSWORD: ${{ secrets.ROADPRINTS_DEBUG_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$ROADPRINTS_DEBUG_KEYSTORE_B64"
+          test -n "$ROADPRINTS_DEBUG_STORE_PASSWORD"
+          test -n "$ROADPRINTS_DEBUG_KEY_ALIAS"
+          test -n "$ROADPRINTS_DEBUG_KEY_PASSWORD"
+          cp .cache/accepted-road-reference/uk-road-reference-v1.bin android-prototype/app/src/main/assets/
+          export ROADPRINTS_DEBUG_KEYSTORE="$RUNNER_TEMP/roadprints-debug.keystore"
+          trap 'rm -f "$ROADPRINTS_DEBUG_KEYSTORE"' EXIT
+          umask 077
+          printf '%s' "$ROADPRINTS_DEBUG_KEYSTORE_B64" | base64 --decode > "$ROADPRINTS_DEBUG_KEYSTORE"
+          unset ROADPRINTS_DEBUG_KEYSTORE_B64
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:assembleDebug
+          cp android-prototype/app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/$APK"
+      - name: Verify both APK identities and exact bundled reference data
+        run: |
+          set -euo pipefail
+          signer=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -n 1)
+          "$signer" verify --print-certs "$RUNNER_TEMP/build290.apk" | grep -F "certificate SHA-256 digest: $CERT_SHA256"
+          "$signer" verify --print-certs "$RUNNER_TEMP/$APK" | grep -F "certificate SHA-256 digest: $CERT_SHA256"
+          "${signer%/*}/aapt" dump badging "$RUNNER_TEMP/build290.apk" > "$RUNNER_TEMP/baseline-package.txt"
+          "${signer%/*}/aapt" dump badging "$RUNNER_TEMP/$APK" > "$RUNNER_TEMP/package.txt"
+          grep -F "package: name='com.roadprints.capture' versionCode='290' versionName='0.25.244'" "$RUNNER_TEMP/baseline-package.txt"
+          grep -F "package: name='com.roadprints.capture' versionCode='291' versionName='0.25.245'" "$RUNNER_TEMP/package.txt"
+          python scripts/verify_milepost_apk.py "$RUNNER_TEMP/$APK"
+          python - "$RUNNER_TEMP/$APK" "$RUNNER_TEMP/build290.apk" <<'PY'
+          import hashlib, sys, zipfile
+          with zipfile.ZipFile(sys.argv[1]) as update, zipfile.ZipFile(sys.argv[2]) as baseline:
+              for old in baseline.infolist():
+                  if (not old.filename.startswith('assets/') or old.is_dir()
+                          or old.filename == 'assets/release-notes.json'):
+                      continue
+                  with baseline.open(old) as source, update.open(old.filename) as packaged:
+                      assert hashlib.file_digest(source, 'sha256').digest() == hashlib.file_digest(packaged, 'sha256').digest(), old.filename
+              reference = update.getinfo('assets/uk-road-reference-v1.bin')
+              assert reference.compress_type == zipfile.ZIP_STORED
+              with update.open(reference) as packaged:
+                  assert packaged.read(8) == b'RPRD0002'
+                  assert packaged.read(32) == hashlib.sha256(b'roadprints-osm-road-tiles-v2\0' + bytes.fromhex(
+                      'f42d530603b1274bc3888a9ebb25e4a262897dc8d3e17e66e0818e8d88774b28'
+                      'd06794fcfe9fecae63e0be5bd1e7d4b38ade90eed502c1b703dc737a38e7af81')).digest()
+          PY
+          echo "APK_SHA256=$(sha256sum "$RUNNER_TEMP/$APK" | cut -d' ' -f1)" >> "$GITHUB_ENV"
+      - name: Enable the Android emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Upgrade build 290 and exercise the regular Map on Android
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: bash scripts/check_accepted_cumulative_android.sh
+      - name: Retain validation receipts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: accepted-cumulative-validation
+          path: |
+            android-prototype/app/build/test-results/testDebugUnitTest/
+            ${{ runner.temp }}/accepted-cumulative-android*.log
+            ${{ runner.temp }}/road-reference.log
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Publish and verify the signed direct-download asset
+        run: |
+          set -euo pipefail
+          apk="$RUNNER_TEMP/$APK"
+          test "$(gh api "repos/$GH_REPO/git/ref/heads/${GITHUB_REF_NAME}" --jq .object.sha)" = "$GITHUB_SHA"
+          gh release create "$TAG" "$apk" --target "$GITHUB_SHA" --prerelease --latest=false \
+            --title "Roadprints 0.25.245 (291) • Cumulative road coverage" \
+            --notes "Owner test. Install over signed build 290. The overview uses accepted saved routes, including Timeline imports, with owner edits applied. Travelled minor-road coverage appears in black and supports journey inspection. Pixel 10 acceptance is pending. Source: $GITHUB_SHA. APK SHA-256: $APK_SHA256."
+          test "$(gh api "repos/$GH_REPO/git/ref/tags/$TAG" --jq .object.sha)" = "$GITHUB_SHA"
+          asset_url=$(gh api "repos/$GH_REPO/releases/tags/$TAG" | jq -er --arg apk "$APK" \
+            'select(.draft == false and .prerelease == true) | .assets[] | select(.name == $apk and .state == "uploaded") | .browser_download_url')
+          test "$asset_url" = "https://github.com/$GH_REPO/releases/download/$TAG/$APK"
+          curl --fail --silent --show-error --location --retry 3 --max-time 120 --output "$RUNNER_TEMP/downloaded.apk" "$asset_url"
+          cmp "$apk" "$RUNNER_TEMP/downloaded.apk"
+          printf '%s\n' "Source $GITHUB_SHA" "APK SHA-256 $APK_SHA256" "$asset_url" | tee -a "$GITHUB_STEP_SUMMARY"

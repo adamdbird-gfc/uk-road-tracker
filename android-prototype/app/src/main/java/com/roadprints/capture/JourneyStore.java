@@ -583,10 +583,11 @@ public final class JourneyStore {
             }
             JSONObject edits = journey.optJSONObject("journey_corrections");
             JSONArray removed = edits == null ? null : edits.optJSONArray("removed_matched_segments");
-            JSONArray roadIds = edits == null ? null : edits.optJSONArray("removed_road_ids");
-            // Legacy edge-only corrections need the original trace to identify removed roads.
-            if (removed != null && removed.length() > 0 && (roadIds == null || roadIds.length() == 0))
-                journey = upgrade(context, read(file));
+            if (!map && removed != null && removed.length() > 0) {
+                JSONObject result = matchedResult(file);
+                if (result != null && journey.optJSONObject("processing_result") != null)
+                    journey.getJSONObject("processing_result").put("geojson", result.opt("geojson"));
+            }
         return journey;
     }
 
@@ -677,12 +678,7 @@ public final class JourneyStore {
                 }
                 reader.endObject();
             }
-            JSONObject edits = journey.optJSONObject("journey_corrections");
-            JSONArray removed = edits == null ? null : edits.optJSONArray("removed_matched_segments");
-            JSONArray roadIds = edits == null ? null : edits.optJSONArray("removed_road_ids");
-            // Legacy edge-only corrections need the original trace to identify removed roads.
-            if (removed != null && removed.length() > 0 && (roadIds == null || roadIds.length() == 0))
-                journey = upgrade(context, read(file));
+
             if (journey != null) visitor.visit(journey);
         }
         }finally{achievementCancellation.remove();}
@@ -734,7 +730,27 @@ public final class JourneyStore {
         reader.endObject();geometry.put("coordinates",output);return geometry;
     }
 
-    private static Object readEvidenceValue(JsonReader reader) throws Exception {
+    static JSONObject matchedResult(File source) throws Exception {
+        try (JsonReader reader = new JsonReader(new InputStreamReader(new FileInputStream(source), StandardCharsets.UTF_8))) {
+            reader.beginObject();
+            while (reader.hasNext()) {
+                if (!"processing_result".equals(reader.nextName()) || reader.peek() != JsonToken.BEGIN_OBJECT) {
+                    reader.skipValue();
+                    continue;
+                }
+                reader.beginObject();
+                while (reader.hasNext()) {
+                    if ("geojson".equals(reader.nextName()))
+                        return new JSONObject().put("geojson", readEvidenceValue(reader));
+                    reader.skipValue();
+                }
+                return null;
+            }
+        }
+        return null;
+    }
+
+    static Object readEvidenceValue(JsonReader reader) throws Exception {
         checkAchievementCancellation();
         switch (reader.peek()) {
             case BEGIN_OBJECT:

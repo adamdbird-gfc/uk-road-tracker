@@ -17,7 +17,7 @@ final class CountyCollectorEvidence {
         for(String field:new String[]{"road_geojson","motorway_geojson","a_road_geojson"}) {
             JSONObject collection=result.optJSONObject(field);JSONArray features=collection==null?null:collection.optJSONArray("features");if(features==null)continue;
             for(int i=0;i<features.length();i++) {
-                JSONObject feature=features.optJSONObject(i);if(feature==null||JourneyCorrectionUtils.excludesRoadFeature(journey,feature))continue;
+                JSONObject feature = JourneyCorrectionUtils.retainedRoadFeature(journey, features.optJSONObject(i));if(feature==null)continue;
                 JSONObject properties=feature.optJSONObject("properties");if(properties==null)continue;
                 String highway=properties.optString("highway").toLowerCase(Locale.ROOT);
                 if(highway.endsWith("_link")||Arrays.asList("service","path","footway","cycleway","steps","track").contains(highway))continue;
