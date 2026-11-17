@@ -7,6 +7,7 @@ import java.util.Set;
 public final class CumulativeRoadUnionTest {
     private static final CumulativeRoadUnion.Evidence OK = CumulativeRoadUnion.Evidence.SUPPORTED;
     private static final CumulativeRoadUnion.Evidence GUESS = CumulativeRoadUnion.Evidence.INFERRED;
+    private static final CumulativeRoadUnion.Evidence MATCH = CumulativeRoadUnion.Evidence.ACCEPTED_MATCH;
 
     private static CumulativeRoadUnion.Contribution section(String trip, String edge,
             int start, int end, CumulativeRoadUnion.Evidence evidence) {
@@ -31,6 +32,25 @@ public final class CumulativeRoadUnionTest {
                 section("different", "way/101", 30_000, 70_000, OK),
                 section("different", "way/102", 0, 35_000, OK)), List.of());
         check(union.uniqueMillimetres() == 135_000, "alternative road adds unique distance");
+
+        union.replaceJourney("accepted-timeline", List.of(
+                section("accepted-timeline", "way/104", 0, 75_000, MATCH)), List.of());
+        check(union.uniqueMillimetres() == 210_000,
+                "accepted matched Timeline journey adds coverage without dense raw GPS");
+        union.replaceJourney("duplicate-timeline", List.of(
+                section("duplicate-timeline", "way/104", 0, 75_000, MATCH)), List.of());
+        check(union.uniqueMillimetres() == 210_000, "repeat matched journeys do not double credit");
+        union.replaceJourney("accepted-timeline", List.of(
+                section("accepted-timeline", "way/104", 0, 75_000, MATCH)), List.of(
+                section("accepted-timeline", "way/104", 10_000, 30_000, MATCH)));
+        check(union.uniqueMillimetres() == 210_000,
+                "one owner's rejection must not remove independently supported road");
+        union.removeJourney("duplicate-timeline");
+        check(union.uniqueMillimetres() == 190_000,
+                "rejected interval withheld once no other journey supports it");
+        union.removeJourney("accepted-timeline");
+        check(union.uniqueMillimetres() == 135_000,
+                "removing a contributing matched journey withdraws only its own coverage");
 
         union.replaceJourney("timeline", List.of(
                 section("timeline", "way/103", 0, 250_000, GUESS)), List.of());
