@@ -994,7 +994,7 @@ public class MapActivity extends Activity {
         if (local != null) {
             long started = System.nanoTime();
             for (LocalRoadCoverage.Section section : local.sections()) output.addLocalRoad(section);
-            output.localCoverageDegraded = local.held > 0 || local.overBudget > 0;
+            output.localCoverageDegraded = local.held > 0 || local.overBudget > 0 || local.unresolvedMm > 0;
             if (local.overBudget > 0) output.simplified = true;
             localRoadNanos[0] += System.nanoTime() - started;
             PerformanceDiagnostics.timing("map_local_roads", localRoadNanos[0] / 1_000_000,

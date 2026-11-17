@@ -10,7 +10,7 @@ on:
 permissions:
   contents: write
 concurrency:
-  group: cumulative-recovery-validation
+  group: cumulative-recovery-${{ github.sha }}
   cancel-in-progress: true
 jobs:
   validation:

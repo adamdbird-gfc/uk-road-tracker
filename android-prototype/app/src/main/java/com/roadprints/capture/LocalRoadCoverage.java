@@ -76,10 +76,9 @@ final class LocalRoadCoverage implements AutoCloseable {
             int hits = cache.hits;
             JSONObject row = cache.get(record.source, file -> readAcceptedContribution(reference, file));
             if (row == null || !record.token.equals(JourneyStore.fileToken(record.source))) return null;
-            if (cache.hits != hits) reused++;
-            else calculated++;
+            boolean reusedRow = cache.hits != hits;
             phase = "decode_contribution";
-            if (!row.has("residual")) return null;
+            JSONArray residual = row.getJSONArray("residual");
             Map<Edge, List<Interval>> result = new LinkedHashMap<>();
             JSONArray spans = row.getJSONArray("spans");
             int count = row.getInt("intervals");
@@ -89,17 +88,28 @@ final class LocalRoadCoverage implements AutoCloseable {
                 overBudget++;
                 return null;
             }
+            int decodedCount = 0;
             for (int i = 0; i < spans.length(); i++) {
                 JSONArray span = spans.getJSONArray(i);
                 long way = span.getLong(0), from = span.getLong(1), to = span.getLong(2);
                 Point a = RoadReference.point(span.getDouble(4), span.getDouble(5));
                 Point b = RoadReference.point(span.getDouble(6), span.getDouble(7));
                 Edge edge = new Edge(way, from, to, span.getString(3), a, b, 0, true, span.getInt(8), -1);
-                result.put(edge, decodeCachedIntervals(span, edge.mm));
+                List<Interval> intervals = decodeCachedIntervals(span, edge.mm);
+                if (result.put(edge, intervals) != null)
+                    throw new IllegalArgumentException("Duplicate cached local-road section");
+                decodedCount += intervals.size();
             }
-            unresolvedMm += row.getLong("unresolvedMm");
-            excludedMm += row.getLong("excludedMm");
-            return new Prepared(result, row.getJSONArray("residual"));
+            if (decodedCount != count)
+                throw new IllegalArgumentException("Invalid cached local-road interval total");
+            long unresolved = row.getLong("unresolvedMm"), excluded = row.getLong("excludedMm");
+            if (unresolved < 0 || excluded < 0)
+                throw new IllegalArgumentException("Invalid cached local-road distance");
+            unresolvedMm += unresolved;
+            excludedMm += excluded;
+            if (reusedRow) reused++;
+            else calculated++;
+            return new Prepared(result, residual);
         } catch (CancellationException cancelled) {
             throw cancelled;
         } catch (Exception unavailable) {

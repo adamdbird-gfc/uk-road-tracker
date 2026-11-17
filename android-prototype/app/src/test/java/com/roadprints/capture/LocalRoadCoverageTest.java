@@ -134,6 +134,47 @@ public class LocalRoadCoverageTest {
         assertNull(LocalRoadCoverage.open(missing));
     }
 
+    @Test public void incompleteDerivedRowIsInvalidatedAndRecalculatedFromSavedEvidence() throws Exception {
+        Context context = RuntimeEnvironment.getApplication();
+        File source = new File(context.getCacheDir(), "incomplete-road-contribution.json");
+        byte[] original = """
+                {"mode":"driving","processing_status":"complete","processing_result":{
+                  "geojson":{"features":[{"geometry":{"type":"LineString","coordinates":[
+                    [0.3753447,51.44112821],[0.3753871,51.44128429]]}}]}}}
+                """.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        Files.write(source.toPath(), original);
+        try (MapJourneyStore records = new MapJourneyStore(context);
+             LocalRoadCoverage coverage = LocalRoadCoverage.open(context)) {
+            assertNotNull(coverage);
+            var record = records.new Record(source, JourneyStore.fileToken(source),
+                    new JSONObject().put("mode", "driving"), null, true);
+            java.lang.reflect.Field field = LocalRoadCoverage.class.getDeclaredField("cache");
+            field.setAccessible(true);
+            CompactJourneyCache cache = (CompactJourneyCache) field.get(coverage);
+            cache.get(source, file -> new JSONObject());
+            assertNull(coverage.contribution(record));
+            assertEquals(1, coverage.held);
+            assertEquals(0, coverage.reused);
+            assertTrue(coverage.failureBreakdown().contains("decode_contribution"));
+            assertFalse(coverage.contribution(record).spans().isEmpty());
+            assertEquals(1, coverage.calculated);
+
+            JSONObject valid = cache.get(source, file -> {
+                throw new AssertionError("Expected the recalculated cached contribution");
+            });
+            valid.put("intervals", valid.getInt("intervals") + 1);
+            cache.invalidate(source);
+            cache.get(source, file -> valid);
+            assertNull(coverage.contribution(record));
+            assertEquals(2, coverage.held);
+            assertFalse(coverage.contribution(record).spans().isEmpty());
+            assertEquals(2, coverage.calculated);
+            assertArrayEquals(original, Files.readAllBytes(source.toPath()));
+        } finally {
+            Files.deleteIfExists(source.toPath());
+        }
+    }
+
     @Test public void heldArchiveRowsReportTheirOriginWithoutLoggingFileDetails() throws Exception {
         Context context = RuntimeEnvironment.getApplication();
         File source = new File(context.getCacheDir(), "private-journey-marker.json");
