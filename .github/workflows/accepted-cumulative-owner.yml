@@ -51,9 +51,18 @@ jobs:
           set -euo pipefail
           temp="$RUNNER_TEMP/road-reference"
           mkdir -p "$temp"
-          base=https://download.geofabrik.de/europe
-          curl --fail --retry 3 --location "$base/great-britain-261116.osm.pbf" --output "$temp/gb.pbf"
-          curl --fail --retry 3 --location "$base/ireland-and-northern-ireland-261116.osm.pbf" --output "$temp/ireland.pbf"
+          fetch_osm() {
+            local file="$1" output="$2" domain
+            for domain in download-ext2.geofabrik.de download.geofabrik.de download-ext1.geofabrik.de; do
+              if curl --ipv4 --fail --silent --show-error --location --retry 2 --retry-all-errors \
+                  --connect-timeout 12 --max-time 600 "https://$domain/europe/$file" --output "$output"; then
+                return
+              fi
+            done
+            return 1
+          }
+          fetch_osm great-britain-261116.osm.pbf "$temp/gb.pbf"
+          fetch_osm ireland-and-northern-ireland-261116.osm.pbf "$temp/ireland.pbf"
           cd "$temp"
           sha256sum --check <<'SHA'
           f42d530603b1274bc3888a9ebb25e4a262897dc8d3e17e66e0818e8d88774b28  gb.pbf
@@ -81,7 +90,7 @@ jobs:
           if [[ ! -s "$NCN_TEST_DATABASE" ]]; then unset NCN_TEST_DATABASE; fi
           gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false \
             :app:testDebugUnitTest --tests '*AcceptedRoadRouteTest' --tests '*LocalRoadCoverageTest' --tests '*JourneyCorrectionUtilsTest' --tests '*Map*Test' \
-            --tests '*JourneyStore*Test' --tests '*CaptureRecoveryIntegrationTest' \
+            --tests '*WhatsNewActivityTest' --tests '*JourneyStore*Test' --tests '*CaptureRecoveryIntegrationTest' \
             --tests '*MotorwayProgressCalculatorTest' --tests '*ARoadProgressCalculatorTest' \
             --tests '*NcnAndroidTest' --tests '*NcnPresentationTest' --tests '*MultimodalFerryTest' \
             --tests '*Milepost*Test' --tests '*Railway*Test' --tests '*JourneyIntelligence*Test' \
@@ -120,7 +129,8 @@ jobs:
           import hashlib, sys, zipfile
           with zipfile.ZipFile(sys.argv[1]) as update, zipfile.ZipFile(sys.argv[2]) as baseline:
               for old in baseline.infolist():
-                  if not old.filename.startswith('assets/') or old.is_dir():
+                  if (not old.filename.startswith('assets/') or old.is_dir()
+                          or old.filename == 'assets/release-notes.json'):
                       continue
                   with baseline.open(old) as source, update.open(old.filename) as packaged:
                       assert hashlib.file_digest(source, 'sha256').digest() == hashlib.file_digest(packaged, 'sha256').digest(), old.filename

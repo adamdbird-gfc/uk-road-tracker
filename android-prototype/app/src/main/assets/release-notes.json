@@ -2,6 +2,22 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.245",
+      "version_code": 291,
+      "release_date": "2026-11-17",
+      "since": "0.25.244",
+      "changes": [
+        {
+          "title": "One line for each travelled road section",
+          "description": "The Map combines your saved matched driving routes, including Google Timeline imports. Travelled minor roads and B-roads appear in black."
+        },
+        {
+          "title": "See which journeys contributed",
+          "description": "Tap a travelled road to see its journeys. When you edit a saved route, Roadprints updates that journey’s contribution."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.240",
       "version_code": 286,
       "release_date": "2026-11-14",

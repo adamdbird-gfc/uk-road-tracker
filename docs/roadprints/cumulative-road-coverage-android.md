@@ -14,7 +14,7 @@ The Map prepares coverage on its archive worker and commits per-journey derived 
 
 ## Seven private exports
 
-The executable accepted-route attribution was run against the seven original build 290 exports. Figures below are provisional until the same replay is verified on the release reference. No raw samples, coordinates or archive IDs are included. “Already represented” compares each journey's own unique minor-road intervals to earlier journeys. “Eligible” is the length of the corrected saved match, which can include multiple traversals within one trip and major or non-creditable roads.
+The executable accepted-route attribution was run against the seven original build 290 exports. The production attribution code was replayed on the 100,103-tile release reference, version `858c943ffe1bbc3295cdbcbbbd8703deb08a4f6e9354723d887cbd901028e3c9`. The result is identical to the Kent extract replay. No raw samples, coordinates or archive IDs are included. “Already represented” compares each journey's own unique minor-road intervals to earlier journeys. “Eligible” is the length of the corrected saved match, which can include multiple traversals within one trip and major or non-creditable roads.
 
 | Journey | Eligible m | New minor-road m | Already represented m | Unique minor-road m | Excluded m | Unresolved m |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
