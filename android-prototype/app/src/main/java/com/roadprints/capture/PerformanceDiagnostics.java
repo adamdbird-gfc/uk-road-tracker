@@ -133,7 +133,13 @@ final class PerformanceDiagnostics {
         String previous=p.getString("recent","");
         String combined=entry+previous;
         if(combined.length()>16000)combined=combined.substring(0,16000);
-        p.edit().putString("recent",combined).apply();
+        android.content.SharedPreferences.Editor edit = p.edit().putString("recent",combined);
+        // Important coverage diagnostics must survive the 16KB rolling log.
+        // Otherwise a large map can rotate the relevant attribution counters out
+        // before the owner opens Utilities to copy a report.
+        if (value.startsWith("map_mode_coverage ") || value.startsWith("map_local_roads "))
+            edit.putString(value.substring(0, value.indexOf(' ')), entry.trim());
+        edit.apply();
     }
     static void clear(Context context){
         context.getSharedPreferences(PREFS,0).edit().clear().apply();
@@ -144,6 +150,12 @@ final class PerformanceDiagnostics {
         ReferenceDataDiagnostics.initialize(context.getFilesDir());
         String bandwidth=ReferenceDataDiagnostics.report();
         String timings=context.getSharedPreferences(PREFS,0).getString("recent","");
-        return bandwidth.isEmpty()?timings:timings.isEmpty()?bandwidth:bandwidth+"\n"+timings;
+        android.content.SharedPreferences prefs = context.getSharedPreferences(PREFS,0);
+        String latestModes = prefs.getString("map_mode_coverage", "");
+        String latestRoads = prefs.getString("map_local_roads", "");
+        String summary = (latestModes.isEmpty() ? "" : latestModes + "\n")
+                + (latestRoads.isEmpty() ? "" : latestRoads + "\n");
+        String details = summary + timings;
+        return bandwidth.isEmpty() ? details : bandwidth + "\n" + details;
     }
 }
