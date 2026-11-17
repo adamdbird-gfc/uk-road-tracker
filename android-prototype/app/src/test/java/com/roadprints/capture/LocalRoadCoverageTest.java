@@ -115,15 +115,11 @@ public class LocalRoadCoverageTest {
         assertNull(LocalRoadCoverage.open(missing));
     }
 
-    @Test public void mapUsesNativeContributorsKeepsOtherTravelAndDoesNotWriteArchive() throws Exception {
+    @Test public void mapUsesAcceptedTimelineAndNativeContributorsAndDoesNotWriteArchive() throws Exception {
         Context context = RuntimeEnvironment.getApplication();
         LocalRoadNetwork network = network(context);
-        Edge edge = network.edges.values().stream()
-                .filter(row -> row.eligible && row.length >= 20 && row.length <= 35)
-                .filter(row -> match(network, row.at(.1), row.at(.9), 2).equals(
-                        List.of(new Span(row, new Interval((int) Math.round(.1 * row.mm),
-                                (int) Math.round(.9 * row.mm))))))
-                .findFirst().orElseThrow();
+        Edge edge = new Edge(1000, 1, 2, "Canal Road",
+                network.point(0.3753447, 51.44112821), network.point(0.3753871, 51.44128429), 0, true);
         write(context, "drive-one", "driving", network, edge);
         write(context, "drive-two", "driving", network, edge);
         write(context, "walk", "walking", network, edge);
@@ -251,6 +247,10 @@ public class LocalRoadCoverageTest {
                 .put("source", new JSONObject().put("type", "android_activity_capture"))
                 .put("raw_capture_samples", samples).put("route_geometry", geometry)
                 .put("processing_result", new JSONObject().put("geojson", matched));
+        if ("drive-two".equals(id)) {
+            row.put("source", new JSONObject().put("type", "google_timeline"));
+            row.remove("raw_capture_samples");
+        }
         if ("drive-one".equals(id)) {
             JSONObject phantom = new JSONObject().put("type", "LineString").put("coordinates",
                     new JSONArray().put(network.coordinates(new Point(-400, 100)))

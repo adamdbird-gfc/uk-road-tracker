@@ -25,66 +25,125 @@ import java.util.concurrent.CancellationException;
 /** Read-only journey attribution and disposable projection for the overview Map. */
 final class LocalRoadCoverage implements AutoCloseable {
     private static final int MAX_INTERVALS_PER_JOURNEY = 4096;
-    private static final int MAX_CONTRIBUTION_INTERVALS = 48_000;
+    private static final int MAX_CONTRIBUTION_INTERVALS = 240_000;
 
-    private final LocalRoadNetwork network;
+    private final RoadReference reference;
     private final CompactJourneyCache cache;
     private final Map<Edge, Map<String, List<Interval>>> contributors = new LinkedHashMap<>();
     private int intervalCount;
     int reused, calculated, held;
 
-    private LocalRoadCoverage(LocalRoadNetwork network, CompactJourneyCache cache) {
-        this.network = network;
+    private LocalRoadCoverage(RoadReference reference, CompactJourneyCache cache) {
+        this.reference = reference;
         this.cache = cache;
     }
 
     static LocalRoadCoverage open(Context context) {
-        try (InputStream asset = context.getAssets().open(ASSET)) {
-            LocalRoadNetwork network = LocalRoadNetwork.load(asset);
+        try {
+            android.content.res.AssetFileDescriptor asset = context.getAssets().openFd(RoadReference.ASSET);
+            java.io.FileInputStream stream = asset.createInputStream();
             try {
-                return new LocalRoadCoverage(network, new CompactJourneyCache(context, CACHE_VERSION));
-            } catch (RuntimeException invalidCache) {
-                // Keep the legacy view usable and try opening the cache on a later preparation.
-                return null;
+                RoadReference reference = new RoadReference(stream.getChannel(), asset.getStartOffset(),
+                        asset.getDeclaredLength());
+                return new LocalRoadCoverage(reference,
+                        new CompactJourneyCache(context, RoadReference.ALGORITHM + "-" + reference.version));
+            } catch (Exception unavailable) {
+                stream.close();
+                throw unavailable;
             }
         } catch (Exception unavailable) {
+            android.util.Log.w("RoadprintsTiming", "local_road_reference=unavailable");
             return null;
         }
     }
 
-    static boolean eligible(JSONObject header) {
-        JSONObject source = header.optJSONObject("source");
-        return "driving".equals(header.optString("mode"))
-                && source != null && "android_activity_capture".equals(source.optString("type"));
-    }
+    record Prepared(Map<Edge, List<Interval>> spans, JSONArray residual) {}
+    int overBudget;
+    long unresolvedMm, excludedMm;
 
-    Map<Edge, List<Interval>> contribution(MapJourneyStore.Record record) {
-        if (!eligible(record.header)) return Collections.emptyMap();
+    Prepared contribution(MapJourneyStore.Record record) {
+        String mode = record.header.optString("mode");
+        if (!"driving".equals(mode) && !"bus".equals(mode)) return null;
         try {
             int hits = cache.hits;
-            JSONObject row = cache.get(record.source, file -> readContribution(network, file,
-                    record.header.optString("started_at"), record.header.optString("ended_at")));
-            if (!record.token.equals(JourneyStore.fileToken(record.source))) return Collections.emptyMap();
+            JSONObject row = cache.get(record.source, file -> readAcceptedContribution(reference, file));
+            if (row == null || !record.token.equals(JourneyStore.fileToken(record.source))) return null;
             if (cache.hits != hits) reused++;
             else calculated++;
+            if (!row.has("residual")) return null;
+            unresolvedMm += row.getLong("unresolvedMm");
+            excludedMm += row.getLong("excludedMm");
             Map<Edge, List<Interval>> result = new LinkedHashMap<>();
             JSONArray spans = row.getJSONArray("spans");
-            if (spans.length() > MAX_INTERVALS_PER_JOURNEY
-                    || intervalCount + spans.length() > MAX_CONTRIBUTION_INTERVALS) return Collections.emptyMap();
+            int count = row.getInt("intervals");
+            if (count > MAX_INTERVALS_PER_JOURNEY || intervalCount + count > MAX_CONTRIBUTION_INTERVALS) {
+                overBudget++;
+                return null;
+            }
             for (int i = 0; i < spans.length(); i++) {
                 JSONArray span = spans.getJSONArray(i);
-                Edge edge = network.edges.get(span.getString(0));
-                int start = span.getInt(1), end = span.getInt(2);
-                if (edge == null || !edge.eligible || start < 0 || end <= start || end > edge.mm) return Collections.emptyMap();
-                result.computeIfAbsent(edge, ignored -> new ArrayList<>()).add(new Interval(start, end));
+                long way = span.getLong(0), from = span.getLong(1), to = span.getLong(2);
+                Point a = RoadReference.point(span.getDouble(4), span.getDouble(5));
+                Point b = RoadReference.point(span.getDouble(6), span.getDouble(7));
+                Edge edge = new Edge(way, from, to, span.getString(3), a, b, 0, true, span.getInt(8), -1);
+                List<Interval> intervals = new ArrayList<>();
+                for (int offset = 9; offset < span.length(); offset += 2) {
+                    int start = span.getInt(offset), end = span.getInt(offset + 1);
+                    if (start < 0 || end <= start || end > edge.mm) return null;
+                    intervals.add(new Interval(start, end));
+                }
+                result.put(edge, intervals);
             }
-            return result;
+            return new Prepared(result, row.getJSONArray("residual"));
         } catch (CancellationException cancelled) {
             throw cancelled;
         } catch (Exception unavailable) {
             held++;
-            return Collections.emptyMap();
+            return null;
         }
+    }
+
+    private static JSONObject readAcceptedContribution(RoadReference reference, File source) throws Exception {
+        JSONObject journey = new JSONObject();
+        try (JsonReader reader = journeyReader(source)) {
+            reader.beginObject();
+            while (reader.hasNext()) {
+                String field = reader.nextName();
+                if ("processing_result".equals(field) && reader.peek() == JsonToken.BEGIN_OBJECT) {
+                    JSONObject result = new JSONObject();
+                    reader.beginObject();
+                    while (reader.hasNext()) {
+                        String key = reader.nextName();
+                        if ("geojson".equals(key) || "status".equals(key))
+                            result.put(key, JourneyStore.readEvidenceValue(reader));
+                        else reader.skipValue();
+                    }
+                    reader.endObject();
+                    journey.put(field, result);
+                } else if ("mode".equals(field) || "processing_status".equals(field)
+                        || "journey_corrections".equals(field)) {
+                    journey.put(field, JourneyStore.readEvidenceValue(reader));
+                } else reader.skipValue();
+            }
+            reader.endObject();
+        }
+        AcceptedRoadRoute.Projection projection = AcceptedRoadRoute.project(reference, journey);
+        if (projection == null) return new JSONObject();
+        int count = 0;
+        JSONArray spans = new JSONArray();
+        for (Map.Entry<Edge, List<Interval>> section : projection.sections().entrySet()) {
+            Edge edge = section.getKey();
+            count += section.getValue().size();
+            if (count > MAX_INTERVALS_PER_JOURNEY) return new JSONObject();
+            JSONArray row = new JSONArray().put(edge.way).put(edge.from).put(edge.to).put(edge.label)
+                    .put(ukLongitude(edge.a)).put(ukLatitude(edge.a)).put(ukLongitude(edge.b))
+                    .put(ukLatitude(edge.b)).put(edge.mm);
+            for (Interval interval : section.getValue()) row.put(interval.start()).put(interval.end());
+            spans.put(row);
+        }
+        return new JSONObject().put("spans", spans).put("intervals", count)
+                .put("residual", MapActivity.preparedLines(projection.residual()))
+                .put("unresolvedMm", projection.unresolvedMm()).put("excludedMm", projection.excludedMm());
     }
 
     static JSONObject readContribution(LocalRoadNetwork network, File source, String started, String ended)
@@ -202,8 +261,8 @@ final class LocalRoadCoverage implements AutoCloseable {
         List<Section> sections = new ArrayList<>();
         for (Map.Entry<Edge, Map<String, List<Interval>>> entry : contributors.entrySet()) {
             Edge edge = entry.getKey();
-            sections.add(new Section(edge.id(), edge.label, edge.mm, network.coordinates(edge.a),
-                    network.coordinates(edge.b), entry.getValue()));
+            sections.add(new Section(edge.id(), edge.label, edge.mm, new JSONArray().put(ukLongitude(edge.a)).put(ukLatitude(edge.a)),
+                    new JSONArray().put(ukLongitude(edge.b)).put(ukLatitude(edge.b)), entry.getValue()));
         }
         return sections;
     }
@@ -279,21 +338,6 @@ final class LocalRoadCoverage implements AutoCloseable {
         }
     }
 
-    JSONArray remainingLines(JSONArray rows, Map<Edge, List<Interval>> accepted) throws Exception {
-        if (accepted.isEmpty()) return rows;
-        JSONArray remaining = new JSONArray();
-        for (int row = 0; row < rows.length(); row++) {
-            JSONObject original = rows.getJSONObject(row);
-            JSONArray points = original.getJSONArray("points");
-            List<JSONArray> fragments = remainingFragments(network, points, accepted);
-            for (JSONArray fragment : fragments) {
-                remaining.put(fragment == points ? original
-                        : new JSONObject().put("points", fragment).put("original", fragment.length()));
-            }
-        }
-        return remaining;
-    }
-
     static List<JSONArray> remainingFragments(LocalRoadNetwork network, JSONArray points,
                                                Map<Edge, List<Interval>> accepted) throws Exception {
         List<JSONArray> fragments = new ArrayList<>();
@@ -333,6 +377,11 @@ final class LocalRoadCoverage implements AutoCloseable {
     }
 
     @Override public void close() {
+        try {
+            reference.close();
+        } catch (java.io.IOException optional) {
+            android.util.Log.w("RoadprintsTiming", "local_road_reference_close=failed");
+        }
         try { cache.close(); }
         catch (android.database.sqlite.SQLiteException optional) {
             android.util.Log.w("RoadprintsTiming", "local_road_cache_close=failed");

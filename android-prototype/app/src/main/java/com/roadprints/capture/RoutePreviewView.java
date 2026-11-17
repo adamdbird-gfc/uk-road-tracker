@@ -351,17 +351,18 @@ public class RoutePreviewView extends View {
         routeFitPending = false;
     }
 
-    private final List<JSONArray> localRoadLines = new ArrayList<>();
+    private LocalRoadLayer localRoadLayer;
+    private final float[] localRoadBatch = new float[4096];
     private final Paint localRoadPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final List<JSONArray> ferrySegments=new ArrayList<>();
     private final Paint ferryPaint=new Paint(Paint.ANTI_ALIAS_FLAG);
-    void setLocalRoadLines(List<JSONArray> routes) {
-        replaceSegments(localRoadLines, routes);
+    void setLocalRoadLayer(LocalRoadLayer layer) {
+        localRoadLayer = layer;
         localRoadPaint.setColor(MapLayerPreferences.LOCAL_ROAD_COLOR);
         localRoadPaint.setStyle(Paint.Style.STROKE);
         localRoadPaint.setStrokeWidth(dp(4));
         localRoadPaint.setStrokeCap(Paint.Cap.BUTT);
-        if (!localRoadLines.isEmpty()) {
+        if (layer != null && !layer.isEmpty()) {
             coordinatesValid = true;
             routeFitPending = true;
             fitRouteIfReady();
@@ -758,7 +759,13 @@ public class RoutePreviewView extends View {
                 drawRoute(canvas, coordinates, routePaint,
                         flatRoadMapStyle ? null : routeHaloPaint);
             }
-            if (travelVisible) drawRoadLayer(canvas, localRoadLines, localRoadPaint);
+            if (travelVisible && localRoadLayer != null && !localRoadLayer.isEmpty()) {
+                double world = mapTileSize() * Math.pow(2.0, cameraZoom);
+                localRoadLayer.draw(canvas, localRoadPaint,
+                        getWidth() / 2.0 - longitudeToUnitX(centerLongitude) * world,
+                        getHeight() / 2.0 - latitudeToUnitY(centerLatitude) * world,
+                        world, getWidth(), getHeight(), localRoadBatch);
+            }
             if (remainingVisible) {
                 drawRoadLayer(canvas, incompleteMotorwaySegments, motorwayIncompletePaint);
                 drawRoadLayer(canvas, incompleteARoadSegments, aRoadIncompletePaint);
@@ -919,7 +926,12 @@ public class RoutePreviewView extends View {
             } else {
                 fitRoutes.addAll(ferrySegments);
                 fitRoutes.addAll(matchedSegments);
-                fitRoutes.addAll(localRoadLines);
+                if (localRoadLayer != null && !localRoadLayer.isEmpty()) {
+                    minX = longitudeToUnitX(localRoadLayer.west);
+                    maxX = longitudeToUnitX(localRoadLayer.east);
+                    minY = latitudeToUnitY(localRoadLayer.north);
+                    maxY = latitudeToUnitY(localRoadLayer.south);
+                }
                 fitRoutes.addAll(routeExtensions);
                 if (hasRoutePoints(coordinates)) fitRoutes.add(coordinates);
                 fitRoutes.addAll(motorwaySegments);
@@ -1172,7 +1184,19 @@ public class RoutePreviewView extends View {
         JSONArray selectedLocalRoad = null;
         float selectedFraction = 0;
         List<List<JSONArray>> groups = new ArrayList<>();
-        if (travelVisible && localRoadTapListener != null) groups.add(localRoadLines);
+        if (travelVisible && localRoadTapListener != null && localRoadLayer != null) {
+            double world = mapTileSize() * Math.pow(2.0, cameraZoom);
+            LocalRoadLayer.Hit hit = localRoadLayer.nearest(
+                    longitudeToUnitX(centerLongitude) + (x - getWidth() / 2.0) / world,
+                    latitudeToUnitY(centerLatitude) + (y - getHeight() / 2.0) / world, dp(42) / world);
+            if (hit != null) {
+                selectedLocalRoad = hit.line();
+                selectedFraction = (float) hit.fraction();
+                selectedLongitude = hit.x() * 360 - 180;
+                selectedLatitude = unitYToLatitude(hit.y());
+                nearest = (float) (hit.distance() * world);
+            }
+        }
         if(travelVisible) groups.add(matchedSegments);
         if(travelVisible) groups.add(routeExtensions);
         if(motorwayVisible) groups.add(motorwaySegments);
@@ -1196,7 +1220,7 @@ public class RoutePreviewView extends View {
                     float distance = (float) Math.hypot(x - projectedX, y - projectedY);
                     if (distance >= nearest) continue;
                     nearest = distance;
-                    selectedLocalRoad = group == localRoadLines ? route : null;
+                    selectedLocalRoad = null;
                     selectedFraction = amount;
                     double ax = longitudeToUnitX(a.optDouble(0));
                     double bx = longitudeToUnitX(b.optDouble(0));

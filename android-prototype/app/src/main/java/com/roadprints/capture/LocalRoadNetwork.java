@@ -43,12 +43,18 @@ final class LocalRoadNetwork {
         final String label;
         final Point a, b, axis;
         final double length;
-        final int mm;
+        final int mm, roadClass;
         final Integer direction;
         final boolean eligible;
 
         Edge(long way, long from, long to, String label, Point a, Point b,
              Integer direction, boolean eligible) {
+            this(way, from, to, label, a, b, direction, eligible,
+                    (int) Math.round(b.minus(a).length() * 1000), -1);
+        }
+
+        Edge(long way, long from, long to, String label, Point a, Point b,
+             Integer direction, boolean eligible, int millimetres, int roadClass) {
             this.way = way;
             this.from = from;
             this.to = to;
@@ -57,12 +63,24 @@ final class LocalRoadNetwork {
             this.b = b;
             axis = b.minus(a);
             length = axis.length();
-            mm = (int) Math.round(length * 1000);
+            mm = millimetres;
+            this.roadClass = roadClass;
             this.direction = direction;
             this.eligible = eligible;
         }
 
         String id() { return "osm:" + way + ":" + Math.min(from, to) + ":" + Math.max(from, to); }
+
+        @Override public boolean equals(Object other) {
+            return other instanceof Edge edge && way == edge.way
+                    && Math.min(from, to) == Math.min(edge.from, edge.to)
+                    && Math.max(from, to) == Math.max(edge.from, edge.to);
+        }
+
+        @Override public int hashCode() {
+            int endpoints = Long.hashCode(from) ^ Long.hashCode(to);
+            return 31 * Long.hashCode(way) + endpoints;
+        }
 
         Point at(double fraction) {
             return new Point(a.x + fraction * axis.x, a.y + fraction * axis.y);
@@ -71,7 +89,7 @@ final class LocalRoadNetwork {
         long endpoint(double fraction) { return fraction < .5 ? from : to; }
     }
 
-    private record Candidate(Edge edge, double start, double end, double entry, double exit) {
+    record Candidate(Edge edge, double start, double end, double entry, double exit) {
         boolean joins(Candidate next) {
             return edge.endpoint(exit) == next.edge.endpoint(next.entry)
                     && Math.abs(exit - Math.round(exit)) * edge.length <= SEAM
@@ -90,9 +108,13 @@ final class LocalRoadNetwork {
     final Map<String, Edge> edges = new HashMap<>();
 
     LocalRoadNetwork(double west, double south, double east, double north) {
+        this(west, south, east, north, (south + north) / 2);
+    }
+
+    LocalRoadNetwork(double west, double south, double east, double north, double latitudeForScale) {
         this.west = west;
         this.south = south;
-        lonScale = LAT_SCALE * Math.cos(Math.toRadians((south + north) / 2));
+        lonScale = LAT_SCALE * Math.cos(Math.toRadians(latitudeForScale));
         Point extent = point(east, north);
         width = extent.x;
         height = extent.y;
@@ -152,6 +174,18 @@ final class LocalRoadNetwork {
                     occupied.add(key(x, y));
         }
         for (long cell : occupied) grid.computeIfAbsent(cell, ignored -> new ArrayList<>()).add(edge);
+    }
+
+    static Point ukPoint(double lon, double lat) {
+        return new Point((lon + 9) * LAT_SCALE * Math.cos(Math.toRadians(54)), (lat - 49) * LAT_SCALE);
+    }
+
+    static double ukLongitude(Point point) {
+        return point.x / (LAT_SCALE * Math.cos(Math.toRadians(54))) - 9;
+    }
+
+    static double ukLatitude(Point point) {
+        return point.y / LAT_SCALE + 49;
     }
 
     Point point(double lon, double lat) { return new Point((lon - west) * lonScale, (lat - south) * LAT_SCALE); }
@@ -292,7 +326,7 @@ final class LocalRoadNetwork {
                 && Math.max(a.y, b.y) >= -margin && Math.min(a.y, b.y) <= height + margin;
     }
 
-    private Set<Edge> nearby(Point a, Point b, double margin) {
+    Set<Edge> nearby(Point a, Point b, double margin) {
         Set<Edge> result = new HashSet<>();
         int left = cell(Math.max(-margin, Math.min(a.x, b.x) - margin));
         int right = cell(Math.min(width + margin, Math.max(a.x, b.x) + margin));
@@ -306,7 +340,7 @@ final class LocalRoadNetwork {
         return result;
     }
 
-    private static Candidate project(Edge edge, Point a, Point step, double length, double radius) {
+    static Candidate project(Edge edge, Point a, Point step, double length, double radius) {
         double dot = edge.axis.dot(step);
         if (Math.abs(dot) < HEADING * edge.length * length) return null;
         Point relative = a.minus(edge.a);

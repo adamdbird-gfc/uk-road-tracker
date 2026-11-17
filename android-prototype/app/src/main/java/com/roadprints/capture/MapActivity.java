@@ -620,6 +620,7 @@ public class MapActivity extends Activity {
                 mainHandler.post(() -> mapFailure(generation,"Your roads could not be loaded. Retry or Reset your filters."));
                 return;
             }
+            if (mapRoutes.localRoadLayer == null) mapRoutes.localRoadLayer = new LocalRoadLayer(mapRoutes.localRoadLines);
             long currentRevision = mapDataRevision();
             Runtime runtime = Runtime.getRuntime();
             long freeHeadroom = runtime.maxMemory()
@@ -634,8 +635,7 @@ public class MapActivity extends Activity {
             PerformanceDiagnostics.ArchiveHeapSample pathHeap = new PerformanceDiagnostics.ArchiveHeapSample();
             for (java.util.List<JSONArray> lines : java.util.Arrays.asList(mapRoutes.sections,
                     mapRoutes.motorwaySections, mapRoutes.incompleteMotorwaySections, mapRoutes.coveredMotorwaySections,
-                    mapRoutes.incompleteARoadSections, mapRoutes.coveredARoadSections, mapRoutes.ferrySections,
-                    mapRoutes.localRoadLines)) {
+                    mapRoutes.incompleteARoadSections, mapRoutes.coveredARoadSections, mapRoutes.ferrySections)) {
                 if (freeHeadroom >= 64L * 1024 * 1024) MapRenderGeometry.prepare(lines);
                 else MapRenderGeometry.prepareBounds(lines);
                 pathHeap.sample();
@@ -694,7 +694,7 @@ public class MapActivity extends Activity {
             map.setOverviewLoading(false);
             map.setRouteData(null, mapRoutes.sections);
             map.setFerrySegments(mapRoutes.ferrySections);
-            map.setLocalRoadLines(mapRoutes.localRoadLines);
+            map.setLocalRoadLayer(mapRoutes.localRoadLayer);
             map.setFlatRoadMapStyle(true);
             map.setMotorwaySegments(mapRoutes.motorwaySections);
             map.setMotorwayCoverageSegments(mapRoutes.incompleteMotorwaySections,
@@ -902,8 +902,8 @@ public class MapActivity extends Activity {
         return inside;
     }
 
-    private static final long MAP_SNAPSHOT_REVISION = 1_000L
-            + Integer.toUnsignedLong(LocalRoadNetwork.CACHE_VERSION.hashCode());
+    private static final long MAP_SNAPSHOT_REVISION = 1_000L + BuildConfig.VERSION_CODE
+            + Integer.toUnsignedLong(RoadReference.ALGORITHM.hashCode());
 
     private long mapDataRevision() {
         long revision = 31L * JourneyStore.geometryRevision(getApplicationContext()) + MAP_SNAPSHOT_REVISION;
@@ -986,16 +986,12 @@ public class MapActivity extends Activity {
             boolean localCoverage = false;
             if (local != null) {
                 long started = System.nanoTime();
-                Map<LocalRoadNetwork.Edge, List<LocalRoadNetwork.Interval>> spans = local.contribution(record);
+                LocalRoadCoverage.Prepared coverage = local.contribution(record);
                 String journeyId = journey.optString("journey_id");
-                if (!spans.isEmpty() && !journeyId.isEmpty()) {
-                    try {
-                        matched = local.remainingLines(matched, spans);
-                        local.add(journeyId, spans);
-                        localCoverage = true;
-                    } catch (org.json.JSONException malformedGeometry) {
-                        // Keep legacy geometry if its aligned substitution cannot be constructed.
-                    }
+                if (coverage != null && !journeyId.isEmpty()) {
+                    matched = coverage.residual();
+                    local.add(journeyId, coverage.spans());
+                    localCoverage = !coverage.spans().isEmpty();
                 }
                 localRoadNanos[0] += System.nanoTime() - started;
             }
@@ -1008,9 +1004,12 @@ public class MapActivity extends Activity {
         if (local != null) {
             long started = System.nanoTime();
             for (LocalRoadCoverage.Section section : local.sections()) output.addLocalRoad(section);
+            if (local.overBudget > 0) output.simplified = true;
             localRoadNanos[0] += System.nanoTime() - started;
             PerformanceDiagnostics.timing("map_local_roads", localRoadNanos[0] / 1_000_000,
                     "calculated=" + local.calculated + " reused=" + local.reused + " held=" + local.held
+                            + " budget_holds=" + local.overBudget + " unresolved_mm=" + local.unresolvedMm
+                            + " excluded_mm=" + local.excludedMm
                             + " sections=" + output.localRoadSections.size()
                             + " lines=" + output.localRoadLines.size() + " unique_mm=" + output.localRoadMillimetres);
         }
@@ -1068,7 +1067,7 @@ public class MapActivity extends Activity {
                 .put("ferries",preparedLines(recordedSegments(recorded)));
     }
 
-    private JSONArray preparedLines(List<JSONArray> routes) throws Exception {
+    static JSONArray preparedLines(List<JSONArray> routes) throws Exception {
         JSONArray result=new JSONArray();
         for(JSONArray route:routes) {
             JSONArray projected=projectMapRoute(route,MAX_POINTS_PER_ROUTE);
@@ -1132,7 +1131,7 @@ public class MapActivity extends Activity {
         if(covered)output.coveredARoadPoints=used;else output.incompleteARoadPoints=used;
     }
 
-    private JSONArray projectMapRoute(JSONArray route, int maxPoints) {
+    private static JSONArray projectMapRoute(JSONArray route, int maxPoints) {
         if (route == null || route.length() < 2 || maxPoints < 2) return null;
         int pointCount = route.length();
         boolean[] keep = new boolean[pointCount];
@@ -2491,6 +2490,7 @@ public class MapActivity extends Activity {
         final List<LocalRoadCoverage.Section> localRoadSections = new ArrayList<>();
         final List<JSONArray> localRoadLines = new ArrayList<>();
         final Map<JSONArray, LocalRoadCoverage.Line> localRoadByLine = new java.util.IdentityHashMap<>();
+        LocalRoadLayer localRoadLayer;
         boolean localReferenceAvailable = true;
         long localRoadMillimetres;
 

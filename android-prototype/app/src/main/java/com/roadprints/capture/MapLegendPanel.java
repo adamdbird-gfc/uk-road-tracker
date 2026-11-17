@@ -50,7 +50,7 @@ final class MapLegendPanel {
             coverage.setGravity(Gravity.CENTER_VERTICAL);
             coverage.addView(new Sample(activity, MapLayerPreferences.LOCAL_ROAD_COLOR, null, false),
                     new LinearLayout.LayoutParams(dp(activity, 40), dp(activity, 36)));
-            coverage.addView(text(activity, "Covered local roads in central Gravesend. Tap a line for journeys.",
+            coverage.addView(text(activity, "Travelled minor roads and B-roads. Tap a line to see journeys.",
                     12, 0xFF43516A, false), new LinearLayout.LayoutParams(0, -2, 1));
             lines.addView(coverage);
         }

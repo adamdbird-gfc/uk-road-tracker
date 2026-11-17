@@ -7,6 +7,7 @@ plugins {
 android {
     namespace = "com.roadprints.capture"
     compileSdk = 35
+    buildToolsVersion = "35.0.0"
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -29,8 +30,8 @@ android {
         minSdk = 26
         targetSdk = 35
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        versionCode = 290
-        versionName = "0.25.244"
+        versionCode = 291
+        versionName = "0.25.245"
     }
 }
 

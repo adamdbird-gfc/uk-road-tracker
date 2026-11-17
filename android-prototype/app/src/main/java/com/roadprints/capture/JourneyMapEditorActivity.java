@@ -672,27 +672,7 @@ public class JourneyMapEditorActivity extends Activity {
     }
 
     static List<JSONArray> matchedRouteSegments(JSONObject result) {
-        List<JSONArray> segments = new ArrayList<>();
-        if (result == null) return segments;
-        JSONObject geojson = result.optJSONObject("geojson");
-        JSONArray features = geojson == null ? null : geojson.optJSONArray("features");
-        if (features == null) return segments;
-        for (int index = 0; index < features.length(); index++) {
-            JSONObject feature = features.optJSONObject(index);
-            JSONObject geometry = feature == null ? null : feature.optJSONObject("geometry");
-            if (geometry == null) continue;
-            String type = geometry.optString("type", "");
-            JSONArray coordinates = geometry.optJSONArray("coordinates");
-            if ("LineString".equals(type) && coordinates != null && coordinates.length() >= 2) {
-                segments.add(coordinates);
-            } else if ("MultiLineString".equals(type) && coordinates != null) {
-                for (int part = 0; part < coordinates.length(); part++) {
-                    JSONArray segment = coordinates.optJSONArray(part);
-                    if (segment != null && segment.length() >= 2) segments.add(segment);
-                }
-            }
-        }
-        return segments;
+        return AcceptedRoadRoute.matchedLines(result);
     }
 
     private TextView text(String value, float size, int colour, boolean bold) {
