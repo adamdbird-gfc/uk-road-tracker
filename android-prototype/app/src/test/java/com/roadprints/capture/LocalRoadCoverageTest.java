@@ -51,6 +51,42 @@ public class LocalRoadCoverageTest {
                 () -> LocalRoadCoverage.decodeCachedIntervals(inverted, 1000));
     }
 
+    @Test public void nineMileRoadCompletionAccumulatesDrivingWalkingAndCyclingWithoutDuplication()
+            throws Exception {
+        // The physical road is nine miles long. Its journey history comprises
+        // three different modes, each covering a distinct consecutive third.
+        int mileMm = 1_609_344;
+        int completeMm = 9 * mileMm;
+        LocalRoadNetwork network = new LocalRoadNetwork(0, 0, 1, 1);
+        Edge road = new Edge(900, 1, 2, "Nine-mile road", new Point(40, 40),
+                new Point(40 + completeMm / 1000.0, 40), 0, true);
+        network.add(road);
+        Map<String, List<Interval>> contributions = new LinkedHashMap<>();
+        contributions.put("drive-0-to-3", List.of(new Interval(0, 3 * mileMm)));
+        contributions.put("walk-3-to-6", List.of(new Interval(3 * mileMm, 6 * mileMm)));
+        contributions.put("cycle-6-to-9", List.of(new Interval(6 * mileMm, 9 * mileMm)));
+        LocalRoadCoverage.Section section = section(network, road, contributions);
+        assertEquals(completeMm, section.uniqueMillimetres);
+        assertEquals(1, section.lines.size());
+        // Repeat travel adds attribution, not another copy of covered distance.
+        contributions.put("run-3-to-6", List.of(new Interval(3 * mileMm, 6 * mileMm)));
+        LocalRoadCoverage.Section repeated = section(network, road, contributions);
+        assertEquals(completeMm, repeated.uniqueMillimetres);
+        assertEquals(1, repeated.lines.size());
+        assertTrue(repeated.lines.get(0).contributors(.5).contains("walk-3-to-6"));
+        assertTrue(repeated.lines.get(0).contributors(.5).contains("run-3-to-6"));
+    }
+
+    @Test public void matchedRouteCoverageEligibilityIsIndependentOfTravelMode() {
+        for (String mode : List.of("driving", "bus", "walking", "running",
+                "pedestrian", "cycling", " Walking ")) {
+            assertTrue("Expected eligible " + mode, AcceptedRoadRoute.eligibleMode(mode));
+        }
+        for (String mode : List.of("train", "ferry", "plane", "unknown")) {
+            assertFalse("Unexpected eligible " + mode, AcceptedRoadRoute.eligibleMode(mode));
+        }
+    }
+
     @Test public void nineMileCoverageRepeatsAndSeparatedIntervals() throws Exception {
         LocalRoadNetwork network = new LocalRoadNetwork(0, 0, 1, 1);
         long nineMiles = 14_484_096;
@@ -221,18 +257,20 @@ public class LocalRoadCoverageTest {
         assertEquals(5, all.matchedJourneys);
         assertEquals(1, all.localRoadLines.size());
         assertTrue(all.sections.isEmpty());
-        assertEquals(Set.of("drive-one", "drive-two"),
+        assertEquals(Set.of("drive-one", "drive-two", "walk", "run", "bike"),
                 Set.copyOf(all.localRoadByLine.get(all.localRoadLines.get(0)).contributors(.5)));
         assertTrue(all.localRoadMillimetres > 0);
         JourneyFilters onFoot = new JourneyFilters(2, "matched", JourneyDateFilter.all());
         MapActivity.MapRoutes foot = (MapActivity.MapRoutes) read.invoke(screen, onFoot, day, ZoneOffset.UTC);
-        assertTrue(foot.localRoadLines.isEmpty());
+        assertEquals(1, foot.localRoadLines.size());
+        assertEquals(Set.of("walk", "run"),
+                Set.copyOf(foot.localRoadByLine.get(foot.localRoadLines.get(0)).contributors(.5)));
         assertTrue(foot.sections.isEmpty());
 
         try (MapJourneyStore records = new MapJourneyStore(context);
              LocalRoadCoverage projection = LocalRoadCoverage.open(context)) {
             records.forEach(() -> false, projection::contribution);
-            assertEquals(2, projection.reused);
+            assertEquals(5, projection.reused);
             assertEquals(0, projection.calculated);
         }
         for (File file : JourneyStore.archiveFiles(context)) assertArrayEquals(before.get(file.getName()), Files.readAllBytes(file.toPath()));
@@ -241,7 +279,7 @@ public class LocalRoadCoverageTest {
         try (MapJourneyStore records = new MapJourneyStore(context);
              LocalRoadCoverage projection = LocalRoadCoverage.open(context)) {
             records.forEach(() -> false, projection::contribution);
-            assertEquals(2, projection.reused);
+            assertEquals(5, projection.reused);
             assertEquals(1, projection.calculated);
         }
         screen.finish();

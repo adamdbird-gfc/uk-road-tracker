@@ -69,8 +69,7 @@ final class LocalRoadCoverage implements AutoCloseable {
     long unresolvedMm, excludedMm;
 
     Prepared contribution(MapJourneyStore.Record record) {
-        String mode = record.header.optString("mode");
-        if (!"driving".equals(mode) && !"bus".equals(mode)) return null;
+        if (!AcceptedRoadRoute.eligibleMode(record.header.optString("mode"))) return null;
         String phase = "read_or_compute";
         try {
             int hits = cache.hits;

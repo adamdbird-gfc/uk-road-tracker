@@ -20,6 +20,14 @@ import java.util.concurrent.CancellationException;
 final class AcceptedRoadRoute {
     private static final int MAX_LEGS = 35_000;
 
+    /** All accepted human road travel contributes to one physical coverage ledger. */
+    static boolean eligibleMode(String rawMode) {
+        if (rawMode == null) return false;
+        String mode = rawMode.trim().toLowerCase(Locale.ROOT);
+        return JourneyFilters.isRoadMode(mode) || JourneyFilters.isFootMode(mode)
+                || MatchingCoordinator.isCycle(mode);
+    }
+
     record Projection(Map<Edge, List<Interval>> sections, List<JSONArray> residual,
                       long eligibleMm, long excludedMm, long unresolvedMm, long majorOrOtherMm,
                       Map<String, Integer> unresolvedLegs) {}
@@ -50,7 +58,7 @@ final class AcceptedRoadRoute {
     static Projection project(RoadReference reference, JSONObject journey) throws IOException, JSONException {
         JSONObject result = journey.optJSONObject("processing_result");
         if (result == null || !"complete".equals(journey.optString("processing_status"))
-                || !("driving".equals(journey.optString("mode")) || "bus".equals(journey.optString("mode")))
+                || !eligibleMode(journey.optString("mode"))
                 || (result.has("status") && !"ok".equals(result.optString("status")))) return null;
         List<JSONArray> lines = matchedLines(result);
         if (lines.isEmpty()) return null;

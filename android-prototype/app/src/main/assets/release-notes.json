@@ -2,6 +2,22 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.247",
+      "version_code": 293,
+      "release_date": "2026-11-17",
+      "since": "0.25.246",
+      "changes": [
+        {
+          "title": "One cumulative road network, however you travel",
+          "description": "Accepted matched driving, walking, running and cycling journeys contribute to the same physical minor-road coverage without counting repeated stretches twice."
+        },
+        {
+          "title": "Preserved journey history",
+          "description": "The Map retains its network-only presentation. Your saved routes, corrections and individual journey screens remain unchanged."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.246",
       "version_code": 292,
       "release_date": "2026-11-17",
