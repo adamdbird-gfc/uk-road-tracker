@@ -676,16 +676,7 @@ public class MapActivity extends Activity {
             long renderStarted = android.os.SystemClock.elapsedRealtime();
             hideMapLoading();
             mapSubtitle.setOnClickListener(null);
-            mapSubtitle.setText(mapRoutes.sections.isEmpty()
-                    && mapRoutes.ferrySections.isEmpty()
-                    && mapRoutes.localRoadLines.isEmpty()
-                    && mapRoutes.motorwaySections.isEmpty()
-                    && mapRoutes.incompleteMotorwaySections.isEmpty()
-                    ? (mapFilters.isAll() ? "Recorded journeys will appear here." : "No mapped journeys match these filters. Try another selection or Reset.")
-                    : String.format(java.util.Locale.UK, "%,d recorded journeys shown%s",
-                            mapRoutes.matchedJourneys,
-                            mapRoutes.localCoverageDegraded ? " · some road coverage unavailable."
-                                    : mapRoutes.simplified ? " · map simplified for performance." : "."));
+            mapSubtitle.setText(overviewCoverageMessage(mapRoutes, mapFilters.isAll()));
             double[] camera = mapView == null ? null : mapView.cameraState();
             RoutePreviewView map = mapView;
             if (map == null) {
@@ -694,11 +685,14 @@ public class MapActivity extends Activity {
             }
             map.beginOverviewUpdate();
             map.setOverviewLoading(false);
-            map.setRouteData(null, mapRoutes.sections);
-            map.setFerrySegments(mapRoutes.ferrySections);
+            // Overview is network-only. Legacy matched routes remain in each journey
+            // detail view but must never mask a failed cumulative aggregation.
+            map.setRouteData(null, java.util.Collections.emptyList());
+            map.setFerrySegments(java.util.Collections.emptyList());
             map.setLocalRoadLayer(mapRoutes.localRoadLayer);
             map.setFlatRoadMapStyle(true);
-            map.setMotorwaySegments(mapRoutes.motorwaySections);
+            // Covered/uncovered motorway and A-road reference layers remain unchanged.
+            map.setMotorwaySegments(java.util.Collections.emptyList());
             map.setMotorwayCoverageSegments(mapRoutes.incompleteMotorwaySections,
                     mapRoutes.coveredMotorwaySections);
             map.setARoadCoverageSegments(mapRoutes.incompleteARoadSections,
@@ -904,7 +898,7 @@ public class MapActivity extends Activity {
         return inside;
     }
 
-    private static final long MAP_SNAPSHOT_REVISION = 2_000L + BuildConfig.VERSION_CODE
+    private static final long MAP_SNAPSHOT_REVISION = 3_000L + BuildConfig.VERSION_CODE
             + Integer.toUnsignedLong(RoadReference.ALGORITHM.hashCode());
 
     private long mapDataRevision() {
@@ -967,10 +961,9 @@ public class MapActivity extends Activity {
                 JSONObject prepared=new JSONObject().put("motorway",motorwayCalculator.contribution(raw))
                         .put("a_road",aRoadCalculator.contribution(raw));
                 work[1]+=System.nanoTime()-start;
-                start=System.nanoTime();
-                prepared.put("roads",preparedLines(matchedSegments(raw)))
-                        .put("motorways",preparedLines(motorwaySegments(raw)));
-                work[2]+=System.nanoTime()-start;
+                // Legacy per-journey polyline geometry is never needed for
+                // network-only overview rendering; the contribution reader
+                // independently uses the accepted saved route.
                 return prepared;
             };
             JSONObject prepared=record.prepared(factory);
@@ -983,26 +976,19 @@ public class MapActivity extends Activity {
             motorwayCalculator.addContribution(journey.optString("journey_id"),prepared.getJSONArray("motorway"));
             aRoadCalculator.addContribution(journey.optString("journey_id"),prepared.getJSONArray("a_road"));
             work[1]+=System.nanoTime()-coverageStarted;
-            long geometryStarted=System.nanoTime();
-            JSONArray matched=prepared.getJSONArray("roads"),motorways=prepared.getJSONArray("motorways");
-            boolean localCoverage = false;
+            // A successful saved match is accepted for cumulative attribution.
+            // Do not restore individual black journey traces when attribution
+            // is unavailable: absence of a canonical line must remain visible.
             if (local == null && JourneyFilters.isRoadMode(mode)) output.localCoverageDegraded = true;
-            if (local != null) {
+            if (local != null && JourneyFilters.isRoadMode(mode)) {
                 long started = System.nanoTime();
                 LocalRoadCoverage.Prepared coverage = local.contribution(record);
                 String journeyId = journey.optString("journey_id");
-                if (coverage != null && !journeyId.isEmpty()) {
-                    matched = coverage.residual();
+                if (coverage != null && !journeyId.isEmpty())
                     local.add(journeyId, coverage.spans());
-                    localCoverage = !coverage.spans().isEmpty();
-                }
                 localRoadNanos[0] += System.nanoTime() - started;
             }
-            if (!localCoverage && matched.length() == 0 && motorways.length() == 0) { counts[4]++; return; }
-            appendPreparedLines(output,matched,false);
-            appendPreparedLines(output,motorways,true);
             output.matchedJourneys++;counts[5]++;
-            work[2]+=System.nanoTime()-geometryStarted;
         });
         if (local != null) {
             long started = System.nanoTime();
@@ -2491,6 +2477,22 @@ public class MapActivity extends Activity {
             JSONArray route = array.optJSONArray(i);
             if (route != null) target.add(route);
         }
+    }
+
+    /**
+     * No fallback to legacy journey traces: report degraded canonical coverage
+     * explicitly, even when motorway/A-road reference geometry is visible.
+     */
+    static String overviewCoverageMessage(MapRoutes routes, boolean allJourneys) {
+        if (routes.localCoverageDegraded)
+            return "Cumulative minor-road coverage incomplete · see diagnostics. "
+                    + "Saved journeys remain available in the archive.";
+        if (routes.localRoadLines.isEmpty() && routes.matchedJourneys > 0)
+            return "No cumulative minor-road coverage available yet · saved journeys remain in the archive.";
+        if (routes.matchedJourneys == 0 && routes.localRoadLines.isEmpty())
+            return allJourneys ? "No mapped coverage yet." : "No coverage matches these filters. Try Reset.";
+        return String.format(java.util.Locale.UK, "%,d journeys assessed · cumulative road network%s",
+                routes.matchedJourneys, routes.simplified ? " · simplified for performance." : ".");
     }
 
     static final class MapRoutes {
