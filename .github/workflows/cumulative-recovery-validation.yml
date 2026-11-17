@@ -1,0 +1,102 @@
+name: Cumulative recovery validation
+on:
+  push:
+    branches: [fix/cumulative-road-coverage-291-recovery]
+    paths:
+      - .github/workflows/cumulative-recovery-validation.yml
+      - android-prototype/**
+      - scripts/check_network_only_recovery.sh
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: cumulative-recovery-validation
+  cancel-in-progress: false
+jobs:
+  validation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: adamdbird-gfc/uk-road-tracker
+      JAVA_TOOL_OPTIONS: -XX:TieredStopAtLevel=1
+      NCN_TEST_DATABASE: ${{ github.workspace }}/.cache/ncn/catalogue.db
+      MILEPOST_CANDIDATE_CATALOGUE: ${{ github.workspace }}/reference-data/millennium-mileposts/revision-1/catalogue.jsonl
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - name: Restore the released reference and record source
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 5f9ef9492643f05f4b1c19cec3d13bbf69041c79 "$GITHUB_SHA"
+          gh release download roadprints-0.25.245-291 --pattern Roadprints-0.25.245-291.apk --output "$RUNNER_TEMP/build291.apk"
+          echo "f2220aed2421f055300d33181d354731a5fca2edf7b2004a992c3a6c715e2960  $RUNNER_TEMP/build291.apk" | sha256sum --check
+          assets=android-prototype/app/src/main/assets
+          for asset in historic-counties/boundaries.bin railway/national.json railway/national.sqlite.gzip; do
+            unzip -p "$RUNNER_TEMP/build291.apk" "assets/$asset" > "$assets/$asset"
+          done
+          unzip -p "$RUNNER_TEMP/build291.apk" assets/uk-road-reference-v1.bin > "$RUNNER_TEMP/uk-road-reference-v1.bin"
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+      - name: Extract bounded pinned reference for JVM tests
+        run: |
+          python - <<'PYTHON'
+          import os,pathlib,struct
+          source=pathlib.Path(os.environ['RUNNER_TEMP'])/'uk-road-reference-v1.bin'
+          target=pathlib.Path('android-prototype/app/src/main/assets/uk-road-reference-v1.bin')
+          with source.open('rb') as r:
+              header=r.read(40)
+              assert header[:8]==b'RPRD0002'
+              count,=struct.unpack('>i',r.read(4))
+              rows=list(struct.iter_unpack('>iiii',r.read(count*16)))
+              rows=[e for e in rows if 17<=e[0]<=20 and 2570<=e[1]<=2573]
+              assert rows
+              with target.open('wb') as w:
+                  w.write(header+struct.pack('>i',len(rows)))
+                  offset=44+16*len(rows)
+                  for x,y,_,size in rows:
+                      w.write(struct.pack('>iiii',x,y,offset,size));offset+=size
+                  for _,_,offset,size in rows:
+                      r.seek(offset);w.write(r.read(size))
+          PYTHON
+      - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: .cache/ncn/catalogue.db
+          key: reference-pins-v2-${{ runner.os }}-${{ hashFiles('android-prototype/app/src/main/assets/ncn-national/manifest.json', 'android-prototype/app/src/main/assets/historic-counties/catalogue.json') }}
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.10'
+          cache-read-only: true
+      - name: Run complete Android JVM suite
+        run: |
+          set -euo pipefail
+          if [[ ! -s "$NCN_TEST_DATABASE" ]]; then unset NCN_TEST_DATABASE; fi
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:testDebugUnitTest
+      - name: Build integrated diagnostic APK with complete reference
+        run: |
+          cp "$RUNNER_TEMP/uk-road-reference-v1.bin" android-prototype/app/src/main/assets/
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:assembleDebug
+      - name: Enable emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Exercise the integrated Map on Android
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: bash scripts/check_network_only_recovery.sh
+      - name: Retain test results and runtime logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cumulative-recovery-validation
+          path: |
+            android-prototype/app/build/test-results/testDebugUnitTest/
+            ${{ runner.temp }}/network-recovery*.log
+          if-no-files-found: warn
+          retention-days: 30
