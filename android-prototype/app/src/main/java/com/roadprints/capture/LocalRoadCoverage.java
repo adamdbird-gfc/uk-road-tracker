@@ -99,6 +99,14 @@ final class LocalRoadCoverage implements AutoCloseable {
             throw cancelled;
         } catch (Exception unavailable) {
             if (Thread.currentThread().isInterrupted()) throw new CancellationException();
+            // A malformed derived row should never poison the next Map refresh.
+            // The original journey remains authoritative and is never modified.
+            if ("decode_contribution".equals(phase)) {
+                try { cache.invalidate(record.source); }
+                catch (android.database.sqlite.SQLiteException ignored) {
+                    // Continue reporting the original failure, not a cache-cleanup failure.
+                }
+            }
             held++;
             String signature = phase + ":" + failureSignature(unavailable);
             if (!failureCounts.containsKey(signature) && failureCounts.size() >= 8) signature = "other";
