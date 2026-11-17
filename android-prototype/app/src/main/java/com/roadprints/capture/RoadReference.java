@@ -16,7 +16,7 @@ import java.util.zip.GZIPInputStream;
 /** Read-only packaged OSM reference. Only tiles intersecting the current matched leg are decoded. */
 final class RoadReference implements AutoCloseable {
     static final String ASSET = "uk-road-reference-v1.bin";
-    static final String ALGORITHM = "accepted-roads-v1";
+    static final String ALGORITHM = "accepted-roads-v2-diagnostic";
     private static final int INDEX_START = 44;
     private static final int ENTRY_BYTES = 16;
     private static final int MAX_TILE_BYTES = 4 * 1024 * 1024;
