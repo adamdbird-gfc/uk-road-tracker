@@ -28,14 +28,19 @@ final class LocalRoadCoverage implements AutoCloseable {
     private static final int MAX_CONTRIBUTION_INTERVALS = 600_000;
 
     private final RoadReference reference;
+    // Android's asset stream can delegate getChannel() to a different stream.
+    // Retain the outer owner so its finalizer cannot close an active reference.
+    private final java.io.FileInputStream referenceStream;
     private final CompactJourneyCache cache;
     private final Map<Edge, Map<String, int[]>> contributors = new LinkedHashMap<>();
     private int intervalCount;
     int reused, calculated, held;
     private final Map<String, Integer> failureCounts = new LinkedHashMap<>();
 
-    private LocalRoadCoverage(RoadReference reference, CompactJourneyCache cache) {
+    private LocalRoadCoverage(RoadReference reference, CompactJourneyCache cache,
+                              java.io.FileInputStream referenceStream) {
         this.reference = reference;
+        this.referenceStream = referenceStream;
         this.cache = cache;
     }
 
@@ -47,7 +52,7 @@ final class LocalRoadCoverage implements AutoCloseable {
                 RoadReference reference = new RoadReference(stream.getChannel(), asset.getStartOffset(),
                         asset.getDeclaredLength());
                 return new LocalRoadCoverage(reference,
-                        new CompactJourneyCache(context, RoadReference.ALGORITHM + "-" + reference.version));
+                        new CompactJourneyCache(context, RoadReference.ALGORITHM + "-" + reference.version), stream);
             } catch (Exception unavailable) {
                 stream.close();
                 throw unavailable;
@@ -445,6 +450,10 @@ final class LocalRoadCoverage implements AutoCloseable {
             reference.close();
         } catch (java.io.IOException optional) {
             android.util.Log.w("RoadprintsTiming", "local_road_reference_close=failed");
+        }
+        try { referenceStream.close(); }
+        catch (java.io.IOException optional) {
+            android.util.Log.w("RoadprintsTiming", "local_road_stream_close=failed");
         }
         try { cache.close(); }
         catch (android.database.sqlite.SQLiteException optional) {
