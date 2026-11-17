@@ -85,9 +85,9 @@ jobs:
             {
               echo "### Focused validation attempt $attempt failed"
               echo 'Recorded failure lines:'
-              echo '\`\`\`text'
+              echo '```text'
               grep -E '(^> Task .*FAILED|^FAILURE:|^\\* What went wrong:|^Execution failed|^> .*[Ff]ailed|^Caused by:|^.*(AssertionError|Compilation failed|error: |No tests found|tests completed|There were failing tests))' "$RUNNER_TEMP/focused-$attempt.log" | head -30 || true
-              echo '\`\`\`'
+              echo '```'
               echo 'See **mixed-mode-293-test-logs** for full reports.'
             } >> "$GITHUB_STEP_SUMMARY"
             if ! grep -Eq '(Received status code (429|502|503|504)|HTTP (429|502|503|504)|Too Many Requests|Read timed out|Connect timed out)' "$RUNNER_TEMP/focused-$attempt.log"; then
