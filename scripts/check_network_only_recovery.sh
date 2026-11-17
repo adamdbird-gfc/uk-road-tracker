@@ -109,7 +109,10 @@ def camera(path):
 expected, actual = camera(sys.argv[1]), camera(sys.argv[2])
 for key in expected:
     # Android may rewrite the XML, but must retain the actual camera settings.
-    assert actual[key] == expected[key], (key, expected[key], actual[key])
+    # SharedPreferences long bits can round-trip through decimal JSON/Java
+    # camera handling. Permit sub-nanometre numeric rounding, not drift.
+    tolerance = 1e-12
+    assert abs(actual[key] - expected[key]) <= tolerance, (key, expected[key], actual[key])
 print('Verified restored Map camera settings semantically', actual)
 PYCAMERA
     else
