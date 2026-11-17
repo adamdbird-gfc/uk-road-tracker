@@ -634,9 +634,9 @@ public class MapActivity extends Activity {
             }
             long pathStarted=android.os.SystemClock.elapsedRealtime();
             PerformanceDiagnostics.ArchiveHeapSample pathHeap = new PerformanceDiagnostics.ArchiveHeapSample();
-            for (java.util.List<JSONArray> lines : java.util.Arrays.asList(mapRoutes.sections,
-                    mapRoutes.motorwaySections, mapRoutes.incompleteMotorwaySections, mapRoutes.coveredMotorwaySections,
-                    mapRoutes.incompleteARoadSections, mapRoutes.coveredARoadSections, mapRoutes.ferrySections)) {
+            for (java.util.List<JSONArray> lines : java.util.Arrays.asList(
+                    mapRoutes.incompleteMotorwaySections, mapRoutes.coveredMotorwaySections,
+                    mapRoutes.incompleteARoadSections, mapRoutes.coveredARoadSections)) {
                 if (freeHeadroom >= 64L * 1024 * 1024) MapRenderGeometry.prepare(lines);
                 else MapRenderGeometry.prepareBounds(lines);
                 pathHeap.sample();
