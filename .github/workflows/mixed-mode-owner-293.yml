@@ -1,0 +1,172 @@
+name: Roadprints 293 fast mixed-mode owner release
+on:
+  push:
+    branches: [feat/mixed-mode-cumulative-293]
+    paths:
+      - .github/workflows/mixed-mode-owner-293.yml
+      - android-prototype/**
+      - scripts/check_mixed_mode_owner_293.sh
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: owner-293-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  validate-and-release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: adamdbird-gfc/uk-road-tracker
+      APK: Roadprints-0.25.247-293.apk
+      TAG: roadprints-0.25.247-293
+      CERT_SHA256: 5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031
+      JAVA_TOOL_OPTIONS: -XX:TieredStopAtLevel=1
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - name: Restore exact build 292 reference data
+        run: |
+          set -euo pipefail
+          gh release download roadprints-0.25.246-292 --pattern Roadprints-0.25.246-292.apk --output "$RUNNER_TEMP/build292.apk"
+          assets=android-prototype/app/src/main/assets
+          for asset in historic-counties/boundaries.bin railway/national.json railway/national.sqlite.gzip; do
+            unzip -p "$RUNNER_TEMP/build292.apk" "assets/$asset" > "$assets/$asset"
+          done
+          unzip -p "$RUNNER_TEMP/build292.apk" assets/uk-road-reference-v1.bin > "$RUNNER_TEMP/uk-road-reference-v1.bin"
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+      - name: Build bounded exact-reference tiles for focused JVM coverage tests
+        run: |
+          python - <<'PY'
+          import os,pathlib,struct
+          source=pathlib.Path(os.environ['RUNNER_TEMP'])/'uk-road-reference-v1.bin'
+          target=pathlib.Path('android-prototype/app/src/main/assets/uk-road-reference-v1.bin')
+          with source.open('rb') as r:
+              header=r.read(40)
+              assert header[:8]==b'RPRD0002'
+              count,=struct.unpack('>i',r.read(4))
+              index=list(struct.iter_unpack('>iiii',r.read(count*16)))
+              rows=[e for e in index if 17<=e[0]<=20 and 2570<=e[1]<=2573]
+              assert rows, 'Pinned reference extract missing expected tiles'
+              with target.open('wb') as w:
+                  w.write(header+struct.pack('>i',len(rows)))
+                  offset=44+16*len(rows)
+                  for x,y,_,size in rows:
+                      w.write(struct.pack('>iiii',x,y,offset,size));offset+=size
+                  for _,_,original,size in rows:
+                      r.seek(original)
+                      data=r.read(size)
+                      assert len(data)==size
+                      w.write(data)
+          PY
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.10'
+          cache-read-only: true
+      - name: Run focused mixed-mode and Map integrity tests
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            if gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:testDebugUnitTest \
+                --tests com.roadprints.capture.LocalRoadCoverageTest \
+                --tests com.roadprints.capture.AcceptedRoadRouteTest \
+                --tests com.roadprints.capture.CanonicalRoadAttributionTest \
+                --tests com.roadprints.capture.MapActivityOverviewCoverageTest \
+                > "$RUNNER_TEMP/focused-$attempt.log" 2>&1; then
+              cat "$RUNNER_TEMP/focused-$attempt.log"
+              break
+            fi
+            cat "$RUNNER_TEMP/focused-$attempt.log"
+            if ! grep -Eq '(Received status code (429|502|503|504)|HTTP (429|502|503|504)|Too Many Requests|Read timed out|Connect timed out)' "$RUNNER_TEMP/focused-$attempt.log"; then
+              exit 1
+            fi
+            if [ "$attempt" -eq 3 ]; then exit 1; fi
+            sleep $((attempt*40))
+          done
+      - name: Assemble signed integrated in-place APK
+        env:
+          ROADPRINTS_DEBUG_KEYSTORE_B64: ${{ secrets.ROADPRINTS_DEBUG_KEYSTORE_B64 }}
+          ROADPRINTS_DEBUG_STORE_PASSWORD: ${{ secrets.ROADPRINTS_DEBUG_STORE_PASSWORD }}
+          ROADPRINTS_DEBUG_KEY_ALIAS: ${{ secrets.ROADPRINTS_DEBUG_KEY_ALIAS }}
+          ROADPRINTS_DEBUG_KEY_PASSWORD: ${{ secrets.ROADPRINTS_DEBUG_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$ROADPRINTS_DEBUG_KEYSTORE_B64"
+          test -n "$ROADPRINTS_DEBUG_STORE_PASSWORD"
+          test -n "$ROADPRINTS_DEBUG_KEY_ALIAS"
+          test -n "$ROADPRINTS_DEBUG_KEY_PASSWORD"
+          cp "$RUNNER_TEMP/uk-road-reference-v1.bin" android-prototype/app/src/main/assets/uk-road-reference-v1.bin
+          umask 077
+          export ROADPRINTS_DEBUG_KEYSTORE="$RUNNER_TEMP/roadprints-debug.keystore"
+          trap 'rm -f "$ROADPRINTS_DEBUG_KEYSTORE"' EXIT
+          printf '%s' "$ROADPRINTS_DEBUG_KEYSTORE_B64" | base64 --decode > "$ROADPRINTS_DEBUG_KEYSTORE"
+          unset ROADPRINTS_DEBUG_KEYSTORE_B64
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:assembleDebug
+          cp android-prototype/app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/$APK"
+      - name: Verify package identity, signing and immutable reference assets
+        run: |
+          set -euo pipefail
+          signer=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -n 1)
+          for apk in "$RUNNER_TEMP/build292.apk" "$RUNNER_TEMP/$APK"; do
+            "$signer" verify --print-certs "$apk" | grep -F "certificate SHA-256 digest: $CERT_SHA256"
+          done
+          "${signer%/*}/aapt" dump badging "$RUNNER_TEMP/$APK" | grep -F "package: name='com.roadprints.capture' versionCode='293' versionName='0.25.247'"
+          python scripts/verify_milepost_apk.py "$RUNNER_TEMP/$APK"
+          python - "$RUNNER_TEMP/build292.apk" "$RUNNER_TEMP/$APK" <<'PY'
+          import hashlib,sys,zipfile
+          with zipfile.ZipFile(sys.argv[1]) as previous,zipfile.ZipFile(sys.argv[2]) as candidate:
+              for entry in previous.infolist():
+                  if entry.is_dir() or not entry.filename.startswith('assets/') or entry.filename=='assets/release-notes.json':
+                      continue
+                  with previous.open(entry.filename) as original,candidate.open(entry.filename) as updated:
+                      assert hashlib.file_digest(original,'sha256').digest()==hashlib.file_digest(updated,'sha256').digest(), entry.filename
+              assert candidate.getinfo('assets/uk-road-reference-v1.bin').compress_type==zipfile.ZIP_STORED
+          PY
+          echo "APK_SHA256=$(sha256sum "$RUNNER_TEMP/$APK" | cut -d' ' -f1)" >> "$GITHUB_ENV"
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Android in-place upgrade and mixed-mode Map smoke test
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          heap-size: 256M
+          disable-animations: true
+          script: bash scripts/check_mixed_mode_owner_293.sh
+      - name: Retain failure evidence (not an APK download)
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: mixed-mode-293-test-logs
+          path: |
+            android-prototype/app/build/test-results/testDebugUnitTest/
+            ${{ runner.temp }}/mixed-mode-*.log
+            ${{ runner.temp }}/mixed-mode-*.txt
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Publish successful signed owner-test APK
+        run: |
+          set -euo pipefail
+          current=$(gh api "repos/$GH_REPO/git/ref/heads/${GITHUB_REF_NAME}" --jq .object.sha)
+          test "$current" = "$GITHUB_SHA"
+          cat > "$RUNNER_TEMP/owner-notes.md" <<NOTES
+          Roadprints 0.25.247 (293) — private integrated owner-test prerelease.
+          Accepted matched driving, walking, running and cycling routes now contribute to one physical minor-road network.
+          Focused regressions, signed package identity, immutable reference assets and an Android emulator in-place upgrade with mixed-mode Map coverage passed.
+          Full 1,600-journey performance/stress validation has not been run for this fast owner-test release.
+          Pixel 10 owner acceptance remains pending. Existing motorway/A-road geometry and separate off-road paths are unchanged.
+          Source $GITHUB_SHA. SHA-256 $APK_SHA256.
+          NOTES
+          gh release create "$TAG" "$RUNNER_TEMP/$APK" --target "$GITHUB_SHA" --prerelease --latest=false --title "Roadprints 0.25.247 (293) owner test" --notes-file "$RUNNER_TEMP/owner-notes.md"
+          asset_url=$(gh api "repos/$GH_REPO/releases/tags/$TAG" --jq '.assets[] | select(.name=="Roadprints-0.25.247-293.apk" and .state=="uploaded") | .browser_download_url')
+          test "$asset_url" = "https://github.com/$GH_REPO/releases/download/$TAG/$APK"
+          curl --fail --silent --show-error --location --retry 3 --max-time 180 "$asset_url" --output "$RUNNER_TEMP/downloaded.apk"
+          cmp "$RUNNER_TEMP/$APK" "$RUNNER_TEMP/downloaded.apk"
+          printf '%s\n' "Verified owner APK: $asset_url" "SHA-256: $APK_SHA256" >> "$GITHUB_STEP_SUMMARY"
