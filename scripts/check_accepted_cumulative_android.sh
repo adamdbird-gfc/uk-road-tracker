@@ -70,7 +70,7 @@ adb shell am start -W -n "$package/.OnboardingActivity" | grep -F "Status: ok"
 wait_log 'map_local_roads.*calculated=2 reused=0 held=0.*sections=1 lines=1 unique_mm=17603'
 wait_log 'map_render'
 cp "$log" "$RUNNER_TEMP/accepted-cumulative-android-cold.log"
-if grep -Eq 'FATAL EXCEPTION|OutOfMemoryError|foreground_stall.*ms=([2-9][0-9]{3}|[0-9]{5,})' "$log"; then
+if grep -Eq 'FATAL EXCEPTION|OutOfMemoryError|foreground_ui_stall_ms=([2-9][0-9]{3}|[0-9]{5,})' "$log"; then
     exit 1
 fi
 for file in "$fixtures"/journey_*.json; do verify "files/${file##*/}" "$file"; done

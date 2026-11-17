@@ -46,11 +46,17 @@ jobs:
           test -f "$ANDROID_HOME/platforms/android-35/android.jar"
           echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
           echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: .cache/accepted-road-reference/uk-road-reference-v1.bin
+          key: accepted-osm-road-reference-v2-858c943ffe1bbc3295cdbcbbbd8703deb08a4f6e9354723d887cbd901028e3c9
       - name: Build the reference from the pinned OpenStreetMap snapshot
         run: |
           set -euo pipefail
           temp="$RUNNER_TEMP/road-reference"
-          mkdir -p "$temp"
+          reference="$GITHUB_WORKSPACE/.cache/accepted-road-reference/uk-road-reference-v1.bin"
+          if [[ -s "$reference" ]]; then exit 0; fi
+          mkdir -p "$temp" "$(dirname "$reference")"
           fetch_osm() {
             local file="$1" output="$2" domain
             for domain in download-ext2.geofabrik.de download.geofabrik.de download-ext1.geofabrik.de; do
@@ -70,10 +76,34 @@ jobs:
           SHA
           python -m venv "$temp/venv"
           "$temp/venv/bin/pip" install osmium==4.3.2
-          reference="$GITHUB_WORKSPACE/android-prototype/app/src/main/assets/uk-road-reference-v1.bin"
           "$temp/venv/bin/python" "$GITHUB_WORKSPACE/scripts/build_uk_road_reference.py" \
             "$reference" "$temp/gb.pbf" "$temp/ireland.pbf" | tee "$RUNNER_TEMP/road-reference.log"
           rm "$temp/gb.pbf" "$temp/ireland.pbf"
+      - name: Extract the exact Gravesend fixture for the JVM Android tests
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import pathlib, struct
+          source = pathlib.Path('.cache/accepted-road-reference/uk-road-reference-v1.bin')
+          target = pathlib.Path('android-prototype/app/src/main/assets/uk-road-reference-v1.bin')
+          with source.open('rb') as reference:
+              header = reference.read(40)
+              assert header[:8] == b'RPRD0002'
+              assert header[8:].hex() == '858c943ffe1bbc3295cdbcbbbd8703deb08a4f6e9354723d887cbd901028e3c9'
+              count, = struct.unpack('>i', reference.read(4))
+              entries = list(struct.iter_unpack('>iiii', reference.read(16 * count)))
+              selected = [entry for entry in entries if 17 <= entry[0] <= 20 and 2570 <= entry[1] <= 2573]
+              assert len(selected) > 0
+              with target.open('wb') as fixture:
+                  fixture.write(header + struct.pack('>i', len(selected)))
+                  next_offset = 44 + 16 * len(selected)
+                  for x, y, _, size in selected:
+                      fixture.write(struct.pack('>iiii', x, y, next_offset, size))
+                      next_offset += size
+                  for _, _, offset, size in selected:
+                      reference.seek(offset)
+                      fixture.write(reference.read(size))
+          PY
       - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
           path: .cache/ncn/catalogue.db
@@ -107,6 +137,7 @@ jobs:
           test -n "$ROADPRINTS_DEBUG_STORE_PASSWORD"
           test -n "$ROADPRINTS_DEBUG_KEY_ALIAS"
           test -n "$ROADPRINTS_DEBUG_KEY_PASSWORD"
+          cp .cache/accepted-road-reference/uk-road-reference-v1.bin android-prototype/app/src/main/assets/
           export ROADPRINTS_DEBUG_KEYSTORE="$RUNNER_TEMP/roadprints-debug.keystore"
           trap 'rm -f "$ROADPRINTS_DEBUG_KEYSTORE"' EXIT
           umask 077
