@@ -66,7 +66,10 @@ final class LocalRoadCoverage implements AutoCloseable {
 
     record Prepared(Map<Edge, List<Interval>> spans, JSONArray residual) {}
     int overBudget;
-    long unresolvedMm, excludedMm;
+    long unresolvedMm, excludedMm, majorOrOtherMm;
+    final Map<String, Integer> unresolvedLegReasons = new LinkedHashMap<>();
+    final Map<String, Integer> footUnresolvedLegReasons = new LinkedHashMap<>();
+    long footUnresolvedMm, footMajorOrOtherMm;
 
     Prepared contribution(MapJourneyStore.Record record) {
         if (!AcceptedRoadRoute.eligibleMode(record.header.optString("mode"))) return null;
@@ -75,7 +78,18 @@ final class LocalRoadCoverage implements AutoCloseable {
             int hits = cache.hits;
             JSONObject row = cache.get(record.source, file -> readAcceptedContribution(reference, file));
             if (row == null || !record.token.equals(JourneyStore.fileToken(record.source))) return null;
-            boolean reusedRow = cache.hits != hits;
+            boolean refreshedLegacyFootRow = false;
+            // Older disposable rows contain covered intervals but no reason
+            // breakdown. Reassess only on-foot rows to learn why saved paths
+            // remain invisible; do not invalidate the 660 driving contributions.
+            if (JourneyFilters.isFootMode(record.header.optString("mode"))
+                    && !row.has("unresolvedLegs") && row.has("spans")) {
+                cache.invalidate(record.source);
+                refreshedLegacyFootRow = true;
+                row = cache.get(record.source, file -> readAcceptedContribution(reference, file));
+                if (row == null) return null;
+            }
+            boolean reusedRow = cache.hits != hits && !refreshedLegacyFootRow;
             phase = "decode_contribution";
             JSONArray residual = row.getJSONArray("residual");
             Map<Edge, List<Interval>> result = new LinkedHashMap<>();
@@ -106,6 +120,24 @@ final class LocalRoadCoverage implements AutoCloseable {
                 throw new IllegalArgumentException("Invalid cached local-road distance");
             unresolvedMm += unresolved;
             excludedMm += excluded;
+            long major = row.optLong("majorOrOtherMm", 0);
+            majorOrOtherMm += major;
+            boolean onFoot = JourneyFilters.isFootMode(record.header.optString("mode"));
+            if (onFoot) {
+                footUnresolvedMm += unresolved;
+                footMajorOrOtherMm += major;
+            }
+            JSONObject reasons = row.optJSONObject("unresolvedLegs");
+            if (reasons != null) {
+                java.util.Iterator<String> keys = reasons.keys();
+                while (keys.hasNext()) {
+                    String reason = keys.next();
+                    int occurrences = reasons.optInt(reason, 0);
+                    if (occurrences < 0) throw new IllegalArgumentException("Negative unresolved reason count");
+                    unresolvedLegReasons.merge(reason, occurrences, Integer::sum);
+                    if (onFoot) footUnresolvedLegReasons.merge(reason, occurrences, Integer::sum);
+                }
+            }
             if (reusedRow) reused++;
             else calculated++;
             return new Prepared(result, residual);
@@ -202,7 +234,9 @@ final class LocalRoadCoverage implements AutoCloseable {
         // Preserve the disposable cache schema without preparing hidden overview polylines.
         return new JSONObject().put("spans", spans).put("intervals", count)
                 .put("residual", new JSONArray())
-                .put("unresolvedMm", projection.unresolvedMm()).put("excludedMm", projection.excludedMm());
+                .put("unresolvedMm", projection.unresolvedMm()).put("excludedMm", projection.excludedMm())
+                .put("majorOrOtherMm", projection.majorOrOtherMm())
+                .put("unresolvedLegs", new JSONObject(projection.unresolvedLegs()));
     }
 
     static JSONObject readContribution(LocalRoadNetwork network, File source, String started, String ended)

@@ -33,6 +33,37 @@ public class LocalRoadCoverageTest {
     private static final String END = "2026-11-15T12:10:00Z";
     private static final long TIME = Instant.parse(START).toEpochMilli();
 
+    @Test public void acceptedWalkingRouteRetainsReasonForUnresolvedCoverageWithoutInventingRoad()
+            throws Exception {
+        Context context = RuntimeEnvironment.getApplication();
+        File source = new File(context.getCacheDir(), "unresolved-on-foot-fixture.json");
+        JSONObject segment = new JSONObject().put("type", "LineString")
+                .put("coordinates", new JSONArray().put(new JSONArray().put(0).put(0))
+                        .put(new JSONArray().put(0.001).put(0)));
+        JSONObject journey = new JSONObject().put("mode", "walking")
+                .put("processing_status", "complete")
+                .put("processing_result", new JSONObject().put("status", "ok")
+                        .put("geojson", new JSONObject().put("features",
+                                new JSONArray().put(new JSONObject().put("geometry", segment)))));
+        byte[] original = journey.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        Files.write(source.toPath(), original);
+        try (MapJourneyStore records = new MapJourneyStore(context);
+             LocalRoadCoverage coverage = LocalRoadCoverage.open(context)) {
+            assertNotNull(coverage);
+            var record = records.new Record(source, JourneyStore.fileToken(source),
+                    new JSONObject().put("mode", "walking"), null, true);
+            LocalRoadCoverage.Prepared projected = coverage.contribution(record);
+            assertNotNull(projected);
+            assertTrue(projected.spans().isEmpty());
+            assertTrue(coverage.footUnresolvedMm > 0);
+            assertEquals(1, coverage.footUnresolvedLegReasons.get("no_connected_alignment").intValue());
+            assertEquals(0, coverage.held);
+        } finally {
+            assertArrayEquals(original, Files.readAllBytes(source.toPath()));
+            Files.deleteIfExists(source.toPath());
+        }
+    }
+
     @Test public void cachedContributionRejectsMalformedIntervalsRatherThanSilentlyFallingBack()
             throws Exception {
         JSONArray valid = new JSONArray().put(9).put(1).put(2).put("Road")
