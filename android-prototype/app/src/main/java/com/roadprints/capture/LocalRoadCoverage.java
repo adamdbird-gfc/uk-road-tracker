@@ -200,8 +200,9 @@ final class LocalRoadCoverage implements AutoCloseable {
             for (Interval interval : section.getValue()) row.put(interval.start()).put(interval.end());
             spans.put(row);
         }
+        // Preserve the disposable cache schema without preparing hidden overview polylines.
         return new JSONObject().put("spans", spans).put("intervals", count)
-                .put("residual", MapActivity.preparedLines(projection.residual()))
+                .put("residual", new JSONArray())
                 .put("unresolvedMm", projection.unresolvedMm()).put("excludedMm", projection.excludedMm());
     }
 
