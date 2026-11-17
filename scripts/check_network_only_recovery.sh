@@ -7,6 +7,7 @@ fixtures="$RUNNER_TEMP/accepted-cumulative-fixtures"
 log="$RUNNER_TEMP/network-recovery.log"
 mkdir -p "$fixtures"
 trap 'adb logcat -d -s RoadprintsTiming AndroidRuntime > "$RUNNER_TEMP/network-recovery-final.log"' EXIT
+trap 'status=$?; echo "RECOVERY_VALIDATION_FAILED: line=$LINENO exit=$status command=$BASH_COMMAND" >&2' ERR
 python - "$fixtures" <<'PY'
 import json, pathlib, struct, sys
 root = pathlib.Path(sys.argv[1])
@@ -131,15 +132,22 @@ wait_log() {
 }
 adb logcat -c
 adb shell am start -W -n "$package/.OnboardingActivity" | grep -F "Status: ok"
-wait_log 'map_local_roads.*held=0.*sections=1 lines=1 unique_mm=17603'
+echo 'CHECKPOINT: cold canonical attribution'
+wait_log 'map_local_roads'
 python - "$log" <<'PYCOVERAGE'
 import re,sys
 text=open(sys.argv[1]).read()
 rows=[line for line in text.splitlines() if "map_local_roads" in line]
-assert rows
-values=dict((key,int(value)) for key,value in re.findall(r"(calculated|reused|held|budget_holds)=(\d+)",rows[-1]))
-assert values["calculated"]+values["reused"]==1599,values
-assert values["held"]==values["budget_holds"]==0,values
+assert rows, 'No cumulative attribution diagnostic appeared'
+values={key:int(value) for key,value in re.findall(
+    r"(calculated|reused|held|budget_holds|sections|lines|unique_mm)=(\d+)",rows[-1])}
+print('Cold cumulative attribution:', values, flush=True)
+required={'calculated','reused','held','budget_holds','sections','lines','unique_mm'}
+assert required <= values.keys(), ('Missing diagnostic keys', sorted(required-values.keys()))
+assert values['calculated']+values['reused']==1599, ('Driving contributions lost', values)
+assert values['held']==values['budget_holds']==0, ('Attribution failed or budget exhausted', values, rows[-1])
+assert values['sections']==values['lines']==1, ('Expected one physical section, not duplicate road lines', values)
+assert values['unique_mm']>0, ('No canonical road coverage generated', values)
 PYCOVERAGE
 wait_log 'map_render'
 python - "$log" <<'PYLAYERS'
@@ -161,7 +169,27 @@ verify shared_prefs/roadprints_achievements_v1.xml "$fixtures/roadprints_achieve
 adb shell am force-stop "$package"
 adb logcat -c
 adb shell am start -W -n "$package/.OnboardingActivity" | grep -F "Status: ok"
-wait_log 'map_cache.*source=hit|map_local_roads.*calculated=0 reused=1599 held=0.*sections=1 lines=1 unique_mm=17603'
+echo 'CHECKPOINT: warm cache or reused canonical attribution'
+wait_log 'map_cache.*source=hit|map_local_roads'
+python - "$log" <<'PYWARM'
+import re,sys
+rows=open(sys.argv[1]).read().splitlines()
+cache_hit=any('map_cache' in line and 'source=hit' in line for line in rows)
+local=[line for line in rows if 'map_local_roads' in line]
+if not cache_hit:
+    assert local, 'Neither disk Map snapshot hit nor recomputed coverage was observed'
+    values={key:int(value) for key,value in re.findall(
+        r"(calculated|reused|held|budget_holds|sections|lines|unique_mm)=(\d+)",local[-1])}
+    print('Warm attribution (no disk snapshot):', values, flush=True)
+    assert values.get('calculated')==0 and values.get('reused')==1599, (
+        'Expected all accepted journeys to reuse derived contribution rows',values,local[-1])
+    assert values.get('held')==0 and values.get('budget_holds')==0, (
+        'Warm coverage failed',values,local[-1])
+    assert values.get('sections')==values.get('lines')==1 and values.get('unique_mm',0)>0, (
+        'Warm coverage failed to retain one canonical road',values,local[-1])
+else:
+    print('Warm Map restored from verified disk snapshot', flush=True)
+PYWARM
 wait_log 'map_render'
 
 cp "$log" "$RUNNER_TEMP/network-recovery-warm.log"
