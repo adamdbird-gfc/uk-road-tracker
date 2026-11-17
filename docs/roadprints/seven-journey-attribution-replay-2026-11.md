@@ -2,6 +2,17 @@
 
 This is an aggregate-only report from the owner's seven private football-training diagnostics exports. No private coordinates, raw samples, precise endpoints, or personally identifying journey IDs are committed.
 
+## Owner decision: accepted saved route is the coverage source
+
+**Supersedes the earlier GPS-only completion interpretation in this report.**
+The user's agreed product policy is that a successfully matched saved journey is *accepted by default*, regardless of the sparse original Timeline source. The overview uses the effective route displayed in journey detail, after applying the owner's explicit corrections, rather than treating the original handful of positions as the full travelled path.
+
+- The seven files' stored matched geometries are now first-class **candidate coverage** under this policy. Their source-point density and matcher confidence alone must not exclude them.
+- The 174 candidate Android observation pairs above are **secondary corroboration/diagnostic evidence**, not a completeness gate and not a cap on the eligible route.
+- The existing Gravesend tagged road graph still lacks coverage for these journeys, so the first true canonical section replay remains blocked until wider tiles are available. This is a network-identity blocker, **not** evidence that these saved journeys are invalid.
+- A successful saved match may contribute automatically, but known errors, malformed geometry, unrecorded gaps, failed matches, explicitly removed sections, and unresolved reference ambiguity must be handled without fabricated credit.
+- Contributions remain reversible per journey and can be inspected from the overview Map. Opening a journey isn't an explicit confirmation, and no retroactive manual approval exercise is required.
+
 ## File coverage
 
 Seven files were parsed completely: **four Google Timeline imports** and **three Android activity captures**. All exports were from Roadprints 0.25.244 (290).
@@ -16,7 +27,7 @@ Seven files were parsed completely: **four Google Timeline imports** and **three
 | 15 Oct return | Android | 2,940 | **91** | 2,591 pairs exceeded 12m accuracy; 229 failed movement rules; 28 failed time rules |
 | 5 Nov return | Android | 127 | **41** | 36 accuracy, 39 network-provider, 9 movement, 1 timing rejection |
 
-The Android gate checks each adjacent pair only: reported accuracy 0–12m, monotonic 0–12s timestamps, 4–130m displacement and maximum plausible 45m/s speed. For older Android exports with five-column samples, provider metadata is absent, not assumed to be `gps`. Newer eight-column exports explicitly identify provider; network-only pairs are excluded. In total **174 candidate pairs** advance to map-attribution checks. **These are not credited road intervals.**
+The Android gate checks each adjacent pair only: reported accuracy 0–12m, monotonic 0–12s timestamps, 4–130m displacement and maximum plausible 45m/s speed. For older Android exports with five-column samples, provider metadata is absent, not assumed to be `gps`. Newer eight-column exports explicitly identify provider; network-only pairs are excluded. In total **174 candidate pairs** advance to map-attribution checks. **These are not credited road intervals and are not required for accepted matched-route coverage.**
 
 ### Canonical reference coverage blocker
 
