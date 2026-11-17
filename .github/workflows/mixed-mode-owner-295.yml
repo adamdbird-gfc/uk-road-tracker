@@ -73,6 +73,7 @@ jobs:
           for attempt in 1 2 3; do
             if gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:testDebugUnitTest \
                 --tests com.roadprints.capture.ARoadProgressCalculatorTest \
+                --tests com.roadprints.capture.MapJourneyStoreCacheMigrationTest \
                 --tests com.roadprints.capture.LocalRoadCoverageTest \
                 --tests com.roadprints.capture.AcceptedRoadRouteTest \
                 --tests com.roadprints.capture.CanonicalRoadAttributionTest \
