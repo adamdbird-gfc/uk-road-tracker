@@ -32,6 +32,24 @@ public class LocalRoadCoverageTest {
     private static final String END = "2026-11-15T12:10:00Z";
     private static final long TIME = Instant.parse(START).toEpochMilli();
 
+    @Test public void cachedContributionRejectsMalformedIntervalsRatherThanSilentlyFallingBack()
+            throws Exception {
+        JSONArray valid = new JSONArray().put(9).put(1).put(2).put("Road")
+                .put(.1).put(51.4).put(.2).put(51.4).put(1000).put(100).put(900);
+        assertEquals(List.of(new Interval(100, 900)),
+                LocalRoadCoverage.decodeCachedIntervals(valid, 1000));
+        JSONArray outside = new JSONArray(valid.toString()).put(900).put(1100);
+        assertThrows(IllegalArgumentException.class,
+                () -> LocalRoadCoverage.decodeCachedIntervals(outside, 1000));
+        JSONArray truncated = new JSONArray(valid.toString()).put(950);
+        assertThrows(IllegalArgumentException.class,
+                () -> LocalRoadCoverage.decodeCachedIntervals(truncated, 1000));
+        JSONArray inverted = new JSONArray().put(9).put(1).put(2).put("Road")
+                .put(.1).put(51.4).put(.2).put(51.4).put(1000).put(900).put(100);
+        assertThrows(IllegalArgumentException.class,
+                () -> LocalRoadCoverage.decodeCachedIntervals(inverted, 1000));
+    }
+
     @Test public void nineMileCoverageRepeatsAndSeparatedIntervals() throws Exception {
         LocalRoadNetwork network = new LocalRoadNetwork(0, 0, 1, 1);
         long nineMiles = 14_484_096;
