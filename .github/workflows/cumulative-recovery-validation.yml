@@ -64,6 +64,37 @@ jobs:
         with:
           path: .cache/ncn/catalogue.db
           key: reference-pins-v2-${{ runner.os }}-${{ hashFiles('android-prototype/app/src/main/assets/ncn-national/manifest.json', 'android-prototype/app/src/main/assets/historic-counties/catalogue.json') }}
+      - name: Restore and verify the pinned NCN test database
+        run: |
+          python - <<'PYTHON'
+          import gzip,hashlib,json,os,pathlib,urllib.request
+          manifest=json.loads(pathlib.Path('android-prototype/app/src/main/assets/ncn-national/manifest.json').read_text())
+          target=pathlib.Path(os.environ['NCN_TEST_DATABASE'])
+          def valid(path, digest, size):
+              if not path.is_file() or path.stat().st_size!=size:
+                  return False
+              with path.open('rb') as source:
+                  return hashlib.file_digest(source,'sha256').hexdigest()==digest
+          if not valid(target,manifest['sha256'],manifest['database_bytes']):
+              target.parent.mkdir(parents=True,exist_ok=True)
+              packed=pathlib.Path(os.environ['RUNNER_TEMP'])/'pinned-ncn.db.gz'
+              url='https://roadprints-data-822cc.web.app/'+manifest['filename']
+              with urllib.request.urlopen(url,timeout=90) as source, packed.open('wb') as out:
+                  total=0
+                  while chunk:=source.read(1024*1024):
+                      total+=len(chunk)
+                      assert total<=manifest['compressed_bytes'],'NCN response exceeds pinned size'
+                      out.write(chunk)
+              assert valid(packed,manifest['compressed_sha256'],manifest['compressed_bytes'])
+              with gzip.open(packed,'rb') as source,target.open('wb') as out:
+                  total=0
+                  while chunk:=source.read(1024*1024):
+                      total+=len(chunk)
+                      assert total<=manifest['database_bytes'],'NCN expansion exceeds pinned size'
+                      out.write(chunk)
+          assert valid(target,manifest['sha256'],manifest['database_bytes'])
+          print('Verified exact pinned NCN test database',manifest['sha256'])
+          PYTHON
       - uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: '8.10'
@@ -71,7 +102,6 @@ jobs:
       - name: Run complete Android JVM suite
         run: |
           set -euo pipefail
-          if [[ ! -s "$NCN_TEST_DATABASE" ]]; then unset NCN_TEST_DATABASE; fi
           gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:testDebugUnitTest
       - name: Build integrated diagnostic APK with complete reference
         run: |

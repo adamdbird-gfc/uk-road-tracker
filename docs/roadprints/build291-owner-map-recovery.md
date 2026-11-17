@@ -68,3 +68,7 @@ A confirmed cache compatibility defect was found in the recovery implementation.
 Overview expectations in LocalRoadCoverageTest and MultimodalFerryTest now follow the approved presentation. The latter also verifies that the saved ferry geometry remains available. These source changes require fresh execution of the Android JVM suite.
 
 The interrupted environment lost its Gradle logs and Android runtime. No full-suite pass, integrated Android result, performance measurement or build 292 release is claimed. The cause of the original 648 held contributions remains open. No backend or Firebase changes, main integration or issue closures occurred.
+
+The first durable GitHub run 44126507697 executed 1,087 JVM tests with six failures and 11 skips. All six failures were the NCN national/UI setup assertions requiring NCN_TEST_DATABASE. Its exact cache key was unavailable. Road and Map tests, including the new cache regression, passed in that run. The validation workflow now retrieves and verifies the content-addressed database from the existing published reference when the cache misses. This changes test preparation only.
+
+The prepared Map reader also streams only motorway and a_road arrays from existing derived rows. It skips the legacy road geometry arrays before JSON object allocation, retaining existing headers and major-road contribution reuse. A regression checks this upgrade path. Fresh validation of this additional change is pending.

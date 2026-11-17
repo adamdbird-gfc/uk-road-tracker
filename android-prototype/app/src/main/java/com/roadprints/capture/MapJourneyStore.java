@@ -62,13 +62,12 @@ final class MapJourneyStore implements AutoCloseable {
                         decodeStarted = System.nanoTime();
                         payloadBytes += bytes.length;
                         if (NcnJson.hash(bytes).equals(expected)) {
-                            JSONObject value = new JSONObject(new String(bytes, StandardCharsets.UTF_8));
-                            for (String key : new String[]{"motorway", "a_road"}) value.getJSONArray(key);
+                            JSONObject value = readCoveragePayload(bytes);
                             reused++;
                             return value;
                         }
                     }
-                } catch (org.json.JSONException invalid) { /* Rebuild this derived row only. */ }
+                } catch (org.json.JSONException | java.io.IOException | IllegalStateException invalid) { /* Rebuild this derived row only. */ }
                 finally {
                     long end = System.nanoTime();
                     payloadLookupNanos += (decodeStarted == 0 ? end : decodeStarted) - lookupStarted;
@@ -83,6 +82,26 @@ final class MapJourneyStore implements AutoCloseable {
             return value;
         }
     }
+    /** Read major-road contributions without materialising legacy journey polylines. */
+    private static JSONObject readCoveragePayload(byte[] bytes) throws Exception {
+        JSONObject value = new JSONObject();
+        try (android.util.JsonReader reader = new android.util.JsonReader(
+                new java.io.InputStreamReader(new java.io.ByteArrayInputStream(bytes),
+                        StandardCharsets.UTF_8))) {
+            reader.beginObject();
+            while (reader.hasNext()) {
+                String key = reader.nextName();
+                if ("motorway".equals(key) || "a_road".equals(key))
+                    value.put(key, JourneyStore.readEvidenceValue(reader));
+                else reader.skipValue();
+            }
+            reader.endObject();
+        }
+        value.getJSONArray("motorway");
+        value.getJSONArray("a_road");
+        return value;
+    }
+
     private static JSONObject header(JSONObject journey) throws Exception {
         JSONObject value=new JSONObject();
         for(String key:new String[]{"journey_id","mode","processing_status","started_at","ended_at",

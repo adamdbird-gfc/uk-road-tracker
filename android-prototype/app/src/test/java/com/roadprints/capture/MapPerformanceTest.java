@@ -73,6 +73,27 @@ public class MapPerformanceTest {
         }
     }
 
+    @Test public void legacyMapPayloadReusesMajorCoverageWithoutDecodingHiddenLines() throws Exception {
+        JourneyStore.save(app, trip("legacy-network-cache"));
+        try (MapJourneyStore records = new MapJourneyStore(app)) {
+            records.forEach(() -> false, record -> record.prepared(raw ->
+                    emptyPrepared().put("roads", new JSONArray().put(new JSONArray("[[0,0],[1,1]]")))));
+        }
+        try (MapJourneyStore records = new MapJourneyStore(app)) {
+            records.forEach(() -> false, record -> {
+                JSONObject prepared = record.prepared(raw -> {
+                    throw new AssertionError("Valid major-road contributions were rebuilt");
+                });
+                assertEquals(0, prepared.getJSONArray("motorway").length());
+                assertEquals(0, prepared.getJSONArray("a_road").length());
+                assertFalse(prepared.has("roads"));
+                assertFalse(prepared.has("motorways"));
+            });
+            assertEquals(1, records.reused);
+            assertEquals(0, records.sourceReads);
+        }
+    }
+
     @Test public void compactContributionsEqualUncachedRoadCreditAndAttribution() throws Exception {
         MotorwayProgressCalculator rawM=new MotorwayProgressCalculator(app),cachedM=new MotorwayProgressCalculator(app);
         ARoadProgressCalculator rawA=new ARoadProgressCalculator(app),cachedA=new ARoadProgressCalculator(app);
