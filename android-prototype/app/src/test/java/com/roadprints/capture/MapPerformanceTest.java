@@ -94,6 +94,28 @@ public class MapPerformanceTest {
         }
     }
 
+    @Test public void cancellingCachedPayloadDecodeDoesNotRebuildTheRow() throws Exception {
+        JourneyStore.save(app, trip("cancel-network-cache"));
+        try (MapJourneyStore records = new MapJourneyStore(app)) {
+            records.forEach(() -> false, record -> record.prepared(raw -> emptyPrepared()));
+        }
+        try (MapJourneyStore records = new MapJourneyStore(app)) {
+            records.forEach(() -> false, record -> {
+                record.raw();
+                Thread.currentThread().interrupt();
+                try {
+                    assertThrows(java.util.concurrent.CancellationException.class,
+                            () -> record.prepared(raw -> {
+                                throw new AssertionError("Cancellation rebuilt a cached row");
+                            }));
+                } finally {
+                    Thread.interrupted();
+                }
+            });
+            assertEquals(0, records.rebuilt);
+        }
+    }
+
     @Test public void compactContributionsEqualUncachedRoadCreditAndAttribution() throws Exception {
         MotorwayProgressCalculator rawM=new MotorwayProgressCalculator(app),cachedM=new MotorwayProgressCalculator(app);
         ARoadProgressCalculator rawA=new ARoadProgressCalculator(app),cachedA=new ARoadProgressCalculator(app);

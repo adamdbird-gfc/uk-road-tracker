@@ -67,6 +67,8 @@ final class MapJourneyStore implements AutoCloseable {
                             return value;
                         }
                     }
+                } catch (java.util.concurrent.CancellationException cancelled) {
+                    throw cancelled;
                 } catch (org.json.JSONException | java.io.IOException | IllegalStateException invalid) { /* Rebuild this derived row only. */ }
                 finally {
                     long end = System.nanoTime();

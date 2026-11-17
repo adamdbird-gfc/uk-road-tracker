@@ -11,7 +11,7 @@ permissions:
   contents: read
 concurrency:
   group: cumulative-recovery-validation
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   validation:
     runs-on: ubuntu-24.04
