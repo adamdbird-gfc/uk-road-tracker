@@ -66,12 +66,14 @@ final class LocalRoadCoverage implements AutoCloseable {
     Prepared contribution(MapJourneyStore.Record record) {
         String mode = record.header.optString("mode");
         if (!"driving".equals(mode) && !"bus".equals(mode)) return null;
+        String phase = "read_or_compute";
         try {
             int hits = cache.hits;
             JSONObject row = cache.get(record.source, file -> readAcceptedContribution(reference, file));
             if (row == null || !record.token.equals(JourneyStore.fileToken(record.source))) return null;
             if (cache.hits != hits) reused++;
             else calculated++;
+            phase = "decode_contribution";
             if (!row.has("residual")) return null;
             Map<Edge, List<Interval>> result = new LinkedHashMap<>();
             JSONArray spans = row.getJSONArray("spans");
@@ -98,7 +100,7 @@ final class LocalRoadCoverage implements AutoCloseable {
         } catch (Exception unavailable) {
             if (Thread.currentThread().isInterrupted()) throw new CancellationException();
             held++;
-            String signature = failureSignature(unavailable);
+            String signature = phase + ":" + failureSignature(unavailable);
             if (!failureCounts.containsKey(signature) && failureCounts.size() >= 8) signature = "other";
             failureCounts.merge(signature, 1, Integer::sum);
             return null;
