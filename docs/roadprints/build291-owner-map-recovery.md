@@ -25,7 +25,7 @@ map_filter total=1674 filtered=1011 unprocessed=13 shown=650
 
 ## Recovery code (PR #326 stacked on PR #325)
 - `LocalRoadCoverage` distinguishes `read_or_compute` failures from `decode_contribution` failures, grouping exception class and safe top package frame (without private paths/positions).
-- Rejects malformed cached interval arrays and oversized per-journey calculations instead of quietly accepting apparent no-coverage rows.
+- Rejects malformed cached interval arrays and oversized per-journey calculations instead of quietly accepting apparent no-coverage rows. Malformed disposable contribution cache rows are invalidated, so the next refresh can recompute from the original journey.
 - Avoids incrementing successful `unresolvedMm/excludedMm` counters before decoding and validating a derived row.
 - `MapActivity` treats total contribution-budget exhaustion as degraded coverage and prevents incomplete Map snapshots being cached.
 - Adds invalid/truncated/out-of-range cached interval regression cases.
