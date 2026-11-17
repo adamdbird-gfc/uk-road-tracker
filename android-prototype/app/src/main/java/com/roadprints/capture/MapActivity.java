@@ -928,6 +928,8 @@ public class MapActivity extends Activity {
         PerformanceDiagnostics.timing("map_reference_init",(System.nanoTime()-initialiseStarted)/1_000_000,"");
         long evidenceStarted=System.nanoTime();
         long[] work=new long[3];int[] counts=new int[6];int[] unprocessedModes=new int[4];
+        // Aggregated, non-location diagnostics reveal which travel modes have accepted A-road features.
+        int[] modeAccepted = new int[3], modeWithARoad = new int[3], modeWithLocal = new int[3];
         PerformanceDiagnostics.ArchiveHeapSample heap = new PerformanceDiagnostics.ArchiveHeapSample();
         long localRoadNanos[] = {0};
         try (MapJourneyStore records = new MapJourneyStore(getApplicationContext());
@@ -976,6 +978,10 @@ public class MapActivity extends Activity {
             }
             motorwayCalculator.addContribution(journey.optString("journey_id"),prepared.getJSONArray("motorway"));
             aRoadCalculator.addContribution(journey.optString("journey_id"),prepared.getJSONArray("a_road"));
+            int roadModeIndex = JourneyFilters.isFootMode(mode) ? 1 :
+                    MatchingCoordinator.isCycle(mode) ? 2 : 0;
+            modeAccepted[roadModeIndex]++;
+            if (prepared.getJSONArray("a_road").length() > 0) modeWithARoad[roadModeIndex]++;
             work[1]+=System.nanoTime()-coverageStarted;
             // A successful saved match is accepted for cumulative attribution.
             // Do not restore individual black journey traces when attribution
@@ -986,8 +992,10 @@ public class MapActivity extends Activity {
                 long started = System.nanoTime();
                 LocalRoadCoverage.Prepared coverage = local.contribution(record);
                 String journeyId = journey.optString("journey_id");
-                if (coverage != null && !journeyId.isEmpty())
+                if (coverage != null && !journeyId.isEmpty()) {
                     local.add(journeyId, coverage.spans());
+                    if (!coverage.spans().isEmpty()) modeWithLocal[roadModeIndex]++;
+                }
                 localRoadNanos[0] += System.nanoTime() - started;
             }
             output.matchedJourneys++;counts[5]++;
@@ -1015,6 +1023,12 @@ public class MapActivity extends Activity {
         }
         long evidenceDuration=System.nanoTime()-evidenceStarted;
         PerformanceDiagnostics.timing("map_evidence",Math.max(0,evidenceDuration-work[0]-work[1]-work[2])/1_000_000,"compact_records_or_archive");
+        PerformanceDiagnostics.timing("map_mode_coverage", 0,
+                "accepted_road=" + modeAccepted[0] + " accepted_foot=" + modeAccepted[1]
+                + " accepted_cycle=" + modeAccepted[2] + " aroad_road=" + modeWithARoad[0]
+                + " aroad_foot=" + modeWithARoad[1] + " aroad_cycle=" + modeWithARoad[2]
+                + " minor_road=" + modeWithLocal[0] + " minor_foot=" + modeWithLocal[1]
+                + " minor_cycle=" + modeWithLocal[2]);
         PerformanceDiagnostics.timing("map_filter",work[0]/1_000_000,"total="+counts[0]+" filtered="+counts[1]+" unprocessed="+counts[2]+" hidden_mode="+counts[3]+" no_geometry="+counts[4]+" shown="+counts[5]+" unprocessed_train="+unprocessedModes[0]+" unprocessed_plane="+unprocessedModes[1]+" unprocessed_unknown="+unprocessedModes[2]+" unprocessed_other="+unprocessedModes[3]);
         PerformanceDiagnostics.timing("map_coverage_add",work[1]/1_000_000,"");
         PerformanceDiagnostics.timing("map_geometry",work[2]/1_000_000,"");
