@@ -15,7 +15,7 @@ import java.util.Set;
  * No archive, Map, motorway or A-road ledger is modified by this class.
  */
 final class CumulativeRoadUnion {
-    enum Evidence { SUPPORTED, INFERRED }
+    enum Evidence { SUPPORTED, ACCEPTED_MATCH, INFERRED }
 
     record Interval(int startMm, int endMm) {
         Interval {
@@ -56,13 +56,13 @@ final class CumulativeRoadUnion {
         rejectionsByJourney.remove(journeyId);
     }
 
-    /** Disjoint supported intervals, retaining the exact contributing journeys. */
+    /** Disjoint accepted intervals (observed or saved matched), retaining contributing journeys. */
     List<VisibleSpan> supported() {
         Map<String, List<Contribution>> bySection = new HashMap<>();
         for (Map.Entry<String, List<Contribution>> entry : byJourney.entrySet()) {
             List<Contribution> rejected = rejectionsByJourney.getOrDefault(entry.getKey(), List.of());
             for (Contribution candidate : entry.getValue()) {
-                if (candidate.evidence() != Evidence.SUPPORTED) continue;
+                if (candidate.evidence() == Evidence.INFERRED) continue;
                 List<Interval> remaining = new ArrayList<>(List.of(candidate.interval()));
                 for (Contribution r : rejected)
                     if (r.sectionId().equals(candidate.sectionId()))
@@ -70,7 +70,7 @@ final class CumulativeRoadUnion {
                 for (Interval interval : remaining)
                     bySection.computeIfAbsent(candidate.sectionId(), ignored -> new ArrayList<>())
                         .add(new Contribution(candidate.journeyId(), candidate.sectionId(),
-                            interval, Evidence.SUPPORTED));
+                            interval, candidate.evidence()));
             }
         }
         List<VisibleSpan> result = new ArrayList<>();
