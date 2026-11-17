@@ -1014,6 +1014,9 @@ public class MapActivity extends Activity {
                             + " lines=" + output.localRoadLines.size() + " unique_mm=" + output.localRoadMillimetres
                             + " major_or_other_mm=" + local.majorOrOtherMm
                             + " unresolved_reasons=" + local.unresolvedLegReasons
+                            + " foot_unresolved_mm=" + local.footUnresolvedMm
+                            + " foot_major_or_other_mm=" + local.footMajorOrOtherMm
+                            + " foot_unresolved_reasons=" + local.footUnresolvedLegReasons
                             + (local.held == 0 ? "" : " hold_reasons=" + local.failureBreakdown()));
         }
         PerformanceDiagnostics.timing("map_records",(System.nanoTime()-evidenceStarted)/1_000_000,"reused="+records.reused+" rebuilt="+records.rebuilt
