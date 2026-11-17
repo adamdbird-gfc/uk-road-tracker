@@ -2,6 +2,22 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.249",
+      "version_code": 295,
+      "release_date": "2026-11-17",
+      "since": "0.25.248",
+      "changes": [
+        {
+          "title": "Reassess historical road contributions after travel-mode changes",
+          "description": "Roadprints invalidates disposable major-road summaries created before walking, running and cycling became eligible. Saved accepted route evidence is reassessed without modifying original journeys or corrections."
+        },
+        {
+          "title": "Cumulative road accuracy remains under review",
+          "description": "Roads and paths without compatible reference attribution can still be missing from the overview; no completion is inferred from mere proximity."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.248",
       "version_code": 294,
       "release_date": "2026-11-17",
