@@ -191,7 +191,7 @@ jobs:
           Integrated Roadprints 0.25.246 (292) owner upgrade.
           The overview shows motorway and A-road reference coverage plus cumulative black minor-road sections.
           Validated with the complete Android JVM suite and a signed upgrade from build 291 on Android API 35.
-          A controlled reference-stream comparison reproduced held contribution reads and verified their recovery across 1,600 synthetic journeys.
+          The corrected Android runtime passed 1,600 synthetic journey checks; negative-control read failures are captured if observed, but the original Pixel 10 cause remains unconfirmed.
           Canonical contributor summary, individual journey navigation, archive preservation, cold and warm Map checks passed.
           Pixel 10 / Android 17 owner acceptance is pending.
           Source $GITHUB_SHA.
