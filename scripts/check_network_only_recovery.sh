@@ -51,7 +51,7 @@ for i, mode in enumerate(["driving"] * 1599 + ["walking"]):
 (root / "roadprints_achievements_v1.xml").write_text('<map><string name="unlocked">{"test-award":{"level":1,"unlocked_at":1794744000000}}</string></map>')
 (root / "roadprints_onboarding.xml").write_text('<map><boolean name="complete" value="true"/></map>')
 camera = {"longitude": sum(point[0] for point in coords) / 2,
-          "latitude": sum(point[1] for point in coords) / 2, "zoom": 19.0}
+          "latitude": sum(point[1] for point in coords) / 2, "zoom": 18.0}
 values = "".join(f'<long name="{key}" value="{struct.unpack(">q", struct.pack(">d", value))[0]}"/>'
                  for key, value in camera.items())
 (root / "roadprints_map_camera.xml").write_text("<map>" + values + "</map>")
