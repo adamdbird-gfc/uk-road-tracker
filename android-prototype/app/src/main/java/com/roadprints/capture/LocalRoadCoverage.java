@@ -68,6 +68,8 @@ final class LocalRoadCoverage implements AutoCloseable {
     int overBudget;
     long unresolvedMm, excludedMm, majorOrOtherMm;
     final Map<String, Integer> unresolvedLegReasons = new LinkedHashMap<>();
+    final Map<String, Integer> footUnresolvedLegReasons = new LinkedHashMap<>();
+    long footUnresolvedMm, footMajorOrOtherMm;
 
     Prepared contribution(MapJourneyStore.Record record) {
         if (!AcceptedRoadRoute.eligibleMode(record.header.optString("mode"))) return null;
@@ -107,12 +109,19 @@ final class LocalRoadCoverage implements AutoCloseable {
                 throw new IllegalArgumentException("Invalid cached local-road distance");
             unresolvedMm += unresolved;
             excludedMm += excluded;
-            majorOrOtherMm += row.optLong("majorOrOtherMm", 0);
+            long major = row.optLong("majorOrOtherMm", 0);
+            majorOrOtherMm += major;
+            boolean onFoot = JourneyFilters.isFootMode(record.header.optString("mode"));
+            if (onFoot) {
+                footUnresolvedMm += unresolved;
+                footMajorOrOtherMm += major;
+            }
             JSONObject reasons = row.optJSONObject("unresolvedLegs");
             if (reasons != null) for (String reason : reasons.keySet()) {
                 int occurrences = reasons.optInt(reason, 0);
                 if (occurrences < 0) throw new IllegalArgumentException("Negative unresolved reason count");
                 unresolvedLegReasons.merge(reason, occurrences, Integer::sum);
+                if (onFoot) footUnresolvedLegReasons.merge(reason, occurrences, Integer::sum);
             }
             if (reusedRow) reused++;
             else calculated++;
