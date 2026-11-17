@@ -257,18 +257,20 @@ public class LocalRoadCoverageTest {
         assertEquals(5, all.matchedJourneys);
         assertEquals(1, all.localRoadLines.size());
         assertTrue(all.sections.isEmpty());
-        assertEquals(Set.of("drive-one", "drive-two"),
+        assertEquals(Set.of("drive-one", "drive-two", "walk", "run", "bike"),
                 Set.copyOf(all.localRoadByLine.get(all.localRoadLines.get(0)).contributors(.5)));
         assertTrue(all.localRoadMillimetres > 0);
         JourneyFilters onFoot = new JourneyFilters(2, "matched", JourneyDateFilter.all());
         MapActivity.MapRoutes foot = (MapActivity.MapRoutes) read.invoke(screen, onFoot, day, ZoneOffset.UTC);
-        assertTrue(foot.localRoadLines.isEmpty());
+        assertEquals(1, foot.localRoadLines.size());
+        assertEquals(Set.of("walk", "run"),
+                Set.copyOf(foot.localRoadByLine.get(foot.localRoadLines.get(0)).contributors(.5)));
         assertTrue(foot.sections.isEmpty());
 
         try (MapJourneyStore records = new MapJourneyStore(context);
              LocalRoadCoverage projection = LocalRoadCoverage.open(context)) {
             records.forEach(() -> false, projection::contribution);
-            assertEquals(2, projection.reused);
+            assertEquals(5, projection.reused);
             assertEquals(0, projection.calculated);
         }
         for (File file : JourneyStore.archiveFiles(context)) assertArrayEquals(before.get(file.getName()), Files.readAllBytes(file.toPath()));
@@ -277,7 +279,7 @@ public class LocalRoadCoverageTest {
         try (MapJourneyStore records = new MapJourneyStore(context);
              LocalRoadCoverage projection = LocalRoadCoverage.open(context)) {
             records.forEach(() -> false, projection::contribution);
-            assertEquals(2, projection.reused);
+            assertEquals(5, projection.reused);
             assertEquals(1, projection.calculated);
         }
         screen.finish();
