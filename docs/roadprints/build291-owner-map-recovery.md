@@ -30,6 +30,21 @@ map_filter total=1674 filtered=1011 unprocessed=13 shown=650
 - `MapActivity` treats total contribution-budget exhaustion as degraded coverage and prevents incomplete Map snapshots being cached.
 - Adds invalid/truncated/out-of-range cached interval regression cases.
 
+## Overview presentation decision — implemented in recovery branch
+
+At the owner's request, the existing overview Map is **network-only by default** while cumulative coverage is validated:
+
+- Existing canonical covered/uncovered motorway and A-road layers remain present with their current colours and calculators.
+- Only resolved cumulative minor-road sections render black. No individual historical journey, raw motorway trace, or ferry path is supplied to the overview renderer as a visual fallback.
+- Individual journey detail screens, ferry recordings, corrections, archive and route data are untouched.
+- Legacy per-journey polyline preparation and hidden geometry bounds preparation are bypassed in the overview worker. Performance improvement is expected, but **not yet benchmarked**.
+- When attribution is held/degraded, subtitle explicitly states cumulative coverage is incomplete; when no minor sections are available it says so without claiming no travel occurred.
+- The local-road tap continues to open the existing **Road Summary**, including journey contributors, rather than exposing a technical section screen. Existing A-road/motorway summary callbacks remain.
+- Disk snapshot revision is bumped to avoid accidentally reusing the prior legacy geometry snapshot.
+- New focused `MapActivityOverviewCoverageTest` checks status wording and degraded-cache protection.
+
+**Important:** a nearly empty network-only Map on build 292 is a valid diagnostic of the still-unfixed matching problem, but **not acceptable as a completed feature**. Work must fix and validate the original `held=648` issue before declaring release success.
+
 ## Next Android pass (do not start from scratch)
 1. Validate PR #326 atop latest PR #325. Run full Android JVM test suite and use current pinned reference asset; then replay real archive/seed fixture with diagnostic `hold_reasons`.
 2. Capture the dominant failure signatures from `read_or_compute` vs `decode_contribution` and fix root cause rather than weakening saved matched-route acceptance or suppressing errors.
