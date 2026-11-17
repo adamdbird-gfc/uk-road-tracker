@@ -78,16 +78,18 @@ final class LocalRoadCoverage implements AutoCloseable {
             int hits = cache.hits;
             JSONObject row = cache.get(record.source, file -> readAcceptedContribution(reference, file));
             if (row == null || !record.token.equals(JourneyStore.fileToken(record.source))) return null;
+            boolean refreshedLegacyFootRow = false;
             // Older disposable rows contain covered intervals but no reason
             // breakdown. Reassess only on-foot rows to learn why saved paths
             // remain invisible; do not invalidate the 660 driving contributions.
             if (JourneyFilters.isFootMode(record.header.optString("mode"))
                     && !row.has("unresolvedLegs") && row.has("spans")) {
                 cache.invalidate(record.source);
+                refreshedLegacyFootRow = true;
                 row = cache.get(record.source, file -> readAcceptedContribution(reference, file));
                 if (row == null) return null;
             }
-            boolean reusedRow = cache.hits != hits && row.has("unresolvedLegs");
+            boolean reusedRow = cache.hits != hits && !refreshedLegacyFootRow;
             phase = "decode_contribution";
             JSONArray residual = row.getJSONArray("residual");
             Map<Edge, List<Interval>> result = new LinkedHashMap<>();
