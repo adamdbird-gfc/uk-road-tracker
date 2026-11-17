@@ -625,7 +625,8 @@ public class MapActivity extends Activity {
             Runtime runtime = Runtime.getRuntime();
             long freeHeadroom = runtime.maxMemory()
                     - (runtime.totalMemory() - runtime.freeMemory());
-            if (selection.isAll() && generation == mapLoadGeneration && currentRevision == revision) {
+            if (mapRoutes.canCacheSnapshot() && selection.isAll()
+                    && generation == mapLoadGeneration && currentRevision == revision) {
                 synchronized (MAP_CACHE_LOCK) {
                     processMapCache = mapRoutes;
                     processMapCacheRevision = revision;
@@ -648,7 +649,7 @@ public class MapActivity extends Activity {
             final MapRoutes prepared=mapRoutes;
             PerformanceDiagnostics.timing("map_navigation", android.os.SystemClock.elapsedRealtime()-queuedAt,
                     "source="+(archivePrepared?"archive":"disk_snapshot")+" "+heap.description());
-            if(archivePrepared&&prepared.localReferenceAvailable&&generation==mapLoadGeneration&&selection.isAll()
+            if(archivePrepared&&prepared.canCacheSnapshot()&&generation==mapLoadGeneration&&selection.isAll()
                     &&prepared.snapshotPoints()<=240000&&freeHeadroom>=96L*1024L*1024L)
                 ScreenDataLoader.cache(()->{
                     Runtime cacheRuntime = Runtime.getRuntime();
@@ -683,7 +684,8 @@ public class MapActivity extends Activity {
                     ? (mapFilters.isAll() ? "Recorded journeys will appear here." : "No mapped journeys match these filters. Try another selection or Reset.")
                     : String.format(java.util.Locale.UK, "%,d recorded journeys shown%s",
                             mapRoutes.matchedJourneys,
-                            mapRoutes.simplified ? " · map simplified for performance." : "."));
+                            mapRoutes.localCoverageDegraded ? " · some road coverage unavailable."
+                                    : mapRoutes.simplified ? " · map simplified for performance." : "."));
             double[] camera = mapView == null ? null : mapView.cameraState();
             RoutePreviewView map = mapView;
             if (map == null) {
@@ -902,7 +904,7 @@ public class MapActivity extends Activity {
         return inside;
     }
 
-    private static final long MAP_SNAPSHOT_REVISION = 1_000L + BuildConfig.VERSION_CODE
+    private static final long MAP_SNAPSHOT_REVISION = 2_000L + BuildConfig.VERSION_CODE
             + Integer.toUnsignedLong(RoadReference.ALGORITHM.hashCode());
 
     private long mapDataRevision() {
@@ -984,6 +986,7 @@ public class MapActivity extends Activity {
             long geometryStarted=System.nanoTime();
             JSONArray matched=prepared.getJSONArray("roads"),motorways=prepared.getJSONArray("motorways");
             boolean localCoverage = false;
+            if (local == null && JourneyFilters.isRoadMode(mode)) output.localCoverageDegraded = true;
             if (local != null) {
                 long started = System.nanoTime();
                 LocalRoadCoverage.Prepared coverage = local.contribution(record);
@@ -1004,6 +1007,7 @@ public class MapActivity extends Activity {
         if (local != null) {
             long started = System.nanoTime();
             for (LocalRoadCoverage.Section section : local.sections()) output.addLocalRoad(section);
+            output.localCoverageDegraded = local.held > 0;
             if (local.overBudget > 0) output.simplified = true;
             localRoadNanos[0] += System.nanoTime() - started;
             PerformanceDiagnostics.timing("map_local_roads", localRoadNanos[0] / 1_000_000,
@@ -1011,7 +1015,8 @@ public class MapActivity extends Activity {
                             + " budget_holds=" + local.overBudget + " unresolved_mm=" + local.unresolvedMm
                             + " excluded_mm=" + local.excludedMm
                             + " sections=" + output.localRoadSections.size()
-                            + " lines=" + output.localRoadLines.size() + " unique_mm=" + output.localRoadMillimetres);
+                            + " lines=" + output.localRoadLines.size() + " unique_mm=" + output.localRoadMillimetres
+                            + (local.held == 0 ? "" : " hold_reasons=" + local.failureBreakdown()));
         }
         PerformanceDiagnostics.timing("map_records",(System.nanoTime()-evidenceStarted)/1_000_000,"reused="+records.reused+" rebuilt="+records.rebuilt
                 +" source_reads="+records.sourceReads+" legacy_reads="+records.legacyReads+" oversized="+records.oversized
@@ -2496,7 +2501,12 @@ public class MapActivity extends Activity {
         final Map<JSONArray, LocalRoadCoverage.Line> localRoadByLine = new java.util.IdentityHashMap<>();
         LocalRoadLayer localRoadLayer;
         boolean localReferenceAvailable = true;
+        boolean localCoverageDegraded;
         long localRoadMillimetres;
+
+        boolean canCacheSnapshot() {
+            return localReferenceAvailable && !localCoverageDegraded;
+        }
 
         void addLocalRoad(LocalRoadCoverage.Section section) {
             localRoadSections.add(section);

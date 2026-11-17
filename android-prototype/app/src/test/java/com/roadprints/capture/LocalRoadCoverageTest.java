@@ -115,6 +115,30 @@ public class LocalRoadCoverageTest {
         assertNull(LocalRoadCoverage.open(missing));
     }
 
+    @Test public void heldArchiveRowsReportTheirOriginWithoutLoggingFileDetails() throws Exception {
+        Context context = RuntimeEnvironment.getApplication();
+        File source = new File(context.getCacheDir(), "private-journey-marker.json");
+        Files.write(source.toPath(), "[".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        try (MapJourneyStore records = new MapJourneyStore(context);
+             LocalRoadCoverage coverage = LocalRoadCoverage.open(context)) {
+            assertNotNull(coverage);
+            var record = records.new Record(source, JourneyStore.fileToken(source),
+                    new JSONObject().put("mode", "driving"), null, true);
+            assertNull(coverage.contribution(record));
+            assertEquals(1, coverage.held);
+            assertTrue(coverage.failureBreakdown().contains("LocalRoadCoverage.readAcceptedContribution"));
+            assertFalse(coverage.failureBreakdown().contains("private-journey-marker"));
+
+            var routes = new MapActivity.MapRoutes();
+            assertTrue(routes.canCacheSnapshot());
+            routes.localCoverageDegraded = true;
+            assertFalse(routes.canCacheSnapshot());
+            routes.localCoverageDegraded = false;
+            routes.localReferenceAvailable = false;
+            assertFalse(routes.canCacheSnapshot());
+        }
+    }
+
     @Test public void mapUsesAcceptedTimelineAndNativeContributorsAndDoesNotWriteArchive() throws Exception {
         Context context = RuntimeEnvironment.getApplication();
         LocalRoadNetwork network = network(context);

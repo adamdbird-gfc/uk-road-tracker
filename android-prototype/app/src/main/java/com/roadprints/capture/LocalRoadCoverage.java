@@ -32,6 +32,7 @@ final class LocalRoadCoverage implements AutoCloseable {
     private final Map<Edge, Map<String, int[]>> contributors = new LinkedHashMap<>();
     private int intervalCount;
     int reused, calculated, held;
+    private final Map<String, Integer> failureCounts = new LinkedHashMap<>();
 
     private LocalRoadCoverage(RoadReference reference, CompactJourneyCache cache) {
         this.reference = reference;
@@ -52,7 +53,8 @@ final class LocalRoadCoverage implements AutoCloseable {
                 throw unavailable;
             }
         } catch (Exception unavailable) {
-            android.util.Log.w("RoadprintsTiming", "local_road_reference=unavailable");
+            PerformanceDiagnostics.timing("map_local_road_reference_unavailable", 0,
+                    "reason=" + failureSignature(unavailable));
             return null;
         }
     }
@@ -98,9 +100,29 @@ final class LocalRoadCoverage implements AutoCloseable {
         } catch (CancellationException cancelled) {
             throw cancelled;
         } catch (Exception unavailable) {
+            if (Thread.currentThread().isInterrupted()) throw new CancellationException();
             held++;
+            String signature = failureSignature(unavailable);
+            if (!failureCounts.containsKey(signature) && failureCounts.size() >= 8) signature = "other";
+            failureCounts.merge(signature, 1, Integer::sum);
             return null;
         }
+    }
+
+    String failureBreakdown() {
+        return failureCounts.toString();
+    }
+
+    private static String failureSignature(Exception failure) {
+        String origin = "unknown";
+        for (StackTraceElement frame : failure.getStackTrace()) {
+            String owner = frame.getClassName();
+            if (!owner.startsWith("com.roadprints.capture.")) continue;
+            origin = owner.substring(owner.lastIndexOf('.') + 1) + "." + frame.getMethodName();
+            break;
+        }
+        // Exception messages can contain journey paths or coordinate data.
+        return failure.getClass().getSimpleName() + "@" + origin;
     }
 
     private static JSONObject readAcceptedContribution(RoadReference reference, File source) throws Exception {
