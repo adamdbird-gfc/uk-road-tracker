@@ -1,0 +1,330 @@
+name: Roadprints 302 fresh-signed diagnostic owner APK
+on:
+  push:
+    branches: [release/map-diagnostics-302-rebuild]
+    paths:
+      - .github/workflows/map-diagnostics-owner-302.yml
+      - android-prototype/**
+      - scripts/check_map_diagnostics_302.sh
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+concurrency:
+  group: roadprints-302-owner-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  validate-generate-and-release:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 240
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: adamdbird-gfc/uk-road-tracker
+      TAG: roadprints-0.25.256-302
+      APK: Roadprints-0.25.256-302.apk
+      CERT_SHA256: 5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031
+      JAVA_TOOL_OPTIONS: -XX:TieredStopAtLevel=1
+      REFERENCE_TAG: roadprints-uk-reference-v3-298-r1
+      REFERENCE_FILE: uk-road-reference-v3.bin
+      REFERENCE_MANIFEST: uk-road-reference-v3-manifest.json
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - name: Announce full national generation gate
+        run: |
+          gh issue comment 335 --body "Build 302 diagnostic reference and signed owner release pipeline STARTED on commit $GITHUB_SHA. Verified reference reuse, JVM tests and owner-scale Android Map smoke must pass before publication." || true
+      - name: Verify build resources and restore previous immutable assets
+        run: |
+          set -euo pipefail
+          df -h .
+          gh release download roadprints-0.25.254-300 --pattern Roadprints-0.25.254-300.apk --output "$RUNNER_TEMP/build300.apk"
+          assets=android-prototype/app/src/main/assets
+          for asset in historic-counties/boundaries.bin railway/national.json railway/national.sqlite.gzip; do
+            unzip -p "$RUNNER_TEMP/build300.apk" "assets/$asset" > "$assets/$asset"
+          done
+          unzip -p "$RUNNER_TEMP/build300.apk" assets/uk-road-reference-v1.bin > "$RUNNER_TEMP/original-road-reference.bin"
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+      - name: Use the bounded original reference for focused JVM tests
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os,pathlib,struct
+          source=pathlib.Path(os.environ['RUNNER_TEMP'])/'original-road-reference.bin'
+          target=pathlib.Path('android-prototype/app/src/main/assets/uk-road-reference-v1.bin')
+          with source.open('rb') as r:
+              header=r.read(40)
+              assert header[:8]==b'RPRD0003'
+              count,=struct.unpack('>i',r.read(4))
+              index=list(struct.iter_unpack('>iiii',r.read(count*16)))
+              rows=[e for e in index if 17<=e[0]<=20 and 2570<=e[1]<=2573]
+              assert rows
+              with target.open('wb') as w:
+                  w.write(header+struct.pack('>i',len(rows)))
+                  offset=44+16*len(rows)
+                  for x,y,_,size in rows:
+                      w.write(struct.pack('>iiii',x,y,offset,size));offset+=size
+                  for _,_,original,size in rows:
+                      r.seek(original); data=r.read(size)
+                      assert len(data)==size
+                      w.write(data)
+          PY
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check Python support for reference generation
+        run: |
+          python --version
+          python -c 'from hashlib import file_digest; print("hashlib.file_digest available")'
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.10'
+      - name: Run canonical geometry and reference regression tests
+        run: |
+          set -euo pipefail
+          python scripts/test_uk_road_reference_v3.py
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:testDebugUnitTest \
+            --tests com.roadprints.capture.AcceptedRoadRouteTest \
+            --tests com.roadprints.capture.LocalRoadCoverageTest \
+            --tests com.roadprints.capture.ARoadProgressCalculatorTest \
+            --tests com.roadprints.capture.CanonicalRoadAttributionTest \
+            --tests com.roadprints.capture.MapActivityOverviewCoverageTest \
+            --tests com.roadprints.capture.MapJourneyStoreCacheMigrationTest \
+            > "$RUNNER_TEMP/owner302-jvm.log" 2>&1 || {
+              grep -nE -A4 -B2 '(error:|FAILED|failure|AssertionError|Caused by:)' "$RUNNER_TEMP/owner302-jvm.log" | head -85 || true
+              tail -n 55 "$RUNNER_TEMP/owner302-jvm.log"
+              exit 1
+            }
+      - name: Restore immutable validated national v3 reference when available
+        id: reference_cache
+        run: |
+          set -euo pipefail
+          echo "REFERENCE_REUSED=false" >> "$GITHUB_ENV"
+          if ! gh release view "$REFERENCE_TAG" >/dev/null 2>&1; then
+            echo "::error::Approved v3 reference missing. Diagnostic release must not regenerate it."
+            exit 1
+          fi
+          mkdir -p "$RUNNER_TEMP/road-reference-cache"
+          gh release download "$REFERENCE_TAG" \
+            --pattern "$REFERENCE_FILE" \
+            --pattern "$REFERENCE_MANIFEST" \
+            --dir "$RUNNER_TEMP/road-reference-cache"
+          python - <<'PY'
+          import hashlib,json,os,pathlib,shutil
+          cache=pathlib.Path(os.environ["RUNNER_TEMP"])/"road-reference-cache"
+          manifest=json.loads((cache/os.environ["REFERENCE_MANIFEST"]).read_text())
+          reference=cache/os.environ["REFERENCE_FILE"]
+          assert manifest["format"]=="roadprints-uk-pedestrian-reference-v3"
+          assert manifest["source_sha256"] and len(manifest["source_sha256"])==64
+          builder=hashlib.sha256(pathlib.Path("scripts/build_uk_road_reference.py").read_bytes()).hexdigest()
+          assert manifest["builder_sha256"]==builder,"Reference builder changed: rotate REFERENCE_TAG and regenerate"
+          h=hashlib.sha256()
+          with reference.open("rb") as stream:
+              for chunk in iter(lambda:stream.read(8*1024*1024),b""): h.update(chunk)
+          assert h.hexdigest()==manifest["reference"]["sha256"],"Cached reference SHA-256 mismatch"
+          assert reference.stat().st_size==manifest["reference"]["bytes"],"Cached reference size mismatch"
+          asset=pathlib.Path("android-prototype/app/src/main/assets")
+          shutil.copyfile(reference,asset/"uk-road-reference-v1.bin")
+          shutil.copyfile(cache/os.environ["REFERENCE_MANIFEST"],asset/os.environ["REFERENCE_MANIFEST"])
+          PY
+          python scripts/verify_uk_road_reference_v3.py \
+            android-prototype/app/src/main/assets/uk-road-reference-v1.bin \
+            --json "$RUNNER_TEMP/reference-v3-audit.json"
+          echo "REFERENCE_REUSED=true" >> "$GITHUB_ENV"
+          echo "Reused validated immutable catalogue from $REFERENCE_TAG"
+      - name: Download and fingerprint national United Kingdom OSM source
+        if: env.REFERENCE_REUSED != 'true'
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check 'osmium>=4,<5'
+          # Download only the verified Geofabrik United Kingdom PBF.
+          # Do not substitute a smaller country/region or unverified mirror.
+          source_url=https://download.geofabrik.de/europe/united-kingdom-latest.osm.pbf
+          export ROADPRINTS_OSM_SOURCE_URL="$source_url"
+          echo "Geofabrik DNS records:"
+          getent ahostsv4 download.geofabrik.de || true
+          curl --ipv4 --fail --location --retry 12 --retry-all-errors \
+            --retry-delay 30 --retry-max-time 2400 --connect-timeout 30 --max-time 3600 \
+            --continue-at - "$source_url" --output "$RUNNER_TEMP/uk-source.osm.pbf" || {
+              echo "::error::Verified UK Geofabrik source unavailable; release blocked."
+              exit 1
+            }
+          test "$(stat -c%s "$RUNNER_TEMP/uk-source.osm.pbf")" -gt 500000000
+          sha256sum "$RUNNER_TEMP/uk-source.osm.pbf" | tee "$RUNNER_TEMP/uk-source.sha256"
+          df -h .
+          python - <<'PY'
+          import datetime,hashlib,json,os,pathlib
+          source=pathlib.Path(os.environ["RUNNER_TEMP"])/"uk-source.osm.pbf"
+          h=hashlib.sha256()
+          with source.open("rb") as f:
+              for chunk in iter(lambda:f.read(8*1024*1024),b""):h.update(chunk)
+          manifest={"format":"roadprints-uk-pedestrian-reference-v3",
+              "source":"Geofabrik / OpenStreetMap contributors",
+              "source_url":os.environ["ROADPRINTS_OSM_SOURCE_URL"],
+              "source_sha256":h.hexdigest(),"source_bytes":source.stat().st_size,
+              "downloaded_at_utc":datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              "source_license":"OpenStreetMap ODbL 1.0"}
+          pathlib.Path("android-prototype/app/src/main/assets/uk-road-reference-v3-manifest.json").write_text(
+              json.dumps(manifest,indent=2,sort_keys=True)+"\n")
+          PY
+      - name: Generate full v3 national road and footpath network from pinned bytes
+        if: env.REFERENCE_REUSED != 'true'
+        run: |
+          set -euo pipefail
+          python scripts/build_uk_road_reference.py \
+            android-prototype/app/src/main/assets/uk-road-reference-v1.bin \
+            "$RUNNER_TEMP/uk-source.osm.pbf" | tee "$RUNNER_TEMP/build302-reference.txt"
+          python scripts/verify_uk_road_reference_v3.py \
+            android-prototype/app/src/main/assets/uk-road-reference-v1.bin \
+            --json "$RUNNER_TEMP/reference-v3-audit.json"
+          python - <<'PY'
+          import json,pathlib
+          audit=json.loads(pathlib.Path(__import__('os').environ['RUNNER_TEMP'],'reference-v3-audit.json').read_text())
+          path=pathlib.Path('android-prototype/app/src/main/assets/uk-road-reference-v3-manifest.json')
+          manifest=json.loads(path.read_text())
+          import hashlib
+          manifest['reference']=audit
+          manifest['builder_sha256']=hashlib.sha256(pathlib.Path('scripts/build_uk_road_reference.py').read_bytes()).hexdigest()
+          path.write_text(json.dumps(manifest,sort_keys=True,indent=2)+"\n")
+          PY
+          df -h .
+      - name: Publish approved reference separately for future APK builds
+        if: env.REFERENCE_REUSED != 'true'
+        run: |
+          set -euo pipefail
+          current=$(gh api "repos/$GH_REPO/git/ref/heads/${GITHUB_REF_NAME}" --jq .object.sha)
+          test "$current" = "$GITHUB_SHA"
+          assets=android-prototype/app/src/main/assets
+          if gh release view "$REFERENCE_TAG" >/dev/null 2>&1; then
+            echo "::error::Reference tag already exists. Do not overwrite a published reference."
+            exit 1
+          fi
+          cat > "$RUNNER_TEMP/reference-notes.md" <<'NOTES'
+          Immutable, fingerprinted UK road + pedestrian catalogue (RPRD0003).
+          Source and builder SHA-256 digests, ODbL attribution and validation
+          metrics are preserved in the companion JSON manifest. Reuse only
+          after SHA-256, builder compatibility and full structural validation.
+          Update REFERENCE_TAG explicitly to regenerate a revised catalogue.
+          NOTES
+          cp "$assets/uk-road-reference-v1.bin" "$RUNNER_TEMP/$REFERENCE_FILE"
+          cp "$assets/$REFERENCE_MANIFEST" "$RUNNER_TEMP/$REFERENCE_MANIFEST"
+          gh release create "$REFERENCE_TAG" \
+            "$RUNNER_TEMP/$REFERENCE_FILE" "$RUNNER_TEMP/$REFERENCE_MANIFEST" \
+            --target "$GITHUB_SHA" --prerelease --latest=false \
+            --title "Roadprints UK road and pedestrian reference v3" \
+            --notes-file "$RUNNER_TEMP/reference-notes.md"
+          echo "Published validated national reference $REFERENCE_TAG"
+      - name: Report validated national catalogue
+        run: |
+          gh issue comment 335 --body "Build 302 UK-wide v3 reference generated or restored and passed structural/geographic integrity checks on commit $GITHUB_SHA. Proceeding to signing and Android in-place upgrade smoke; APK publication remains blocked until all gates pass." || true
+      - name: Assemble installed-identity signed owner APK
+        env:
+          ROADPRINTS_DEBUG_KEYSTORE_B64: ${{ secrets.ROADPRINTS_DEBUG_KEYSTORE_B64 }}
+          ROADPRINTS_DEBUG_STORE_PASSWORD: ${{ secrets.ROADPRINTS_DEBUG_STORE_PASSWORD }}
+          ROADPRINTS_DEBUG_KEY_ALIAS: ${{ secrets.ROADPRINTS_DEBUG_KEY_ALIAS }}
+          ROADPRINTS_DEBUG_KEY_PASSWORD: ${{ secrets.ROADPRINTS_DEBUG_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$ROADPRINTS_DEBUG_KEYSTORE_B64"
+          test -n "$ROADPRINTS_DEBUG_STORE_PASSWORD"
+          test -n "$ROADPRINTS_DEBUG_KEY_ALIAS"
+          test -n "$ROADPRINTS_DEBUG_KEY_PASSWORD"
+          umask 077
+          export ROADPRINTS_DEBUG_KEYSTORE="$RUNNER_TEMP/roadprints-debug.keystore"
+          trap 'rm -f "$ROADPRINTS_DEBUG_KEYSTORE"' EXIT
+          printf '%s' "$ROADPRINTS_DEBUG_KEYSTORE_B64" | base64 --decode > "$ROADPRINTS_DEBUG_KEYSTORE"
+          unset ROADPRINTS_DEBUG_KEYSTORE_B64
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:assembleDebug \
+            > "$RUNNER_TEMP/build302-apk.log" 2>&1 || {
+              grep -nE -A3 -B2 '(error:|FAILED|Failure|Caused by:)' "$RUNNER_TEMP/build302-apk.log" | head -80 || true
+              exit 1
+            }
+          cp android-prototype/app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/$APK"
+      - name: Verify signature, version and all unchanged bundled reference assets
+        run: |
+          set -euo pipefail
+          signer=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -n 1)
+          for apk in "$RUNNER_TEMP/build300.apk" "$RUNNER_TEMP/$APK"; do
+            "$signer" verify --print-certs "$apk" | grep -F "certificate SHA-256 digest: $CERT_SHA256"
+          done
+          "${signer%/*}/aapt" dump badging "$RUNNER_TEMP/$APK" | grep -F "package: name='com.roadprints.capture' versionCode='302' versionName='0.25.256'"
+          python scripts/verify_milepost_apk.py "$RUNNER_TEMP/$APK"
+          python - "$RUNNER_TEMP/build300.apk" "$RUNNER_TEMP/$APK" <<'PY'
+          import hashlib,sys,zipfile
+          with zipfile.ZipFile(sys.argv[1]) as previous,zipfile.ZipFile(sys.argv[2]) as candidate:
+              excluded={'assets/release-notes.json','assets/uk-road-reference-v1.bin'}
+              for entry in previous.infolist():
+                  if entry.is_dir() or not entry.filename.startswith('assets/') or entry.filename in excluded:continue
+                  with previous.open(entry.filename) as original,candidate.open(entry.filename) as updated:
+                      assert hashlib.file_digest(original,'sha256').digest()==hashlib.file_digest(updated,'sha256').digest(),entry.filename
+              assert candidate.read('assets/uk-road-reference-v1.bin')[:8]==b'RPRD0003'
+              assert candidate.getinfo('assets/uk-road-reference-v1.bin').compress_type==zipfile.ZIP_STORED
+              assert candidate.getinfo('assets/uk-road-reference-v3-manifest.json')
+          PY
+          echo "APK_SHA256=$(sha256sum "$RUNNER_TEMP/$APK" | cut -d' ' -f1)" >> "$GITHUB_ENV"
+      - name: Enable Android emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Test 299-to-300 upgrade, Map stages and 1675-journey smoke
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          heap-size: 256M
+          disable-animations: true
+          script: bash scripts/check_map_diagnostics_302.sh
+      - name: Preserve verification evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: map-302-diagnostic-release-validation
+          path: |
+            ${{ runner.temp }}/owner302-jvm.log
+            ${{ runner.temp }}/build302-reference.txt
+            ${{ runner.temp }}/reference-v3-audit.json
+            ${{ runner.temp }}/mixed-mode-map.log
+            ${{ runner.temp }}/mixed-mode-final.log
+            android-prototype/app/build/test-results/testDebugUnitTest/**
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Publish signed data-preserving owner APK only after every gate passes
+        run: |
+          set -euo pipefail
+          current=$(gh api "repos/$GH_REPO/git/ref/heads/${GITHUB_REF_NAME}" --jq .object.sha)
+          test "$current" = "$GITHUB_SHA"
+          python - <<'PY'
+          import json,pathlib
+          manifest=json.loads(pathlib.Path('android-prototype/app/src/main/assets/uk-road-reference-v3-manifest.json').read_text())
+          audit=manifest['reference']
+          assert audit['pedestrian_edge_records']>1000
+          assert audit['separate_a_ref_records']>1000
+          PY
+          cat > "$RUNNER_TEMP/owner302-notes.md" <<NOTES
+          Roadprints 0.25.256 (302) — signed, integrated owner-test prerelease.
+          Reuses the immutable verified UK-wide road and pedestrian catalogue from Build 298.
+          Adds timed motorway/A-road reference initialisation, archive progress and slow-contribution telemetry. Railway background work remains paused on Map.
+          Existing owner corrections and archived journeys are not rewritten. Owner-scale emulator smoke uses 1,675 journeys and confirms the new Map-stage diagnostics.
+          Signed package upgrade from 300, JVM regressions, national reference integrity and emulator Map smoke passed.
+          THIS BUILD IS DIAGNOSTIC ONLY: full owner archive performance and Pixel 10 field evidence are required before declaring the timeout fixed.
+          Reference manifest is packaged as an asset in this APK. Source commit $GITHUB_SHA.
+          APK SHA-256 $APK_SHA256.
+          NOTES
+          gh release create "$TAG" "$RUNNER_TEMP/$APK" \
+            --target "$GITHUB_SHA" --prerelease --latest=false \
+            --title "Roadprints 0.25.256 (302) Map stall diagnostic owner test" \
+            --notes-file "$RUNNER_TEMP/owner302-notes.md"
+          asset_url=$(gh api "repos/$GH_REPO/releases/tags/$TAG" \
+            --jq '.assets[] | select(.name=="Roadprints-0.25.256-302.apk" and .state=="uploaded") | .browser_download_url')
+          test "$asset_url" = "https://github.com/$GH_REPO/releases/download/$TAG/$APK"
+          curl --fail --silent --show-error --location --retry 3 --max-time 900 \
+            "$asset_url" --output "$RUNNER_TEMP/downloaded302.apk"
+          cmp "$RUNNER_TEMP/$APK" "$RUNNER_TEMP/downloaded302.apk"
+          printf '%s\\n' "Verified owner APK $asset_url" "SHA-256 $APK_SHA256" >> "$GITHUB_STEP_SUMMARY"
+      - name: Report release failure in PR
+        if: failure()
+        run: |
+          gh issue comment 335 --body "Build 302 source, tests, signing, emulator or publishing gate FAILED on commit $GITHUB_SHA. No owner APK should be installed. See the workflow's map-302-diagnostic-release-validation evidence." || true
