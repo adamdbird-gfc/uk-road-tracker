@@ -1045,13 +1045,19 @@ public class MapActivity extends Activity {
             boolean eligibleRoadTravel = AcceptedRoadRoute.eligibleMode(mode);
             if (local == null && eligibleRoadTravel) output.localCoverageDegraded = true;
             if (local != null && eligibleRoadTravel) {
+                RoadReference.Statistics referenceBefore = local.referenceStatistics();
                 long started = System.nanoTime();
                 LocalRoadCoverage.Prepared coverage = local.contribution(record);
                 long contributionElapsed = (System.nanoTime() - started) / 1_000_000L;
                 if (contributionElapsed >= 1500) {
+                    RoadReference.Statistics referenceAfter = local.referenceStatistics();
                     PerformanceDiagnostics.timing("map_slow_contribution", contributionElapsed,
                             "processed=" + counts[0] + " mode=" + (roadModeIndex == 1 ? "foot" : roadModeIndex == 2 ? "cycle" : "road")
-                                    + " held=" + local.held);
+                                    + " held=" + local.held
+                                    + " tile_decodes=" + (referenceAfter.decodes() - referenceBefore.decodes())
+                                    + " tile_hits=" + (referenceAfter.hits() - referenceBefore.hits())
+                                    + " nearby_queries=" + (referenceAfter.queries() - referenceBefore.queries())
+                                    + " candidate_edges=" + (referenceAfter.candidates() - referenceBefore.candidates()));
                 }
                 String journeyId = journey.optString("journey_id");
                 if (coverage != null && !journeyId.isEmpty()) {
