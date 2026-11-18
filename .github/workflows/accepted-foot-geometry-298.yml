@@ -57,6 +57,40 @@ jobs:
                       assert len(data)==size
                       w.write(data)
           PY
+      - name: Audit actual packaged major-road labels without expanding the archive
+        run: |
+          python - <<'PY'
+          import gzip,os,pathlib,re,struct
+          source=pathlib.Path("android-prototype/app/src/main/assets/uk-road-reference-v1.bin").read_bytes()
+          count,=struct.unpack_from(">i",source,40)
+          edge=struct.Struct(">qqqiiiibbH")
+          major=named=numbered=unnamed=0
+          for i in range(count):
+              x,y,offset,size=struct.unpack_from(">iiii",source,44+i*16)
+              raw=gzip.decompress(source[offset:offset+size])
+              cursor=0
+              while cursor<len(raw):
+                  if cursor+edge.size>len(raw): raise ValueError("Truncated reference edge")
+                  row=edge.unpack_from(raw,cursor)
+                  cursor+=edge.size
+                  name_size=row[-1]
+                  if cursor+name_size>len(raw): raise ValueError("Truncated reference label")
+                  label=raw[cursor:cursor+name_size].decode("utf8",errors="replace")
+                  cursor+=name_size
+                  if row[-2]&1: continue
+                  major+=1
+                  if re.fullmatch(r"A[0-9]+[A-Za-z]?",label.strip()): numbered+=1
+                  elif label.strip(): named+=1
+                  else: unnamed+=1
+          report=(f"Stage 298 packaged sample ({count} Gravesend-region tiles): "
+                  f"non-local_edges={major} exact_A_labels={numbered} "
+                  f"named_or_other_labels={named} blank_labels={unnamed}. "
+                  "Named/blank labels cannot be assumed to carry an A-road reference.")
+          print(report)
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a") as out: out.write(report+"\\n")
+          with open(os.environ["RUNNER_TEMP"]+"/major-reference-audit.txt","w") as out: out.write(report)
+          PY
+          gh pr comment 332 --body-file "$RUNNER_TEMP/major-reference-audit.txt" || true
       - uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: '8.10'
