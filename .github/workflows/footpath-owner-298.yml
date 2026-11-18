@@ -17,7 +17,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   validate-generate-and-release:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 240
     env:
       GH_TOKEN: ${{ github.token }}
@@ -92,28 +92,18 @@ jobs:
         run: |
           set -euo pipefail
           python -m pip install --disable-pip-version-check 'osmium>=4,<5'
-          # Use only Geofabrik-hosted UK extracts; never silently change region.
-          # The alternate hostname offers an independent route when the primary
-          # endpoint refuses connections from a GitHub-hosted runner.
-          downloaded=false
-          for source_url in \
-            https://download.geofabrik.de/europe/united-kingdom-latest.osm.pbf \
-            https://download-ext2.geofabrik.de/europe/united-kingdom-latest.osm.pbf; do
-            echo "Trying UK OSM source: $source_url"
-            rm -f "$RUNNER_TEMP/uk-source.osm.pbf"
-            if curl --ipv4 --fail --location --retry 3 --retry-all-errors --retry-delay 10 \
-              --connect-timeout 30 --max-time 3600 \
-              "$source_url" --output "$RUNNER_TEMP/uk-source.osm.pbf" \
-              && test "$(stat -c%s "$RUNNER_TEMP/uk-source.osm.pbf")" -gt 500000000; then
-              export ROADPRINTS_OSM_SOURCE_URL="$source_url"
-              downloaded=true
-              break
-            fi
-          done
-          if [ "$downloaded" != true ]; then
-            echo "::error::Both Geofabrik UK extract endpoints failed; no release will be published."
-            exit 1
-          fi
+          # Download only the verified Geofabrik United Kingdom PBF.
+          # Do not substitute a smaller country/region or unverified mirror.
+          source_url=https://download.geofabrik.de/europe/united-kingdom-latest.osm.pbf
+          export ROADPRINTS_OSM_SOURCE_URL="$source_url"
+          echo "Geofabrik DNS records:"
+          getent ahostsv4 download.geofabrik.de || true
+          curl --ipv4 --fail --location --retry 12 --retry-all-errors \
+            --retry-delay 30 --retry-max-time 2400 --connect-timeout 30 --max-time 3600 \
+            --continue-at - "$source_url" --output "$RUNNER_TEMP/uk-source.osm.pbf" || {
+              echo "::error::Verified UK Geofabrik source unavailable; release blocked."
+              exit 1
+            }
           test "$(stat -c%s "$RUNNER_TEMP/uk-source.osm.pbf")" -gt 500000000
           sha256sum "$RUNNER_TEMP/uk-source.osm.pbf" | tee "$RUNNER_TEMP/uk-source.sha256"
           df -h .
