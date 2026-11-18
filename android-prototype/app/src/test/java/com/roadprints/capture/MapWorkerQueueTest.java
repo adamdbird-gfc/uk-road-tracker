@@ -4,6 +4,8 @@ import static org.junit.Assert.*;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Test;
@@ -71,7 +73,10 @@ public final class MapWorkerQueueTest {
     @Test public void cancellingMapWaitingForArchiveLockDoesNotRunItsPreparation() throws Exception {
         CountDownLatch lockAcquired = new CountDownLatch(1);
         CountDownLatch releaseLock = new CountDownLatch(1);
-        Future<?> otherScreen = ScreenDataLoader.submit(() -> {
+        // Isolate the competing screen from the shared general-purpose executor;
+        // this test is specifically about the archive lock and Map cancellation.
+        ExecutorService otherScreenExecutor = Executors.newSingleThreadExecutor();
+        Future<?> otherScreen = otherScreenExecutor.submit(() -> {
             try {
                 ScreenDataLoader.prepareArchive(() -> {
                     lockAcquired.countDown();
@@ -115,6 +120,7 @@ public final class MapWorkerQueueTest {
             releaseLock.countDown();
             if (cancelled != null) cancelled.cancel(true);
             otherScreen.cancel(true);
+            otherScreenExecutor.shutdownNow();
         }
     }
 
