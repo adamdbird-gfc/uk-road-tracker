@@ -138,8 +138,23 @@ final class RailwayTrialWorker {
 
     // Runs before a foreground archive allocation. Any running batch sees the
     // preparation flag and yields at its normal cancellation checkpoints.
+    // Screen archive work is interactive. Never wait without a bound for a
+    // background railway scan or its SQLite resources to become available.
+    // The worker already checks ScreenDataLoader.preparingArchive() and yields
+    // at cancellation checkpoints. A stalled railway query must not stall Map.
     static void releaseCatalogueForScreen() throws Exception {
-        WORK.submit(RailwayTrialWorker::closeCatalogue).get();
+        Future<?> close = WORK.submit(RailwayTrialWorker::closeCatalogue);
+        long started = SystemClock.elapsedRealtime();
+        try {
+            close.get(1500, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException busy) {
+            // Do not interrupt a railway write: it can finish safely in the
+            // background while interactive archive preparation proceeds.
+            close.cancel(false);
+            PerformanceDiagnostics.timing("railway_catalogue_release_timeout",
+                    SystemClock.elapsedRealtime() - started, "screen=archive");
+            Log.w(TAG, "Railway catalogue release exceeded screen wait budget");
+        }
     }
 
     private static void schedule(Context app) {

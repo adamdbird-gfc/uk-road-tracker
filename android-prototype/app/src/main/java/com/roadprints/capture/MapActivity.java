@@ -221,7 +221,10 @@ public class MapActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        RailwayTrialWorker.resume(this);
+        // Map navigation must not start historical railway scans while the
+        // full archive and national road network are being prepared.
+        // Journey-detail screens can resume the railway worker independently.
+        RailwayTrialWorker.pause();
         navigation.resume(this);if(hasDisplayedMap&&mapView!=null){navigation.frame(mapView,"first_map","cache=retained current="+(displayedMapRevision==mapDataRevision()));if(displayedMapRevision==mapDataRevision())navigation.frame(mapView,"ready","cache=retained");}
         active = true;
         startLocateAfterPermission();
