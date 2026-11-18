@@ -45,7 +45,8 @@ final class LocalRoadNetwork {
         final double length;
         final int mm, roadClass;
         final Integer direction;
-        final boolean eligible;
+        final boolean eligible, footOnly;
+        final String roadRef;
 
         Edge(long way, long from, long to, String label, Point a, Point b,
              Integer direction, boolean eligible) {
@@ -55,6 +56,14 @@ final class LocalRoadNetwork {
 
         Edge(long way, long from, long to, String label, Point a, Point b,
              Integer direction, boolean eligible, int millimetres, int roadClass) {
+            this(way, from, to, label, a, b, direction, eligible, millimetres, roadClass, "", false);
+        }
+
+        Edge(long way, long from, long to, String label, Point a, Point b,
+             Integer direction, boolean eligible, int millimetres, int roadClass,
+             String roadRef, boolean footOnly) {
+            this.roadRef = roadRef == null ? "" : roadRef;
+            this.footOnly = footOnly;
             this.way = way;
             this.from = from;
             this.to = to;
