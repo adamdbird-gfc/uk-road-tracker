@@ -266,7 +266,7 @@ final class ARoadProgressCalculator {
             if (edge.eligible || edge.mm <= 0 || edge.length <= 0) continue;
             // A street name or an unknown class cannot be converted to A-road
             // completion. The reference must explicitly identify the A road.
-            String ref = normalize(edge.label);
+            String ref = normalize(edge.roadRef.isEmpty() ? edge.label : edge.roadRef);
             if (!ref.matches("A[0-9]+[A-Z]?")) continue;
             double lon = LocalRoadNetwork.ukLongitude(edge.a);
             double lat = LocalRoadNetwork.ukLatitude(edge.a);
