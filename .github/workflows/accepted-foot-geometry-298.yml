@@ -1,0 +1,88 @@
+name: Roadprints 298 canonical walking geometry verification
+on:
+  push:
+    branches: [feat/accepted-foot-major-sections-298]
+    paths:
+      - .github/workflows/accepted-foot-geometry-298.yml
+      - android-prototype/**
+  workflow_dispatch:
+permissions:
+  contents: read
+  pull-requests: write
+concurrency:
+  group: accepted-foot-298-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  focused-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: adamdbird-gfc/uk-road-tracker
+      JAVA_TOOL_OPTIONS: -XX:TieredStopAtLevel=1
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Restore signed build 297 reference assets
+        run: |
+          set -euo pipefail
+          gh release download roadprints-0.25.251-297 --pattern Roadprints-0.25.251-297.apk --output "$RUNNER_TEMP/build297.apk"
+          assets=android-prototype/app/src/main/assets
+          for asset in historic-counties/boundaries.bin railway/national.json railway/national.sqlite.gzip; do
+            unzip -p "$RUNNER_TEMP/build297.apk" "assets/$asset" > "$assets/$asset"
+          done
+          unzip -p "$RUNNER_TEMP/build297.apk" assets/uk-road-reference-v1.bin > "$RUNNER_TEMP/uk-road-reference-v1.bin"
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+      - name: Extract bounded original road reference tiles for unit tests
+        run: |
+          python - <<'PY'
+          import os,pathlib,struct
+          source=pathlib.Path(os.environ['RUNNER_TEMP'])/'uk-road-reference-v1.bin'
+          target=pathlib.Path('android-prototype/app/src/main/assets/uk-road-reference-v1.bin')
+          with source.open('rb') as r:
+              header=r.read(40)
+              assert header[:8]==b'RPRD0002'
+              count,=struct.unpack('>i',r.read(4))
+              index=list(struct.iter_unpack('>iiii',r.read(count*16)))
+              rows=[e for e in index if 17<=e[0]<=20 and 2570<=e[1]<=2573]
+              assert rows
+              with target.open('wb') as w:
+                  w.write(header+struct.pack('>i',len(rows)))
+                  offset=44+16*len(rows)
+                  for x,y,_,size in rows:
+                      w.write(struct.pack('>iiii',x,y,offset,size));offset+=size
+                  for _,_,original,size in rows:
+                      r.seek(original)
+                      data=r.read(size)
+                      assert len(data)==size
+                      w.write(data)
+          PY
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.10'
+      - name: Compile and run focused accepted geometry regression tests
+        run: |
+          set -euo pipefail
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:testDebugUnitTest \
+            --tests com.roadprints.capture.AcceptedRoadRouteTest \
+            --tests com.roadprints.capture.LocalRoadCoverageTest \
+            --tests com.roadprints.capture.CanonicalRoadAttributionTest \
+            2>&1 | tee "$RUNNER_TEMP/accepted-foot-298.log"
+      - name: Upload exact test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: accepted-foot-298-jvm-results
+          path: |
+            android-prototype/app/build/test-results/testDebugUnitTest/**
+            android-prototype/app/build/reports/tests/testDebugUnitTest/**
+          if-no-files-found: ignore
+      - name: Report failed validation on PR
+        if: failure()
+        run: |
+          {
+            echo "Stage 298 canonical-foot-road validation failed on commit $GITHUB_SHA."
+            echo
+            echo "See the **accepted-foot-298-jvm-results** action artifact and workflow logs."
+          } > "$RUNNER_TEMP/stage298-error.md"
+          gh pr comment 332 --body-file "$RUNNER_TEMP/stage298-error.md" || true
