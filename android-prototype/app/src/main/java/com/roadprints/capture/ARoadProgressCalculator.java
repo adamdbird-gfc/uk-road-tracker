@@ -248,6 +248,105 @@ final class ARoadProgressCalculator {
         }
         return true;
     }
+
+    // Accepted on-foot sections are attributed to a particular OSM physical
+    // road before entering this calculator. Do not run their coordinates through
+    // the ordinary 100m proximity matcher: a parallel carriageway could qualify.
+    private static final double ACCEPTED_FOOT_RADIUS_M = 2.5;
+    private static final double ACCEPTED_FOOT_HEADING_COS = .9;
+    private static final int MAX_ACCEPTED_FOOT_REFERENCE_CELLS = 160;
+
+    int addAcceptedFootSections(String journeyId,
+            Map<LocalRoadNetwork.Edge, List<LocalRoadNetwork.Interval>> sections) {
+        if (completedSummary != null) throw new IllegalStateException("Coverage is finished");
+        int credited = 0;
+        for (var entry : sections.entrySet()) {
+            checkInterrupted();
+            LocalRoadNetwork.Edge edge = entry.getKey();
+            if (edge.eligible || edge.mm <= 0 || edge.length <= 0) continue;
+            // A street name or an unknown class cannot be converted to A-road
+            // completion. The reference must explicitly identify the A road.
+            String ref = normalize(edge.label);
+            if (!ref.matches("A[0-9]+[A-Z]?")) continue;
+            double lon = LocalRoadNetwork.ukLongitude(edge.a);
+            double lat = LocalRoadNetwork.ukLatitude(edge.a);
+            String region = lon < -5.3 && lat > 53.9 && lat < 55.6 ? "NI" : "GB";
+            String id = region + ":" + ref;
+            Road road = roads.get(id);
+            if (road == null) road = new Road(id, ref, region);
+            Reference reference = reference(road);
+            if (reference == null) continue;
+            prepareGrid(reference);
+            int before = road.covered.size();
+            double matched = 0;
+            for (LocalRoadNetwork.Interval span : entry.getValue()) {
+                checkInterrupted();
+                if (span.start() < 0 || span.end() > edge.mm || span.start() >= span.end())
+                    continue;
+                LocalRoadNetwork.Point a = edge.at(span.start() / (double) edge.mm);
+                LocalRoadNetwork.Point b = edge.at(span.end() / (double) edge.mm);
+                double[] start = mercator(LocalRoadNetwork.ukLongitude(a), LocalRoadNetwork.ukLatitude(a));
+                double[] end = mercator(LocalRoadNetwork.ukLongitude(b), LocalRoadNetwork.ukLatitude(b));
+                if (matchAcceptedFootReference(reference, road, start, end))
+                    matched += (span.end() - span.start()) / 1000.0;
+            }
+            int added = road.covered.size() - before;
+            if (added > 0) {
+                roads.putIfAbsent(id, road);
+                road.matchedMetres += matched;
+                if (journeyId != null && !journeyId.isEmpty()) road.journeyIds.add(journeyId);
+                credited += added;
+            }
+        }
+        return credited;
+    }
+
+    /** Reference-anchor sampling is a subset of exact OSM-identified intervals. */
+    private static boolean matchAcceptedFootReference(Reference reference, Road road,
+                                                      double[] start, double[] end) {
+        double dx = end[0] - start[0], dy = end[1] - start[1], length2 = dx * dx + dy * dy;
+        if (!Double.isFinite(length2) || length2 < 1 || length2 > 4_000_000) return false;
+        long left = (long) Math.floor((Math.min(start[0], end[0]) - ACCEPTED_FOOT_RADIUS_M) / GRID_M);
+        long right = (long) Math.floor((Math.max(start[0], end[0]) + ACCEPTED_FOOT_RADIUS_M) / GRID_M);
+        long bottom = (long) Math.floor((Math.min(start[1], end[1]) - ACCEPTED_FOOT_RADIUS_M) / GRID_M);
+        long top = (long) Math.floor((Math.max(start[1], end[1]) + ACCEPTED_FOOT_RADIUS_M) / GRID_M);
+        if ((right - left + 1) * (top - bottom + 1) > MAX_ACCEPTED_FOOT_REFERENCE_CELLS)
+            return false;
+        int accepted = 0;
+        for (long x = left; x <= right; x++) for (long y = bottom; y <= top; y++) {
+            List<Anchor> anchors = reference.grid.get(spatialKey(x, y));
+            if (anchors == null) continue;
+            for (Anchor anchor : anchors) {
+                double projection = ((anchor.x - start[0]) * dx + (anchor.y - start[1]) * dy) / length2;
+                if (projection < 0 || projection > 1) continue;
+                double perpendicular = Math.abs(dx * (anchor.y - start[1]) -
+                        dy * (anchor.x - start[0])) / Math.sqrt(length2);
+                if (perpendicular > ACCEPTED_FOOT_RADIUS_M
+                        || !alignedWithReference(reference, anchor, dx, dy, length2))
+                    continue;
+                if (road.covered.add(anchor.id)) accepted++;
+            }
+        }
+        return accepted > 0;
+    }
+
+    private static boolean alignedWithReference(Reference reference, Anchor anchor,
+                                                double dx, double dy, double length2) {
+        int id = anchor.id;
+        for (int neighborId : new int[]{id - 1, id + 1}) {
+            if (neighborId < 0 || neighborId >= reference.anchors.size()) continue;
+            Anchor neighbor = reference.anchors.get(neighborId);
+            if (neighbor.component != anchor.component) continue;
+            double rx = neighbor.x - anchor.x, ry = neighbor.y - anchor.y;
+            double referenceLength2 = rx * rx + ry * ry;
+            if (referenceLength2 < 1 || referenceLength2 > 250 * 250) continue;
+            if (Math.abs((dx * rx + dy * ry) /
+                    Math.sqrt(length2 * referenceLength2)) >= ACCEPTED_FOOT_HEADING_COS)
+                return true;
+        }
+        return false;
+    }
+
     void addContribution(String journeyId,JSONArray rows) throws Exception {
         for(int i=0;i<rows.length();i++) {
             JSONObject row=rows.getJSONObject(i);String id=row.getString("id");
