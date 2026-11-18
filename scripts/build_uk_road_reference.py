@@ -9,8 +9,6 @@ from pathlib import Path
 import struct
 import tempfile
 
-import osmium
-
 from build_gravesend_coverage import ROAD_CLASSES, direction, eligible
 
 
@@ -46,7 +44,33 @@ class Tiles:
             handle.close()
 
 
+def encoded_flags(highway, tags, major):
+    local = eligible(tags) and not major if highway in ROAD_CLASSES else False
+    # Foot-only ways, including pedestrianised streets, must not be credited
+    # from driving. Keep inaccessible ways as competitors without awarding them.
+    walk_only = highway in FOOT_ONLY_CLASSES and all(
+        tags.get(key, "yes") not in {"no", "private"}
+        for key in ("access", "foot")
+    )
+    return (CLASSES.index(highway) << 2) | (2 if walk_only else 0) | int(local)
+
+
+def encoded_label(tags):
+    # Reference is independent of the human-readable street name. This was
+    # missing from v2 and made named A-roads impossible to reconcile safely.
+    name = (tags.get("name") or tags.get("ref") or "").replace(LABEL_SEPARATOR, " ")
+    road_ref = tags.get("ref", "").replace(LABEL_SEPARATOR, " ")
+    label = (name + LABEL_SEPARATOR + road_ref).encode("utf-8")
+    if len(label) > 1024:
+        label = (LABEL_SEPARATOR + road_ref).encode("utf-8")
+    if len(label) > 1024:
+        label = LABEL_SEPARATOR.encode("utf-8")
+    return label
+
+
 def collect(source, tiles):
+    import osmium
+
     for way in osmium.FileProcessor(source).with_locations("flex_mem").with_filter(
         osmium.filter.EntityFilter(osmium.osm.WAY)
     ):
@@ -59,20 +83,8 @@ def collect(source, tiles):
             ref.strip().startswith("A") and ref.strip()[1:2].isdigit()
             for ref in tags.get("ref", "").split(";")
         )
-        local = eligible(tags) and not major if highway in ROAD_CLASSES else False
-        # Dedicated pedestrian paths have their own physical identity. A drive
-        # must never credit these edges; the reader applies the mode gate.
-        walk_only = highway in FOOT_ONLY_CLASSES and all(
-            tags.get(key, "yes") not in {"no", "private"}
-            for key in ("access", "foot")
-        )
-        name = (tags.get("name") or tags.get("ref") or "").replace(LABEL_SEPARATOR, " ")
-        road_ref = tags.get("ref", "").replace(LABEL_SEPARATOR, " ")
-        label = (name + LABEL_SEPARATOR + road_ref).encode("utf-8")
-        if len(label) > 1024:
-            label = (LABEL_SEPARATOR + road_ref).encode("utf-8")
-        if len(label) > 1024:
-            label = LABEL_SEPARATOR.encode("utf-8")
+        flags = encoded_flags(highway, tags, major)
+        label = encoded_label(tags)
         nodes = list(way.nodes)
         repeats = Counter(tuple(sorted((a.ref, b.ref))) for a, b in zip(nodes, nodes[1:]))
         for a, b in zip(nodes, nodes[1:]):
@@ -89,8 +101,7 @@ def collect(source, tiles):
                 continue
             data = EDGE.pack(way.id, a.ref, b.ref, ax, ay, bx, by,
                              2 if travel_direction is None else travel_direction,
-                             (CLASSES.index(highway) << 2)
-                             | (2 if walk_only else 0) | int(local), len(label)) + label
+                             flags, len(label)) + label
             # Add the same physical edge to each intersecting tile, including the
             # attribution search halo. Identity and orientation are independent of tile.
             for x in range((min(ax, bx) - HALO) // TILE, (max(ax, bx) + HALO) // TILE + 1):
