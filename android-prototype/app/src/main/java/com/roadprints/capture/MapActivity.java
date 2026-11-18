@@ -75,6 +75,8 @@ public class MapActivity extends Activity {
     private java.util.concurrent.Future<?> mapPending;
     private Runnable mapDeadline;
     private long mapStartedAt;
+    private volatile String mapLoadStage = "idle";
+    private volatile long mapStageStartedAt;
     private View mapRecovery;
     static final long MAP_TIMEOUT_MS = 120_000; // Cold archive/reference preparation can legitimately exceed 30 seconds.
     interface MapRouteLoader {
@@ -512,8 +514,19 @@ public class MapActivity extends Activity {
         mapSubtitle.setOnClickListener(null);mapSubtitle.setText("Map refresh cancelled. Previous results retained.");setMapReady(hasDisplayedMap);
         android.util.Log.i("RoadprintsTiming","map_outcome=cancelled total_ms="+(android.os.SystemClock.elapsedRealtime()-mapStartedAt));
     }
+    private void markMapStage(String stage, long started) {
+        mapLoadStage = stage;
+        mapStageStartedAt = android.os.SystemClock.elapsedRealtime();
+        PerformanceDiagnostics.timing("map_stage", mapStageStartedAt - started,
+                "phase=" + stage + " request=" + mapLoadGeneration);
+    }
+
     private void mapFailure(int request,String message) {
         if(request!=mapLoadGeneration||isFinishing()||isDestroyed())return;
+        PerformanceDiagnostics.timing("map_timeout_stage",
+                android.os.SystemClock.elapsedRealtime() - mapStageStartedAt,
+                "phase=" + mapLoadStage + " total_ms="
+                        + (android.os.SystemClock.elapsedRealtime() - mapStartedAt));
         mapLoadGeneration++;cancelMapWork();hideMapLoading();mapLoadFailed=true;
         mapSubtitle.setText(message);mapSubtitle.setOnClickListener(v->retryMap());
         setMapReady(false);showMapRecovery(true);
@@ -581,6 +594,8 @@ public class MapActivity extends Activity {
             }
         }
         mapStartedAt=android.os.SystemClock.elapsedRealtime();
+        mapLoadStage="request";
+        mapStageStartedAt=mapStartedAt;
         loadingMapRevision = revision;
         if (cached != null) {
             PerformanceDiagnostics.timing("map_navigation", 0, "source=process_snapshot");
@@ -592,14 +607,18 @@ public class MapActivity extends Activity {
         mapDeadline=()->mapFailure(generation,"Loading took too long. Retry or Reset your filters.");
         mainHandler.postDelayed(mapDeadline,MAP_TIMEOUT_MS);
         final long queuedAt = android.os.SystemClock.elapsedRealtime();mapStartedAt=queuedAt;
+        PerformanceDiagnostics.timing("map_request_queued", 0, "generation=" + generation);
         mapPending=ScreenDataLoader.map(() -> {
+            markMapStage("worker_started", queuedAt);
             long workerStarted = android.os.SystemClock.elapsedRealtime();
             MapRoutes mapRoutes;
             boolean archivePrepared;
             PerformanceDiagnostics.HeapSample heap = new PerformanceDiagnostics.HeapSample();
             try (BetaMeasurement.Operation measurement = BetaMeasurement.operation(this, "map_data_load")) {
                 boolean[] fromArchive = {false};
+                markMapStage("archive_lock_wait", queuedAt);
                 mapRoutes = ScreenDataLoader.prepareArchive(() -> {
+                    markMapStage("archive_lock_acquired", queuedAt);
                     long cacheStarted = android.os.SystemClock.elapsedRealtime();
                     boolean diskCacheEligible = selection.isAll() && !skipDiskMapCache;
                     JSONObject saved = diskCacheEligible
@@ -614,9 +633,11 @@ public class MapActivity extends Activity {
                                     + " archive_wait_ms=" + (cacheStarted - workerStarted));
                     if (restored != null) return restored;
                     fromArchive[0] = true;
+                    markMapStage("archive_geometry_processing", queuedAt);
                     return mapRouteLoader.load(this, selection, today, zone);
                 });
                 archivePrepared = fromArchive[0];
+                markMapStage("archive_prepared", queuedAt);
                 if (Thread.currentThread().isInterrupted() || generation != mapLoadGeneration) return;
                 android.util.Log.i("RoadprintsTiming", "map_prepare_ms="+measurement.duration());
             } catch (Exception error) {
@@ -635,6 +656,7 @@ public class MapActivity extends Activity {
                     processMapCacheRevision = revision;
                 }
             }
+            markMapStage("render_path_preparation", queuedAt);
             long pathStarted=android.os.SystemClock.elapsedRealtime();
             PerformanceDiagnostics.ArchiveHeapSample pathHeap = new PerformanceDiagnostics.ArchiveHeapSample();
             for (java.util.List<JSONArray> lines : java.util.Arrays.asList(
@@ -646,6 +668,7 @@ public class MapActivity extends Activity {
             }
             PerformanceDiagnostics.timing("map_paths_worker",android.os.SystemClock.elapsedRealtime()-pathStarted,
                     "snapshot_points=" + mapRoutes.snapshotPoints() + " " + pathHeap.description());
+            markMapStage("render_queued", queuedAt);
             displayMapRoutes(mapRoutes, generation);
             // Publish usable geometry before optional JSON serialization/fsync. Cache work
             // must not hold the interactive map lane or delay the readiness transition.
@@ -676,6 +699,7 @@ public class MapActivity extends Activity {
         mainHandler.post(() -> {
             if (isFinishing() || isDestroyed() || generation != mapLoadGeneration) return;
             try {
+            markMapStage("render_started", mapStartedAt);
             long renderStarted = android.os.SystemClock.elapsedRealtime();
             hideMapLoading();
             mapSubtitle.setOnClickListener(null);
@@ -725,6 +749,7 @@ public class MapActivity extends Activity {
             displayedMapRevision = loadingMapRevision == Long.MIN_VALUE ? mapDataRevision() : loadingMapRevision;
             displayedFilters=mapFilters;hasDisplayedMap=true;mapLoadFailed=false;skipDiskMapCache=false;forceMapReload=false;
             completeMapWork();
+            markMapStage("ready", mapStartedAt);
             setMapReady(true);navigation.frame(mapView,"first_map","sections="+mapRoutes.sections.size());navigation.frame(mapView,"ready","sections="+mapRoutes.sections.size());
             android.util.Log.i("RoadprintsTiming","map_outcome=ready total_ms="+(android.os.SystemClock.elapsedRealtime()-mapStartedAt)+" selection="+filterKey(mapFilters));
             PerformanceDiagnostics.timing("map_render",android.os.SystemClock.elapsedRealtime()-renderStarted,"");
@@ -925,9 +950,19 @@ public class MapActivity extends Activity {
     private MapRoutes readMapRoutes(JourneyFilters selection, java.time.LocalDate today, java.time.ZoneId zone) throws Exception {
         MapRoutes output = new MapRoutes();
         long initialiseStarted=System.nanoTime();
+        long motorwayStarted = android.os.SystemClock.elapsedRealtime();
+        markMapStage("motorway_reference_initialising", mapStartedAt);
         MotorwayProgressCalculator motorwayCalculator =
                 new MotorwayProgressCalculator(getApplicationContext());
-        ARoadProgressCalculator aRoadCalculator = new ARoadProgressCalculator(getApplicationContext(), false);
+        PerformanceDiagnostics.timing("map_motorway_reference_init",
+                android.os.SystemClock.elapsedRealtime() - motorwayStarted, "");
+        long aRoadStarted = android.os.SystemClock.elapsedRealtime();
+        markMapStage("a_road_reference_initialising", mapStartedAt);
+        ARoadProgressCalculator aRoadCalculator =
+                new ARoadProgressCalculator(getApplicationContext(), false);
+        PerformanceDiagnostics.timing("map_a_road_reference_init",
+                android.os.SystemClock.elapsedRealtime() - aRoadStarted, "");
+        markMapStage("journey_records_initialising", mapStartedAt);
         PerformanceDiagnostics.timing("map_reference_init",(System.nanoTime()-initialiseStarted)/1_000_000,"");
         long evidenceStarted=System.nanoTime();
         long[] work=new long[3];int[] counts=new int[6];int[] unprocessedModes=new int[4];
@@ -939,9 +974,26 @@ public class MapActivity extends Activity {
         try (MapJourneyStore records = new MapJourneyStore(getApplicationContext());
              LocalRoadCoverage local = LocalRoadCoverage.open(getApplicationContext())) {
         output.localReferenceAvailable = local != null;
+        markMapStage("journey_records_scanning", mapStartedAt);
+        final long archiveScanStarted = android.os.SystemClock.elapsedRealtime();
+        final long[] lastProgressAt = {archiveScanStarted};
         records.forEach(() -> isDestroyed() || Thread.currentThread().isInterrupted(), record -> {
             JSONObject journey=record.header;
-            if (++counts[0] % 25 == 0) heap.sample();
+            ++counts[0];
+            // Report bounded progress without persisting IDs, route coordinates or
+            // titles. Detect a single expensive journey without treating it as
+            // evidence of faulty matching.
+            long progressAt = android.os.SystemClock.elapsedRealtime();
+            if (counts[0] == 1 || counts[0] % 100 == 0
+                    || progressAt - lastProgressAt[0] >= 10_000) {
+                PerformanceDiagnostics.timing("map_archive_progress",
+                        progressAt - archiveScanStarted,
+                        "processed=" + counts[0] + " local_calculated=" + (local == null ? 0 : local.calculated)
+                                + " local_reused=" + (local == null ? 0 : local.reused)
+                                + " local_held=" + (local == null ? 0 : local.held));
+                lastProgressAt[0] = progressAt;
+            }
+            if (counts[0] % 25 == 0) heap.sample();
             long filterStarted=System.nanoTime();
             boolean selected=selection.matches(journey,today,zone);
             work[0]+=System.nanoTime()-filterStarted;
@@ -995,6 +1047,12 @@ public class MapActivity extends Activity {
             if (local != null && eligibleRoadTravel) {
                 long started = System.nanoTime();
                 LocalRoadCoverage.Prepared coverage = local.contribution(record);
+                long contributionElapsed = (System.nanoTime() - started) / 1_000_000L;
+                if (contributionElapsed >= 1500) {
+                    PerformanceDiagnostics.timing("map_slow_contribution", contributionElapsed,
+                            "processed=" + counts[0] + " mode=" + (roadModeIndex == 1 ? "foot" : roadModeIndex == 2 ? "cycle" : "road")
+                                    + " held=" + local.held);
+                }
                 String journeyId = journey.optString("journey_id");
                 if (coverage != null && !journeyId.isEmpty()) {
                     local.add(journeyId, coverage.spans());

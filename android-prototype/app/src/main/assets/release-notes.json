@@ -2,6 +2,22 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.254",
+      "version_code": 300,
+      "release_date": "2026-11-18",
+      "since": "0.25.253",
+      "changes": [
+        {
+          "title": "Identify why the overview Map stalls",
+          "description": "Records Map worker queue, archive lock, coverage preparation and rendering stages, plus the phase at timeout. Retains the last timeout and archive wait in performance diagnostics."
+        },
+        {
+          "title": "Preserve journey records and cumulative network",
+          "description": "No changes to accepted journey evidence, manual route corrections or national road and pedestrian reference. Railway protection from Build 299 remains in place."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.253",
       "version_code": 299,
       "release_date": "2026-11-18",

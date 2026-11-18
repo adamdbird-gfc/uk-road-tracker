@@ -44,10 +44,18 @@ final class ScreenDataLoader {
     static boolean preparingArchive() { return preparingArchive; }
 
     static <T> T prepareArchive(java.util.concurrent.Callable<T> prepare) throws Exception {
+        long waitedAt = android.os.SystemClock.elapsedRealtime();
         ARCHIVE_PREPARATION.lockInterruptibly();
+        long acquiredAt = android.os.SystemClock.elapsedRealtime();
         preparingArchive = true;
+        PerformanceDiagnostics.timing("archive_prepare_lock_wait", acquiredAt - waitedAt,
+                "thread=" + Thread.currentThread().getName());
         try {
+            long railwayAt = android.os.SystemClock.elapsedRealtime();
             RailwayTrialWorker.releaseCatalogueForScreen();
+            PerformanceDiagnostics.timing("archive_prepare_railway_release",
+                    android.os.SystemClock.elapsedRealtime() - railwayAt,
+                    "thread=" + Thread.currentThread().getName());
             return prepare.call();
         } finally {
             preparingArchive = false;
