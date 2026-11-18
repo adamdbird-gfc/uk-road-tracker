@@ -56,7 +56,8 @@ print("Mixed-mode integrated attribution",values,flush=True)
 assert values.get("calculated",0)+values.get("reused",0)==4, values
 assert values.get("held")==0 and values.get("budget_holds")==0,values
 assert values.get("sections",0)>0 and values.get("lines",0)>0,values
-assert values.get("unique_mm",0)>0,values\nassert "foot_major_intervals=" in rows[-1], "Missing versioned major-road section metric"
+assert values.get("unique_mm",0)>0,values
+assert "foot_major_intervals=" in rows[-1], "Missing versioned major-road section metric"
 assert "foot_unresolved_mm=" in rows[-1], "Missing on-foot attribution breakdown"
 assert "foot_unresolved_reasons=" in rows[-1], "Missing diagnostic reason categories"
 assert "major_or_other_mm=" in rows[-1], "Missing major-road classification"
