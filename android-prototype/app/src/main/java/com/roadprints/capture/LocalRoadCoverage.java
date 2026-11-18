@@ -503,9 +503,13 @@ final class LocalRoadCoverage implements AutoCloseable {
             double lon = section.first.optDouble(0), lat = section.first.optDouble(1);
             double dx = section.last.optDouble(0) - lon;
             double dy = section.last.optDouble(1) - lat;
-            return new JSONArray()
-                    .put(new JSONArray().put(lon + dx * fractionStart).put(lat + dy * fractionStart))
-                    .put(new JSONArray().put(lon + dx * fractionEnd).put(lat + dy * fractionEnd));
+            try {
+                return new JSONArray()
+                        .put(new JSONArray().put(lon + dx * fractionStart).put(lat + dy * fractionStart))
+                        .put(new JSONArray().put(lon + dx * fractionEnd).put(lat + dy * fractionEnd));
+            } catch (org.json.JSONException invalid) {
+                throw new IllegalStateException("Invalid derived road coordinate", invalid);
+            }
         }
 
         double longitude(boolean last) {
