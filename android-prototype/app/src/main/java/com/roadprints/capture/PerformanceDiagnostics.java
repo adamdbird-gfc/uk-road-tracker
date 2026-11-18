@@ -137,7 +137,8 @@ final class PerformanceDiagnostics {
         // Important coverage diagnostics must survive the 16KB rolling log.
         // Otherwise a large map can rotate the relevant attribution counters out
         // before the owner opens Utilities to copy a report.
-        if (value.startsWith("map_mode_coverage ") || value.startsWith("map_local_roads "))
+        if (value.startsWith("map_mode_coverage ") || value.startsWith("map_local_roads ")
+                || value.startsWith("map_timeout_stage ") || value.startsWith("archive_prepare_lock_wait "))
             edit.putString(value.substring(0, value.indexOf(' ')), entry.trim());
         edit.apply();
     }
@@ -153,8 +154,12 @@ final class PerformanceDiagnostics {
         android.content.SharedPreferences prefs = context.getSharedPreferences(PREFS,0);
         String latestModes = prefs.getString("map_mode_coverage", "");
         String latestRoads = prefs.getString("map_local_roads", "");
+        String latestTimeout = prefs.getString("map_timeout_stage", "");
+        String latestArchiveWait = prefs.getString("archive_prepare_lock_wait", "");
         String summary = (latestModes.isEmpty() ? "" : latestModes + "\n")
-                + (latestRoads.isEmpty() ? "" : latestRoads + "\n");
+                + (latestRoads.isEmpty() ? "" : latestRoads + "\n")
+                + (latestTimeout.isEmpty() ? "" : latestTimeout + "\n")
+                + (latestArchiveWait.isEmpty() ? "" : latestArchiveWait + "\n");
         String details = summary + timings;
         return bandwidth.isEmpty() ? details : bandwidth + "\n" + details;
     }
