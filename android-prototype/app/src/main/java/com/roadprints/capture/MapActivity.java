@@ -975,9 +975,25 @@ public class MapActivity extends Activity {
              LocalRoadCoverage local = LocalRoadCoverage.open(getApplicationContext())) {
         output.localReferenceAvailable = local != null;
         markMapStage("journey_records_scanning", mapStartedAt);
+        final long archiveScanStarted = android.os.SystemClock.elapsedRealtime();
+        final long[] lastProgressAt = {archiveScanStarted};
         records.forEach(() -> isDestroyed() || Thread.currentThread().isInterrupted(), record -> {
             JSONObject journey=record.header;
-            if (++counts[0] % 25 == 0) heap.sample();
+            ++counts[0];
+            // Report bounded progress without persisting IDs, route coordinates or
+            // titles. Detect a single expensive journey without treating it as
+            // evidence of faulty matching.
+            long progressAt = android.os.SystemClock.elapsedRealtime();
+            if (counts[0] == 1 || counts[0] % 100 == 0
+                    || progressAt - lastProgressAt[0] >= 10_000) {
+                PerformanceDiagnostics.timing("map_archive_progress",
+                        progressAt - archiveScanStarted,
+                        "processed=" + counts[0] + " local_calculated=" + (local == null ? 0 : local.calculated)
+                                + " local_reused=" + (local == null ? 0 : local.reused)
+                                + " local_held=" + (local == null ? 0 : local.held));
+                lastProgressAt[0] = progressAt;
+            }
+            if (counts[0] % 25 == 0) heap.sample();
             long filterStarted=System.nanoTime();
             boolean selected=selection.matches(journey,today,zone);
             work[0]+=System.nanoTime()-filterStarted;
@@ -1031,6 +1047,12 @@ public class MapActivity extends Activity {
             if (local != null && eligibleRoadTravel) {
                 long started = System.nanoTime();
                 LocalRoadCoverage.Prepared coverage = local.contribution(record);
+                long contributionElapsed = (System.nanoTime() - started) / 1_000_000L;
+                if (contributionElapsed >= 1500) {
+                    PerformanceDiagnostics.timing("map_slow_contribution", contributionElapsed,
+                            "processed=" + counts[0] + " mode=" + (roadModeIndex == 1 ? "foot" : roadModeIndex == 2 ? "cycle" : "road")
+                                    + " held=" + local.held);
+                }
                 String journeyId = journey.optString("journey_id");
                 if (coverage != null && !journeyId.isEmpty()) {
                     local.add(journeyId, coverage.spans());
