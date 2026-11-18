@@ -33,6 +33,50 @@ public class LocalRoadCoverageTest {
     private static final String END = "2026-11-15T12:10:00Z";
     private static final long TIME = Instant.parse(START).toEpochMilli();
 
+    @Test public void ineligibleGeometryIsPersistedAsHeldWithoutGrantingPhysicalCoverage()
+            throws Exception {
+        Context context = RuntimeEnvironment.getApplication();
+        File source = File.createTempFile("held-projection-305-", ".json", context.getCacheDir());
+        // An accepted record with no valid matched geometry is an assessment
+        // hold, never zero-distance completion or a successful road match.
+        JSONObject journey = new JSONObject().put("mode", "driving")
+                .put("processing_status", "complete")
+                .put("processing_result", new JSONObject().put("status", "ok")
+                        .put("geojson", new JSONObject().put("features", new JSONArray())));
+        try {
+            Files.write(source.toPath(), journey.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            byte[] original = Files.readAllBytes(source.toPath());
+            try (MapJourneyStore store = new MapJourneyStore(context);
+                 LocalRoadCoverage coverage = LocalRoadCoverage.open(context)) {
+                assertNotNull(coverage);
+                MapJourneyStore.Record record = store.new Record(source, JourneyStore.fileToken(source),
+                        new JSONObject().put("mode", "driving"), null, true);
+                assertNull(coverage.contribution(record));
+                assertEquals(1, coverage.held);
+                assertEquals(1, coverage.calculated);
+                assertEquals(0, coverage.reused);
+                assertTrue(coverage.failureBreakdown().contains("cached:no_accepted_projection"));
+                // A second attempt in the same worker must not repeat geometry evaluation.
+                assertNull(coverage.contribution(record));
+                assertEquals(2, coverage.held);
+                assertEquals(1, coverage.calculated);
+                assertEquals(1, coverage.reused);
+            }
+            // Verify durable cache reuse after the worker is cancelled/closed.
+            try (MapJourneyStore store = new MapJourneyStore(context);
+                 LocalRoadCoverage coverage = LocalRoadCoverage.open(context)) {
+                MapJourneyStore.Record record = store.new Record(source, JourneyStore.fileToken(source),
+                        new JSONObject().put("mode", "driving"), null, true);
+                assertNull(coverage.contribution(record));
+                assertEquals(1, coverage.reused);
+                assertEquals(1, coverage.held);
+            }
+            assertArrayEquals(original, Files.readAllBytes(source.toPath()));
+        } finally {
+            Files.deleteIfExists(source.toPath());
+        }
+    }
+
     @Test public void acceptedWalkingRouteRetainsReasonForUnresolvedCoverageWithoutInventingRoad()
             throws Exception {
         Context context = RuntimeEnvironment.getApplication();
