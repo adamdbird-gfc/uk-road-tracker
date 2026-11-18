@@ -2,6 +2,26 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.259",
+      "version_code": 305,
+      "release_date": "2026-11-18",
+      "since": "0.25.258",
+      "changes": [
+        {
+          "title": "Stop abandoned Map scans competing with other screens",
+          "description": "Cancels pending and running Map work when leaving the overview; keeps only the newest queued Map request and releases shared archive preparation when cancelled."
+        },
+        {
+          "title": "Reuse deterministic held-road assessments",
+          "description": "Retains source/revision-bound no-projection and oversized-interval hold results, preventing repeated expensive assessment without crediting unverified road sections; rechecks changed journey evidence."
+        },
+        {
+          "title": "Explain held-road contributions in Map diagnostics",
+          "description": "Adds anonymised held reasons to slow contribution timing reports. Full-archive Map timeout may still occur while uncached journeys are assessed."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.258",
       "version_code": 304,
       "release_date": "2026-11-18",
