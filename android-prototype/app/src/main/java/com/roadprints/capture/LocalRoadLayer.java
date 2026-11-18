@@ -3,27 +3,25 @@ package com.roadprints.capture;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 
-import org.json.JSONArray;
-
 import java.util.List;
 
 /** One compact projected line array, prepared off the UI thread for drawing and hit tests. */
 final class LocalRoadLayer {
-    record Hit(JSONArray line, double fraction, double distance, double x, double y) {}
+    record Hit(LocalRoadCoverage.Line line, double fraction, double distance, double x, double y) {}
 
-    private final List<JSONArray> lines;
+    private final List<LocalRoadCoverage.Line> lines;
     private final double[] coordinates;
     final double west, south, east, north;
 
-    LocalRoadLayer(List<JSONArray> lines) {
+    LocalRoadLayer(List<LocalRoadCoverage.Line> lines) {
         this.lines = lines;
         coordinates = new double[lines.size() * 4];
         double minLon = Double.POSITIVE_INFINITY, minLat = Double.POSITIVE_INFINITY;
         double maxLon = Double.NEGATIVE_INFINITY, maxLat = Double.NEGATIVE_INFINITY;
         for (int i = 0; i < lines.size(); i++) {
             for (int endpoint = 0; endpoint < 2; endpoint++) {
-                JSONArray point = lines.get(i).optJSONArray(endpoint);
-                double lon = point.optDouble(0), lat = point.optDouble(1);
+                LocalRoadCoverage.Line line = lines.get(i);
+                double lon = line.longitude(endpoint == 1), lat = line.latitude(endpoint == 1);
                 minLon = Math.min(minLon, lon);
                 minLat = Math.min(minLat, lat);
                 maxLon = Math.max(maxLon, lon);
