@@ -361,11 +361,11 @@ public class LocalRoadCoverageTest {
             field.setAccessible(true);
             CompactJourneyCache cache = (CompactJourneyCache) field.get(coverage);
             cache.get(source, file -> new JSONObject());
-            assertNull(coverage.contribution(record));
-            assertEquals(1, coverage.held);
-            assertEquals(0, coverage.reused);
-            assertTrue(coverage.failureBreakdown().contains("decode_contribution"));
+            // Legacy empty rows now repair during the first visit, rather
+            // than forcing an extra full Map retry to recover.
             assertFalse(coverage.contribution(record).spans().isEmpty());
+            assertEquals(0, coverage.held);
+            assertEquals(0, coverage.reused);
             assertEquals(1, coverage.calculated);
 
             JSONObject valid = cache.get(source, file -> {
@@ -375,7 +375,7 @@ public class LocalRoadCoverageTest {
             cache.invalidate(source);
             cache.get(source, file -> valid);
             assertNull(coverage.contribution(record));
-            assertEquals(2, coverage.held);
+            assertEquals(1, coverage.held);
             assertFalse(coverage.contribution(record).spans().isEmpty());
             assertEquals(2, coverage.calculated);
             assertArrayEquals(original, Files.readAllBytes(source.toPath()));
