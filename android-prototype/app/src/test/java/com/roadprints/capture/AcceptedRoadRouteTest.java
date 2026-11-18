@@ -64,12 +64,18 @@ public class AcceptedRoadRouteTest {
                 var complete = AcceptedRoadRoute.project(reference, journey);
                 assertEquals(2, complete.sections().size());
                 assertTrue(complete.majorOrOtherMm() > 0);
+                assertEquals(1, complete.majorSections().size());
+                Edge major = complete.majorSections().keySet().iterator().next();
+                assertFalse(major.eligible);
+                assertEquals(3L, major.way);
+                assertEquals(1, complete.majorSections().get(major).size());
                 assertEquals(0, complete.unresolvedMm());
                 assertEquals(1, complete.residual().size());
                 journey.put("journey_corrections", new JSONObject().put("removed_matched_segments", new JSONArray().put(1)));
                 var corrected = AcceptedRoadRoute.project(reference, journey);
                 assertEquals(1, corrected.sections().size());
                 assertTrue(corrected.excludedMm() > 0);
+                assertTrue(corrected.majorSections().isEmpty());
                 var remaining = corrected.sections().entrySet().iterator().next();
                 assertEquals(1, remaining.getKey().way);
                 assertTrue(remaining.getValue().get(0).start() > 0);
@@ -100,6 +106,7 @@ public class AcceptedRoadRouteTest {
                 assertNotNull(walked);
                 assertEquals(driven.sections().keySet(), walked.sections().keySet());
                 assertEquals(driven.sections(), walked.sections());
+                assertEquals(driven.majorSections(), walked.majorSections());
                 walk.put("journey_corrections", new JSONObject()
                         .put("removed_matched_segments", new JSONArray().put(0)));
                 var edited = AcceptedRoadRoute.project(reference, walk);
