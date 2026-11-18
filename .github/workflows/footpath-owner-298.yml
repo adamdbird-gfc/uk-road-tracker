@@ -92,9 +92,28 @@ jobs:
         run: |
           set -euo pipefail
           python -m pip install --disable-pip-version-check 'osmium>=4,<5'
-          source_url=https://download.geofabrik.de/europe/united-kingdom-latest.osm.pbf
-          curl --fail --location --retry 5 --retry-all-errors --connect-timeout 30 --max-time 3600 \
-            "$source_url" --output "$RUNNER_TEMP/uk-source.osm.pbf"
+          # Use only Geofabrik-hosted UK extracts; never silently change region.
+          # The alternate hostname offers an independent route when the primary
+          # endpoint refuses connections from a GitHub-hosted runner.
+          downloaded=false
+          for source_url in \
+            https://download.geofabrik.de/europe/united-kingdom-latest.osm.pbf \
+            https://download-ext2.geofabrik.de/europe/united-kingdom-latest.osm.pbf; do
+            echo "Trying UK OSM source: $source_url"
+            rm -f "$RUNNER_TEMP/uk-source.osm.pbf"
+            if curl --ipv4 --fail --location --retry 3 --retry-all-errors --retry-delay 10 \
+              --connect-timeout 30 --max-time 3600 \
+              "$source_url" --output "$RUNNER_TEMP/uk-source.osm.pbf" \
+              && test "$(stat -c%s "$RUNNER_TEMP/uk-source.osm.pbf")" -gt 500000000; then
+              echo "ROADPRINTS_OSM_SOURCE_URL=$source_url" >> "$GITHUB_ENV"
+              downloaded=true
+              break
+            fi
+          done
+          if [ "$downloaded" != true ]; then
+            echo "::error::Both Geofabrik UK extract endpoints failed; no release will be published."
+            exit 1
+          fi
           test "$(stat -c%s "$RUNNER_TEMP/uk-source.osm.pbf")" -gt 500000000
           sha256sum "$RUNNER_TEMP/uk-source.osm.pbf" | tee "$RUNNER_TEMP/uk-source.sha256"
           df -h .
@@ -106,7 +125,7 @@ jobs:
               for chunk in iter(lambda:f.read(8*1024*1024),b""):h.update(chunk)
           manifest={"format":"roadprints-uk-pedestrian-reference-v3",
               "source":"Geofabrik / OpenStreetMap contributors",
-              "source_url":"https://download.geofabrik.de/europe/united-kingdom-latest.osm.pbf",
+              "source_url":os.environ["ROADPRINTS_OSM_SOURCE_URL"],
               "source_sha256":h.hexdigest(),"source_bytes":source.stat().st_size,
               "downloaded_at_utc":datetime.datetime.now(datetime.timezone.utc).isoformat(),
               "source_license":"OpenStreetMap ODbL 1.0"}
