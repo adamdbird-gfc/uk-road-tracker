@@ -1016,6 +1016,7 @@ public class MapActivity extends Activity {
                             + " unresolved_reasons=" + local.unresolvedLegReasons
                             + " foot_unresolved_mm=" + local.footUnresolvedMm
                             + " foot_major_or_other_mm=" + local.footMajorOrOtherMm
+                            + " foot_major_intervals=" + local.footMajorIntervals
                             + " foot_unresolved_reasons=" + local.footUnresolvedLegReasons
                             + (local.held == 0 ? "" : " hold_reasons=" + local.failureBreakdown()));
         }
