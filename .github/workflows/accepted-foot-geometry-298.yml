@@ -63,11 +63,29 @@ jobs:
       - name: Compile and run focused accepted geometry regression tests
         run: |
           set -euo pipefail
-          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:testDebugUnitTest \
+          if gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:testDebugUnitTest \
             --tests com.roadprints.capture.AcceptedRoadRouteTest \
             --tests com.roadprints.capture.LocalRoadCoverageTest \
+            --tests com.roadprints.capture.ARoadProgressCalculatorTest \
             --tests com.roadprints.capture.CanonicalRoadAttributionTest \
-            2>&1 | tee "$RUNNER_TEMP/accepted-foot-298.log"
+            > "$RUNNER_TEMP/accepted-foot-298.log" 2>&1; then
+            tail -n 40 "$RUNNER_TEMP/accepted-foot-298.log"
+          else
+            {
+              printf 'Build 298 focused tests failed on %s\\n\\n' "$GITHUB_SHA"
+              echo '~~~text'
+              grep -nE '(^> Task .*FAILED|^FAILURE:|^\\* What went wrong:|^Execution failed|^> .*[Ff]ailed|^Caused by:|^.*(AssertionError|Compilation failed|error: |No tests found|tests completed|There were failing tests))' "$RUNNER_TEMP/accepted-foot-298.log" | head -50 || true
+              echo '~~~'
+              echo
+              echo 'Last 60 log lines:'
+              echo '~~~text'
+              tail -n 60 "$RUNNER_TEMP/accepted-foot-298.log"
+              echo '~~~'
+            } > "$RUNNER_TEMP/stage298-error.md"
+            cat "$RUNNER_TEMP/stage298-error.md"
+            gh pr comment 332 --body-file "$RUNNER_TEMP/stage298-error.md" || true
+            exit 1
+          fi
       - name: Upload exact test reports
         if: always()
         uses: actions/upload-artifact@v4
