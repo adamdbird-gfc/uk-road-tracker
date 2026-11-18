@@ -2,6 +2,26 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.253",
+      "version_code": 299,
+      "release_date": "2026-11-18",
+      "since": "0.25.252",
+      "changes": [
+        {
+          "title": "Prevent railway assessments from blocking Map",
+          "description": "Historical railway scans do not resume when opening the overview Map, preserving interactive map loading."
+        },
+        {
+          "title": "Bound archive preparation wait",
+          "description": "A stalled railway catalogue close cannot indefinitely hold archive screen preparation; a diagnostic records any timeout."
+        },
+        {
+          "title": "Preserve national road and pedestrian catalogue",
+          "description": "The previously verified UK-wide version 3 reference remains unchanged; owner journeys and corrections are preserved."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.252",
       "version_code": 298,
       "release_date": "2026-11-18",
