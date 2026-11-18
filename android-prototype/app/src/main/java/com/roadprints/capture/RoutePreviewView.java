@@ -411,7 +411,7 @@ public class RoutePreviewView extends View {
     }
 
     interface OnLocalRoadTapListener {
-        void onLocalRoadTap(JSONArray line, double fraction);
+        void onLocalRoadTap(LocalRoadCoverage.Line line, double fraction);
     }
 
     private OnLocalRoadTapListener localRoadTapListener;
@@ -1181,7 +1181,7 @@ public class RoutePreviewView extends View {
         float nearest = Float.MAX_VALUE;
         double selectedLongitude = Double.NaN;
         double selectedLatitude = Double.NaN;
-        JSONArray selectedLocalRoad = null;
+        LocalRoadCoverage.Line selectedLocalRoad = null;
         float selectedFraction = 0;
         List<List<JSONArray>> groups = new ArrayList<>();
         if (travelVisible && localRoadTapListener != null && localRoadLayer != null) {
