@@ -105,7 +105,7 @@ jobs:
               --connect-timeout 30 --max-time 3600 \
               "$source_url" --output "$RUNNER_TEMP/uk-source.osm.pbf" \
               && test "$(stat -c%s "$RUNNER_TEMP/uk-source.osm.pbf")" -gt 500000000; then
-              echo "ROADPRINTS_OSM_SOURCE_URL=$source_url" >> "$GITHUB_ENV"
+              export ROADPRINTS_OSM_SOURCE_URL="$source_url"
               downloaded=true
               break
             fi
