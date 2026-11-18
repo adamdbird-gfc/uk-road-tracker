@@ -35,7 +35,7 @@ public final class CompactJourneyCacheResumeTest {
         try {
             for (int i = 0; i < originals.length; i++) {
                 File file = new File(context.getCacheDir(), "resume303-" + i + ".json");
-                byte[] bytes = ("{\\"journey_id\\":\\"resume-" + i + "\\"}").getBytes(StandardCharsets.UTF_8);
+                byte[] bytes = ("{\"journey_id\":\"resume-" + i + "\"}").getBytes(StandardCharsets.UTF_8);
                 Files.write(file.toPath(), bytes);
                 originals[i] = bytes;
                 sources.add(file);
@@ -83,13 +83,13 @@ public final class CompactJourneyCacheResumeTest {
         File two = File.createTempFile("resume303-b-", ".json", context.getCacheDir());
         File database = new File(context.getCacheDir(), "compact-" + kind + ".db");
         try {
-            Files.writeString(one.toPath(), "{\\"journey_id\\":\\"one\\"}");
-            Files.writeString(two.toPath(), "{\\"journey_id\\":\\"two\\"}");
+            Files.writeString(one.toPath(), "{\"journey_id\":\"one\"}");
+            Files.writeString(two.toPath(), "{\"journey_id\":\"two\"}");
             try (CompactJourneyCache initial = new CompactJourneyCache(context, kind)) {
                 initial.get(one, f -> new JSONObject().put("generation", 1));
                 initial.get(two, f -> new JSONObject().put("generation", 1));
             }
-            Files.writeString(one.toPath(), "{\\"journey_id\\":\\"one\\",\\"corrected\\":true}");
+            Files.writeString(one.toPath(), "{\"journey_id\":\"one\",\"corrected\":true}");
             try (CompactJourneyCache resumed = new CompactJourneyCache(context, kind)) {
                 assertEquals(2, resumed.get(one,
                         f -> new JSONObject().put("generation", 2)).getInt("generation"));
