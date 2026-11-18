@@ -75,10 +75,15 @@ public class AcceptedRoadRouteTest {
                 var corrected = AcceptedRoadRoute.project(reference, journey);
                 assertEquals(1, corrected.sections().size());
                 assertTrue(corrected.excludedMm() > 0);
-                assertTrue(corrected.majorSections().isEmpty());
+                assertEquals(1, corrected.majorSections().size());
                 var remaining = corrected.sections().entrySet().iterator().next();
                 assertEquals(1, remaining.getKey().way);
                 assertTrue(remaining.getValue().get(0).start() > 0);
+                journey.put("journey_corrections", new JSONObject().put(
+                        "removed_matched_segments", new JSONArray().put(2)));
+                var withoutMajor = AcceptedRoadRoute.project(reference, journey);
+                assertTrue(withoutMajor.majorSections().isEmpty());
+                assertEquals(2, withoutMajor.sections().size());
                 journey.put("processing_status", "pending");
                 assertNull(AcceptedRoadRoute.project(reference, journey));
             }
