@@ -22,15 +22,15 @@ jobs:
       JAVA_TOOL_OPTIONS: -XX:TieredStopAtLevel=1
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - name: Restore signed build 297 reference assets
+      - name: Restore known published build 296 reference assets
         run: |
           set -euo pipefail
-          gh release download roadprints-0.25.251-297 --pattern Roadprints-0.25.251-297.apk --output "$RUNNER_TEMP/build297.apk"
+          gh release download roadprints-0.25.250-296 --pattern Roadprints-0.25.250-296.apk --output "$RUNNER_TEMP/build296.apk"
           assets=android-prototype/app/src/main/assets
           for asset in historic-counties/boundaries.bin railway/national.json railway/national.sqlite.gzip; do
-            unzip -p "$RUNNER_TEMP/build297.apk" "assets/$asset" > "$assets/$asset"
+            unzip -p "$RUNNER_TEMP/build296.apk" "assets/$asset" > "$assets/$asset"
           done
-          unzip -p "$RUNNER_TEMP/build297.apk" assets/uk-road-reference-v1.bin > "$RUNNER_TEMP/uk-road-reference-v1.bin"
+          unzip -p "$RUNNER_TEMP/build296.apk" assets/uk-road-reference-v1.bin > "$RUNNER_TEMP/uk-road-reference-v1.bin"
           echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
           echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
       - name: Extract bounded original road reference tiles for unit tests
