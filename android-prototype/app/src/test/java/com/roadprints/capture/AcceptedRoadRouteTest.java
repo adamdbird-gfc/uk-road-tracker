@@ -125,7 +125,7 @@ public class AcceptedRoadRouteTest {
         }
     }
 
-    private static byte[] testPack() throws Exception {
+    static byte[] testPack() throws Exception {
         ByteArrayOutputStream compressedBytes = new ByteArrayOutputStream();
         try (DataOutputStream compressed = new DataOutputStream(new GZIPOutputStream(compressedBytes))) {
             for (int i = 1; i <= 3; i++) {
