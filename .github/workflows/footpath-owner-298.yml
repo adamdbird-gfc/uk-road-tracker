@@ -111,7 +111,7 @@ jobs:
               "downloaded_at_utc":datetime.datetime.now(datetime.timezone.utc).isoformat(),
               "source_license":"OpenStreetMap ODbL 1.0"}
           pathlib.Path("android-prototype/app/src/main/assets/uk-road-reference-v3-manifest.json").write_text(
-              json.dumps(manifest,indent=2,sort_keys=True)+"\\n")
+              json.dumps(manifest,indent=2,sort_keys=True)+"\n")
           PY
       - name: Generate full v3 national road and footpath network from pinned bytes
         run: |
@@ -128,7 +128,7 @@ jobs:
           path=pathlib.Path('android-prototype/app/src/main/assets/uk-road-reference-v3-manifest.json')
           manifest=json.loads(path.read_text())
           manifest['reference']=audit
-          path.write_text(json.dumps(manifest,sort_keys=True,indent=2)+"\\n")
+          path.write_text(json.dumps(manifest,sort_keys=True,indent=2)+"\n")
           PY
           df -h .
       - name: Report validated national catalogue
