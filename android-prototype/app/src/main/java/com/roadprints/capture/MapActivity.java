@@ -930,7 +930,7 @@ public class MapActivity extends Activity {
         long[] work=new long[3];int[] counts=new int[6];int[] unprocessedModes=new int[4];
         // Aggregated, non-location diagnostics reveal which travel modes have accepted A-road features.
         int[] modeAccepted = new int[3], modeWithARoad = new int[3], modeWithLocal = new int[3];
-        int[] acceptedFootCanonicalA = {0};
+        int[] acceptedFootCanonicalA = {0}, deferredFootCanonicalA = {0};
         PerformanceDiagnostics.ArchiveHeapSample heap = new PerformanceDiagnostics.ArchiveHeapSample();
         long localRoadNanos[] = {0};
         try (MapJourneyStore records = new MapJourneyStore(getApplicationContext());
@@ -999,9 +999,18 @@ public class MapActivity extends Activity {
                     // Merge only exact accepted OSM-identified walking intervals
                     // through the existing A-road coverage ledger. Never draw
                     // an overlapping second polyline for these sections.
-                    if (roadModeIndex == 1 && !coverage.majorSpans().isEmpty())
-                        acceptedFootCanonicalA[0] += aRoadCalculator.addAcceptedFootSections(
-                                journeyId, coverage.majorSpans());
+                    if (roadModeIndex == 1 && !coverage.majorSpans().isEmpty()) {
+                        Runtime runtime = Runtime.getRuntime();
+                        long available = runtime.maxMemory()
+                                - (runtime.totalMemory() - runtime.freeMemory());
+                        if (available < 40L * 1024 * 1024) {
+                            deferredFootCanonicalA[0] += coverage.majorSpans().size();
+                            output.localCoverageDegraded = true;
+                        } else {
+                            acceptedFootCanonicalA[0] += aRoadCalculator.addAcceptedFootSections(
+                                    journeyId, coverage.majorSpans());
+                        }
+                    }
                 }
                 localRoadNanos[0] += System.nanoTime() - started;
             }
@@ -1010,7 +1019,7 @@ public class MapActivity extends Activity {
         if (local != null) {
             long started = System.nanoTime();
             for (LocalRoadCoverage.Section section : local.sections()) output.addLocalRoad(section);
-            output.localCoverageDegraded = local.held > 0 || local.overBudget > 0 || local.unresolvedMm > 0;
+            output.localCoverageDegraded |= local.held > 0 || local.overBudget > 0 || local.unresolvedMm > 0;
             if (local.overBudget > 0) output.simplified = true;
             localRoadNanos[0] += System.nanoTime() - started;
             PerformanceDiagnostics.timing("map_local_roads", localRoadNanos[0] / 1_000_000,
@@ -1024,6 +1033,7 @@ public class MapActivity extends Activity {
                             + " foot_unresolved_mm=" + local.footUnresolvedMm
                             + " foot_major_or_other_mm=" + local.footMajorOrOtherMm
                             + " foot_major_intervals=" + local.footMajorIntervals
+                            + " foot_major_heap_deferred=" + deferredFootCanonicalA[0]
                             + " foot_unresolved_reasons=" + local.footUnresolvedLegReasons
                             + (local.held == 0 ? "" : " hold_reasons=" + local.failureBreakdown()));
         }
@@ -1039,6 +1049,7 @@ public class MapActivity extends Activity {
         PerformanceDiagnostics.timing("map_mode_coverage", 0,
                 "accepted_road=" + modeAccepted[0] + " accepted_foot=" + modeAccepted[1]
                 + " foot_canonical_a_sections=" + acceptedFootCanonicalA[0]
+                + " foot_canonical_a_heap_deferred=" + deferredFootCanonicalA[0]
                 + " accepted_cycle=" + modeAccepted[2] + " aroad_road=" + modeWithARoad[0]
                 + " aroad_foot=" + modeWithARoad[1] + " aroad_cycle=" + modeWithARoad[2]
                 + " minor_road=" + modeWithLocal[0] + " minor_foot=" + modeWithLocal[1]
