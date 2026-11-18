@@ -2,6 +2,26 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.260",
+      "version_code": 306,
+      "release_date": "2026-11-18",
+      "since": "0.25.259",
+      "changes": [
+        {
+          "title": "Keep actively progressing Map scans alive within a strict bound",
+          "description": "Grants one additional 60-second window at the 120-second deadline only while historical journey scanning is still making verified recent progress; protects against indefinitely running scans."
+        },
+        {
+          "title": "Retain complete Map overviews with known held journeys",
+          "description": "Allows completed, revision-keyed overview snapshots with explicitly incomplete held-road coverage to be reused without a full rescan. Disallows caching coverage skipped due to memory or interval-budget exhaustion."
+        },
+        {
+          "title": "Preserve existing cumulative road identities and styling",
+          "description": "Retains the existing black travelled-local-road map, blue motorways, green A-roads, original journey evidence and owner corrections."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.259",
       "version_code": 305,
       "release_date": "2026-11-18",
