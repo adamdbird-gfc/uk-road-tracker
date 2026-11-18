@@ -26,6 +26,9 @@ jobs:
       APK: Roadprints-0.25.252-298.apk
       CERT_SHA256: 5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031
       JAVA_TOOL_OPTIONS: -XX:TieredStopAtLevel=1
+      REFERENCE_TAG: roadprints-uk-reference-v3-298-r1
+      REFERENCE_FILE: uk-road-reference-v3.bin
+      REFERENCE_MANIFEST: uk-road-reference-v3-manifest.json
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -69,6 +72,13 @@ jobs:
                       assert len(data)==size
                       w.write(data)
           PY
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check Python support for reference generation
+        run: |
+          python --version
+          python -c 'from hashlib import file_digest; print("hashlib.file_digest available")'
       - uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: '8.10'
@@ -88,7 +98,45 @@ jobs:
               tail -n 55 "$RUNNER_TEMP/owner298-jvm.log"
               exit 1
             }
+      - name: Restore immutable validated national v3 reference when available
+        id: reference_cache
+        run: |
+          set -euo pipefail
+          echo "REFERENCE_REUSED=false" >> "$GITHUB_ENV"
+          if ! gh release view "$REFERENCE_TAG" >/dev/null 2>&1; then
+            echo "No approved national v3 reference release yet; generate once."
+            exit 0
+          fi
+          mkdir -p "$RUNNER_TEMP/road-reference-cache"
+          gh release download "$REFERENCE_TAG" \
+            --pattern "$REFERENCE_FILE" \
+            --pattern "$REFERENCE_MANIFEST" \
+            --dir "$RUNNER_TEMP/road-reference-cache"
+          python - <<'PY'
+          import hashlib,json,os,pathlib,shutil
+          cache=pathlib.Path(os.environ["RUNNER_TEMP"])/"road-reference-cache"
+          manifest=json.loads((cache/os.environ["REFERENCE_MANIFEST"]).read_text())
+          reference=cache/os.environ["REFERENCE_FILE"]
+          assert manifest["format"]=="roadprints-uk-pedestrian-reference-v3"
+          assert manifest["source_sha256"] and len(manifest["source_sha256"])==64
+          builder=hashlib.sha256(pathlib.Path("scripts/build_uk_road_reference.py").read_bytes()).hexdigest()
+          assert manifest["builder_sha256"]==builder,"Reference builder changed: rotate REFERENCE_TAG and regenerate"
+          h=hashlib.sha256()
+          with reference.open("rb") as stream:
+              for chunk in iter(lambda:stream.read(8*1024*1024),b""): h.update(chunk)
+          assert h.hexdigest()==manifest["reference"]["sha256"],"Cached reference SHA-256 mismatch"
+          assert reference.stat().st_size==manifest["reference"]["bytes"],"Cached reference size mismatch"
+          asset=pathlib.Path("android-prototype/app/src/main/assets")
+          shutil.copyfile(reference,asset/"uk-road-reference-v1.bin")
+          shutil.copyfile(cache/os.environ["REFERENCE_MANIFEST"],asset/os.environ["REFERENCE_MANIFEST"])
+          PY
+          python scripts/verify_uk_road_reference_v3.py \
+            android-prototype/app/src/main/assets/uk-road-reference-v1.bin \
+            --json "$RUNNER_TEMP/reference-v3-audit.json"
+          echo "REFERENCE_REUSED=true" >> "$GITHUB_ENV"
+          echo "Reused validated immutable catalogue from $REFERENCE_TAG"
       - name: Download and fingerprint national United Kingdom OSM source
+        if: env.REFERENCE_REUSED != 'true'
         run: |
           set -euo pipefail
           python -m pip install --disable-pip-version-check 'osmium>=4,<5'
@@ -123,6 +171,7 @@ jobs:
               json.dumps(manifest,indent=2,sort_keys=True)+"\n")
           PY
       - name: Generate full v3 national road and footpath network from pinned bytes
+        if: env.REFERENCE_REUSED != 'true'
         run: |
           set -euo pipefail
           python scripts/build_uk_road_reference.py \
@@ -136,13 +185,41 @@ jobs:
           audit=json.loads(pathlib.Path(__import__('os').environ['RUNNER_TEMP'],'reference-v3-audit.json').read_text())
           path=pathlib.Path('android-prototype/app/src/main/assets/uk-road-reference-v3-manifest.json')
           manifest=json.loads(path.read_text())
+          import hashlib
           manifest['reference']=audit
+          manifest['builder_sha256']=hashlib.sha256(pathlib.Path('scripts/build_uk_road_reference.py').read_bytes()).hexdigest()
           path.write_text(json.dumps(manifest,sort_keys=True,indent=2)+"\n")
           PY
           df -h .
+      - name: Publish approved reference separately for future APK builds
+        if: env.REFERENCE_REUSED != 'true'
+        run: |
+          set -euo pipefail
+          current=$(gh api "repos/$GH_REPO/git/ref/heads/${GITHUB_REF_NAME}" --jq .object.sha)
+          test "$current" = "$GITHUB_SHA"
+          assets=android-prototype/app/src/main/assets
+          if gh release view "$REFERENCE_TAG" >/dev/null 2>&1; then
+            echo "::error::Reference tag already exists. Do not overwrite a published reference."
+            exit 1
+          fi
+          cat > "$RUNNER_TEMP/reference-notes.md" <<'NOTES'
+          Immutable, fingerprinted UK road + pedestrian catalogue (RPRD0003).
+          Source and builder SHA-256 digests, ODbL attribution and validation
+          metrics are preserved in the companion JSON manifest. Reuse only
+          after SHA-256, builder compatibility and full structural validation.
+          Update REFERENCE_TAG explicitly to regenerate a revised catalogue.
+          NOTES
+          cp "$assets/uk-road-reference-v1.bin" "$RUNNER_TEMP/$REFERENCE_FILE"
+          cp "$assets/$REFERENCE_MANIFEST" "$RUNNER_TEMP/$REFERENCE_MANIFEST"
+          gh release create "$REFERENCE_TAG" \
+            "$RUNNER_TEMP/$REFERENCE_FILE" "$RUNNER_TEMP/$REFERENCE_MANIFEST" \
+            --target "$GITHUB_SHA" --prerelease --latest=false \
+            --title "Roadprints UK road and pedestrian reference v3" \
+            --notes-file "$RUNNER_TEMP/reference-notes.md"
+          echo "Published validated national reference $REFERENCE_TAG"
       - name: Report validated national catalogue
         run: |
-          gh pr comment 334 --body "Build 298 UK-wide v3 reference generated and passed structural/geographic integrity checks on commit $GITHUB_SHA. Proceeding to signing and Android in-place upgrade smoke; APK publication remains blocked until all gates pass." || true
+          gh pr comment 334 --body "Build 298 UK-wide v3 reference generated or restored and passed structural/geographic integrity checks on commit $GITHUB_SHA. Proceeding to signing and Android in-place upgrade smoke; APK publication remains blocked until all gates pass." || true
       - name: Assemble installed-identity signed owner APK
         env:
           ROADPRINTS_DEBUG_KEYSTORE_B64: ${{ secrets.ROADPRINTS_DEBUG_KEYSTORE_B64 }}
