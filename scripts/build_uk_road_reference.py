@@ -16,9 +16,9 @@ from build_gravesend_coverage import ROAD_CLASSES, direction, eligible
 
 TILE = 200_000  # 0.02 degrees in OSM's integer coordinate units
 HALO = 4_000  # At least 21 m within the UK
-FOOT_ONLY_CLASSES = {"footway", "path", "cycleway", "bridleway", "steps"}
-# Preserve all v2 road-class codes; new foot-only classes append to the end.
-CLASSES = tuple(sorted(ROAD_CLASSES)) + tuple(sorted(FOOT_ONLY_CLASSES))
+FOOT_ONLY_CLASSES = {"footway", "path", "cycleway", "bridleway", "steps", "pedestrian"}
+# Preserve all v2 road-class codes; only previously absent classes append.
+CLASSES = tuple(sorted(ROAD_CLASSES)) + tuple(sorted(FOOT_ONLY_CLASSES - ROAD_CLASSES))
 LABEL_SEPARATOR = chr(31)
 MAJOR = {"motorway", "trunk", "primary"}
 UK_BOUNDS = (-9 * 10**7, 49 * 10**7, 3 * 10**7, 62 * 10**7)
