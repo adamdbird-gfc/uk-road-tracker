@@ -100,7 +100,8 @@ public class LocalRoadCoverageTest {
                 assertEquals(0, removed.getJSONArray("majorSpans").length());
             }
             // Coverage operations must never edit the actual saved journey file.
-            assertTrue(Files.readString(source).contains("removed_matched_segments"));
+            assertTrue(new String(Files.readAllBytes(source), java.nio.charset.StandardCharsets.UTF_8)
+                    .contains("removed_matched_segments"));
 
         } finally {
             Files.deleteIfExists(source);
