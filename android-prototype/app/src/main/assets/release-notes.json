@@ -2,6 +2,22 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.258",
+      "version_code": 304,
+      "release_date": "2026-11-18",
+      "since": "0.25.257",
+      "changes": [
+        {
+          "title": "Reduce cumulative-road matching allocations",
+          "description": "Reuses one deduplicated set of road candidates across reference tiles and projects matched-leg endpoints once instead of rebuilding temporary sets and coordinate objects for every tile."
+        },
+        {
+          "title": "Preserve physical-road attribution and historical cache",
+          "description": "Unchanged accepted geometry, road identities, manual corrections, NCN rules, reference data and saved journeys. The Map may still require historical preparation while uncached journeys are processed."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.257",
       "version_code": 303,
       "release_date": "2026-11-18",
