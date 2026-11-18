@@ -92,6 +92,57 @@ public class ARoadProgressCalculatorTest {
         assertEquals(drivingOnly.finish().roads.get(0).percent(), road.percent(), 0.000001);
     }
 
+    @Test public void acceptedFootCanonicalSectionUnionsIntoExistingARoadNotParallelCarriageway()
+            throws Exception {
+        Context app = RuntimeEnvironment.getApplication();
+        JSONObject reference;
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                app.getAssets().open("GB-A1.json"), StandardCharsets.UTF_8))) {
+            StringBuilder content = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) content.append(line);
+            reference = new JSONObject(content.toString());
+        }
+        JSONArray path = reference.getJSONArray("paths").getJSONArray(0);
+        LocalRoadNetwork.Edge correct = null;
+        ARoadProgressCalculator calc = new ARoadProgressCalculator(app, false);
+        for (int i = 1; i < path.length(); i++) {
+            JSONArray a = path.getJSONArray(i - 1), b = path.getJSONArray(i);
+            double ax = a.getDouble(0), ay = a.getDouble(1);
+            double bx = b.getDouble(0), by = b.getDouble(1);
+            int mm = RoadReference.groundMillimetres(ax, ay, bx, by);
+            if (mm < 5_000 || mm > 1_000_000) continue;
+            LocalRoadNetwork.Edge candidate = new LocalRoadNetwork.Edge(4_321, 10, 11, "A1",
+                    RoadReference.point(ax, ay), RoadReference.point(bx, by),
+                    0, false, mm, -1);
+            if (calc.addAcceptedFootSections("walking-first", java.util.Map.of(candidate,
+                    java.util.List.of(new LocalRoadNetwork.Interval(0, mm)))) > 0) {
+                correct = candidate;
+                break;
+            }
+        }
+        assertNotNull("Expected exact road geometry to hit an A1 reference anchor", correct);
+        var full = java.util.Map.of(correct, java.util.List.of(
+                new LocalRoadNetwork.Interval(0, correct.mm)));
+        assertTrue(calc.addAcceptedFootSections("walking-repeat", full) > 0);
+        ARoadProgressCalculator.Summary summary = calc.finish();
+        ARoadProgressCalculator.Road road = summary.roads.stream()
+                .filter(r -> r.ref.equals("A1")).findFirst().orElseThrow();
+        assertEquals(2, road.journeyIds.size());
+        assertTrue(road.percent() > 0);
+
+        // Ten metres alongside the reference is a distinct physical road.
+        LocalRoadNetwork.Edge parallel = new LocalRoadNetwork.Edge(4_322, 20, 21, "A1",
+                new LocalRoadNetwork.Point(correct.a.x(), correct.a.y() + 11),
+                new LocalRoadNetwork.Point(correct.b.x(), correct.b.y() + 11),
+                0, false, correct.mm, -1);
+        ARoadProgressCalculator parallelOnly = new ARoadProgressCalculator(app, false);
+        assertEquals(0, parallelOnly.addAcceptedFootSections("wrong-carriageway",
+                java.util.Map.of(parallel, java.util.List.of(
+                        new LocalRoadNetwork.Interval(0, parallel.mm)))));
+        assertTrue(parallelOnly.finish().roads.isEmpty());
+    }
+
     @Test public void statisticsCoverageMatchesMapWithoutRetainingGeometryOrLookupData() throws Exception {
         Context app=RuntimeEnvironment.getApplication();
         JSONObject reference;

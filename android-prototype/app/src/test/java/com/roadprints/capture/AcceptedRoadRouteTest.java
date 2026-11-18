@@ -64,15 +64,26 @@ public class AcceptedRoadRouteTest {
                 var complete = AcceptedRoadRoute.project(reference, journey);
                 assertEquals(2, complete.sections().size());
                 assertTrue(complete.majorOrOtherMm() > 0);
+                assertEquals(1, complete.majorSections().size());
+                Edge major = complete.majorSections().keySet().iterator().next();
+                assertFalse(major.eligible);
+                assertEquals(3L, major.way);
+                assertEquals(1, complete.majorSections().get(major).size());
                 assertEquals(0, complete.unresolvedMm());
                 assertEquals(1, complete.residual().size());
                 journey.put("journey_corrections", new JSONObject().put("removed_matched_segments", new JSONArray().put(1)));
                 var corrected = AcceptedRoadRoute.project(reference, journey);
                 assertEquals(1, corrected.sections().size());
                 assertTrue(corrected.excludedMm() > 0);
+                assertEquals(1, corrected.majorSections().size());
                 var remaining = corrected.sections().entrySet().iterator().next();
                 assertEquals(1, remaining.getKey().way);
                 assertTrue(remaining.getValue().get(0).start() > 0);
+                journey.put("journey_corrections", new JSONObject().put(
+                        "removed_matched_segments", new JSONArray().put(2)));
+                var withoutMajor = AcceptedRoadRoute.project(reference, journey);
+                assertTrue(withoutMajor.majorSections().isEmpty());
+                assertEquals(2, withoutMajor.sections().size());
                 journey.put("processing_status", "pending");
                 assertNull(AcceptedRoadRoute.project(reference, journey));
             }
@@ -100,6 +111,7 @@ public class AcceptedRoadRouteTest {
                 assertNotNull(walked);
                 assertEquals(driven.sections().keySet(), walked.sections().keySet());
                 assertEquals(driven.sections(), walked.sections());
+                assertEquals(driven.majorSections(), walked.majorSections());
                 walk.put("journey_corrections", new JSONObject()
                         .put("removed_matched_segments", new JSONArray().put(0)));
                 var edited = AcceptedRoadRoute.project(reference, walk);
@@ -113,7 +125,7 @@ public class AcceptedRoadRouteTest {
         }
     }
 
-    private static byte[] testPack() throws Exception {
+    static byte[] testPack() throws Exception {
         ByteArrayOutputStream compressedBytes = new ByteArrayOutputStream();
         try (DataOutputStream compressed = new DataOutputStream(new GZIPOutputStream(compressedBytes))) {
             for (int i = 1; i <= 3; i++) {

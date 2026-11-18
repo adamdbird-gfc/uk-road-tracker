@@ -64,6 +64,51 @@ public class LocalRoadCoverageTest {
         }
     }
 
+    @Test public void acceptedWalkCachesMajorSectionsWithExactIdentityAndNoDuplicateLocalLine()
+            throws Exception {
+        java.nio.file.Path pack = Files.createTempFile("foot-major-reference", ".bin");
+        java.nio.file.Path source = Files.createTempFile("accepted-walk-major", ".json");
+        try {
+            Files.write(pack, AcceptedRoadRouteTest.testPack());
+            JSONObject walk = new JSONObject("""
+                    {"mode":"walking","processing_status":"complete",
+                     "processing_result":{"status":"ok","geojson":{"features":[
+                       {"geometry":{"type":"LineString","coordinates":[
+                         [0.0015,51.001],[0.002,51.001],[0.003,51.001],[0.004,51.001]]}}
+                     ]}}}
+                    """);
+            byte[] original = walk.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            Files.write(source, original);
+            try (RoadReference reference = new RoadReference(
+                    java.nio.channels.FileChannel.open(pack), 0, Files.size(pack))) {
+                JSONObject contribution = LocalRoadCoverage.readAcceptedContribution(reference, source.toFile());
+                assertEquals(2, contribution.getJSONArray("spans").length());
+                assertEquals(1, contribution.getInt("majorIntervals"));
+                JSONArray major = contribution.getJSONArray("majorSpans").getJSONArray(0);
+                assertEquals(3L, major.getLong(0));
+                assertEquals(3L, major.getLong(1));
+                assertEquals(4L, major.getLong(2));
+                // The same physical major section is not an extra minor-road line.
+                for (int i = 0; i < contribution.getJSONArray("spans").length(); i++)
+                    assertNotEquals(3L, contribution.getJSONArray("spans").getJSONArray(i).getLong(0));
+
+                walk.put("journey_corrections", new JSONObject().put(
+                        "removed_matched_segments", new JSONArray().put(2)));
+                Files.write(source, walk.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                JSONObject removed = LocalRoadCoverage.readAcceptedContribution(reference, source.toFile());
+                assertEquals(0, removed.getInt("majorIntervals"));
+                assertEquals(0, removed.getJSONArray("majorSpans").length());
+            }
+            // Coverage operations must never edit the actual saved journey file.
+            assertTrue(new String(Files.readAllBytes(source), java.nio.charset.StandardCharsets.UTF_8)
+                    .contains("removed_matched_segments"));
+
+        } finally {
+            Files.deleteIfExists(source);
+            Files.deleteIfExists(pack);
+        }
+    }
+
     @Test public void cachedContributionRejectsMalformedIntervalsRatherThanSilentlyFallingBack()
             throws Exception {
         JSONArray valid = new JSONArray().put(9).put(1).put(2).put("Road")

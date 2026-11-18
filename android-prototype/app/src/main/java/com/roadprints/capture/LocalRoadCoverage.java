@@ -64,12 +64,14 @@ final class LocalRoadCoverage implements AutoCloseable {
         }
     }
 
-    record Prepared(Map<Edge, List<Interval>> spans, JSONArray residual) {}
+    record Prepared(Map<Edge, List<Interval>> spans, Map<Edge, List<Interval>> majorSpans,
+                    JSONArray residual) {}
     int overBudget;
     long unresolvedMm, excludedMm, majorOrOtherMm;
     final Map<String, Integer> unresolvedLegReasons = new LinkedHashMap<>();
     final Map<String, Integer> footUnresolvedLegReasons = new LinkedHashMap<>();
     long footUnresolvedMm, footMajorOrOtherMm;
+    int footMajorIntervals;
 
     Prepared contribution(MapJourneyStore.Record record) {
         if (!AcceptedRoadRoute.eligibleMode(record.header.optString("mode"))) return null;
@@ -83,7 +85,7 @@ final class LocalRoadCoverage implements AutoCloseable {
             // breakdown. Reassess only on-foot rows to learn why saved paths
             // remain invisible; do not invalidate the 660 driving contributions.
             if (JourneyFilters.isFootMode(record.header.optString("mode"))
-                    && !row.has("unresolvedLegs") && row.has("spans")) {
+                    && (!row.has("unresolvedLegs") || !row.has("majorSpans")) && row.has("spans")) {
                 cache.invalidate(record.source);
                 refreshedLegacyFootRow = true;
                 row = cache.get(record.source, file -> readAcceptedContribution(reference, file));
@@ -122,10 +124,35 @@ final class LocalRoadCoverage implements AutoCloseable {
             excludedMm += excluded;
             long major = row.optLong("majorOrOtherMm", 0);
             majorOrOtherMm += major;
+            JSONArray retainedMajor = row.optJSONArray("majorSpans");
+            int majorCount = row.optInt("majorIntervals", 0);
+            if (majorCount < 0 || majorCount > MAX_INTERVALS_PER_JOURNEY
+                    || (retainedMajor == null && majorCount != 0))
+                throw new IllegalArgumentException("Invalid major-road attribution count");
+            Map<Edge, List<Interval>> majorResult = new LinkedHashMap<>();
+            if (retainedMajor != null) {
+                int validated = 0;
+                for (int i = 0; i < retainedMajor.length(); i++) {
+                    JSONArray span = retainedMajor.getJSONArray(i);
+                    int sectionMm = span.getInt(8);
+                    long way = span.getLong(0), from = span.getLong(1), to = span.getLong(2);
+                    Edge edge = new Edge(way, from, to, span.getString(3),
+                            RoadReference.point(span.getDouble(4), span.getDouble(5)),
+                            RoadReference.point(span.getDouble(6), span.getDouble(7)),
+                            0, false, sectionMm, -1);
+                    List<Interval> intervals = decodeCachedIntervals(span, sectionMm);
+                    if (majorResult.put(edge, intervals) != null)
+                        throw new IllegalArgumentException("Duplicate accepted major-road section");
+                    validated += intervals.size();
+                }
+                if (validated != majorCount)
+                    throw new IllegalArgumentException("Invalid major-road interval total");
+            }
             boolean onFoot = JourneyFilters.isFootMode(record.header.optString("mode"));
             if (onFoot) {
                 footUnresolvedMm += unresolved;
                 footMajorOrOtherMm += major;
+                footMajorIntervals += majorCount;
             }
             JSONObject reasons = row.optJSONObject("unresolvedLegs");
             if (reasons != null) {
@@ -140,7 +167,7 @@ final class LocalRoadCoverage implements AutoCloseable {
             }
             if (reusedRow) reused++;
             else calculated++;
-            return new Prepared(result, residual);
+            return new Prepared(result, majorResult, residual);
         } catch (CancellationException cancelled) {
             throw cancelled;
         } catch (Exception unavailable) {
@@ -192,7 +219,7 @@ final class LocalRoadCoverage implements AutoCloseable {
         return failure.getClass().getSimpleName() + "@" + origin;
     }
 
-    private static JSONObject readAcceptedContribution(RoadReference reference, File source) throws Exception {
+    static JSONObject readAcceptedContribution(RoadReference reference, File source) throws Exception {
         JSONObject journey = new JSONObject();
         try (JsonReader reader = journeyReader(source)) {
             reader.beginObject();
@@ -231,8 +258,24 @@ final class LocalRoadCoverage implements AutoCloseable {
             for (Interval interval : section.getValue()) row.put(interval.start()).put(interval.end());
             spans.put(row);
         }
-        // Preserve the disposable cache schema without preparing hidden overview polylines.
+        // Non-local canonical sections retain their physical OSM identity and
+        // clipped intervals for reconciliation. They are NOT drawn as local roads.
+        JSONArray majorSpans = new JSONArray();
+        int majorCount = 0;
+        for (Map.Entry<Edge, List<Interval>> section : projection.majorSections().entrySet()) {
+            Edge edge = section.getKey();
+            majorCount += section.getValue().size();
+            if (count + majorCount > MAX_INTERVALS_PER_JOURNEY)
+                throw new IllegalArgumentException("Accepted route exceeds interval limit");
+            JSONArray row = new JSONArray().put(edge.way).put(edge.from).put(edge.to).put(edge.label)
+                    .put(ukLongitude(edge.a)).put(ukLatitude(edge.a)).put(ukLongitude(edge.b))
+                    .put(ukLatitude(edge.b)).put(edge.mm);
+            for (Interval interval : section.getValue()) row.put(interval.start()).put(interval.end());
+            majorSpans.put(row);
+        }
+        // Only accepted and owner-retained physical intervals enter this derived cache.
         return new JSONObject().put("spans", spans).put("intervals", count)
+                .put("majorSpans", majorSpans).put("majorIntervals", majorCount)
                 .put("residual", new JSONArray())
                 .put("unresolvedMm", projection.unresolvedMm()).put("excludedMm", projection.excludedMm())
                 .put("majorOrOtherMm", projection.majorOrOtherMm())

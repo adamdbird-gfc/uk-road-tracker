@@ -1,0 +1,144 @@
+name: Roadprints 298 canonical walking geometry verification
+on:
+  push:
+    branches: [feat/accepted-foot-major-sections-298]
+    paths:
+      - .github/workflows/accepted-foot-geometry-298.yml
+      - android-prototype/**
+  workflow_dispatch:
+permissions:
+  contents: read
+  pull-requests: write
+concurrency:
+  group: accepted-foot-298-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  focused-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: adamdbird-gfc/uk-road-tracker
+      JAVA_TOOL_OPTIONS: -XX:TieredStopAtLevel=1
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Restore known published build 296 reference assets
+        run: |
+          set -euo pipefail
+          gh release download roadprints-0.25.250-296 --pattern Roadprints-0.25.250-296.apk --output "$RUNNER_TEMP/build296.apk"
+          assets=android-prototype/app/src/main/assets
+          for asset in historic-counties/boundaries.bin railway/national.json railway/national.sqlite.gzip; do
+            unzip -p "$RUNNER_TEMP/build296.apk" "assets/$asset" > "$assets/$asset"
+          done
+          unzip -p "$RUNNER_TEMP/build296.apk" assets/uk-road-reference-v1.bin > "$RUNNER_TEMP/uk-road-reference-v1.bin"
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+      - name: Extract bounded original road reference tiles for unit tests
+        run: |
+          python - <<'PY'
+          import os,pathlib,struct
+          source=pathlib.Path(os.environ['RUNNER_TEMP'])/'uk-road-reference-v1.bin'
+          target=pathlib.Path('android-prototype/app/src/main/assets/uk-road-reference-v1.bin')
+          with source.open('rb') as r:
+              header=r.read(40)
+              assert header[:8]==b'RPRD0002'
+              count,=struct.unpack('>i',r.read(4))
+              index=list(struct.iter_unpack('>iiii',r.read(count*16)))
+              rows=[e for e in index if 17<=e[0]<=20 and 2570<=e[1]<=2573]
+              assert rows
+              with target.open('wb') as w:
+                  w.write(header+struct.pack('>i',len(rows)))
+                  offset=44+16*len(rows)
+                  for x,y,_,size in rows:
+                      w.write(struct.pack('>iiii',x,y,offset,size));offset+=size
+                  for _,_,original,size in rows:
+                      r.seek(original)
+                      data=r.read(size)
+                      assert len(data)==size
+                      w.write(data)
+          PY
+      - name: Audit actual packaged major-road labels without expanding the archive
+        run: |
+          python - <<'PY'
+          import gzip,os,pathlib,re,struct
+          source=pathlib.Path("android-prototype/app/src/main/assets/uk-road-reference-v1.bin").read_bytes()
+          count,=struct.unpack_from(">i",source,40)
+          edge=struct.Struct(">qqqiiiibbH")
+          major=named=numbered=unnamed=0
+          for i in range(count):
+              x,y,offset,size=struct.unpack_from(">iiii",source,44+i*16)
+              raw=gzip.decompress(source[offset:offset+size])
+              cursor=0
+              while cursor<len(raw):
+                  if cursor+edge.size>len(raw): raise ValueError("Truncated reference edge")
+                  row=edge.unpack_from(raw,cursor)
+                  cursor+=edge.size
+                  name_size=row[-1]
+                  if cursor+name_size>len(raw): raise ValueError("Truncated reference label")
+                  label=raw[cursor:cursor+name_size].decode("utf8",errors="replace")
+                  cursor+=name_size
+                  if row[-2]&1: continue
+                  major+=1
+                  if re.fullmatch(r"A[0-9]+[A-Za-z]?",label.strip()): numbered+=1
+                  elif label.strip(): named+=1
+                  else: unnamed+=1
+          report=(f"Stage 298 packaged sample ({count} Gravesend-region tiles): "
+                  f"non-local_edges={major} exact_A_labels={numbered} "
+                  f"named_or_other_labels={named} blank_labels={unnamed}. "
+                  "Named/blank labels cannot be assumed to carry an A-road reference.")
+          print(report)
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a") as out: out.write(report+"\\n")
+          with open(os.environ["RUNNER_TEMP"]+"/major-reference-audit.txt","w") as out: out.write(report)
+          PY
+          gh pr comment 332 --body-file "$RUNNER_TEMP/major-reference-audit.txt" || true
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.10'
+      - name: Compile and run focused accepted geometry regression tests
+        run: |
+          set -euo pipefail
+          if gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:testDebugUnitTest \
+            --tests com.roadprints.capture.AcceptedRoadRouteTest \
+            --tests com.roadprints.capture.LocalRoadCoverageTest \
+            --tests com.roadprints.capture.ARoadProgressCalculatorTest \
+            --tests com.roadprints.capture.CanonicalRoadAttributionTest \
+            > "$RUNNER_TEMP/accepted-foot-298.log" 2>&1; then
+            tail -n 40 "$RUNNER_TEMP/accepted-foot-298.log"
+          else
+            {
+              printf 'Build 298 focused tests failed on %s\\n\\n' "$GITHUB_SHA"
+              echo '~~~text'
+              grep -nE -A4 -B2 '(^> Task .*FAILED|^FAILURE:|^\\* What went wrong:|^Execution failed|^> .*[Ff]ailed|^Caused by:|^.*(AssertionError|Compilation failed|error: |No tests found|tests completed|There were failing tests))' "$RUNNER_TEMP/accepted-foot-298.log" | head -50 || true
+              echo '~~~'
+              echo
+              echo 'Last 60 log lines:'
+              echo '~~~text'
+              tail -n 60 "$RUNNER_TEMP/accepted-foot-298.log"
+              echo '~~~'
+            } > "$RUNNER_TEMP/stage298-error.md"
+            cat "$RUNNER_TEMP/stage298-error.md"
+            gh pr comment 332 --body-file "$RUNNER_TEMP/stage298-error.md" || true
+            exit 1
+          fi
+      - name: Confirm focused geometry checks on PR
+        if: success()
+        run: |
+          gh pr comment 332 --body "Build 298 focused canonical walking integration tests PASSED on commit $GITHUB_SHA. No APK was produced in this validation workflow."
+      - name: Upload exact test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: accepted-foot-298-jvm-results
+          path: |
+            android-prototype/app/build/test-results/testDebugUnitTest/**
+            android-prototype/app/build/reports/tests/testDebugUnitTest/**
+          if-no-files-found: ignore
+      - name: Report failed validation on PR
+        if: failure()
+        run: |
+          {
+            echo "Stage 298 canonical-foot-road validation failed on commit $GITHUB_SHA."
+            echo
+            echo "See the **accepted-foot-298-jvm-results** action artifact and workflow logs."
+          } > "$RUNNER_TEMP/stage298-error.md"
+          gh pr comment 332 --body-file "$RUNNER_TEMP/stage298-error.md" || true
