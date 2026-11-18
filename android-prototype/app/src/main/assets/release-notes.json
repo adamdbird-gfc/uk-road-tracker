@@ -2,6 +2,22 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.255",
+      "version_code": 301,
+      "release_date": "2026-11-18",
+      "since": "0.25.254",
+      "changes": [
+        {
+          "title": "Trace Map readiness across full journey history",
+          "description": "Reports separate motorway and A-road reference initialisation, archive scan progress, expensive journey contributions and the exact timeout stage."
+        },
+        {
+          "title": "Retain diagnostic evidence and saved journeys",
+          "description": "Preserves the most recent archive progress and slow-contribution measurements in Utilities, alongside Map timeout status. Journey files, manual corrections and the verified national reference are unchanged."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.254",
       "version_code": 300,
       "release_date": "2026-11-18",
