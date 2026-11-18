@@ -277,7 +277,6 @@ final class ARoadProgressCalculator {
             Reference reference = reference(road);
             if (reference == null) continue;
             prepareGrid(reference);
-            int before = road.covered.size();
             double matched = 0;
             for (LocalRoadNetwork.Interval span : entry.getValue()) {
                 checkInterrupted();
@@ -290,12 +289,11 @@ final class ARoadProgressCalculator {
                 if (matchAcceptedFootReference(reference, road, start, end))
                     matched += (span.end() - span.start()) / 1000.0;
             }
-            int added = road.covered.size() - before;
-            if (added > 0) {
+            if (matched > 0) {
                 roads.putIfAbsent(id, road);
                 road.matchedMetres += matched;
                 if (journeyId != null && !journeyId.isEmpty()) road.journeyIds.add(journeyId);
-                credited += added;
+                credited++;
             }
         }
         return credited;
@@ -324,7 +322,8 @@ final class ARoadProgressCalculator {
                 if (perpendicular > ACCEPTED_FOOT_RADIUS_M
                         || !alignedWithReference(reference, anchor, dx, dy, length2))
                     continue;
-                if (road.covered.add(anchor.id)) accepted++;
+                road.covered.add(anchor.id);
+                accepted++;
             }
         }
         return accepted > 0;
