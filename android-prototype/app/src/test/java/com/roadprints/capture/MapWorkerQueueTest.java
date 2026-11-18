@@ -4,10 +4,10 @@ import static org.junit.Assert.*;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
+import java.lang.reflect.Field;
 import org.junit.Test;
 
 /** New Map requests cannot accumulate behind an expensive running archive scan. */
@@ -71,31 +71,18 @@ public final class MapWorkerQueueTest {
     }
 
     @Test public void cancellingMapWaitingForArchiveLockDoesNotRunItsPreparation() throws Exception {
-        CountDownLatch lockAcquired = new CountDownLatch(1);
-        CountDownLatch releaseLock = new CountDownLatch(1);
-        // Isolate the competing screen from the shared general-purpose executor;
-        // this test is specifically about the archive lock and Map cancellation.
-        ExecutorService otherScreenExecutor = Executors.newSingleThreadExecutor();
-        Future<?> otherScreen = otherScreenExecutor.submit(() -> {
-            try {
-                ScreenDataLoader.prepareArchive(() -> {
-                    lockAcquired.countDown();
-                    if (!releaseLock.await(10, TimeUnit.SECONDS))
-                        throw new IllegalStateException("Screen lock was not released");
-                    return null;
-                });
-            } catch (Exception failure) {
-                throw new RuntimeException(failure);
-            }
-        });
+        // Hold the real archive preparation lock on this test thread. Using a
+        // second screen executor here could queue behind unrelated test work.
+        Field field = ScreenDataLoader.class.getDeclaredField("ARCHIVE_PREPARATION");
+        field.setAccessible(true);
+        ReentrantLock lock = (ReentrantLock) field.get(null);
+        CountDownLatch mapStarted = new CountDownLatch(1);
+        AtomicInteger unexpectedPreparation = new AtomicInteger();
         Future<?> cancelled = null;
+        lock.lock();
         try {
-            assertTrue("Other screen should acquire the archive lock",
-                    lockAcquired.await(10, TimeUnit.SECONDS));
-            CountDownLatch waiting = new CountDownLatch(1);
-            AtomicInteger unexpectedPreparation = new AtomicInteger();
             cancelled = ScreenDataLoader.map(() -> {
-                waiting.countDown();
+                mapStarted.countDown();
                 try {
                     ScreenDataLoader.prepareArchive(() -> {
                         unexpectedPreparation.incrementAndGet();
@@ -107,20 +94,20 @@ public final class MapWorkerQueueTest {
                     throw new RuntimeException(failure);
                 }
             });
-            assertTrue("Map must start waiting for archive preparation",
-                    waiting.await(10, TimeUnit.SECONDS));
-            assertTrue(cancelled.cancel(true));
-            releaseLock.countDown();
-            otherScreen.get(10, TimeUnit.SECONDS);
+            assertTrue("Map should start while archive preparation is locked",
+                    mapStarted.await(10, TimeUnit.SECONDS));
+            assertTrue("Cancelled Map must accept an interrupt", cancelled.cancel(true));
+        } finally {
+            lock.unlock();
+        }
+        try {
+            // This runs on the same Map executor after the cancelled scan.
             Future<?> next = ScreenDataLoader.map(() -> {});
             next.get(10, TimeUnit.SECONDS);
-            assertEquals("Cancelled Map must never enter archive preparation",
+            assertEquals("Cancelled Map must not enter archive preparation",
                     0, unexpectedPreparation.get());
         } finally {
-            releaseLock.countDown();
             if (cancelled != null) cancelled.cancel(true);
-            otherScreen.cancel(true);
-            otherScreenExecutor.shutdownNow();
         }
     }
 
