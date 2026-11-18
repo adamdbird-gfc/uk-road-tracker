@@ -138,7 +138,8 @@ final class PerformanceDiagnostics {
         // Otherwise a large map can rotate the relevant attribution counters out
         // before the owner opens Utilities to copy a report.
         if (value.startsWith("map_mode_coverage ") || value.startsWith("map_local_roads ")
-                || value.startsWith("map_timeout_stage ") || value.startsWith("archive_prepare_lock_wait "))
+                || value.startsWith("map_timeout_stage ") || value.startsWith("archive_prepare_lock_wait ")
+                || value.startsWith("map_archive_progress ") || value.startsWith("map_slow_contribution "))
             edit.putString(value.substring(0, value.indexOf(' ')), entry.trim());
         edit.apply();
     }
@@ -156,10 +157,14 @@ final class PerformanceDiagnostics {
         String latestRoads = prefs.getString("map_local_roads", "");
         String latestTimeout = prefs.getString("map_timeout_stage", "");
         String latestArchiveWait = prefs.getString("archive_prepare_lock_wait", "");
+        String latestProgress = prefs.getString("map_archive_progress", "");
+        String latestSlowContribution = prefs.getString("map_slow_contribution", "");
         String summary = (latestModes.isEmpty() ? "" : latestModes + "\n")
                 + (latestRoads.isEmpty() ? "" : latestRoads + "\n")
                 + (latestTimeout.isEmpty() ? "" : latestTimeout + "\n")
-                + (latestArchiveWait.isEmpty() ? "" : latestArchiveWait + "\n");
+                + (latestArchiveWait.isEmpty() ? "" : latestArchiveWait + "\n")
+                + (latestProgress.isEmpty() ? "" : latestProgress + "\n")
+                + (latestSlowContribution.isEmpty() ? "" : latestSlowContribution + "\n");
         String details = summary + timings;
         return bandwidth.isEmpty() ? details : bandwidth + "\n" + details;
     }
