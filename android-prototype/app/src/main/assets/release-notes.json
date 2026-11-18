@@ -2,6 +2,22 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.256",
+      "version_code": 302,
+      "release_date": "2026-11-18",
+      "since": "0.25.255",
+      "changes": [
+        {
+          "title": "Fresh signed installation package",
+          "description": "Rebuilt integrated Roadprints with the same package identity and signing certificate to address a Pixel 10 installer rejection of Build 301."
+        },
+        {
+          "title": "Keep detailed Map diagnostic stages",
+          "description": "Retains motorway/A-road initialisation, archive progress, expensive journey contribution and Map timeout measurements. Existing journeys and corrections remain untouched."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.255",
       "version_code": 301,
       "release_date": "2026-11-18",
