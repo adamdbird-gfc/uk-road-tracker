@@ -72,6 +72,24 @@ public class LocalRoadCoverageTest {
                 assertEquals(1, coverage.held);
             }
             assertArrayEquals(original, Files.readAllBytes(source.toPath()));
+            // A corrected source token must invalidate the hold. Even when the
+            // new alignment is unresolved, it is a real assessed projection.
+            JSONObject geometry = new JSONObject().put("type", "LineString")
+                    .put("coordinates", new JSONArray()
+                            .put(new JSONArray().put(0).put(0))
+                            .put(new JSONArray().put(.001).put(0)));
+            journey.getJSONObject("processing_result").getJSONObject("geojson")
+                    .put("features", new JSONArray().put(new JSONObject().put("geometry", geometry)));
+            Files.write(source.toPath(), journey.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            try (MapJourneyStore store = new MapJourneyStore(context);
+                 LocalRoadCoverage coverage = LocalRoadCoverage.open(context)) {
+                MapJourneyStore.Record corrected = store.new Record(source, JourneyStore.fileToken(source),
+                        new JSONObject().put("mode", "driving"), null, true);
+                assertNotNull("Corrected geometry must leave held state",
+                        coverage.contribution(corrected));
+                assertEquals(0, coverage.held);
+                assertEquals(1, coverage.calculated);
+            }
         } finally {
             Files.deleteIfExists(source.toPath());
         }
