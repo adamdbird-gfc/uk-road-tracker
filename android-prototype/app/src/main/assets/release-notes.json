@@ -2,6 +2,26 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.252",
+      "version_code": 298,
+      "release_date": "2026-11-18",
+      "since": "0.25.251",
+      "changes": [
+        {
+          "title": "Bring walking and running into the cumulative Map",
+          "description": "Accepted on-foot journeys can contribute to matching physical A-road sections and dedicated public footpaths in the new national reference. Repeated journeys share the same underlying network section instead of drawing duplicate tracks."
+        },
+        {
+          "title": "Preserve road identity and corrections",
+          "description": "Dedicated footways stay distinct from nearby vehicle carriageways, removed journey segments remain excluded, and original journey archives are not modified."
+        },
+        {
+          "title": "Updated United Kingdom road and pedestrian reference",
+          "description": "A new versioned UK catalogue records OSM road references separately from road names and includes eligible pedestrian-only paths. The installed catalogue version determines coverage availability."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.251",
       "version_code": 297,
       "release_date": "2026-11-17",
