@@ -514,19 +514,43 @@ final class LocalRoadCoverage implements AutoCloseable {
             this.first = first;
             this.last = last;
             this.history = history;
-            List<Interval> intervals = new ArrayList<>();
+            // The old union allocated one Interval object for every recorded
+            // contributor span plus another list of merged Intervals. This runs
+            // tens of thousands of times on the overview Map. Encode each
+            // validated pair in one primitive long; signed sort orders start,
+            // then end, exactly as LocalRoadNetwork.union() does.
+            int count = 0;
+            for (int[] values : history.values()) count += values.length / 2;
+            long[] endpoints = new long[count];
+            int cursor = 0;
             for (int[] values : history.values())
                 for (int i = 0; i < values.length; i += 2)
-                    intervals.add(new Interval(values[i], values[i + 1]));
+                    endpoints[cursor++] = ((long) values[i] << 32) | (values[i + 1] & 0xffffffffL);
+            java.util.Arrays.sort(endpoints);
             lines = new ArrayList<>();
             long unique = 0;
-            for (Interval interval : union(intervals)) {
-                lines.add(new Line(this, interval, new JSONArray()
-                        .put(interpolate(first, last, interval.start() / (double) length))
-                        .put(interpolate(first, last, interval.end() / (double) length))));
-                unique += interval.end() - interval.start();
+            int start = -1, end = -1;
+            for (long encoded : endpoints) {
+                int nextStart = (int) (encoded >>> 32), nextEnd = (int) encoded;
+                if (start >= 0 && nextStart > end) {
+                    lines.add(coveredLine(start, end));
+                    unique += end - start;
+                    start = -1;
+                }
+                if (start < 0) { start = nextStart; end = nextEnd; }
+                else end = Math.max(end, nextEnd);
+            }
+            if (start >= 0) {
+                lines.add(coveredLine(start, end));
+                unique += end - start;
             }
             uniqueMillimetres = unique;
+        }
+
+        private Line coveredLine(int start, int end) throws Exception {
+            return new Line(this, new Interval(start, end), new JSONArray()
+                    .put(interpolate(first, last, start / (double) length))
+                    .put(interpolate(first, last, end / (double) length)));
         }
 
         JSONObject encode() throws Exception {
