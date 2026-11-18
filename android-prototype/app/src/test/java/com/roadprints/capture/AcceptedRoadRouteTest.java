@@ -125,6 +125,84 @@ public class AcceptedRoadRouteTest {
         }
     }
 
+    @Test public void version3KeepsOfficialRoadRefAndCreditsDistinctFootwayOnlyOnFoot()
+            throws Exception {
+        Path pack = Files.createTempFile("roadprints-v3-walk", ".bin");
+        try {
+            Files.write(pack, testPackV3());
+            try (RoadReference reference = new RoadReference(
+                    FileChannel.open(pack), 0, Files.size(pack))) {
+                Edge road = reference.nearby(.001, 51.001, .002, 51.001).stream()
+                        .filter(edge -> edge.way == 11).findFirst().orElseThrow();
+                assertEquals("High Street", road.label);
+                assertEquals("A2", road.roadRef);
+                assertFalse(road.footOnly);
+                Edge footway = reference.nearby(.001, 51.0011, .002, 51.0011).stream()
+                        .filter(edge -> edge.way == 12).findFirst().orElseThrow();
+                assertEquals("Riverside Walk", footway.label);
+                assertEquals("", footway.roadRef);
+                assertTrue(footway.footOnly);
+                assertTrue(footway.eligible);
+
+                JSONObject journey = new JSONObject("""
+                        {"mode":"walking","processing_status":"complete",
+                         "processing_result":{"status":"ok","geojson":{"features":[{
+                           "geometry":{"type":"LineString","coordinates":[
+                             [0.001,51.0011],[0.002,51.0011]]}
+                         }]}}}
+                        """);
+                var walked = AcceptedRoadRoute.project(reference, journey);
+                assertNotNull(walked);
+                assertEquals(1, walked.sections().size());
+                assertTrue(walked.sections().keySet().iterator().next().footOnly);
+                assertEquals(12L, walked.sections().keySet().iterator().next().way);
+
+                journey.put("mode", "driving");
+                var driven = AcceptedRoadRoute.project(reference, journey);
+                assertNotNull(driven);
+                assertTrue("Driving cannot credit pedestrian-only OSM ways",
+                        driven.sections().isEmpty());
+                journey.put("mode", "walking");
+                journey.put("journey_corrections", new JSONObject().put(
+                        "removed_matched_segments", new JSONArray().put(0)));
+                var edited = AcceptedRoadRoute.project(reference, journey);
+                assertTrue("Removed footway segment cannot count", edited.sections().isEmpty());
+            }
+        } finally {
+            Files.deleteIfExists(pack);
+        }
+    }
+
+    static byte[] testPackV3() throws Exception {
+        ByteArrayOutputStream tileBytes = new ByteArrayOutputStream();
+        try (DataOutputStream tile = new DataOutputStream(new GZIPOutputStream(tileBytes))) {
+            byte[] namedRoad = "High Street\\u001fA2".replace("\\u001f", String.valueOf((char) 31))
+                    .getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            tile.writeLong(11);tile.writeLong(1);tile.writeLong(2);
+            tile.writeInt(10_000);tile.writeInt(510_010_000);
+            tile.writeInt(20_000);tile.writeInt(510_010_000);
+            tile.writeByte(0);tile.writeByte((1 << 2) | 1);
+            tile.writeShort(namedRoad.length);tile.write(namedRoad);
+            byte[] footName = "Riverside Walk\\u001f".replace("\\u001f", String.valueOf((char) 31))
+                    .getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            tile.writeLong(12);tile.writeLong(3);tile.writeLong(4);
+            tile.writeInt(10_000);tile.writeInt(510_011_000);
+            tile.writeInt(20_000);tile.writeInt(510_011_000);
+            tile.writeByte(0);tile.writeByte((21 << 2) | 2);
+            tile.writeShort(footName.length);tile.write(footName);
+        }
+        ByteArrayOutputStream file = new ByteArrayOutputStream();
+        try (DataOutputStream packed = new DataOutputStream(file)) {
+            packed.writeBytes("RPRD0003");
+            packed.write(new byte[32]);
+            packed.writeInt(1);
+            packed.writeInt(0);packed.writeInt(2550);
+            packed.writeInt(60);packed.writeInt(tileBytes.size());
+            tileBytes.writeTo(packed);
+        }
+        return file.toByteArray();
+    }
+
     static byte[] testPack() throws Exception {
         ByteArrayOutputStream compressedBytes = new ByteArrayOutputStream();
         try (DataOutputStream compressed = new DataOutputStream(new GZIPOutputStream(compressedBytes))) {

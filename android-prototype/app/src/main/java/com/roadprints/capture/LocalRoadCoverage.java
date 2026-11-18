@@ -109,7 +109,8 @@ final class LocalRoadCoverage implements AutoCloseable {
                 long way = span.getLong(0), from = span.getLong(1), to = span.getLong(2);
                 Point a = RoadReference.point(span.getDouble(4), span.getDouble(5));
                 Point b = RoadReference.point(span.getDouble(6), span.getDouble(7));
-                Edge edge = new Edge(way, from, to, span.getString(3), a, b, 0, true, span.getInt(8), -1);
+                Edge edge = new Edge(way, from, to, span.getString(3), a, b, 0, true,
+                        span.getInt(8), -1, cachedRoadRef(span), cachedFootOnly(span));
                 List<Interval> intervals = decodeCachedIntervals(span, edge.mm);
                 if (result.put(edge, intervals) != null)
                     throw new IllegalArgumentException("Duplicate cached local-road section");
@@ -139,7 +140,7 @@ final class LocalRoadCoverage implements AutoCloseable {
                     Edge edge = new Edge(way, from, to, span.getString(3),
                             RoadReference.point(span.getDouble(4), span.getDouble(5)),
                             RoadReference.point(span.getDouble(6), span.getDouble(7)),
-                            0, false, sectionMm, -1);
+                            0, false, sectionMm, -1, cachedRoadRef(span), cachedFootOnly(span));
                     List<Interval> intervals = decodeCachedIntervals(span, sectionMm);
                     if (majorResult.put(edge, intervals) != null)
                         throw new IllegalArgumentException("Duplicate accepted major-road section");
@@ -191,16 +192,26 @@ final class LocalRoadCoverage implements AutoCloseable {
     /** Validates disposable cache rows before they may suppress legacy route geometry. */
     static List<Interval> decodeCachedIntervals(JSONArray span, int sectionMm)
             throws org.json.JSONException {
-        if (sectionMm <= 0 || span == null || span.length() < 11 || span.length() % 2 != 1)
+        int first = span != null && span.opt(9) instanceof String ? 11 : 9;
+        if (sectionMm <= 0 || span == null || span.length() < first + 2
+                || (span.length() - first) % 2 != 0)
             throw new IllegalArgumentException("Invalid cached local-road interval format");
         List<Interval> intervals = new ArrayList<>();
-        for (int offset = 9; offset < span.length(); offset += 2) {
+        for (int offset = first; offset < span.length(); offset += 2) {
             int start = span.getInt(offset), end = span.getInt(offset + 1);
             if (start < 0 || end <= start || end > sectionMm)
                 throw new IllegalArgumentException("Invalid cached local-road interval bounds");
             intervals.add(new Interval(start, end));
         }
         return intervals;
+    }
+
+    private static String cachedRoadRef(JSONArray row) {
+        return row.opt(9) instanceof String ? row.optString(9, "") : "";
+    }
+
+    private static boolean cachedFootOnly(JSONArray row) {
+        return row.opt(9) instanceof String && row.optBoolean(10, false);
     }
 
     String failureBreakdown() {
@@ -254,7 +265,8 @@ final class LocalRoadCoverage implements AutoCloseable {
                 throw new IllegalArgumentException("Matched route exceeds per-journey interval limit");
             JSONArray row = new JSONArray().put(edge.way).put(edge.from).put(edge.to).put(edge.label)
                     .put(ukLongitude(edge.a)).put(ukLatitude(edge.a)).put(ukLongitude(edge.b))
-                    .put(ukLatitude(edge.b)).put(edge.mm);
+                    .put(ukLatitude(edge.b)).put(edge.mm)
+                    .put(edge.roadRef).put(edge.footOnly);
             for (Interval interval : section.getValue()) row.put(interval.start()).put(interval.end());
             spans.put(row);
         }
@@ -269,7 +281,8 @@ final class LocalRoadCoverage implements AutoCloseable {
                 throw new IllegalArgumentException("Accepted route exceeds interval limit");
             JSONArray row = new JSONArray().put(edge.way).put(edge.from).put(edge.to).put(edge.label)
                     .put(ukLongitude(edge.a)).put(ukLatitude(edge.a)).put(ukLongitude(edge.b))
-                    .put(ukLatitude(edge.b)).put(edge.mm);
+                    .put(ukLatitude(edge.b)).put(edge.mm)
+                    .put(edge.roadRef).put(edge.footOnly);
             for (Interval interval : section.getValue()) row.put(interval.start()).put(interval.end());
             majorSpans.put(row);
         }

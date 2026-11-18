@@ -9,14 +9,15 @@ from pathlib import Path
 import struct
 import tempfile
 
-import osmium
-
 from build_gravesend_coverage import ROAD_CLASSES, direction, eligible
 
 
 TILE = 200_000  # 0.02 degrees in OSM's integer coordinate units
 HALO = 4_000  # At least 21 m within the UK
-CLASSES = tuple(sorted(ROAD_CLASSES))
+FOOT_ONLY_CLASSES = {"footway", "path", "cycleway", "bridleway", "steps", "pedestrian"}
+# Preserve all v2 road-class codes; only previously absent classes append.
+CLASSES = tuple(sorted(ROAD_CLASSES)) + tuple(sorted(FOOT_ONLY_CLASSES - ROAD_CLASSES))
+LABEL_SEPARATOR = chr(31)
 MAJOR = {"motorway", "trunk", "primary"}
 UK_BOUNDS = (-9 * 10**7, 49 * 10**7, 3 * 10**7, 62 * 10**7)
 EDGE = struct.Struct(">qqqiiiibbH")
@@ -43,12 +44,38 @@ class Tiles:
             handle.close()
 
 
+def encoded_flags(highway, tags, major):
+    local = eligible(tags) and not major if highway in ROAD_CLASSES else False
+    # Foot-only ways, including pedestrianised streets, must not be credited
+    # from driving. Keep inaccessible ways as competitors without awarding them.
+    walk_only = highway in FOOT_ONLY_CLASSES and all(
+        tags.get(key, "yes") not in {"no", "private"}
+        for key in ("access", "foot")
+    )
+    return (CLASSES.index(highway) << 2) | (2 if walk_only else 0) | int(local)
+
+
+def encoded_label(tags):
+    # Reference is independent of the human-readable street name. This was
+    # missing from v2 and made named A-roads impossible to reconcile safely.
+    name = (tags.get("name") or tags.get("ref") or "").replace(LABEL_SEPARATOR, " ")
+    road_ref = tags.get("ref", "").replace(LABEL_SEPARATOR, " ")
+    label = (name + LABEL_SEPARATOR + road_ref).encode("utf-8")
+    if len(label) > 1024:
+        label = (LABEL_SEPARATOR + road_ref).encode("utf-8")
+    if len(label) > 1024:
+        label = LABEL_SEPARATOR.encode("utf-8")
+    return label
+
+
 def collect(source, tiles):
+    import osmium
+
     for way in osmium.FileProcessor(source).with_locations("flex_mem").with_filter(
         osmium.filter.EntityFilter(osmium.osm.WAY)
     ):
         highway = way.tags.get("highway")
-        if highway not in ROAD_CLASSES:
+        if highway not in ROAD_CLASSES and highway not in FOOT_ONLY_CLASSES:
             continue
         tags = dict(way.tags)
         travel_direction = direction(tags)
@@ -56,10 +83,8 @@ def collect(source, tiles):
             ref.strip().startswith("A") and ref.strip()[1:2].isdigit()
             for ref in tags.get("ref", "").split(";")
         )
-        local = eligible(tags) and not major
-        label = (tags.get("name") or tags.get("ref") or "").encode("utf-8")
-        if len(label) > 1024:
-            label = b""
+        flags = encoded_flags(highway, tags, major)
+        label = encoded_label(tags)
         nodes = list(way.nodes)
         repeats = Counter(tuple(sorted((a.ref, b.ref))) for a, b in zip(nodes, nodes[1:]))
         for a, b in zip(nodes, nodes[1:]):
@@ -76,7 +101,7 @@ def collect(source, tiles):
                 continue
             data = EDGE.pack(way.id, a.ref, b.ref, ax, ay, bx, by,
                              2 if travel_direction is None else travel_direction,
-                             (CLASSES.index(highway) << 1) | int(local), len(label)) + label
+                             flags, len(label)) + label
             # Add the same physical edge to each intersecting tile, including the
             # attribution search halo. Identity and orientation are independent of tile.
             for x in range((min(ax, bx) - HALO) // TILE, (max(ax, bx) + HALO) // TILE + 1):
@@ -89,7 +114,7 @@ def build(sources, output):
     for source in sources:
         with source.open("rb") as stream:
             hashes.append(file_digest(stream, "sha256").digest())
-    version = sha256(b"roadprints-osm-road-tiles-v2\0" + b"".join(hashes)).digest()
+    version = sha256(b"roadprints-osm-road-tiles-v3\0" + b"".join(hashes)).digest()
     with tempfile.TemporaryDirectory(prefix="roadprints-road-tiles-") as directory:
         root = Path(directory)
         tiles = Tiles(root)
@@ -100,7 +125,7 @@ def build(sources, output):
             tiles.close()
         paths = sorted(root.iterdir(), key=lambda path: tuple(map(int, path.name.split("_"))))
         with output.open("wb") as target:
-            target.write(b"RPRD0002" + version + struct.pack(">i", len(paths)))
+            target.write(b"RPRD0003" + version + struct.pack(">i", len(paths)))
             target.seek(44 + 16 * len(paths))
             index = []
             for path in paths:

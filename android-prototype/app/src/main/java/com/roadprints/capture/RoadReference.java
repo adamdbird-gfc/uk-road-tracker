@@ -28,6 +28,7 @@ final class RoadReference implements AutoCloseable {
     private final long length;
     private final ByteBuffer index;
     final String version;
+    private final boolean version3;
     private final LinkedHashMap<Long, LocalRoadNetwork> tiles = new LinkedHashMap<>(16, .75f, true);
 
     RoadReference(FileChannel channel, long start, long length) throws IOException {
@@ -37,8 +38,10 @@ final class RoadReference implements AutoCloseable {
         ByteBuffer header = read(0, INDEX_START);
         byte[] magic = new byte[8];
         header.get(magic);
-        if (!"RPRD0002".equals(new String(magic, StandardCharsets.US_ASCII)))
+        String format = new String(magic, StandardCharsets.US_ASCII);
+        if (!"RPRD0002".equals(format) && !"RPRD0003".equals(format))
             throw new IOException("Unsupported road reference");
+        version3 = "RPRD0003".equals(format);
         byte[] digest = new byte[32];
         header.get(digest);
         StringBuilder hex = new StringBuilder(64);
@@ -110,14 +113,21 @@ final class RoadReference implements AutoCloseable {
                 double bx = data.readInt() / 1e7, by = data.readInt() / 1e7;
                 int direction = data.readByte(), flags = data.readUnsignedByte(), labelLength = data.readUnsignedShort();
                 bytes += 44 + labelLength;
-                if (labelLength > 1024 || bytes > MAX_TILE_BYTES || direction < -1 || direction > 2 || (flags >>> 1) >= 64)
+                if (labelLength > 1024 || bytes > MAX_TILE_BYTES || direction < -1 || direction > 2 || (version3 ? flags >>> 2 : flags >>> 1) >= 64)
                     throw new IOException("Invalid road tile data");
                 byte[] label = new byte[labelLength];
                 data.readFully(label);
                 int mm = groundMillimetres(ax, ay, bx, by);
+                String packedLabel = new String(label, StandardCharsets.UTF_8);
+                int separator = version3 ? packedLabel.indexOf(31) : -1;
+                String name = separator < 0 ? packedLabel : packedLabel.substring(0, separator);
+                String roadRef = separator < 0 ? packedLabel : packedLabel.substring(separator + 1);
+                boolean footOnly = version3 && (flags & 2) != 0;
+                int roadClass = version3 ? flags >>> 2 : flags >>> 1;
                 LocalRoadNetwork.Edge edge = new LocalRoadNetwork.Edge(way, from, to,
-                        new String(label, StandardCharsets.UTF_8), point(ax, ay), point(bx, by),
-                        direction == 2 ? null : direction, (flags & 1) == 1, mm, flags >>> 1);
+                        name, point(ax, ay), point(bx, by),
+                        direction == 2 ? null : direction,
+                        (flags & 1) != 0 || footOnly, mm, roadClass, roadRef, footOnly);
                 // Overlapping extract boundaries may supply the same way.
                 if (!network.edges.containsKey(edge.id())) network.add(edge);
             }

@@ -109,6 +109,41 @@ public class LocalRoadCoverageTest {
         }
     }
 
+    @Test public void version3PedestrianOnlyPathSurvivesDerivedCacheAndNeverCreditsDriving()
+            throws Exception {
+        java.nio.file.Path pack = Files.createTempFile("pedestrian-only-v3", ".bin");
+        java.nio.file.Path source = Files.createTempFile("accepted-v3-walk", ".json");
+        try {
+            Files.write(pack, AcceptedRoadRouteTest.testPackV3());
+            JSONObject journey = new JSONObject("""
+                    {"mode":"walking","processing_status":"complete",
+                     "processing_result":{"status":"ok","geojson":{"features":[{
+                     "geometry":{"type":"LineString","coordinates":[
+                     [0.001,51.0011],[0.002,51.0011]]}}]}}}
+                    """);
+            try (RoadReference reference = new RoadReference(
+                    java.nio.channels.FileChannel.open(pack), 0, Files.size(pack))) {
+                Files.write(source, journey.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                JSONObject walk = LocalRoadCoverage.readAcceptedContribution(reference, source.toFile());
+                assertEquals(1, walk.getInt("intervals"));
+                JSONArray edge = walk.getJSONArray("spans").getJSONArray(0);
+                assertEquals(12L, edge.getLong(0));
+                assertTrue(edge.getBoolean(10));
+                assertEquals("", edge.getString(9));
+                assertEquals(1, LocalRoadCoverage.decodeCachedIntervals(edge, edge.getInt(8)).size());
+
+                journey.put("mode", "driving");
+                Files.write(source, journey.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                JSONObject drive = LocalRoadCoverage.readAcceptedContribution(reference, source.toFile());
+                assertEquals(0, drive.getInt("intervals"));
+                assertEquals(0, drive.getJSONArray("spans").length());
+            }
+        } finally {
+            Files.deleteIfExists(source);
+            Files.deleteIfExists(pack);
+        }
+    }
+
     @Test public void cachedContributionRejectsMalformedIntervalsRatherThanSilentlyFallingBack()
             throws Exception {
         JSONArray valid = new JSONArray().put(9).put(1).put(2).put("Road")
