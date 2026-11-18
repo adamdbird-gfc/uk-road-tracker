@@ -449,6 +449,48 @@ public class LocalRoadCoverageTest {
         }
     }
 
+    @Test public void compactLocalRoadGeometryMatchesLegacyJsonAndTapIdentity() throws Exception {
+        // A partial interval, including a tiny projected difference, must use
+        // the same exact double-precision endpoints as the old retained JSON.
+        Map<String,int[]> history = new LinkedHashMap<>();
+        history.put("journey-one", new int[]{201,9979});
+        history.put("journey-two", new int[]{500,8500});
+        JSONArray a = new JSONArray().put(0.3753447).put(51.44112821);
+        JSONArray b = new JSONArray().put(0.3753871).put(51.44128429);
+        LocalRoadCoverage.Section section = new LocalRoadCoverage.Section(
+                "exact-physical-id", "Test Canal Road", 10000, a, b, history);
+        MapActivity.MapRoutes map = new MapActivity.MapRoutes();
+        map.addLocalRoad(section);
+        assertEquals(1, map.localRoadSegments.size());
+        assertEquals(1, map.localRoadLines.size());
+        assertTrue("Local geometry is not allocated as JSON on initial map assembly",
+                map.localRoadByLine.isEmpty());
+        LocalRoadCoverage.Line line = section.lines.get(0);
+        JSONArray points = line.points();
+        double start = 201d / 10000d, end = 9979d / 10000d;
+        for (int i = 0; i < 2; i++) {
+            double fraction = i == 0 ? start : end;
+            assertEquals(a.getDouble(0) + (b.getDouble(0) - a.getDouble(0)) * fraction,
+                    points.getJSONArray(i).getDouble(0), 0d);
+            assertEquals(a.getDouble(1) + (b.getDouble(1) - a.getDouble(1)) * fraction,
+                    points.getJSONArray(i).getDouble(1), 0d);
+        }
+        LocalRoadLayer layer = new LocalRoadLayer(map.localRoadSegments);
+        double longitude = (line.longitude(false) + line.longitude(true)) / 2d;
+        double latitude = (line.latitude(false) + line.latitude(true)) / 2d;
+        double x = (longitude + 180) / 360;
+        double y = .5 - MapRenderGeometry.y(latitude) / (2 * Math.PI * 6378137);
+        LocalRoadLayer.Hit hit = layer.nearest(x, y, 0.00001);
+        assertNotNull(hit);
+        assertSame("Tap must resolve the exact same physical edge object", line, hit.line());
+        assertEquals(Set.of("journey-one", "journey-two"),
+                Set.copyOf(hit.line().contributors(.5)));
+        JSONArray replay = map.localRoadLines.get(0);
+        assertEquals(points.toString(), replay.toString());
+        assertSame(line, map.localRoadByLine.get(replay));
+        assertEquals(9778L, map.localRoadMillimetres);
+    }
+
     @Test public void streamedRoadSectionsPreserveLineIdentityContributorHistoryAndUniqueDistance()
             throws Exception {
         Context context = RuntimeEnvironment.getApplication();
