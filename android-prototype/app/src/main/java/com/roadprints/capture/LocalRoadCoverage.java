@@ -64,7 +64,8 @@ final class LocalRoadCoverage implements AutoCloseable {
         }
     }
 
-    record Prepared(Map<Edge, List<Interval>> spans, JSONArray residual) {}
+    record Prepared(Map<Edge, List<Interval>> spans, Map<Edge, List<Interval>> majorSpans,
+                    JSONArray residual) {}
     int overBudget;
     long unresolvedMm, excludedMm, majorOrOtherMm;
     final Map<String, Integer> unresolvedLegReasons = new LinkedHashMap<>();
@@ -128,12 +129,21 @@ final class LocalRoadCoverage implements AutoCloseable {
             if (majorCount < 0 || majorCount > MAX_INTERVALS_PER_JOURNEY
                     || (retainedMajor == null && majorCount != 0))
                 throw new IllegalArgumentException("Invalid major-road attribution count");
+            Map<Edge, List<Interval>> majorResult = new LinkedHashMap<>();
             if (retainedMajor != null) {
                 int validated = 0;
                 for (int i = 0; i < retainedMajor.length(); i++) {
                     JSONArray span = retainedMajor.getJSONArray(i);
                     int sectionMm = span.getInt(8);
-                    validated += decodeCachedIntervals(span, sectionMm).size();
+                    long way = span.getLong(0), from = span.getLong(1), to = span.getLong(2);
+                    Edge edge = new Edge(way, from, to, span.getString(3),
+                            RoadReference.point(span.getDouble(4), span.getDouble(5)),
+                            RoadReference.point(span.getDouble(6), span.getDouble(7)),
+                            0, false, sectionMm, -1);
+                    List<Interval> intervals = decodeCachedIntervals(span, sectionMm);
+                    if (majorResult.put(edge, intervals) != null)
+                        throw new IllegalArgumentException("Duplicate accepted major-road section");
+                    validated += intervals.size();
                 }
                 if (validated != majorCount)
                     throw new IllegalArgumentException("Invalid major-road interval total");
@@ -157,7 +167,7 @@ final class LocalRoadCoverage implements AutoCloseable {
             }
             if (reusedRow) reused++;
             else calculated++;
-            return new Prepared(result, residual);
+            return new Prepared(result, majorResult, residual);
         } catch (CancellationException cancelled) {
             throw cancelled;
         } catch (Exception unavailable) {
