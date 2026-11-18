@@ -113,7 +113,7 @@ final class RoadReference implements AutoCloseable {
                 double bx = data.readInt() / 1e7, by = data.readInt() / 1e7;
                 int direction = data.readByte(), flags = data.readUnsignedByte(), labelLength = data.readUnsignedShort();
                 bytes += 44 + labelLength;
-                if (labelLength > 1024 || bytes > MAX_TILE_BYTES || direction < -1 || direction > 2 || (flags >>> 1) >= 64)
+                if (labelLength > 1024 || bytes > MAX_TILE_BYTES || direction < -1 || direction > 2 || (version3 ? flags >>> 2 : flags >>> 1) >= 64)
                     throw new IOException("Invalid road tile data");
                 byte[] label = new byte[labelLength];
                 data.readFully(label);
