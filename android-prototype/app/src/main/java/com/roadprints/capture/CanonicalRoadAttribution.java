@@ -122,13 +122,21 @@ final class CanonicalRoadAttribution {
     /** Resolve a matched chord against a uniquely supported connected chain. */
     static Leg attributeAcceptedLeg(RoadReference reference, double ax, double ay, double bx, double by)
             throws java.io.IOException {
+        return attributeAcceptedLeg(reference, ax, ay, bx, by, false);
+    }
+
+    /** A vehicle must not attribute a nearby pedestrian-only OSM section. */
+    static Leg attributeAcceptedLeg(RoadReference reference, double ax, double ay, double bx, double by,
+                                    boolean onFoot) throws java.io.IOException {
         LocalRoadNetwork.Point first = RoadReference.point(ax, ay), last = RoadReference.point(bx, by);
         LocalRoadNetwork.Point step = last.minus(first);
         double length = step.length();
         if (!Double.isFinite(length) || length > MAX_MATCHED_LEG)
             return new Leg(List.of(), "invalid_or_long_leg");
         if (length < .001) return new Leg(List.of(), null);
-        return attributeAcceptedLeg(first, step, length, reference.nearby(ax, ay, bx, by));
+        Set<LocalRoadNetwork.Edge> available = reference.nearby(ax, ay, bx, by);
+        if (!onFoot) available.removeIf(edge -> edge.footOnly);
+        return attributeAcceptedLeg(first, step, length, available);
     }
 
     static Leg attributeAcceptedLeg(LocalRoadNetwork.Point first, LocalRoadNetwork.Point step,
