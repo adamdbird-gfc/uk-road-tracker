@@ -84,12 +84,17 @@ public class MapLegendTest {
         JSONArray overlapping = new JSONArray("[[0.34,51.440005],[0.38,51.440005]]");
         JSONArray distinct = new JSONArray("[[0.34,51.4401],[0.38,51.4401]]");
         map.setRouteData(null, java.util.List.of(overlapping, distinct));
-        map.setLocalRoadLayer(new LocalRoadLayer(java.util.List.of(cumulative)));
+        LocalRoadCoverage.Section physicalRoad = new LocalRoadCoverage.Section(
+                "road-identity", "Canonical black road", 40000,
+                cumulative.getJSONArray(0), cumulative.getJSONArray(1),
+                java.util.Map.of("recorded-journey", new int[]{0,40000}));
+        LocalRoadCoverage.Line cumulativeLine = physicalRoad.lines.get(0);
+        map.setLocalRoadLayer(new LocalRoadLayer(java.util.List.of(cumulativeLine)));
         map.restoreCameraState(.36, 51.44, 17);
         int[] taps = {0, 0};
         map.setMapRoadTapListener((lat, lon) -> taps[0]++);
         map.setLocalRoadTapListener((line, fraction) -> {
-            assertSame(cumulative, line);
+            assertSame(cumulativeLine, line);
             taps[1]++;
         });
         var tap = RoutePreviewView.class.getDeclaredMethod("tapMapRoad", float.class, float.class);

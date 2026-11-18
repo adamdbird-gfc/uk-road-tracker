@@ -689,7 +689,7 @@ public class MapActivity extends Activity {
                 mainHandler.post(() -> mapFailure(generation,"Your roads could not be loaded. Retry or Reset your filters."));
                 return;
             }
-            if (mapRoutes.localRoadLayer == null) mapRoutes.localRoadLayer = new LocalRoadLayer(mapRoutes.localRoadLines);
+            if (mapRoutes.localRoadLayer == null) mapRoutes.localRoadLayer = new LocalRoadLayer(mapRoutes.localRoadSegments);
             long currentRevision = mapDataRevision();
             Runtime runtime = Runtime.getRuntime();
             long freeHeadroom = runtime.maxMemory()
@@ -782,7 +782,7 @@ public class MapActivity extends Activity {
             incompleteRoadSegments = new ArrayList<>(mapRoutes.incompleteRoadSegments);
             map.setMapRoadTapListener(this::loadRoadSummaryAt);
             map.setLocalRoadTapListener((line, fraction) ->
-                    loadLocalRoadSummary(mapRoutes.localRoadByLine.get(line), fraction));
+                    loadLocalRoadSummary(line, fraction));
             map.setContentDescription("Interactive OpenStreetMap. Pinch to zoom and drag to move.");
             map.endOverviewUpdate(camera==null&&!hasSavedCamera);
             if (camera != null) map.restoreCameraState(camera[0], camera[1], camera[2]);
@@ -2676,8 +2676,19 @@ public class MapActivity extends Activity {
         final List<JSONArray> sections = new ArrayList<>();
         final List<JSONArray> ferrySections = new ArrayList<>();
         final List<LocalRoadCoverage.Section> localRoadSections = new ArrayList<>();
-        final List<JSONArray> localRoadLines = new ArrayList<>();
-        final Map<JSONArray, LocalRoadCoverage.Line> localRoadByLine = new java.util.IdentityHashMap<>();
+        // Keep only compact interval objects in the interactive map. JSON
+        // coordinates are generated lazily for replay/compatibility callers.
+        final List<LocalRoadCoverage.Line> localRoadSegments = new ArrayList<>();
+        final Map<JSONArray, LocalRoadCoverage.Line> localRoadByLine = new java.util.WeakHashMap<>();
+        final List<JSONArray> localRoadLines = new java.util.AbstractList<>() {
+            @Override public int size() { return localRoadSegments.size(); }
+            @Override public JSONArray get(int index) {
+                LocalRoadCoverage.Line line = localRoadSegments.get(index);
+                JSONArray points = line.points();
+                localRoadByLine.put(points, line);
+                return points;
+            }
+        };
         LocalRoadLayer localRoadLayer;
         boolean localReferenceAvailable = true;
         boolean localCoverageDegraded;
@@ -2693,10 +2704,7 @@ public class MapActivity extends Activity {
         void addLocalRoad(LocalRoadCoverage.Section section) {
             localRoadSections.add(section);
             localRoadMillimetres += section.uniqueMillimetres;
-            for (LocalRoadCoverage.Line line : section.lines) {
-                localRoadLines.add(line.points());
-                localRoadByLine.put(line.points(), line);
-            }
+            localRoadSegments.addAll(section.lines);
         }
         int ferryPoints;
         final List<JSONArray> motorwaySections = new ArrayList<>();
