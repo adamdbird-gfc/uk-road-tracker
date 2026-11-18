@@ -28,7 +28,8 @@ final class AcceptedRoadRoute {
                 || MatchingCoordinator.isCycle(mode);
     }
 
-    record Projection(Map<Edge, List<Interval>> sections, List<JSONArray> residual,
+    record Projection(Map<Edge, List<Interval>> sections, Map<Edge, List<Interval>> majorSections,
+                      List<JSONArray> residual,
                       long eligibleMm, long excludedMm, long unresolvedMm, long majorOrOtherMm,
                       Map<String, Integer> unresolvedLegs) {}
 
@@ -91,6 +92,7 @@ final class AcceptedRoadRoute {
         }
 
         Map<Edge, List<Interval>> sections = new LinkedHashMap<>();
+        Map<Edge, List<Interval>> majorSections = new LinkedHashMap<>();
         Map<String, Integer> unresolved = new LinkedHashMap<>();
         List<JSONArray> residual = new ArrayList<>();
         long eligibleMm = 0, excludedMm = 0, unresolvedMm = 0, majorOrOtherMm = 0;
@@ -127,6 +129,14 @@ final class AcceptedRoadRoute {
                     Edge edge = span.edge();
                     if (!edge.eligible) {
                         majorOrOtherMm += Math.round(length * (alignment.end() - alignment.start()));
+                        // Retain the *exact* OSM edge and interval for later
+                        // reconciliation with the existing motorway/A-road layer.
+                        // Never render this as an extra minor-road overlay.
+                        if (excludes(legacyIds, edge.label)) {
+                            excludedMm += Math.round(length * (alignment.end() - alignment.start()));
+                        } else {
+                            retainSection(majorSections, edge, span.interval(), denied);
+                        }
                         continue;
                     }
                     boolean legacyExcluded = excludes(legacyIds, edge.label);
@@ -164,7 +174,21 @@ final class AcceptedRoadRoute {
             endFragment(residual, current);
         }
         sections.replaceAll((edge, intervals) -> union(intervals));
-        return new Projection(sections, residual, eligibleMm, excludedMm, unresolvedMm, majorOrOtherMm, unresolved);
+        majorSections.replaceAll((edge, intervals) -> union(intervals));
+        return new Projection(sections, majorSections, residual, eligibleMm, excludedMm,
+                unresolvedMm, majorOrOtherMm, unresolved);
+    }
+
+    /** Append only the accepted physical interval, respecting segment-level removals. */
+    private static void retainSection(Map<Edge, List<Interval>> target, Edge edge,
+                                      Interval interval, Map<Edge, List<CumulativeRoadUnion.Interval>> denied) {
+        List<CumulativeRoadUnion.Interval> retained = List.of(
+                new CumulativeRoadUnion.Interval(interval.start(), interval.end()));
+        for (CumulativeRoadUnion.Interval exclusion : denied.getOrDefault(edge, List.of()))
+            retained = CumulativeRoadUnion.subtract(retained, exclusion);
+        for (CumulativeRoadUnion.Interval kept : retained)
+            target.computeIfAbsent(edge, ignored -> new ArrayList<>())
+                    .add(new Interval(kept.startMm(), kept.endMm()));
     }
 
     private static Set<Integer> indices(JSONObject corrections) {
