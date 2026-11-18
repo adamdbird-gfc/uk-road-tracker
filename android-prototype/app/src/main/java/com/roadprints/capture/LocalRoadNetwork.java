@@ -337,6 +337,13 @@ final class LocalRoadNetwork {
 
     Set<Edge> nearby(Point a, Point b, double margin) {
         Set<Edge> result = new HashSet<>();
+        collectNearby(a, b, margin, result);
+        return result;
+    }
+
+    // Reuse the caller's candidate set across adjacent reference tiles.
+    // Membership is identical to nearby(); no additional edges are credited.
+    void collectNearby(Point a, Point b, double margin, Set<Edge> result) {
         int left = cell(Math.max(-margin, Math.min(a.x, b.x) - margin));
         int right = cell(Math.min(width + margin, Math.max(a.x, b.x) + margin));
         int bottom = cell(Math.max(-margin, Math.min(a.y, b.y) - margin));
@@ -346,7 +353,6 @@ final class LocalRoadNetwork {
                 List<Edge> edges = grid.get(key(x, y));
                 if (edges != null) result.addAll(edges);
             }
-        return result;
     }
 
     static Candidate project(Edge edge, Point a, Point step, double length, double radius) {
