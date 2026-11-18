@@ -950,9 +950,19 @@ public class MapActivity extends Activity {
     private MapRoutes readMapRoutes(JourneyFilters selection, java.time.LocalDate today, java.time.ZoneId zone) throws Exception {
         MapRoutes output = new MapRoutes();
         long initialiseStarted=System.nanoTime();
+        long motorwayStarted = android.os.SystemClock.elapsedRealtime();
+        markMapStage("motorway_reference_initialising", mapStartedAt);
         MotorwayProgressCalculator motorwayCalculator =
                 new MotorwayProgressCalculator(getApplicationContext());
-        ARoadProgressCalculator aRoadCalculator = new ARoadProgressCalculator(getApplicationContext(), false);
+        PerformanceDiagnostics.timing("map_motorway_reference_init",
+                android.os.SystemClock.elapsedRealtime() - motorwayStarted, "");
+        long aRoadStarted = android.os.SystemClock.elapsedRealtime();
+        markMapStage("a_road_reference_initialising", mapStartedAt);
+        ARoadProgressCalculator aRoadCalculator =
+                new ARoadProgressCalculator(getApplicationContext(), false);
+        PerformanceDiagnostics.timing("map_a_road_reference_init",
+                android.os.SystemClock.elapsedRealtime() - aRoadStarted, "");
+        markMapStage("journey_records_initialising", mapStartedAt);
         PerformanceDiagnostics.timing("map_reference_init",(System.nanoTime()-initialiseStarted)/1_000_000,"");
         long evidenceStarted=System.nanoTime();
         long[] work=new long[3];int[] counts=new int[6];int[] unprocessedModes=new int[4];
@@ -964,6 +974,7 @@ public class MapActivity extends Activity {
         try (MapJourneyStore records = new MapJourneyStore(getApplicationContext());
              LocalRoadCoverage local = LocalRoadCoverage.open(getApplicationContext())) {
         output.localReferenceAvailable = local != null;
+        markMapStage("journey_records_scanning", mapStartedAt);
         records.forEach(() -> isDestroyed() || Thread.currentThread().isInterrupted(), record -> {
             JSONObject journey=record.header;
             if (++counts[0] % 25 == 0) heap.sample();
