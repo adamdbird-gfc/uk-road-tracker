@@ -67,17 +67,17 @@ jobs:
             --tests com.roadprints.capture.RailwayTrialWorkerTest \
             --tests com.roadprints.capture.LocalRoadCoverageTest \
             > "$RUNNER_TEMP/map-resume-303.log" 2>&1 || {
-              grep -nE -A3 -B2 '(error:|FAILED|failure|AssertionError|Caused by:)' "$RUNNER_TEMP/map-stall-300.log" | head -90 || true
-              tail -n 70 "$RUNNER_TEMP/map-stall-300.log"
+              grep -nE -A3 -B2 '(error:|FAILED|failure|AssertionError|Caused by:)' "$RUNNER_TEMP/map-resume-303.log" | head -90 || true
+              tail -n 70 "$RUNNER_TEMP/map-resume-303.log"
               exit 1
             }
-          tail -n 30 "$RUNNER_TEMP/map-stall-300.log"
+          tail -n 30 "$RUNNER_TEMP/map-resume-303.log"
       - name: Upload investigation evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: map-cache-resume-303
           path: |
-            ${{ runner.temp }}/map-stall-300.log
+            ${{ runner.temp }}/map-resume-303.log
             android-prototype/app/build/test-results/testDebugUnitTest/**
           if-no-files-found: ignore
