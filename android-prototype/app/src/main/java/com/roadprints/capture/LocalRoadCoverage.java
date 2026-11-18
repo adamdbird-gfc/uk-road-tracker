@@ -73,6 +73,10 @@ final class LocalRoadCoverage implements AutoCloseable {
     long footUnresolvedMm, footMajorOrOtherMm;
     int footMajorIntervals;
 
+    RoadReference.Statistics referenceStatistics() {
+        return reference.statistics();
+    }
+
     Prepared contribution(MapJourneyStore.Record record) {
         if (!AcceptedRoadRoute.eligibleMode(record.header.optString("mode"))) return null;
         String phase = "read_or_compute";
