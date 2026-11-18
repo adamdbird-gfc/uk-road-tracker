@@ -77,8 +77,15 @@ public class MapActivity extends Activity {
     private long mapStartedAt;
     private volatile String mapLoadStage = "idle";
     private volatile long mapStageStartedAt;
+    // Updated by the Map worker; consulted only when the 120-second deadline fires.
+    private volatile long mapLastArchiveProgressAt;
     private View mapRecovery;
-    static final long MAP_TIMEOUT_MS = 120_000; // Cold archive/reference preparation can legitimately exceed 30 seconds.
+    static final long MAP_TIMEOUT_MS = 120_000; // Initial hard limit unless useful archive work is advancing.
+    static final long MAP_PROGRESS_GRACE_MS = 60_000;
+    static boolean allowMapProgressGrace(String phase, long progressAgeMs, boolean alreadyExtended) {
+        return !alreadyExtended && "journey_records_scanning".equals(phase)
+                && progressAgeMs >= 0 && progressAgeMs <= 15_000;
+    }
     interface MapRouteLoader {
         MapRoutes load(MapActivity screen, JourneyFilters selection, java.time.LocalDate today, java.time.ZoneId zone) throws Exception;
     }
@@ -607,6 +614,7 @@ public class MapActivity extends Activity {
         mapStartedAt=android.os.SystemClock.elapsedRealtime();
         mapLoadStage="request";
         mapStageStartedAt=mapStartedAt;
+        mapLastArchiveProgressAt=0;
         loadingMapRevision = revision;
         if (cached != null) {
             PerformanceDiagnostics.timing("map_navigation", 0, "source=process_snapshot");
@@ -615,7 +623,20 @@ public class MapActivity extends Activity {
         }
         mapLoadFailed=false;
         showMapLoading(hasDisplayedMap);
-        mapDeadline=()->mapFailure(generation,"Loading took too long. Retry or Reset your filters.");
+        mapDeadline=()->{
+            long now = android.os.SystemClock.elapsedRealtime();
+            long age = mapLastArchiveProgressAt == 0 ? Long.MAX_VALUE : now - mapLastArchiveProgressAt;
+            if (generation == mapLoadGeneration && allowMapProgressGrace(mapLoadStage, age, false)) {
+                PerformanceDiagnostics.timing("map_deadline_progress_grace", 0,
+                        "phase=" + mapLoadStage + " progress_age_ms=" + age
+                                + " extra_ms=" + MAP_PROGRESS_GRACE_MS);
+                mapDeadline = () -> mapFailure(generation,
+                        "Loading took too long. Retry or Reset your filters.");
+                mainHandler.postDelayed(mapDeadline, MAP_PROGRESS_GRACE_MS);
+            } else {
+                mapFailure(generation,"Loading took too long. Retry or Reset your filters.");
+            }
+        };
         mainHandler.postDelayed(mapDeadline,MAP_TIMEOUT_MS);
         final long queuedAt = android.os.SystemClock.elapsedRealtime();mapStartedAt=queuedAt;
         PerformanceDiagnostics.timing("map_request_queued", 0, "generation=" + generation);
@@ -991,6 +1012,9 @@ public class MapActivity extends Activity {
         records.forEach(() -> isDestroyed() || Thread.currentThread().isInterrupted(), record -> {
             JSONObject journey=record.header;
             ++counts[0];
+            // A slow valid contribution is not a stalled worker. A fresh scan
+            // heartbeat earns at most one bounded 60-second completion window.
+            mapLastArchiveProgressAt = android.os.SystemClock.elapsedRealtime();
             // Report bounded progress without persisting IDs, route coordinates or
             // titles. Detect a single expensive journey without treating it as
             // evidence of faulty matching.
@@ -1087,6 +1111,7 @@ public class MapActivity extends Activity {
                         if (available < 40L * 1024 * 1024) {
                             deferredFootCanonicalA[0] += coverage.majorSpans().size();
                             output.localCoverageDegraded = true;
+                            output.localCoverageResourceDegraded = true;
                         } else {
                             acceptedFootCanonicalA[0] += aRoadCalculator.addAcceptedFootSections(
                                     journeyId, coverage.majorSpans());
@@ -1101,7 +1126,10 @@ public class MapActivity extends Activity {
             long started = System.nanoTime();
             for (LocalRoadCoverage.Section section : local.sections()) output.addLocalRoad(section);
             output.localCoverageDegraded |= local.held > 0 || local.overBudget > 0 || local.unresolvedMm > 0;
-            if (local.overBudget > 0) output.simplified = true;
+            if (local.overBudget > 0) {
+                output.simplified = true;
+                output.localCoverageResourceDegraded = true;
+            }
             localRoadNanos[0] += System.nanoTime() - started;
             PerformanceDiagnostics.timing("map_local_roads", localRoadNanos[0] / 1_000_000,
                     "calculated=" + local.calculated + " reused=" + local.reused + " held=" + local.held
@@ -2517,6 +2545,9 @@ public class MapActivity extends Activity {
         root.put("incompleteARoadPoints", routes.incompleteARoadPoints);
         root.put("coveredARoadPoints", routes.coveredARoadPoints);
         root.put("simplified", routes.simplified);
+        root.put("localCoverageDegraded", routes.localCoverageDegraded);
+        root.put("localCoverageResourceDegraded", routes.localCoverageResourceDegraded);
+        root.put("localReferenceAvailable", routes.localReferenceAvailable);
         JSONObject percentages = new JSONObject();
         for (Map.Entry<String, Double> entry : routes.roadPercentages.entrySet())
             percentages.put(entry.getKey(), entry.getValue());
@@ -2536,7 +2567,9 @@ public class MapActivity extends Activity {
 
     private MapRoutes mapRoutesFromCache(JSONObject root) throws Exception {
         MapRoutes routes = new MapRoutes();
-        if (!root.has("sections") || !root.has("stations")) return null;
+        if (!root.has("sections") || !root.has("stations")
+                || !root.has("localCoverageDegraded")
+                || !root.has("localCoverageResourceDegraded")) return null;
         getRouteArrays(root, "sections", routes.sections);
         getRouteArrays(root,"ferries",routes.ferrySections);
         JSONArray localRoads = root.getJSONArray("localRoads");
@@ -2561,6 +2594,9 @@ public class MapActivity extends Activity {
         routes.incompleteARoadPoints = root.optInt("incompleteARoadPoints");
         routes.coveredARoadPoints = root.optInt("coveredARoadPoints");
         routes.simplified = root.optBoolean("simplified");
+        routes.localCoverageDegraded = root.optBoolean("localCoverageDegraded");
+        routes.localCoverageResourceDegraded = root.optBoolean("localCoverageResourceDegraded");
+        routes.localReferenceAvailable = root.optBoolean("localReferenceAvailable", false);
         JSONObject percentages = root.optJSONObject("percentages");
         if (percentages != null) {
             java.util.Iterator<String> keys = percentages.keys();
@@ -2626,10 +2662,13 @@ public class MapActivity extends Activity {
         LocalRoadLayer localRoadLayer;
         boolean localReferenceAvailable = true;
         boolean localCoverageDegraded;
+        boolean localCoverageResourceDegraded;
         long localRoadMillimetres;
 
+        /** A complete assessment with explicitly held source rows is reusable.
+         * Never cache results where resource exhaustion skipped valid coverage. */
         boolean canCacheSnapshot() {
-            return localReferenceAvailable && !localCoverageDegraded;
+            return localReferenceAvailable && !localCoverageResourceDegraded;
         }
 
         void addLocalRoad(LocalRoadCoverage.Section section) {
