@@ -1124,7 +1124,9 @@ public class MapActivity extends Activity {
         });
         if (local != null) {
             long started = System.nanoTime();
-            for (LocalRoadCoverage.Section section : local.sections()) output.addLocalRoad(section);
+            // Each section is already retained by MapRoutes; avoid a second
+            // temporary all-sections list at the highest archive heap watermark.
+            local.forEachSection(output::addLocalRoad);
             output.localCoverageDegraded |= local.held > 0 || local.overBudget > 0 || local.unresolvedMm > 0;
             if (local.overBudget > 0) {
                 output.simplified = true;
