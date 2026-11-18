@@ -5,6 +5,9 @@ on:
     paths:
       - .github/workflows/footpath-reference-v3-298.yml
       - android-prototype/**
+      - scripts/build_uk_road_reference.py
+      - scripts/test_uk_road_reference_v3.py
+      - scripts/build_gravesend_coverage.py
   workflow_dispatch:
 permissions:
   contents: read
