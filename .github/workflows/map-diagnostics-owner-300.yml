@@ -1,14 +1,7 @@
 name: Roadprints 300 Map stall diagnostic owner APK
+# The immutable diagnostic Build 300 is already published.
+# Subsequent investigation commits must not attempt to re-publish that tag.
 on:
-  push:
-    branches: [fix/map-load-stage-300]
-    paths:
-      - .github/workflows/map-diagnostics-owner-300.yml
-      - android-prototype/**
-      - scripts/check_map_diagnostics_300.sh
-      - scripts/build_uk_road_reference.py
-      - scripts/verify_uk_road_reference_v3.py
-      - scripts/check_map_diagnostics_300.sh
   workflow_dispatch:
 permissions:
   contents: write
