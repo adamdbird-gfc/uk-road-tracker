@@ -481,7 +481,45 @@ final class LocalRoadCoverage implements AutoCloseable {
         return sections;
     }
 
-    record Line(Section section, Interval interval, JSONArray points) {
+    /** Compact physical-road interval. Geometry is materialised as JSON only for
+     * the rare compatibility caller (e.g. replay), never for normal Map display.
+     * The Section endpoints remain authoritative and are not rounded to floats. */
+    static final class Line {
+        private final Section section;
+        private final Interval interval;
+
+        Line(Section section, Interval interval) {
+            this.section = section;
+            this.interval = interval;
+        }
+
+        Section section() { return section; }
+        Interval interval() { return interval; }
+
+        /** Exact historical double-precision interpolation; no retained JSON. */
+        JSONArray points() {
+            double fractionStart = interval.start() / (double) section.length;
+            double fractionEnd = interval.end() / (double) section.length;
+            double lon = section.first.optDouble(0), lat = section.first.optDouble(1);
+            double dx = section.last.optDouble(0) - lon;
+            double dy = section.last.optDouble(1) - lat;
+            return new JSONArray()
+                    .put(new JSONArray().put(lon + dx * fractionStart).put(lat + dy * fractionStart))
+                    .put(new JSONArray().put(lon + dx * fractionEnd).put(lat + dy * fractionEnd));
+        }
+
+        double longitude(boolean last) {
+            double fraction = (last ? interval.end() : interval.start()) / (double) section.length;
+            double first = section.first.optDouble(0);
+            return first + (section.last.optDouble(0) - first) * fraction;
+        }
+
+        double latitude(boolean last) {
+            double fraction = (last ? interval.end() : interval.start()) / (double) section.length;
+            double first = section.first.optDouble(1);
+            return first + (section.last.optDouble(1) - first) * fraction;
+        }
+
         List<String> contributors(double fraction) {
             int offset = interval.start() + (int) Math.round(fraction * (interval.end() - interval.start()));
             List<String> ids = new ArrayList<>();
@@ -547,10 +585,8 @@ final class LocalRoadCoverage implements AutoCloseable {
             uniqueMillimetres = unique;
         }
 
-        private Line coveredLine(int start, int end) throws Exception {
-            return new Line(this, new Interval(start, end), new JSONArray()
-                    .put(interpolate(first, last, start / (double) length))
-                    .put(interpolate(first, last, end / (double) length)));
+        private Line coveredLine(int start, int end) {
+            return new Line(this, new Interval(start, end));
         }
 
         JSONObject encode() throws Exception {
