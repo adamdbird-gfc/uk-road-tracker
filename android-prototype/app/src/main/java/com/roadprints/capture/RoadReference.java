@@ -31,6 +31,14 @@ final class RoadReference implements AutoCloseable {
     private final boolean version3;
     private final LinkedHashMap<Long, LocalRoadNetwork> tiles = new LinkedHashMap<>(16, .75f, true);
 
+    // Read-only performance counters; consulted on the Map worker thread only.
+    // Never part of the attribution identity or cache key.
+    private long nearbyQueries, tileCacheHits, tileDecodes, candidateEdges;
+    record Statistics(long queries, long hits, long decodes, long candidates) {}
+    Statistics statistics() {
+        return new Statistics(nearbyQueries, tileCacheHits, tileDecodes, candidateEdges);
+    }
+
     RoadReference(FileChannel channel, long start, long length) throws IOException {
         this.channel = channel;
         this.start = start;
@@ -56,6 +64,7 @@ final class RoadReference implements AutoCloseable {
     }
 
     Set<LocalRoadNetwork.Edge> nearby(double ax, double ay, double bx, double by) throws IOException {
+        nearbyQueries++;
         Set<LocalRoadNetwork.Edge> edges = new HashSet<>();
         int left = tile(Math.min(ax, bx)), right = tile(Math.max(ax, bx));
         int bottom = tile(Math.min(ay, by)), top = tile(Math.max(ay, by));
@@ -67,6 +76,7 @@ final class RoadReference implements AutoCloseable {
                 if (network != null) edges.addAll(network.nearby(point(ax, ay), point(bx, by), 8));
             }
         }
+        candidateEdges += edges.size();
         return edges;
     }
 
@@ -76,7 +86,10 @@ final class RoadReference implements AutoCloseable {
 
     private LocalRoadNetwork tile(int x, int y) throws IOException {
         long key = ((long) x << 32) | (y & 0xffffffffL);
-        if (tiles.containsKey(key)) return tiles.get(key);
+        if (tiles.containsKey(key)) {
+            tileCacheHits++;
+            return tiles.get(key);
+        }
         int low = 0, high = index.capacity() / ENTRY_BYTES - 1;
         LocalRoadNetwork network = null;
         while (low <= high) {
@@ -87,6 +100,7 @@ final class RoadReference implements AutoCloseable {
             else if (comparison > 0) low = middle + 1;
             else {
                 network = decodeTile(index.getInt(offset + 8), index.getInt(offset + 12));
+                tileDecodes++;
                 break;
             }
         }
