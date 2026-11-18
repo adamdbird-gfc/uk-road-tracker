@@ -95,7 +95,28 @@ final class LocalRoadCoverage implements AutoCloseable {
                 row = cache.get(record.source, file -> readAcceptedContribution(reference, file));
                 if (row == null) return null;
             }
+            // Earlier builds incorrectly stored {} for a non-projectable route.
+            // Reassess that legacy row once, then persist a typed hold marker.
+            if (row.length() == 0) {
+                cache.invalidate(record.source);
+                refreshedLegacyFootRow = true;
+                row = cache.get(record.source, file -> readAcceptedContribution(reference, file));
+                if (row == null) return null;
+            }
             boolean reusedRow = cache.hits != hits && !refreshedLegacyFootRow;
+            // A known, deterministic projection hold is itself a valid derived
+            // result. Reuse it instead of repeatedly decoding thousands of
+            // matched legs, but never grant road coverage for this source.
+            String holdReason = row.optString("heldReason", "");
+            if (!holdReason.isEmpty()) {
+                if (!"no_accepted_projection".equals(holdReason)
+                        && !"interval_limit".equals(holdReason))
+                    throw new IllegalArgumentException("Unsupported derived hold reason");
+                held++;
+                failureCounts.merge("cached:" + holdReason, 1, Integer::sum);
+                if (reusedRow) reused++; else calculated++;
+                return null;
+            }
             phase = "decode_contribution";
             JSONArray residual = row.getJSONArray("residual");
             Map<Edge, List<Interval>> result = new LinkedHashMap<>();
@@ -258,8 +279,17 @@ final class LocalRoadCoverage implements AutoCloseable {
             }
             reader.endObject();
         }
-        AcceptedRoadRoute.Projection projection = AcceptedRoadRoute.project(reference, journey);
-        if (projection == null) return new JSONObject();
+        AcceptedRoadRoute.Projection projection;
+        try {
+            projection = AcceptedRoadRoute.project(reference, journey);
+        } catch (IllegalArgumentException limit) {
+            if ("Matched route exceeds per-journey interval limit".equals(limit.getMessage())
+                    || "Accepted route exceeds interval limit".equals(limit.getMessage()))
+                return heldContribution("interval_limit");
+            throw limit;
+        }
+        if (projection == null) return heldContribution("no_accepted_projection");
+        try {
         int count = 0;
         JSONArray spans = new JSONArray();
         for (Map.Entry<Edge, List<Interval>> section : projection.sections().entrySet()) {
@@ -297,6 +327,17 @@ final class LocalRoadCoverage implements AutoCloseable {
                 .put("unresolvedMm", projection.unresolvedMm()).put("excludedMm", projection.excludedMm())
                 .put("majorOrOtherMm", projection.majorOrOtherMm())
                 .put("unresolvedLegs", new JSONObject(projection.unresolvedLegs()));
+        } catch (IllegalArgumentException limit) {
+            if ("Matched route exceeds per-journey interval limit".equals(limit.getMessage())
+                    || "Accepted route exceeds interval limit".equals(limit.getMessage()))
+                return heldContribution("interval_limit");
+            throw limit;
+        }
+    }
+
+    /** Cached negative assessment is not successful road coverage. */
+    private static JSONObject heldContribution(String reason) throws org.json.JSONException {
+        return new JSONObject().put("heldReason", reason);
     }
 
     static JSONObject readContribution(LocalRoadNetwork network, File source, String started, String ended)
