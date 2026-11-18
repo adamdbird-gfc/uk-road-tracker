@@ -253,6 +253,17 @@ public class MapActivity extends Activity {
     protected void onPause() {
         RailwayTrialWorker.pause();
         active = false;
+        // Screen transitions must not leave a costly cumulative scan running
+        // behind Progress/Journeys, nor occupy the single Map lane on return.
+        // Completed per-journey contributions are transactionally cached.
+        if (mapPending != null) {
+            PerformanceDiagnostics.timing("map_cancelled_on_pause",
+                    android.os.SystemClock.elapsedRealtime() - mapStartedAt,
+                    "phase=" + mapLoadStage);
+            mapLoadGeneration++;
+            cancelMapWork();
+            hideMapLoading();
+        }
         locationRequest.cancel();
         if(locateControl!=null)locateControl.setEnabled(true);
         if(mapView!=null)mapView.setRenderingActive(false);
