@@ -83,13 +83,13 @@ public final class CompactJourneyCacheResumeTest {
         File two = File.createTempFile("resume303-b-", ".json", context.getCacheDir());
         File database = new File(context.getCacheDir(), "compact-" + kind + ".db");
         try {
-            Files.writeString(one.toPath(), "{\"journey_id\":\"one\"}");
-            Files.writeString(two.toPath(), "{\"journey_id\":\"two\"}");
+            Files.write(one.toPath(), "{\"journey_id\":\"one\"}".getBytes(StandardCharsets.UTF_8));
+            Files.write(two.toPath(), "{\"journey_id\":\"two\"}".getBytes(StandardCharsets.UTF_8));
             try (CompactJourneyCache initial = new CompactJourneyCache(context, kind)) {
                 initial.get(one, f -> new JSONObject().put("generation", 1));
                 initial.get(two, f -> new JSONObject().put("generation", 1));
             }
-            Files.writeString(one.toPath(), "{\"journey_id\":\"one\",\"corrected\":true}");
+            Files.write(one.toPath(), "{\"journey_id\":\"one\",\"corrected\":true}".getBytes(StandardCharsets.UTF_8));
             try (CompactJourneyCache resumed = new CompactJourneyCache(context, kind)) {
                 assertEquals(2, resumed.get(one,
                         f -> new JSONObject().put("generation", 2)).getInt("generation"));
