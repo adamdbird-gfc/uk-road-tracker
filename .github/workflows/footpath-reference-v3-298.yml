@@ -58,7 +58,9 @@ jobs:
                       w.write(data)
           PY
       - name: Check v3 catalogue builder syntax
-        run: python -m py_compile scripts/build_uk_road_reference.py
+        run: |
+          python -m py_compile scripts/build_uk_road_reference.py
+          python scripts/test_uk_road_reference_v3.py
       - uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: '8.10'
