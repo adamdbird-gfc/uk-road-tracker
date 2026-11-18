@@ -61,6 +61,8 @@ final class AcceptedRoadRoute {
         if (result == null || !"complete".equals(journey.optString("processing_status"))
                 || !eligibleMode(journey.optString("mode"))
                 || (result.has("status") && !"ok".equals(result.optString("status")))) return null;
+        boolean onFoot = JourneyFilters.isFootMode(journey.optString("mode"))
+                || MatchingCoordinator.isCycle(journey.optString("mode"));
         List<JSONArray> lines = matchedLines(result);
         if (lines.isEmpty()) return null;
         JSONObject corrections = journey.optJSONObject("journey_corrections");
@@ -82,7 +84,7 @@ final class AcceptedRoadRoute {
                 JSONArray a = line.optJSONArray(i - 1), b = line.optJSONArray(i);
                 if (!valid(a) || !valid(b)) continue;
                 CanonicalRoadAttribution.Leg leg = CanonicalRoadAttribution.attributeAcceptedLeg(reference,
-                        a.getDouble(0), a.getDouble(1), b.getDouble(0), b.getDouble(1));
+                        a.getDouble(0), a.getDouble(1), b.getDouble(0), b.getDouble(1), onFoot);
                 for (CanonicalRoadAttribution.Alignment alignment : leg.alignments()) {
                     Span span = alignment.span();
                     denied.computeIfAbsent(span.edge(), ignored -> new ArrayList<>())
@@ -118,7 +120,7 @@ final class AcceptedRoadRoute {
                 }
                 eligibleMm += length;
                 if (length == 0) continue;
-                CanonicalRoadAttribution.Leg leg = CanonicalRoadAttribution.attributeAcceptedLeg(reference, ax, ay, bx, by);
+                CanonicalRoadAttribution.Leg leg = CanonicalRoadAttribution.attributeAcceptedLeg(reference, ax, ay, bx, by, onFoot);
                 if (leg.unresolvedReason() != null) {
                     unresolved.merge(leg.unresolvedReason(), 1, Integer::sum);
                     unresolvedMm += length;
