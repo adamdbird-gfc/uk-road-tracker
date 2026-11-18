@@ -95,6 +95,14 @@ final class LocalRoadCoverage implements AutoCloseable {
                 row = cache.get(record.source, file -> readAcceptedContribution(reference, file));
                 if (row == null) return null;
             }
+            // Earlier builds incorrectly stored {} for a non-projectable route.
+            // Reassess that legacy row once, then persist a typed hold marker.
+            if (row.length() == 0) {
+                cache.invalidate(record.source);
+                refreshedLegacyFootRow = true;
+                row = cache.get(record.source, file -> readAcceptedContribution(reference, file));
+                if (row == null) return null;
+            }
             boolean reusedRow = cache.hits != hits && !refreshedLegacyFootRow;
             // A known, deterministic projection hold is itself a valid derived
             // result. Reuse it instead of repeatedly decoding thousands of
