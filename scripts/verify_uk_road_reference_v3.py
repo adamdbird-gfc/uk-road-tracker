@@ -15,7 +15,7 @@ EXPECTED_SITES = {
     "Gravesend": (18, 2571),
     "London": (-6, 2576),
     "Cardiff": (-159, 2573),
-    "Glasgow": (-213, 2799),
+    "Glasgow": (-213, 2793),
     "Belfast": (-296, 2730),
 }
 
