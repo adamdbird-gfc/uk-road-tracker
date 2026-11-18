@@ -401,8 +401,11 @@ public class LocalRoadCoverageTest {
             var routes = new MapActivity.MapRoutes();
             assertTrue(routes.canCacheSnapshot());
             routes.localCoverageDegraded = true;
-            assertFalse(routes.canCacheSnapshot());
-            routes.localCoverageDegraded = false;
+            assertTrue("Fully assessed but held journeys keep an explicit incomplete warning",
+                    routes.canCacheSnapshot());
+            routes.localCoverageResourceDegraded = true;
+            assertFalse("Resource-truncated coverage must never be cached", routes.canCacheSnapshot());
+            routes.localCoverageResourceDegraded = false;
             routes.localReferenceAvailable = false;
             assertFalse(routes.canCacheSnapshot());
         }

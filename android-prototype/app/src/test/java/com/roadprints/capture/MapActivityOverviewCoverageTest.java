@@ -22,15 +22,28 @@ public final class MapActivityOverviewCoverageTest {
         routes.coveredARoadSections.add(new org.json.JSONArray());
         assertTrue(MapActivity.overviewCoverageMessage(routes, true)
                 .contains("coverage incomplete"));
-        assertFalse(routes.canCacheSnapshot());
+        assertTrue("A fully scanned archive with held roads may be cached if still labelled incomplete",
+                routes.canCacheSnapshot());
+    }
+
+    @Test public void deadlineGraceRequiresActiveScanAndIsGivenOnlyOnce() {
+        assertTrue(MapActivity.allowMapProgressGrace("journey_records_scanning", 2400, false));
+        assertFalse(MapActivity.allowMapProgressGrace("journey_records_scanning", 16000, false));
+        assertFalse(MapActivity.allowMapProgressGrace("journey_records_scanning", -1, false));
+        assertFalse(MapActivity.allowMapProgressGrace("render_path_preparation", 100, false));
+        assertFalse(MapActivity.allowMapProgressGrace("journey_records_scanning", 100, true));
+        assertEquals(120000L, MapActivity.MAP_TIMEOUT_MS);
+        assertEquals(60000L, MapActivity.MAP_PROGRESS_GRACE_MS);
     }
 
     @Test public void budgetDegradationCannotBeCached() {
         MapActivity.MapRoutes routes = new MapActivity.MapRoutes();
         routes.localReferenceAvailable = true;
         routes.localCoverageDegraded = true;
-        assertFalse(routes.canCacheSnapshot());
-        routes.localCoverageDegraded = false;
+        assertTrue("Known held journeys are not a resource skip", routes.canCacheSnapshot());
+        routes.localCoverageResourceDegraded = true;
+        assertFalse("Resource-budget exclusions cannot become reusable coverage", routes.canCacheSnapshot());
+        routes.localCoverageResourceDegraded = false;
         assertTrue(routes.canCacheSnapshot());
         routes.localReferenceAvailable = false;
         assertFalse(routes.canCacheSnapshot());
