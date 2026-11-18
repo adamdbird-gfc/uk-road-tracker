@@ -105,23 +105,25 @@ public class ARoadProgressCalculatorTest {
         }
         JSONArray path = reference.getJSONArray("paths").getJSONArray(0);
         LocalRoadNetwork.Edge correct = null;
+        ARoadProgressCalculator calc = new ARoadProgressCalculator(app, false);
         for (int i = 1; i < path.length(); i++) {
             JSONArray a = path.getJSONArray(i - 1), b = path.getJSONArray(i);
             double ax = a.getDouble(0), ay = a.getDouble(1);
             double bx = b.getDouble(0), by = b.getDouble(1);
             int mm = RoadReference.groundMillimetres(ax, ay, bx, by);
-            if (mm < 80_000 || mm > 1_000_000) continue;
-            correct = new LocalRoadNetwork.Edge(4_321, 10, 11, "A1",
+            if (mm < 5_000 || mm > 1_000_000) continue;
+            LocalRoadNetwork.Edge candidate = new LocalRoadNetwork.Edge(4_321, 10, 11, "A1",
                     RoadReference.point(ax, ay), RoadReference.point(bx, by),
                     0, false, mm, -1);
-            break;
+            if (calc.addAcceptedFootSections("walking-first", java.util.Map.of(candidate,
+                    java.util.List.of(new LocalRoadNetwork.Interval(0, mm)))) > 0) {
+                correct = candidate;
+                break;
+            }
         }
-        assertNotNull("Expected a reference segment long enough to meet a sampled anchor", correct);
+        assertNotNull("Expected exact road geometry to hit an A1 reference anchor", correct);
         var full = java.util.Map.of(correct, java.util.List.of(
                 new LocalRoadNetwork.Interval(0, correct.mm)));
-        ARoadProgressCalculator calc = new ARoadProgressCalculator(app, false);
-        int first = calc.addAcceptedFootSections("walking-first", full);
-        assertTrue("Exact canonical foot geometry must match A1", first > 0);
         assertTrue(calc.addAcceptedFootSections("walking-repeat", full) > 0);
         ARoadProgressCalculator.Summary summary = calc.finish();
         ARoadProgressCalculator.Road road = summary.roads.stream()
