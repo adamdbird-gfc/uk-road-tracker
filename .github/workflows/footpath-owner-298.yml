@@ -30,6 +30,9 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
+      - name: Announce full national generation gate
+        run: |
+          gh pr comment 334 --body "Build 298 national v3 reference and signed owner release pipeline STARTED on commit $GITHUB_SHA. Source generation, validation, Android smoke and publication are required before an APK is available." || true
       - name: Verify build resources and restore previous immutable assets
         run: |
           set -euo pipefail
@@ -128,6 +131,9 @@ jobs:
           path.write_text(json.dumps(manifest,sort_keys=True,indent=2)+"\\n")
           PY
           df -h .
+      - name: Report validated national catalogue
+        run: |
+          gh pr comment 334 --body "Build 298 UK-wide v3 reference generated and passed structural/geographic integrity checks on commit $GITHUB_SHA. Proceeding to signing and Android in-place upgrade smoke; APK publication remains blocked until all gates pass." || true
       - name: Assemble installed-identity signed owner APK
         env:
           ROADPRINTS_DEBUG_KEYSTORE_B64: ${{ secrets.ROADPRINTS_DEBUG_KEYSTORE_B64 }}
