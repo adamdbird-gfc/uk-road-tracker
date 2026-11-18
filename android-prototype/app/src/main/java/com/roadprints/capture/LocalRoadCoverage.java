@@ -461,13 +461,23 @@ final class LocalRoadCoverage implements AutoCloseable {
         return result;
     }
 
+    /** Emits sections directly into the cumulative Map. Avoid a second 44k-item
+     * temporary list of already retained Section objects during peak heap use. */
+    void forEachSection(java.util.function.Consumer<Section> accept) throws Exception {
+        for (Map.Entry<Edge, Map<String, int[]>> entry : contributors.entrySet()) {
+            if (Thread.currentThread().isInterrupted()) throw new CancellationException();
+            Edge edge = entry.getKey();
+            accept.accept(new Section(edge.id(), edge.label, edge.mm,
+                    new JSONArray().put(ukLongitude(edge.a)).put(ukLatitude(edge.a)),
+                    new JSONArray().put(ukLongitude(edge.b)).put(ukLatitude(edge.b)),
+                    entry.getValue()));
+        }
+    }
+
+    /** Retained for callers that explicitly need a standalone list. */
     List<Section> sections() throws Exception {
         List<Section> sections = new ArrayList<>();
-        for (Map.Entry<Edge, Map<String, int[]>> entry : contributors.entrySet()) {
-            Edge edge = entry.getKey();
-            sections.add(new Section(edge.id(), edge.label, edge.mm, new JSONArray().put(ukLongitude(edge.a)).put(ukLatitude(edge.a)),
-                    new JSONArray().put(ukLongitude(edge.b)).put(ukLatitude(edge.b)), entry.getValue()));
-        }
+        forEachSection(sections::add);
         return sections;
     }
 
