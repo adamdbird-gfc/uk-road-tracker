@@ -2,6 +2,26 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.261",
+      "version_code": 307,
+      "release_date": "2026-11-18",
+      "since": "0.25.260",
+      "changes": [
+        {
+          "title": "Reduce retained geometry for cumulative black roads",
+          "description": "Store physical road lines as section identities and integer intervals, constructing JSON coordinates only when replay needs them. Preserve exact double-precision Map drawing and interactive road-to-journey attribution."
+        },
+        {
+          "title": "Reduce cumulative Map assembly allocations",
+          "description": "Stream local-road sections into the overview and merge interval spans using compact primitive arrays instead of temporary object lists."
+        },
+        {
+          "title": "Measure Map memory by aggregation stage",
+          "description": "Adds memory diagnostics before and after local-road assembly and motorway/A-road finalisation. No change to road matching, accepted coverage or existing Map colours."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.260",
       "version_code": 306,
       "release_date": "2026-11-18",
