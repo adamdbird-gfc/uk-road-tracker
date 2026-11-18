@@ -74,7 +74,7 @@ jobs:
             {
               printf 'Build 298 focused tests failed on %s\\n\\n' "$GITHUB_SHA"
               echo '~~~text'
-              grep -nE '(^> Task .*FAILED|^FAILURE:|^\\* What went wrong:|^Execution failed|^> .*[Ff]ailed|^Caused by:|^.*(AssertionError|Compilation failed|error: |No tests found|tests completed|There were failing tests))' "$RUNNER_TEMP/accepted-foot-298.log" | head -50 || true
+              grep -nE -A4 -B2 '(^> Task .*FAILED|^FAILURE:|^\\* What went wrong:|^Execution failed|^> .*[Ff]ailed|^Caused by:|^.*(AssertionError|Compilation failed|error: |No tests found|tests completed|There were failing tests))' "$RUNNER_TEMP/accepted-foot-298.log" | head -50 || true
               echo '~~~'
               echo
               echo 'Last 60 log lines:'
@@ -86,6 +86,10 @@ jobs:
             gh pr comment 332 --body-file "$RUNNER_TEMP/stage298-error.md" || true
             exit 1
           fi
+      - name: Confirm focused geometry checks on PR
+        if: success()
+        run: |
+          gh pr comment 332 --body "Build 298 focused canonical walking integration tests PASSED on commit $GITHUB_SHA. No APK was produced in this validation workflow."
       - name: Upload exact test reports
         if: always()
         uses: actions/upload-artifact@v4
