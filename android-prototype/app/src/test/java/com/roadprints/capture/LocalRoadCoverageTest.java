@@ -411,6 +411,40 @@ public class LocalRoadCoverageTest {
         }
     }
 
+    @Test public void streamedRoadSectionsPreserveLineIdentityContributorHistoryAndUniqueDistance()
+            throws Exception {
+        Context context = RuntimeEnvironment.getApplication();
+        Edge edge = new Edge(9234, 101, 102, "Stream Test Road",
+                new Point(100, 200), new Point(200, 200), 0, true);
+        Map<Edge, List<Interval>> contribution = new LinkedHashMap<>();
+        contribution.put(edge, List.of(new Interval(1000, 7000)));
+        try (LocalRoadCoverage coverage = LocalRoadCoverage.open(context)) {
+            assertNotNull(coverage);
+            coverage.add("journey-one", contribution);
+            coverage.add("journey-two", contribution);
+            List<LocalRoadCoverage.Section> streamed = new ArrayList<>();
+            coverage.forEachSection(streamed::add);
+            List<LocalRoadCoverage.Section> collected = coverage.sections();
+            assertEquals(1, streamed.size());
+            assertEquals(collected.size(), streamed.size());
+            assertEquals(collected.get(0).id, streamed.get(0).id);
+            assertEquals(collected.get(0).uniqueMillimetres, streamed.get(0).uniqueMillimetres);
+            assertEquals(6000L, streamed.get(0).uniqueMillimetres);
+            assertEquals(collected.get(0).lines.size(), streamed.get(0).lines.size());
+            assertEquals(collected.get(0).lines.get(0).points().toString(),
+                    streamed.get(0).lines.get(0).points().toString());
+            assertEquals(Set.of("journey-one", "journey-two"),
+                    Set.copyOf(streamed.get(0).lines.get(0).contributors(.5)));
+            MapActivity.MapRoutes routes = new MapActivity.MapRoutes();
+            coverage.forEachSection(routes::addLocalRoad);
+            assertEquals(1, routes.localRoadSections.size());
+            assertEquals(1, routes.localRoadLines.size());
+            assertEquals(6000L, routes.localRoadMillimetres);
+            assertEquals(Set.of("journey-one", "journey-two"),
+                    Set.copyOf(routes.localRoadByLine.get(routes.localRoadLines.get(0)).contributors(.5)));
+        }
+    }
+
     @Test public void mapUsesAcceptedTimelineAndNativeContributorsAndDoesNotWriteArchive() throws Exception {
         Context context = RuntimeEnvironment.getApplication();
         LocalRoadNetwork network = network(context);

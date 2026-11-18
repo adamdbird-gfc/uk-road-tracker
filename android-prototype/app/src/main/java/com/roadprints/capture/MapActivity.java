@@ -532,6 +532,19 @@ public class MapActivity extends Activity {
         mapSubtitle.setOnClickListener(null);mapSubtitle.setText("Map refresh cancelled. Previous results retained.");setMapReady(hasDisplayedMap);
         android.util.Log.i("RoadprintsTiming","map_outcome=cancelled total_ms="+(android.os.SystemClock.elapsedRealtime()-mapStartedAt));
     }
+    /** Lightweight live-heap markers, without forcing GC or retaining heap samples.
+     * Compare these with the existing sampled peak to identify the growth stage. */
+    private static void markMapHeap(String stage) {
+        Runtime runtime = Runtime.getRuntime();
+        long allocated = runtime.totalMemory();
+        long used = allocated - runtime.freeMemory();
+        PerformanceDiagnostics.timing("map_heap_stage", 0,
+                "stage=" + stage
+                        + " used_mib=" + used / (1024 * 1024)
+                        + " committed_mib=" + allocated / (1024 * 1024)
+                        + " limit_mib=" + runtime.maxMemory() / (1024 * 1024));
+    }
+
     private void markMapStage(String stage, long started) {
         mapLoadStage = stage;
         mapStageStartedAt = android.os.SystemClock.elapsedRealtime();
@@ -1124,7 +1137,11 @@ public class MapActivity extends Activity {
         });
         if (local != null) {
             long started = System.nanoTime();
-            for (LocalRoadCoverage.Section section : local.sections()) output.addLocalRoad(section);
+            markMapHeap("before_local_sections");
+            // Each section is already retained by MapRoutes; avoid a second
+            // temporary all-sections list at the highest archive heap watermark.
+            local.forEachSection(output::addLocalRoad);
+            markMapHeap("after_local_sections");
             output.localCoverageDegraded |= local.held > 0 || local.overBudget > 0 || local.unresolvedMm > 0;
             if (local.overBudget > 0) {
                 output.simplified = true;
@@ -1179,6 +1196,7 @@ public class MapActivity extends Activity {
             road.coveredMapSections.clear();
         });
         coverageHeap.sample();
+        markMapHeap("after_motorway_finish");
         ARoadProgressCalculator.Summary aSummary = aRoadCalculator.finish();
         for (ARoadProgressCalculator.Road road : aSummary.roads) {
             if (!road.referenceAvailable) continue;
@@ -1192,6 +1210,7 @@ public class MapActivity extends Activity {
             road.coveredMapSections.clear();
             coverageHeap.sample();
         }
+        markMapHeap("after_a_road_finish");
         PerformanceDiagnostics.timing("map_coverage_finish",(System.nanoTime()-finishStarted)/1_000_000,
                 "peak_a_road_anchors="+aRoadCalculator.peakRetainedAnchors()
                         + " a_road_reference_reads=" + (aRoadCalculator.referenceReads() - referenceReadsBeforeFinish)
