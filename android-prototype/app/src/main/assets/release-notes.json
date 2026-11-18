@@ -2,6 +2,22 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.257",
+      "version_code": 303,
+      "release_date": "2026-11-18",
+      "since": "0.25.256",
+      "changes": [
+        {
+          "title": "Diagnose slow historical road matching",
+          "description": "Adds per-slow-journey reference tile decoding, tile reuse, nearby queries and candidate edge counters to the Map performance report. This is an observation release; the historical Map timeout may still occur."
+        },
+        {
+          "title": "Validate interrupted road attribution cache",
+          "description": "Adds regression coverage for retained contributions after a cancelled Map scan and for selective invalidation when a saved journey changes. Existing journey evidence, corrections and national road reference are unchanged."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.256",
       "version_code": 302,
       "release_date": "2026-11-18",
