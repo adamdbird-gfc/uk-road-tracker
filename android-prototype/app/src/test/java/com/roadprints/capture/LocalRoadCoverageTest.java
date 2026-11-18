@@ -411,6 +411,44 @@ public class LocalRoadCoverageTest {
         }
     }
 
+    @Test public void primitiveSectionUnionMatchesCanonicalIntervalUnionWithOverlapsAndTouching()
+            throws Exception {
+        java.util.Random random = new java.util.Random(308);
+        for (int trial = 0; trial < 120; trial++) {
+            Map<String,int[]> history = new LinkedHashMap<>();
+            List<Interval> expectedInput = new ArrayList<>();
+            for (int journey = 0; journey < 5; journey++) {
+                int[] values = new int[20];
+                for (int k = 0; k < values.length; k += 2) {
+                    int start = random.nextInt(99_000);
+                    int end = Math.min(100_000, start + 1 + random.nextInt(5000));
+                    values[k] = start; values[k + 1] = end;
+                    expectedInput.add(new Interval(start,end));
+                }
+                history.put("journey-" + journey, values);
+            }
+            // Verify a touching interval and duplicate spans do not duplicate
+            // physical road length or alter per-journey tap attribution.
+            history.put("touching", new int[]{0,1000,1000,2000,1000,2000});
+            expectedInput.add(new Interval(0,1000));
+            expectedInput.add(new Interval(1000,2000));
+            expectedInput.add(new Interval(1000,2000));
+            LocalRoadCoverage.Section section = new LocalRoadCoverage.Section(
+                    "edge-" + trial, "Canonical Road", 100_000,
+                    new JSONArray().put(0.0).put(51.0),
+                    new JSONArray().put(0.01).put(51.0),history);
+            List<Interval> expected = union(expectedInput);
+            assertEquals(expected.size(), section.lines.size());
+            long length = 0;
+            for (int i = 0; i < expected.size(); i++) {
+                Interval span = expected.get(i);
+                assertEquals(span, section.lines.get(i).interval());
+                length += span.end() - span.start();
+            }
+            assertEquals(length,section.uniqueMillimetres);
+        }
+    }
+
     @Test public void streamedRoadSectionsPreserveLineIdentityContributorHistoryAndUniqueDistance()
             throws Exception {
         Context context = RuntimeEnvironment.getApplication();
