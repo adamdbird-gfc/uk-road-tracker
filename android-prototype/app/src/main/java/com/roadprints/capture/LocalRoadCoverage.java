@@ -209,7 +209,7 @@ final class LocalRoadCoverage implements AutoCloseable {
         return failure.getClass().getSimpleName() + "@" + origin;
     }
 
-    private static JSONObject readAcceptedContribution(RoadReference reference, File source) throws Exception {
+    static JSONObject readAcceptedContribution(RoadReference reference, File source) throws Exception {
         JSONObject journey = new JSONObject();
         try (JsonReader reader = journeyReader(source)) {
             reader.beginObject();
