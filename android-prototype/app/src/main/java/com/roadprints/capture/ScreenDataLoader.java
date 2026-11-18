@@ -19,11 +19,25 @@ final class ScreenDataLoader {
     static java.util.concurrent.Future<?> interactive(Runnable task) { return INTERACTIVE.submit(task); }
 
     // User map refreshes must not queue behind history, recap or Progress scans.
-    private static final ExecutorService MAP = Executors.newSingleThreadExecutor(task -> {
-        Thread thread = new Thread(task, "roadprints-map-data");
-        thread.setPriority(Thread.NORM_PRIORITY - 1);return thread;
-    });
-    static java.util.concurrent.Future<?> map(Runnable task) { return MAP.submit(task); }
+    private static final java.util.concurrent.ThreadPoolExecutor MAP =
+            new java.util.concurrent.ThreadPoolExecutor(
+                    1, 1, 0L, java.util.concurrent.TimeUnit.MILLISECONDS,
+                    new java.util.concurrent.ArrayBlockingQueue<>(1),
+                    task -> {
+                        Thread thread = new Thread(task, "roadprints-map-data");
+                        thread.setPriority(Thread.NORM_PRIORITY - 1);
+                        return thread;
+                    });
+    /** Only the newest not-yet-started Map request is relevant to the visible screen. */
+    static java.util.concurrent.Future<?> map(Runnable task) {
+        java.util.concurrent.FutureTask<Void> submitted = new java.util.concurrent.FutureTask<>(task, null);
+        synchronized (MAP) {
+            Runnable queued = MAP.getQueue().poll();
+            if (queued instanceof java.util.concurrent.Future<?> previous) previous.cancel(false);
+            MAP.execute(submitted);
+        }
+        return submitted;
+    }
 
     private static final java.util.concurrent.ThreadPoolExecutor CACHE=new java.util.concurrent.ThreadPoolExecutor(
             1,1,0L,java.util.concurrent.TimeUnit.MILLISECONDS,new java.util.concurrent.ArrayBlockingQueue<>(1),

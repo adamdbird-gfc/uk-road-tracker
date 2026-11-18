@@ -253,6 +253,17 @@ public class MapActivity extends Activity {
     protected void onPause() {
         RailwayTrialWorker.pause();
         active = false;
+        // Screen transitions must not leave a costly cumulative scan running
+        // behind Progress/Journeys, nor occupy the single Map lane on return.
+        // Completed per-journey contributions are transactionally cached.
+        if (mapPending != null) {
+            PerformanceDiagnostics.timing("map_cancelled_on_pause",
+                    android.os.SystemClock.elapsedRealtime() - mapStartedAt,
+                    "phase=" + mapLoadStage);
+            mapLoadGeneration++;
+            cancelMapWork();
+            hideMapLoading();
+        }
         locationRequest.cancel();
         if(locateControl!=null)locateControl.setEnabled(true);
         if(mapView!=null)mapView.setRenderingActive(false);
@@ -1046,14 +1057,17 @@ public class MapActivity extends Activity {
             if (local == null && eligibleRoadTravel) output.localCoverageDegraded = true;
             if (local != null && eligibleRoadTravel) {
                 RoadReference.Statistics referenceBefore = local.referenceStatistics();
+                int heldBefore = local.held;
                 long started = System.nanoTime();
                 LocalRoadCoverage.Prepared coverage = local.contribution(record);
                 long contributionElapsed = (System.nanoTime() - started) / 1_000_000L;
-                if (contributionElapsed >= 1500) {
+                if (contributionElapsed >= 1500 || local.held > heldBefore) {
                     RoadReference.Statistics referenceAfter = local.referenceStatistics();
                     PerformanceDiagnostics.timing("map_slow_contribution", contributionElapsed,
                             "processed=" + counts[0] + " mode=" + (roadModeIndex == 1 ? "foot" : roadModeIndex == 2 ? "cycle" : "road")
                                     + " held=" + local.held
+                                    + " newly_held=" + (local.held - heldBefore)
+                                    + (local.held > heldBefore ? " held_reasons=" + local.failureBreakdown() : "")
                                     + " tile_decodes=" + (referenceAfter.decodes() - referenceBefore.decodes())
                                     + " tile_hits=" + (referenceAfter.hits() - referenceBefore.hits())
                                     + " nearby_queries=" + (referenceAfter.queries() - referenceBefore.queries())
