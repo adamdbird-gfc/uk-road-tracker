@@ -56,7 +56,7 @@ public final class FootpathResidualGeometryTest {
                      "geometry":{"type":"LineString","coordinates":[
                      [0.001,51.0016],[0.0011,51.0016]]}}]}}}
                     """);
-            Files.writeString(source, walk.toString());
+            Files.write(source, walk.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
             try (RoadReference reference = new RoadReference(
                     FileChannel.open(pack), 0, Files.size(pack))) {
                 JSONObject derived = LocalRoadCoverage.readAcceptedContribution(reference, source.toFile());
@@ -67,7 +67,7 @@ public final class FootpathResidualGeometryTest {
 
                 walk.put("journey_corrections",
                         new JSONObject().put("removed_matched_segments", new JSONArray().put(0)));
-                Files.writeString(source, walk.toString());
+                Files.write(source, walk.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
                 JSONObject corrected = LocalRoadCoverage.readAcceptedContribution(reference, source.toFile());
                 assertEquals(0, corrected.getJSONArray("residual").length());
                 assertEquals(0, corrected.getInt("intervals"));
