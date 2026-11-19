@@ -353,19 +353,17 @@ public class RoutePreviewView extends View {
 
     private LocalRoadLayer localRoadLayer;
     // UI-owned, read-only during drawing. No per-journey raw polylines.
-    private final CanonicalPreviewIndex<LocalRoadLayer> progressiveLocalRoadLayers =
+    private final CanonicalPreviewIndex<CanonicalPreviewGeometry> progressiveLocalRoadLayers =
             new CanonicalPreviewIndex<>(256, 4_096);
     void clearProgressiveLocalRoadLayers() {
         progressiveLocalRoadLayers.clear();
         invalidate();
     }
     void replaceProgressiveLocalRoadSections(
-            java.util.Map<String, LocalRoadLayer> replacements,
-            java.util.Map<String, Integer> lineCounts) {
+            java.util.List<CanonicalPreviewGeometry> replacements) {
         boolean changed = false;
-        for (java.util.Map.Entry<String, LocalRoadLayer> row : replacements.entrySet()) {
-            Integer count = lineCounts.get(row.getKey());
-            if (count != null && progressiveLocalRoadLayers.replace(row.getKey(), row.getValue(), count))
+        for (CanonicalPreviewGeometry section : replacements) {
+            if (progressiveLocalRoadLayers.replace(section.id, section, section.lineCount()))
                 changed = true;
         }
         if (changed) {
@@ -795,7 +793,7 @@ public class RoutePreviewView extends View {
                 if (localRoadLayer != null && !localRoadLayer.isEmpty())
                     localRoadLayer.draw(canvas, localRoadPaint, xOffset, yOffset,
                             world, getWidth(), getHeight(), localRoadBatch);
-                for (LocalRoadLayer chunk : progressiveLocalRoadLayers.layers())
+                for (CanonicalPreviewGeometry chunk : progressiveLocalRoadLayers.layers())
                     chunk.draw(canvas, localRoadPaint, xOffset, yOffset,
                             world, getWidth(), getHeight(), localRoadBatch);
             }
