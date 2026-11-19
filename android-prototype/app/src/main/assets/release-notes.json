@@ -2,6 +2,26 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.264",
+      "version_code": 310,
+      "release_date": "2026-11-19",
+      "since": "0.25.263",
+      "changes": [
+        {
+          "title": "Keep the cumulative Map between tab visits",
+          "description": "Reuses the existing assembled, resource-degraded interactive Map across same-revision tab navigation instead of reconstructing 44,151 local-road lines from all archived journeys."
+        },
+        {
+          "title": "Preserve incomplete-coverage safeguards",
+          "description": "Displayed incomplete coverage remains clearly marked; resource-degraded results remain ineligible for authoritative disk snapshots. Bounded process retention respects 360k geometry points and available heap headroom."
+        },
+        {
+          "title": "Protect accepted road identities and journey evidence",
+          "description": "No change to journey evidence, accepted local-road or A-road attribution, original corrections, reference data, railway or NCN collections."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.263",
       "version_code": 309,
       "release_date": "2026-11-19",
