@@ -54,10 +54,40 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: '8.10'
+      - name: Use bounded immutable road fixture for Robolectric JVM tests
+        run: |
+          set -euo pipefail
+          cp android-prototype/app/src/main/assets/uk-road-reference-v1.bin "$RUNNER_TEMP/full-uk-road-reference.bin"
+          python3 - <<'PY'
+          import os, pathlib,struct
+          original=pathlib.Path(os.environ["RUNNER_TEMP"])/"full-uk-road-reference.bin"
+          target=pathlib.Path("android-prototype/app/src/main/assets/uk-road-reference-v1.bin")
+          with original.open("rb") as stream:
+            header=stream.read(40)
+            assert header[:8]==b"RPRD0003"
+            count,=struct.unpack(">i",stream.read(4))
+            index=list(struct.iter_unpack(">iiii",stream.read(count*16)))
+            rows=[e for e in index if 17<=e[0]<=20 and 2570<=e[1]<=2573]
+            assert rows,"Bounded UK JVM reference has no usable road tiles"
+            with target.open("wb") as output:
+              output.write(header+struct.pack(">i",len(rows)))
+              offset=44+16*len(rows)
+              for x,y,_,size in rows:
+                output.write(struct.pack(">iiii",x,y,offset,size));offset+=size
+              for _,_,source,size in rows:
+                stream.seek(source)
+                block=stream.read(size)
+                assert len(block)==size
+                output.write(block)
+          PY
       - name: Re-run canonical Map and route regression gate
         run: |
           set -euo pipefail
           gradle --no-daemon -p android-prototype -Pandroid.builder.sdkDownload=false :app:testDebugUnitTest             --tests com.roadprints.capture.CanonicalPreviewIndexTest             --tests com.roadprints.capture.MapCoverageBatchGateTest             --tests com.roadprints.capture.MapActivityOverviewCoverageTest             --tests com.roadprints.capture.LocalRoadCoverageTest             --tests com.roadprints.capture.AcceptedRoadRouteTest             --tests com.roadprints.capture.CanonicalRoadAttributionTest             --tests com.roadprints.capture.RoadCandidateCollectionTest
+      - name: Restore full unchanged national road reference for signed APK
+        run: |
+          set -euo pipefail
+          cp "$RUNNER_TEMP/full-uk-road-reference.bin" android-prototype/app/src/main/assets/uk-road-reference-v1.bin
       - name: Build 311 APK with current owner signing identity
         env:
           ROADPRINTS_DEBUG_KEYSTORE_B64: ${{ secrets.ROADPRINTS_DEBUG_KEYSTORE_B64 }}
