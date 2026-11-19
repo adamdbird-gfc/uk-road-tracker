@@ -344,6 +344,55 @@ public class LocalRoadCoverageTest {
         assertTrue(repeated.lines.get(0).contributors(.5).contains("run-3-to-6"));
     }
 
+    @Test public void walkingRunningAndDrivingShareOneCanonicalLineButKeepTapHistory()
+            throws Exception {
+        LocalRoadNetwork network = new LocalRoadNetwork(0, 0, 1, 1);
+        Edge street = new Edge(951, 151, 152, "Shared lane",
+                new Point(20, 20), new Point(120, 20), null, true, 100_000, -1);
+        network.add(street);
+        Map<String, List<Interval>> trips = new LinkedHashMap<>();
+        trips.put("walk-morning", List.of(new Interval(0, 80_000)));
+        trips.put("run-evening", List.of(new Interval(20_000, 100_000)));
+        trips.put("drive-home", List.of(new Interval(0, 100_000)));
+        LocalRoadCoverage.Section first = section(network, street, trips);
+        assertEquals(1, first.lines.size());
+        assertEquals(100_000L, first.uniqueMillimetres);
+        LocalRoadCoverage.Line line = first.lines.get(0);
+        assertEquals(Set.of("walk-morning", "run-evening", "drive-home"),
+                Set.copyOf(line.contributors(.5)));
+        assertEquals("Three accepted travels, not three copies of the street",
+                260_000L, line.contributorMillimetresAt(.5));
+
+        // A source edit removes the whole formerly accepted run segment.
+        trips.remove("run-evening");
+        LocalRoadCoverage.Section corrected = section(network, street, trips);
+        assertEquals(1, corrected.lines.size());
+        assertEquals(100_000L, corrected.uniqueMillimetres);
+        assertEquals(Set.of("walk-morning", "drive-home"),
+                Set.copyOf(corrected.lines.get(0).contributors(.5)));
+        assertEquals(180_000L, corrected.lines.get(0).contributorMillimetresAt(.5));
+        assertEquals(3, first.lines.get(0).contributors(.5).size());
+    }
+
+    @Test public void nearbyDistinctFootpathNeverMergesIntoDrivenStreet() throws Exception {
+        LocalRoadNetwork network = new LocalRoadNetwork(0, 0, 1, 1);
+        Edge street = new Edge(952, 161, 162, "Strand",
+                new Point(20, 20), new Point(120, 20), null, true, 100_000, -1);
+        Edge promenade = new Edge(953, 171, 172, "Promenade",
+                new Point(20, 25), new Point(120, 25), null, true, 100_000, -1);
+        network.add(street);
+        network.add(promenade);
+        Map<String, List<Interval>> roadTrips = new LinkedHashMap<>();
+        roadTrips.put("drive-road", List.of(new Interval(0, 100_000)));
+        Map<String, List<Interval>> footTrips = new LinkedHashMap<>();
+        footTrips.put("walk-promenade", List.of(new Interval(0, 100_000)));
+        LocalRoadCoverage.Section driven = section(network, street, roadTrips);
+        LocalRoadCoverage.Section walked = section(network, promenade, footTrips);
+        assertNotEquals(driven.id, walked.id);
+        assertEquals(Set.of("drive-road"), Set.copyOf(driven.lines.get(0).contributors(.5)));
+        assertEquals(Set.of("walk-promenade"), Set.copyOf(walked.lines.get(0).contributors(.5)));
+    }
+
     @Test public void matchedRouteCoverageEligibilityIsIndependentOfTravelMode() {
         for (String mode : List.of("driving", "bus", "walking", "running",
                 "pedestrian", "cycling", " Walking ")) {
