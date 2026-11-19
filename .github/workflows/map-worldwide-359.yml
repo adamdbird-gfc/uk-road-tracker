@@ -5,6 +5,11 @@ on:
     paths:
       - .github/workflows/map-worldwide-359.yml
       - android-prototype/**
+  pull_request:
+    branches: [feat/workstream-a2-progressive-map]
+    paths:
+      - .github/workflows/map-worldwide-359.yml
+      - android-prototype/**
   workflow_dispatch:
 permissions:
   contents: read
