@@ -864,7 +864,7 @@ public class MapActivity extends Activity {
             // Canonical road coverage remains network-only here; the separate
             // ferry overlay restores historic recorded travel display without
             // letting legacy matched roads mask failed cumulative aggregation.
-            map.setRouteData(null, java.util.Collections.emptyList());
+            map.setRouteData(null, mapRoutes.sections);
             map.setFerrySegments(mapRoutes.ferrySections);
             map.setLocalRoadLayer(mapRoutes.localRoadLayer);
             map.setFlatRoadMapStyle(true);
@@ -880,7 +880,8 @@ public class MapActivity extends Activity {
                             + " covered_a_roads=" + mapRoutes.coveredARoadSections.size()
                             + " uncovered_a_roads=" + mapRoutes.incompleteARoadSections.size()
                             + " cumulative_minor=" + mapRoutes.localRoadLines.size()
-                            + " historical=0 ferry_lines=" + mapRoutes.ferrySections.size()
+                            + " international_lines=" + mapRoutes.sections.size()
+                            + " ferry_lines=" + mapRoutes.ferrySections.size()
                             + " ferry_points=" + mapRoutes.ferryPoints);
             mapView=map;
             applyCollectionLayer();
@@ -1124,11 +1125,14 @@ public class MapActivity extends Activity {
         // Aggregated, non-location diagnostics reveal which travel modes have accepted A-road features.
         int[] modeAccepted = new int[3], modeWithARoad = new int[3], modeWithLocal = new int[3];
         int[] acceptedFootCanonicalA = {0}, deferredFootCanonicalA = {0};
+        final int[] overseasCounts = new int[5]; // scanned, cached, matched, lines, held
+        final int[] overseasPoints = {0};
         PerformanceDiagnostics.ArchiveHeapSample heap = new PerformanceDiagnostics.ArchiveHeapSample();
         final MapGcDiagnostics mapGc = new MapGcDiagnostics();
         long localRoadNanos[] = {0};
         try (MapJourneyStore records = new MapJourneyStore(getApplicationContext());
-             LocalRoadCoverage local = LocalRoadCoverage.open(getApplicationContext())) {
+             LocalRoadCoverage local = LocalRoadCoverage.open(getApplicationContext());
+             CompactJourneyCache overseasCache = new CompactJourneyCache(getApplicationContext(), "map-overseas-v1")) {
         output.localReferenceAvailable = local != null;
         // Track only on actual first-use cold reconstruction; no extra index
         // or immutable snapshots on already-retained Map navigation.
@@ -1296,6 +1300,62 @@ public class MapActivity extends Activity {
                 }
                 localRoadNanos[0] += System.nanoTime() - started;
             }
+            // Historical matched journey geometry lives in the same archive.
+            // Reuse the existing, source-token invalidated compact cache.
+            // UK-indexed tiles remain exclusive to canonical coverage; a tile-
+            // absent accepted leg is eligible for bounded overseas presentation.
+            if (local != null && journey.optBoolean("_has_stored_match", false)) {
+                overseasCounts[0]++;
+                long available = Runtime.getRuntime().maxMemory()
+                        - (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
+                if (available < 48L * 1024L * 1024L) {
+                    overseasCounts[4]++;
+                    output.internationalCoverageIncomplete = true;
+                } else {
+                    try {
+                        int hitsBefore = overseasCache.hits;
+                        JSONObject projection = overseasCache.get(record.source, file -> {
+                            JSONObject raw = record.raw();
+                            List<JSONArray> retained = OverseasMatchedGeometry.unsupportedFragments(
+                                    matchedSegments(raw), 48, 350,
+                                    local::hasUkReferenceTile);
+                            JSONArray rows = new JSONArray();
+                            for (JSONArray line : retained) {
+                                JSONArray simplified = projectMapRoute(line, 120);
+                                if (simplified != null)
+                                    rows.put(new JSONObject().put("points", simplified)
+                                            .put("original", line.length()));
+                            }
+                            return new JSONObject().put("rows", rows);
+                        });
+                        if (overseasCache.hits > hitsBefore) overseasCounts[1]++;
+                        JSONArray rows = projection == null ? null : projection.optJSONArray("rows");
+                        if (rows != null && rows.length() > 0) {
+                            overseasCounts[2]++;
+                            for (int i = 0; i < rows.length(); i++) {
+                                JSONObject item = rows.optJSONObject(i);
+                                JSONArray points = item == null ? null : item.optJSONArray("points");
+                                if (points == null || points.length() < 2) continue;
+                                if (overseasPoints[0] + points.length() > 6_000
+                                        || overseasCounts[3] >= 500) {
+                                    overseasCounts[4]++;
+                                    output.internationalCoverageIncomplete = true;
+                                    break;
+                                }
+                                output.sections.add(points);
+                                output.retainedPoints += points.length();
+                                overseasPoints[0] += points.length();
+                                overseasCounts[3]++;
+                            }
+                        }
+                    } catch (java.util.concurrent.CancellationException cancelled) {
+                        throw cancelled;
+                    } catch (Exception unsafe) {
+                        overseasCounts[4]++;
+                        output.internationalCoverageIncomplete = true;
+                    }
+                }
+            }
             output.matchedJourneys++;counts[5]++;
         });
         if (batchGate.hasPending()) {
@@ -1350,6 +1410,13 @@ public class MapActivity extends Activity {
                 "lines=" + output.ferrySections.size()
                         + " points=" + output.ferryPoints
                         + " within_budget=" + (output.ferryPoints <= 20_000));
+        PerformanceDiagnostics.timing("map_international", 0,
+                "candidates=" + overseasCounts[0] + " cached=" + overseasCounts[1]
+                        + " with_lines=" + overseasCounts[2]
+                        + " rendered_lines=" + overseasCounts[3]
+                        + " rendered_points=" + overseasPoints[0]
+                        + " held=" + overseasCounts[4]
+                        + " incomplete=" + output.internationalCoverageIncomplete);
         PerformanceDiagnostics.timing("map_mode_coverage", 0,
                 "accepted_road=" + modeAccepted[0] + " accepted_foot=" + modeAccepted[1]
                 + " foot_canonical_a_sections=" + acceptedFootCanonicalA[0]
@@ -2745,6 +2812,7 @@ public class MapActivity extends Activity {
         root.put("simplified", routes.simplified);
         root.put("localCoverageDegraded", routes.localCoverageDegraded);
         root.put("localCoverageResourceDegraded", routes.localCoverageResourceDegraded);
+        root.put("internationalCoverageIncomplete", routes.internationalCoverageIncomplete);
         root.put("localReferenceAvailable", routes.localReferenceAvailable);
         JSONObject percentages = new JSONObject();
         for (Map.Entry<String, Double> entry : routes.roadPercentages.entrySet())
@@ -2795,6 +2863,7 @@ public class MapActivity extends Activity {
         routes.simplified = root.optBoolean("simplified");
         routes.localCoverageDegraded = root.optBoolean("localCoverageDegraded");
         routes.localCoverageResourceDegraded = root.optBoolean("localCoverageResourceDegraded");
+        routes.internationalCoverageIncomplete = root.optBoolean("internationalCoverageIncomplete", false);
         routes.localReferenceAvailable = root.optBoolean("localReferenceAvailable", false);
         JSONObject percentages = root.optJSONObject("percentages");
         if (percentages != null) {
@@ -2841,6 +2910,8 @@ public class MapActivity extends Activity {
      * explicitly, even when motorway/A-road reference geometry is visible.
      */
     static String overviewCoverageMessage(MapRoutes routes, boolean allJourneys) {
+        if (routes.internationalCoverageIncomplete)
+            return "International coverage partially held by memory or geometry limits · see diagnostics.";
         if (routes.localCoverageDegraded)
             return "Cumulative minor-road coverage incomplete · see diagnostics. "
                     + "Saved journeys remain available in the archive.";
@@ -2873,12 +2944,14 @@ public class MapActivity extends Activity {
         boolean localReferenceAvailable = true;
         boolean localCoverageDegraded;
         boolean localCoverageResourceDegraded;
+        boolean internationalCoverageIncomplete;
         long localRoadMillimetres;
 
         /** A complete assessment with explicitly held source rows is reusable.
          * Never cache results where resource exhaustion skipped valid coverage. */
         boolean canCacheSnapshot() {
-            return localReferenceAvailable && !localCoverageResourceDegraded;
+            return localReferenceAvailable && !localCoverageResourceDegraded
+                    && !internationalCoverageIncomplete;
         }
 
         /** Reuse exactly the displayed immutable geometry on same-revision tab
