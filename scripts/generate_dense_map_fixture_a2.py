@@ -31,11 +31,12 @@ def edges_from_reference(path):
                 cursor += namelen
                 if cursor > len(payload): raise ValueError("Malformed road tile")
                 if not (flags & 1): continue  # owner-eligible physical road
+                # Road classes are encoded as source-specific category IDs,
+                # not a 0..5 local-road scale. Keep every drivable reference edge.
                 road_class = flags >> 2
-                if road_class > 5: continue
                 lon_a, lat_a, lon_b, lat_b = ax/1e7, ay/1e7, bx/1e7, by/1e7
                 length = 111195 * math.hypot((lon_b-lon_a)*math.cos(math.radians((lat_a+lat_b)/2)), lat_b-lat_a)
-                if not (35 <= length <= 280): continue
+                if not (10 <= length <= 500): continue
                 key=(way, min(node_a,node_b), max(node_a,node_b))
                 distinct.setdefault(key, [[lon_a,lat_a],[lon_b,lat_b]])
         return distinct
