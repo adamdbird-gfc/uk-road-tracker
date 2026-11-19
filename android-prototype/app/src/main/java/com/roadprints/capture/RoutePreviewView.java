@@ -352,11 +352,24 @@ public class RoutePreviewView extends View {
     }
 
     private LocalRoadLayer localRoadLayer;
+    // Bounded cold-load preview tiles. Never reused for authoritative map taps.
+    private final List<LocalRoadLayer> progressiveLocalRoadLayers = new ArrayList<>();
+    void clearProgressiveLocalRoadLayers() {
+        progressiveLocalRoadLayers.clear();
+        invalidate();
+    }
+    void addProgressiveLocalRoadLayer(LocalRoadLayer layer) {
+        if (layer == null || layer.isEmpty()) return;
+        progressiveLocalRoadLayers.add(layer);
+        coordinatesValid = true;
+        invalidate();
+    }
     private final float[] localRoadBatch = new float[4096];
     private final Paint localRoadPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final List<JSONArray> ferrySegments=new ArrayList<>();
     private final Paint ferryPaint=new Paint(Paint.ANTI_ALIAS_FLAG);
     void setLocalRoadLayer(LocalRoadLayer layer) {
+        progressiveLocalRoadLayers.clear();
         localRoadLayer = layer;
         localRoadPaint.setColor(MapLayerPreferences.LOCAL_ROAD_COLOR);
         localRoadPaint.setStyle(Paint.Style.STROKE);
@@ -759,12 +772,17 @@ public class RoutePreviewView extends View {
                 drawRoute(canvas, coordinates, routePaint,
                         flatRoadMapStyle ? null : routeHaloPaint);
             }
-            if (travelVisible && localRoadLayer != null && !localRoadLayer.isEmpty()) {
+            if (travelVisible && ((localRoadLayer != null && !localRoadLayer.isEmpty())
+                    || !progressiveLocalRoadLayers.isEmpty())) {
                 double world = mapTileSize() * Math.pow(2.0, cameraZoom);
-                localRoadLayer.draw(canvas, localRoadPaint,
-                        getWidth() / 2.0 - longitudeToUnitX(centerLongitude) * world,
-                        getHeight() / 2.0 - latitudeToUnitY(centerLatitude) * world,
-                        world, getWidth(), getHeight(), localRoadBatch);
+                double xOffset = getWidth() / 2.0 - longitudeToUnitX(centerLongitude) * world;
+                double yOffset = getHeight() / 2.0 - latitudeToUnitY(centerLatitude) * world;
+                if (localRoadLayer != null && !localRoadLayer.isEmpty())
+                    localRoadLayer.draw(canvas, localRoadPaint, xOffset, yOffset,
+                            world, getWidth(), getHeight(), localRoadBatch);
+                for (LocalRoadLayer chunk : progressiveLocalRoadLayers)
+                    chunk.draw(canvas, localRoadPaint, xOffset, yOffset,
+                            world, getWidth(), getHeight(), localRoadBatch);
             }
             if (remainingVisible) {
                 drawRoadLayer(canvas, incompleteMotorwaySegments, motorwayIncompletePaint);
