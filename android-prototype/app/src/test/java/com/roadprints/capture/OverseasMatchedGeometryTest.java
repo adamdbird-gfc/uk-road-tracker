@@ -49,4 +49,39 @@ public final class OverseasMatchedGeometryTest {
         assertEquals(2, fragments.size());
         assertEquals(2.4, fragments.get(1).getJSONArray(0).getDouble(0), 0.0001);
     }
+
+    @Test public void calaisInsideIndexBoundsStillCountsWithoutUkRoadReference() throws Exception {
+        // Calais sits within the UK reference rectangle, but is not in the UK.
+        List<JSONArray> result = OverseasMatchedGeometry.unsupportedFragments(
+                Arrays.asList(line(1.83, 50.95, 1.85, 50.96)), 10, 50,
+                (longitude, latitude) -> false);
+        assertEquals(1, result.size());
+        assertEquals(2, result.get(0).length());
+    }
+
+    @Test public void londonRoadReferenceSuppressesUnwantedParallelTrace() throws Exception {
+        List<JSONArray> result = OverseasMatchedGeometry.unsupportedFragments(
+                Arrays.asList(line(-0.12, 51.51, -0.115, 51.512)), 10, 50,
+                (longitude, latitude) -> true);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test public void referenceFailureMustBeHeldNotDrawnAsForeign() {
+        try {
+            OverseasMatchedGeometry.unsupportedFragments(
+                    Arrays.asList(line(1.83, 50.95, 1.85, 50.96)), 10, 50,
+                    (longitude, latitude) -> { throw new java.io.IOException("reference unavailable"); });
+            fail("Reference failures must propagate to the caller for held diagnostics");
+        } catch (java.io.IOException expected) {
+            // This is a hold, not verified international geometry.
+        } catch (Exception other) {
+            fail("Unexpected failure: " + other);
+        }
+    }
+
+    @Test public void longSeaConnectorCannotBeRestoredAsRoad() throws Exception {
+        assertTrue(OverseasMatchedGeometry.unsupportedFragments(
+                Arrays.asList(line(1.3, 51.12, 1.84, 50.95)), 10, 50,
+                (longitude, latitude) -> false).isEmpty());
+    }
 }
