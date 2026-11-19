@@ -2,6 +2,26 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.263",
+      "version_code": 309,
+      "release_date": "2026-11-19",
+      "since": "0.25.262",
+      "changes": [
+        {
+          "title": "Preserve accepted-road matching across app upgrades",
+          "description": "Retains expensive per-journey accepted-road contributions in persistent app storage instead of Android's evictable cache, with safe migration of valid existing rows."
+        },
+        {
+          "title": "Prevent repeated historical rematching after cache eviction",
+          "description": "Preserves journey-source token and reference-version checks; new durable cache diagnostics report stored row counts without personal route evidence."
+        },
+        {
+          "title": "Keep road and collection attribution unchanged",
+          "description": "No changes to original journeys, corrected routes, physical road IDs, network matching, NCN or Map colours."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.262",
       "version_code": 308,
       "release_date": "2026-11-19",
