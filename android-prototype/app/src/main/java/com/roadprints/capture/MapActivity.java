@@ -2138,14 +2138,15 @@ public class MapActivity extends Activity {
             final String key = MapRoadTapSelection.key(label);
             final double percent = sectionLabel.isBlank() ? Double.NaN
                     : roadPercentages.getOrDefault(key, Double.NaN);
+            final boolean missingSummaries = unavailable != 0;
             PerformanceDiagnostics.timing("map_canonical_foot_tap", 0,
                     "source_ids=" + ids.size() + " resolved=" + count
                             + " missing=" + unavailable + " geometry_scans=0");
             mainHandler.post(() -> {
                 if (isFinishing() || requestId != roadSummaryRequestId) return;
                 showRoadSummaryCard(label, travelled, count, percent, related,
-                        unavailable == 0 ? null :
-                                "Some saved journey summaries are unavailable; distance is incomplete.");
+                        missingSummaries ?
+                                "Some saved journey summaries are unavailable; distance is incomplete." : null);
             });
         });
     }
