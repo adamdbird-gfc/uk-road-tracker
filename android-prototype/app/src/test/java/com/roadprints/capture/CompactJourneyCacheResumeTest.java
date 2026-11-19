@@ -84,7 +84,7 @@ public final class CompactJourneyCacheResumeTest {
         File durable = new File(context.getNoBackupFilesDir(), "compact-" + kind + ".db");
         File temporary = new File(context.getCacheDir(), "compact-" + kind + ".db");
         try {
-            Files.write(source.toPath(), "{\\"journey_id\\":\\"durable\\"}".getBytes(StandardCharsets.UTF_8));
+            Files.write(source.toPath(), new JSONObject().put("journey_id", "durable").toString().getBytes(StandardCharsets.UTF_8));
             try (CompactJourneyCache first = new CompactJourneyCache(context, kind)) {
                 assertEquals(7, first.get(source, f -> new JSONObject().put("covered", 7))
                         .getInt("covered"));
@@ -114,7 +114,7 @@ public final class CompactJourneyCacheResumeTest {
         File durable = new File(context.getNoBackupFilesDir(), "compact-" + kind + ".db");
         File legacy = new File(context.getCacheDir(), "compact-" + kind + ".db");
         try {
-            Files.write(source.toPath(), "{\\"journey_id\\":\\"legacy\\"}".getBytes(StandardCharsets.UTF_8));
+            Files.write(source.toPath(), new JSONObject().put("journey_id", "legacy").toString().getBytes(StandardCharsets.UTF_8));
             // Simulate the pre-309 schema under Android's evictable cache.
             try (android.database.sqlite.SQLiteDatabase old =
                     android.database.sqlite.SQLiteDatabase.openOrCreateDatabase(legacy, null)) {
