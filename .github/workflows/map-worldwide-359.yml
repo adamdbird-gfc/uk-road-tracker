@@ -1,7 +1,7 @@
 name: Roadprints worldwide Map 359 compile and regression (no APK)
 on:
   push:
-    branches: [feat/map-359-mode-scope-contract, feat/map-361-corridor-equivalence]
+    branches: [feat/map-359-mode-scope-contract, feat/map-361-corridor-equivalence, feat/map-362-partial-corridor-intervals]
     paths:
       - .github/workflows/map-worldwide-359.yml
       - android-prototype/**
@@ -81,6 +81,7 @@ jobs:
             --tests com.roadprints.capture.MapRoadTapSelectionTest \
             --tests com.roadprints.capture.FootpathResidualGeometryTest \
             --tests com.roadprints.capture.MatchedCorridorAccumulatorTest \
+            --tests com.roadprints.capture.MatchedCorridorIntervalUnionTest \
             > "$RUNNER_TEMP/map-worldwide-359.log" 2>&1 || {
               grep -nE -A3 -B2 '(error:|FAILED|failure|AssertionError|Caused by:)' "$RUNNER_TEMP/map-worldwide-359.log" | head -90 || true
               tail -n 70 "$RUNNER_TEMP/map-worldwide-359.log"

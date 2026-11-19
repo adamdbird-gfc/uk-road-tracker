@@ -45,6 +45,25 @@ for group,lon,lat,dx,dy,name in locations:
    for key in ("geojson","road_geojson"):
     variant["processing_result"][key]["features"][0]["geometry"]["coordinates"]=moved
    (root/f"journey_{variant['journey_id']}.json").write_text(json.dumps(variant))
+# Partial Paris journey fragments: same physical segment but one covers
+# 20%-60%, another 40%-80%. The shared street is five atomic intervals
+# with contributor sets that vary by section; no duplicate overpaint.
+start=[2.337,48.858]
+finish=[round(start[0]+0.0007,7),round(start[1]+0.0003,7)]
+for label,start_fraction,end_fraction,mode in [
+    ("lunch-walk",0.2,0.6,"walking"),("evening-run",0.4,0.8,"running")]:
+ route=[[round(start[k]+(finish[k]-start[k])*fraction,7) for k in range(2)]
+        for fraction in (start_fraction,end_fraction)]
+ feat={"type":"Feature","properties":{"name":"Rue de Rivoli",
+     "distance_m":24},"geometry":{"type":"LineString","coordinates":route}}
+ row={"journey_id":"worldwide-paris-partial-"+label,"mode":mode,
+ "title":"Synthetic accepted partial street","distance_meters":24.0,
+ "started_at":"2026-11-16T11:00:00Z","ended_at":"2026-11-16T11:04:00Z",
+ "processing_status":"complete","source":{"type":"android_activity_capture"},
+ "route_geometry":feat["geometry"],
+ "processing_result":{"geojson":{"type":"FeatureCollection","features":[feat]},
+                      "road_geojson":{"type":"FeatureCollection","features":[feat]}}}
+ (root/f"journey_{row['journey_id']}.json").write_text(json.dumps(row))
 # Explicit ferry display, but no road/NCN credit.
 ferry={"journey_id":"worldwide-dover-calais-ferry","mode":"ferry",
  "title":"Synthetic ferry (not owner's crossing)","distance_meters":42000,
@@ -52,7 +71,7 @@ ferry={"journey_id":"worldwide-dover-calais-ferry","mode":"ferry",
  "processing_status":"complete","route_geometry":{"type":"LineString",
  "coordinates":[[1.312,51.127],[1.5,51.05],[1.85,50.95]]}}
 (root/"journey_worldwide-dover-calais-ferry.json").write_text(json.dumps(ferry))
-print("Added 36 international corridors + 12 sub-metre Paris variants + ferry to 1675 base rows")
+print("Added 36 corridors + 12 shifted variants + 2 partially-overlapping Paris journeys + ferry")
 PY
 tar -cf "$RUNNER_TEMP/worldwide-fixtures.tar" -C "$fixtures" .
 seed_archive() {
@@ -100,7 +119,7 @@ import json,pathlib,re,sys
 def parse(p):
  lines=pathlib.Path(p).read_text().splitlines()
  names=("map_total","map_navigation","map_local_roads","map_international","map_ferry_overlay",
-        "map_records","map_cache","map_heap_stage","map_gc","map_outcome=ready")
+        "map_records","map_cache","map_heap_stage","map_gc","map_partial_corridors","map_outcome=ready")
  out={}
  for name in names:
   rows=[s for s in lines if name in s]
@@ -114,12 +133,22 @@ assert base["map_outcome=ready"]["events"] and cold["map_outcome=ready"]["events
 assert cold["map_international"]["events"] > 0,"Worldwide instrumentation absent"
 assert cold["map_ferry_overlay"]["events"] > 0,"Ferry overlay instrumentation absent"
 m=re.search(r"rendered_lines=(\d+) rendered_points=(\d+)",cold["map_international"]["last"])
-assert m and int(m.group(1))==36 and int(m.group(2))>=72, (
- "A shifted accepted match created a duplicate world corridor, or existing corridor was lost: "
+assert m and int(m.group(1))==38 and int(m.group(2))>=76, (
+ "Original 36 world corridors and two independent partial accepted lines were not retained: "
  + (m.group(0) if m else "no match"))
+partial=cold.get("map_partial_corridors",{})
+assert partial.get("events",0)>0, "Partial interval instrumentation absent"
+part=partial["last"]
+match=re.search(r"status=(\w+) merged_inputs=(\d+) atomic_lines=(\d+) "
+                r"ambiguity_holds=(\d+) displayed_lines=(\d+)",part)
+assert match and match.group(1)=="applied" and int(match.group(2))==2, (
+ "Two overlapping partial Paris journeys were not consolidated: "+part)
+assert int(match.group(3))==5 and int(match.group(5))==40, (
+ "Full street plus two partial walks must become five contributor-specific"
+ " intervals, leaving 40 final worldwide display lines: "+part)
 m=re.search(r"lines=(\d+) points=(\d+)",cold["map_ferry_overlay"]["last"])
 assert m and int(m.group(1))>0 and int(m.group(2))>0, "No synthetic ferry overlay"
-result={"fixture_journeys":1724,"international_accepted":48,"unique_international_corridors":36,"ferry":1,"railway_excluded":925,
+result={"fixture_journeys":1726,"international_accepted":50,"unique_international_corridors":36,"partial_journeys":2,"atomic_paris_segments":5,"ferry":1,"railway_excluded":925,
  "baseline":base,"candidate_cold":cold,"candidate_warm":warm,
  "note":"API35 deterministic synthetic comparison, not Pixel10 Android17 owner-archive proof. Cold and warm are process relaunches, not tab switches."}
 pathlib.Path(sys.argv[4]).write_text(json.dumps(result,indent=2))

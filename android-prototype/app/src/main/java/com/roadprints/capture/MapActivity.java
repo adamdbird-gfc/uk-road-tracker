@@ -1092,7 +1092,7 @@ public class MapActivity extends Activity {
         return inside;
     }
 
-    private static final long MAP_SNAPSHOT_REVISION = 3_000L + BuildConfig.VERSION_CODE
+    private static final long MAP_SNAPSHOT_REVISION = 3_100L + BuildConfig.VERSION_CODE
             + Integer.toUnsignedLong(RoadReference.ALGORITHM.hashCode());
 
     private long mapDataRevision() {
@@ -1453,6 +1453,56 @@ public class MapActivity extends Activity {
                             + " foot_unresolved_reasons=" + local.footUnresolvedLegReasons
                             + (local.held == 0 ? "" : " hold_reasons=" + local.failureBreakdown()));
         }
+        // Post-scan interval reconciliation runs once, off the UI thread, on
+        // the SAME worldwide corridor display ledger. Atomic segments carry
+        // contributor IDs only where the corresponding accepted journey
+        // actually travelled. Canonical UK OSM/NCN credit stays untouched.
+        int partialMerged = 0, partialAtoms = 0, partialAmbiguous = 0;
+        String partialStatus = "not_needed";
+        if (output.sections.size() >= 2) {
+            Runtime runtime = Runtime.getRuntime();
+            long headroom = runtime.maxMemory()
+                    - (runtime.totalMemory() - runtime.freeMemory());
+            if (headroom >= 48L * 1024L * 1024L) {
+                long started = System.nanoTime();
+                MatchedCorridorIntervalUnion.Result partial = MatchedCorridorIntervalUnion.reconcile(
+                        output.sections, output.corridorContributorIds,
+                        output.footResidualIndices, 500, 10_000);
+                partialAmbiguous = partial.ambiguous();
+                if (partial.budgetHeld()) {
+                    partialStatus = "bounded_hold";
+                } else {
+                    partialMerged = partial.mergedInputs();
+                    partialAtoms = partial.splitLines();
+                    if (partialMerged > 0) {
+                        int before = 0, after = 0;
+                        for (JSONArray line : output.sections) before += line.length();
+                        for (JSONArray line : partial.lines()) after += line.length();
+                        output.sections.clear();
+                        output.sections.addAll(partial.lines());
+                        output.corridorContributorIds.clear();
+                        output.corridorContributorIds.addAll(partial.contributors());
+                        output.footResidualIndices.clear();
+                        output.footResidualIndices.addAll(partial.footIndices());
+                        output.retainedPoints += after - before;
+                    }
+                    partialStatus = partialMerged > 0 ? "applied" : "no_safe_partial_overlap";
+                }
+                PerformanceDiagnostics.timing("map_partial_corridor_work",
+                        (System.nanoTime() - started) / 1_000_000,
+                        "status=" + partialStatus + " merged_inputs=" + partialMerged
+                                + " atomic_lines=" + partialAtoms
+                                + " ambiguity_holds=" + partialAmbiguous);
+            } else partialStatus = "heap_deferred";
+        }
+        PerformanceDiagnostics.timing("map_partial_corridors", 0,
+                "status=" + partialStatus
+                        + " merged_inputs=" + partialMerged
+                        + " atomic_lines=" + partialAtoms
+                        + " ambiguity_holds=" + partialAmbiguous
+                        + " displayed_lines=" + output.sections.size()
+                        + " section_contributors=" + output.corridorContributorIds.size()
+                        + " canonical_credit_unchanged=true");
         PerformanceDiagnostics.timing("map_shared_corridors", 0,
                 "display_lines=" + output.sections.size()
                         + " foot_lines=" + footFallbackCounts[0]
