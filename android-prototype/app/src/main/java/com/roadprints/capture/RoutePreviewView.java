@@ -361,6 +361,10 @@ public class RoutePreviewView extends View {
     void addProgressiveLocalRoadLayer(LocalRoadLayer layer) {
         if (layer == null || layer.isEmpty()) return;
         progressiveLocalRoadLayers.add(layer);
+        localRoadPaint.setColor(MapLayerPreferences.LOCAL_ROAD_COLOR);
+        localRoadPaint.setStyle(Paint.Style.STROKE);
+        localRoadPaint.setStrokeWidth(dp(4));
+        localRoadPaint.setStrokeCap(Paint.Cap.BUTT);
         coordinatesValid = true;
         invalidate();
     }
