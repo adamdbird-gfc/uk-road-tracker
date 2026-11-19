@@ -861,8 +861,9 @@ public class MapActivity extends Activity {
             }
             map.beginOverviewUpdate();
             map.setOverviewLoading(false);
-            // Overview is network-only. Legacy matched routes remain in each journey
-            // detail view but must never mask a failed cumulative aggregation.
+            // Canonical road coverage remains network-only here; the separate
+            // ferry overlay restores historic recorded travel display without
+            // letting legacy matched roads mask failed cumulative aggregation.
             map.setRouteData(null, java.util.Collections.emptyList());
             map.setFerrySegments(mapRoutes.ferrySections);
             map.setLocalRoadLayer(mapRoutes.localRoadLayer);
@@ -1199,7 +1200,8 @@ public class MapActivity extends Activity {
                 int added = 0;
                 if (ferries != null) for (int i = 0; i < ferries.length()
                         && output.ferrySections.size() < MAX_MAP_ROUTES; i++) {
-                    JSONArray line = ferries.optJSONObject(i).optJSONArray("points");
+                    JSONObject preparedFerry = ferries.optJSONObject(i);
+                    JSONArray line = preparedFerry == null ? null : preparedFerry.optJSONArray("points");
                     if (line == null || line.length() < 2) continue;
                     if (line.length() > 20_000 - output.ferryPoints) {
                         output.simplified = true;
