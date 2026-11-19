@@ -25,6 +25,37 @@ public final class CanonicalPreviewIndexTest {
         assertEquals(0, index.lineCount());
     }
 
+    @Test public void boundedMemorySupportsMoreThanLegacy256Roads() {
+        CanonicalPreviewIndex<String> index =
+                new CanonicalPreviewIndex<>(8192, 16384, 2 * 1024 * 1024);
+        for (int i = 0; i < 1500; i++)
+            assertTrue("section " + i,
+                    index.replace("osm:way:" + i, "line", 1));
+        assertEquals(1500, index.sectionCount());
+        assertEquals(1500, index.lineCount());
+        assertTrue(index.estimatedBytes() <= 2 * 1024 * 1024);
+        assertEquals(0, index.rejectedUpdates());
+        assertTrue(index.replace("osm:way:0", "replaced", 2));
+        assertEquals(1500, index.sectionCount());
+        assertEquals(1501, index.lineCount());
+        assertTrue(index.replace("osm:way:0", "deleted", 0));
+        assertEquals(1499, index.sectionCount());
+    }
+
+    @Test public void estimatedBytesBudgetFailsClosedWithoutDroppingExistingRoads() {
+        CanonicalPreviewIndex<String> index = new CanonicalPreviewIndex<>(100, 100, 400);
+        assertTrue(index.replace("a", "geometry", 1));
+        assertTrue(index.replace("b", "geometry", 1));
+        assertFalse(index.replace("c", "overflow", 1));
+        assertEquals(2, index.sectionCount());
+        assertEquals(1, index.rejectedUpdates());
+        assertEquals(388, index.estimatedBytes());
+        assertTrue(index.replace("a", "removed", 0));
+        assertTrue(index.replace("c", "fits", 1));
+        assertEquals(2, index.sectionCount());
+        assertEquals(388, index.estimatedBytes());
+    }
+
     @Test public void invalidUpdatesCannotChangeIndex() {
         CanonicalPreviewIndex<String> index = new CanonicalPreviewIndex<>(1, 1);
         assertFalse(index.replace("", "layer", 1));
