@@ -831,7 +831,7 @@ public class MapActivity extends Activity {
             mapSubtitle.setText(overviewCoverageMessage(mapRoutes, mapFilters.isAll()));
             // The temporary UK framing must never override a saved camera or
             // the existing initial fit-to-coverage behaviour on readiness.
-            double[] camera = progressiveMapActive ? null
+            double[] camera = progressiveSavedCamera != null ? null
                     : mapView == null ? null : mapView.cameraState();
             RoutePreviewView map = mapView;
             if (map == null) {
