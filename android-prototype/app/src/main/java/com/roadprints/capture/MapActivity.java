@@ -1121,6 +1121,7 @@ public class MapActivity extends Activity {
         int[] modeAccepted = new int[3], modeWithARoad = new int[3], modeWithLocal = new int[3];
         int[] acceptedFootCanonicalA = {0}, deferredFootCanonicalA = {0};
         PerformanceDiagnostics.ArchiveHeapSample heap = new PerformanceDiagnostics.ArchiveHeapSample();
+        final MapGcDiagnostics mapGc = new MapGcDiagnostics();
         long localRoadNanos[] = {0};
         try (MapJourneyStore records = new MapJourneyStore(getApplicationContext());
              LocalRoadCoverage local = LocalRoadCoverage.open(getApplicationContext())) {
@@ -1137,6 +1138,7 @@ public class MapActivity extends Activity {
         // journey objects. Publishing geometry is deliberately deferred until
         // the canonical network layer can accept immutable deltas safely.
         final MapCoverageBatchGate batchGate = new MapCoverageBatchGate(archiveScanStarted);
+        mapGc.checkpoint("scan_start", 0, 0, local == null ? 0 : local.pendingChangedEdges());
         records.forEach(() -> isDestroyed() || Thread.currentThread().isInterrupted(), record -> {
             JSONObject journey=record.header;
             ++counts[0];
@@ -1172,6 +1174,9 @@ public class MapActivity extends Activity {
                 lastProgressAt[0] = progressAt;
             }
             if (counts[0] % 25 == 0) heap.sample();
+            if (counts[0] % 250 == 0)
+                mapGc.checkpoint("scan", counts[0], 0,
+                        local == null ? 0 : local.pendingChangedEdges());
             long filterStarted=System.nanoTime();
             boolean selected=selection.matches(journey,today,zone);
             work[0]+=System.nanoTime()-filterStarted;
@@ -1273,6 +1278,8 @@ public class MapActivity extends Activity {
         }
         publishProgressiveChangedRoads(local, counts[0],
                 scanPreviewGeneration, scanPreviewRevision);
+        mapGc.checkpoint("scan_end", counts[0], 0,
+                local == null ? 0 : local.pendingChangedEdges());
         if (local != null) {
             long started = System.nanoTime();
             markMapHeap("before_local_sections");
@@ -1280,6 +1287,7 @@ public class MapActivity extends Activity {
             // temporary all-sections list at the highest archive heap watermark.
             local.forEachSection(output::addLocalRoad);
             markMapHeap("after_local_sections");
+            mapGc.checkpoint("after_sections", counts[0], 0, local.pendingChangedEdges());
             output.localCoverageDegraded |= local.held > 0 || local.overBudget > 0 || local.unresolvedMm > 0;
             if (local.overBudget > 0) {
                 output.simplified = true;
@@ -1349,6 +1357,7 @@ public class MapActivity extends Activity {
             coverageHeap.sample();
         }
         markMapHeap("after_a_road_finish");
+        mapGc.checkpoint("after_major_roads", counts[0], 0, local == null ? 0 : local.pendingChangedEdges());
         PerformanceDiagnostics.timing("map_coverage_finish",(System.nanoTime()-finishStarted)/1_000_000,
                 "peak_a_road_anchors="+aRoadCalculator.peakRetainedAnchors()
                         + " a_road_reference_reads=" + (aRoadCalculator.referenceReads() - referenceReadsBeforeFinish)
