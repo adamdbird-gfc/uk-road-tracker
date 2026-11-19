@@ -2,6 +2,26 @@
   "schema_version": 1,
   "releases": [
     {
+      "version_name": "0.25.262",
+      "version_code": 308,
+      "release_date": "2026-11-19",
+      "since": "0.25.261",
+      "changes": [
+        {
+          "title": "Reduce cumulative A-road memory use",
+          "description": "Replace boxed integer collections of canonical covered reference-anchor IDs with compact bit-backed sets while preserving accepted journey attribution, road identities, coverage percentages and road sections."
+        },
+        {
+          "title": "Preserve cumulative Map geometry and owner evidence",
+          "description": "Keep previous black local-road lines, motorway and A-road styling, road attribution thresholds and corrections untouched; add safety regression tests for anchor union and repeated journeys."
+        },
+        {
+          "title": "Observe device memory against Build 307",
+          "description": "Compare archived Map peak heap, on-foot A-road deferred intervals, route coverage and rendering performance against the previous integrated release."
+        }
+      ]
+    },
+    {
       "version_name": "0.25.261",
       "version_code": 307,
       "release_date": "2026-11-18",
