@@ -519,6 +519,29 @@ final class LocalRoadCoverage implements AutoCloseable {
         return result;
     }
 
+    /**
+     * Drain compact, immutable draw-only canonical coverage updates.
+     * Unlike drainChangedSections(), this does NOT copy journey IDs, JSON,
+     * Section instances or per-journey interval arrays into the UI pipeline.
+     * Serial archive worker only; no concurrent contributor mutations.
+     */
+    List<CanonicalPreviewGeometry> drainChangedPreview(int max) {
+        if (!incrementalTracking || deltaOverflow || max <= 0 || changedEdges.isEmpty())
+            return java.util.Collections.emptyList();
+        List<CanonicalPreviewGeometry> result =
+                new ArrayList<>(Math.min(max, changedEdges.size()));
+        java.util.Iterator<Edge> cursor = changedEdges.iterator();
+        while (cursor.hasNext() && result.size() < max) {
+            if (Thread.currentThread().isInterrupted()) throw new CancellationException();
+            Edge edge = cursor.next();
+            Map<String, int[]> current = contributors.get(edge);
+            if (current != null)
+                result.add(CanonicalPreviewGeometry.from(edge, current));
+            cursor.remove();
+        }
+        return result;
+    }
+
     static int[] endpoints(List<Interval> intervals) {
         int[] result = new int[intervals.size() * 2];
         int i = 0;
