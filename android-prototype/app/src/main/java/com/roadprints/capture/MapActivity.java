@@ -1236,17 +1236,21 @@ public class MapActivity extends Activity {
             final java.util.List<LocalRoadCoverage.Line> previewLines = new ArrayList<>();
             final int[] previewCount = {0};
             final long[] previewStart = {android.os.SystemClock.elapsedRealtime()};
+            final MapCoverageBatchGate sectionBatchGate = new MapCoverageBatchGate(previewStart[0]);
             local.forEachSection(section -> {
                 output.addLocalRoad(section);
                 if (!progressiveMapActive || previewCount[0] >= PROGRESSIVE_MAX_PREVIEW_LINES) return;
                 previewLines.addAll(section.lines);
                 previewCount[0] += section.lines.size();
                 long now = android.os.SystemClock.elapsedRealtime();
-                if (previewLines.size() >= 512 || now - previewStart[0] >= 250) {
-                    publishProgressiveLocalRoads(previewGeneration, previewRevision,
-                            previewLines, counts[0]);
-                    previewLines.clear();
-                    previewStart[0] = now;
+                if (sectionBatchGate.record(now)) {
+                    sectionBatchGate.finishBoundary(now);
+                    if (previewLines.size() >= 512 || now - previewStart[0] >= 250) {
+                        publishProgressiveLocalRoads(previewGeneration, previewRevision,
+                                previewLines, counts[0]);
+                        previewLines.clear();
+                        previewStart[0] = now;
+                    }
                 }
             });
             if (!previewLines.isEmpty())
