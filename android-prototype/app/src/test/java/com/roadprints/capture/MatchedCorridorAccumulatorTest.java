@@ -170,4 +170,22 @@ public final class MatchedCorridorAccumulatorTest {
         assertTrue(MatchedCorridorAccumulator.coherent(
                 ledger.lines,ledger.contributors,ledger.walkingFallback));
     }
+
+    @Test public void ambiguousMidwayMatchIsHeldRatherThanAssignedToEitherPath()
+            throws Exception {
+        Ledger ledger = new Ledger();
+        assertEquals(MatchedCorridorAccumulator.Result.ADDED,
+                ledger.add("[[0.375,51.44],[0.376,51.44]]", "south", false));
+        // 2.2m apart: independently accepted physical alignments.
+        assertEquals(MatchedCorridorAccumulator.Result.ADDED,
+                ledger.add("[[0.375,51.440020],[0.376,51.440020]]", "north", true));
+        assertEquals(MatchedCorridorAccumulator.Result.HELD,
+                ledger.add("[[0.375,51.440010],[0.376,51.440010]]",
+                        "ambiguous-middle", true));
+        assertEquals(2, ledger.lines.size());
+        assertEquals(Set.of("south"), ledger.contributors.get(0));
+        assertEquals(Set.of("north"), ledger.contributors.get(1));
+        assertTrue(MatchedCorridorAccumulator.coherent(
+                ledger.lines, ledger.contributors, ledger.walkingFallback));
+    }
 }
