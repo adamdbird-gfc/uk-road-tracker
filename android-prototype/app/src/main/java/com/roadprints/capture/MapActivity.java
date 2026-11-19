@@ -1127,6 +1127,7 @@ public class MapActivity extends Activity {
         int[] acceptedFootCanonicalA = {0}, deferredFootCanonicalA = {0};
         final int[] overseasCounts = new int[5]; // scanned, cached, matched, lines, held
         final int[] overseasPoints = {0};
+        final Set<String> overseasDisplayKeys = new HashSet<>();
         PerformanceDiagnostics.ArchiveHeapSample heap = new PerformanceDiagnostics.ArchiveHeapSample();
         final MapGcDiagnostics mapGc = new MapGcDiagnostics();
         long localRoadNanos[] = {0};
@@ -1342,6 +1343,10 @@ public class MapActivity extends Activity {
                                 JSONObject item = rows.optJSONObject(i);
                                 JSONArray points = item == null ? null : item.optJSONArray("points");
                                 if (points == null || points.length() < 2) continue;
+                                // Same accepted shape, even reversed, is one
+                                // geographical line with multiple journeys.
+                                if (!overseasDisplayKeys.add(
+                                        OverseasMatchedGeometry.displayIdentity(points))) continue;
                                 if (overseasPoints[0] + points.length() > 6_000
                                         || overseasCounts[3] >= 500) {
                                     overseasCounts[4]++;
