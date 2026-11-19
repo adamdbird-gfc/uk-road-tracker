@@ -36,6 +36,41 @@ public final class MapActivityOverviewCoverageTest {
         assertEquals(60000L, MapActivity.MAP_PROGRESS_GRACE_MS);
     }
 
+    @Test public void memoryDeferredCoverageCanBeRedisplayedButNotPersistedAsComplete() {
+        MapActivity.MapRoutes routes = new MapActivity.MapRoutes();
+        routes.localReferenceAvailable = true;
+        routes.localCoverageDegraded = true;
+        routes.localCoverageResourceDegraded = true;
+        routes.matchedJourneys = 1452;
+        routes.localRoadMillimetres = 772_274_910L;
+        assertFalse("Skipped A-road intervals must never produce authoritative disk snapshot",
+                routes.canCacheSnapshot());
+        assertTrue("Same-revision Map tab should redisplay existing partial interactive geometry",
+                routes.canRetainInteractiveMap(64L * 1024 * 1024));
+        assertTrue(MapActivity.overviewCoverageMessage(routes, true)
+                .contains("coverage incomplete"));
+        assertEquals(772_274_910L, routes.localRoadMillimetres);
+        assertEquals(1452, routes.matchedJourneys);
+        assertFalse("Never retain if heap is too tight",
+                routes.canRetainInteractiveMap(31L * 1024 * 1024));
+        assertTrue(routes.canRetainInteractiveMap(32L * 1024 * 1024));
+        routes.localReferenceAvailable = false;
+        assertFalse("Cannot redisplay unverified reference as valid network",
+                routes.canRetainInteractiveMap(64L * 1024 * 1024));
+    }
+
+    @Test public void largeMapCannotBeRetainedAcrossActivityInstances() {
+        MapActivity.MapRoutes routes = new MapActivity.MapRoutes();
+        routes.localReferenceAvailable = true;
+        assertTrue(routes.canRetainInteractiveMap(64L * 1024 * 1024));
+        // Guard matches the existing onPause snapshot point boundary. The
+        // retained Map carries exactly one immutable geometry graph.
+        for (int i = 0; i < 180_001; i++) {
+            routes.localRoadSegments.add(new LocalRoadCoverage.Line(null, null));
+        }
+        assertFalse(routes.canRetainInteractiveMap(64L * 1024 * 1024));
+    }
+
     @Test public void budgetDegradationCannotBeCached() {
         MapActivity.MapRoutes routes = new MapActivity.MapRoutes();
         routes.localReferenceAvailable = true;
