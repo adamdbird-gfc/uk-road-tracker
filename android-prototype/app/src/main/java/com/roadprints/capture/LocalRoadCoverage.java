@@ -88,6 +88,12 @@ final class LocalRoadCoverage implements AutoCloseable {
     final Map<String, Integer> footUnresolvedLegReasons = new LinkedHashMap<>();
     long footUnresolvedMm, footMajorOrOtherMm;
     int footMajorIntervals;
+    int footResidualLines, footResidualHeldNear, footResidualHeldLong, footResidualTruncated;
+
+    /** Reuse the already-open UK index; never decode a tile to classify a journey. */
+    boolean hasUkReferenceTile(double longitude, double latitude) {
+        return reference.hasIndexedTileAt(longitude, latitude);
+    }
 
     RoadReference.Statistics referenceStatistics() {
         return reference.statistics();
@@ -105,7 +111,9 @@ final class LocalRoadCoverage implements AutoCloseable {
             // breakdown. Reassess only on-foot rows to learn why saved paths
             // remain invisible; do not invalidate the 660 driving contributions.
             if (JourneyFilters.isFootMode(record.header.optString("mode"))
-                    && (!row.has("unresolvedLegs") || !row.has("majorSpans")) && row.has("spans")) {
+                    && (!row.has("unresolvedLegs") || !row.has("majorSpans")
+                            || row.optInt("footResidualVersion", 0) < FootpathResidualGeometry.VERSION)
+                    && row.has("spans")) {
                 cache.invalidate(record.source);
                 refreshedLegacyFootRow = true;
                 row = cache.get(record.source, file -> readAcceptedContribution(reference, file));
@@ -195,6 +203,10 @@ final class LocalRoadCoverage implements AutoCloseable {
                 footUnresolvedMm += unresolved;
                 footMajorOrOtherMm += major;
                 footMajorIntervals += majorCount;
+                footResidualLines += residual.length();
+                footResidualHeldNear += row.optInt("footResidualHeldNear", 0);
+                footResidualHeldLong += row.optInt("footResidualHeldLong", 0);
+                if (row.optBoolean("footResidualTruncated", false)) footResidualTruncated++;
             }
             JSONObject reasons = row.optJSONObject("unresolvedLegs");
             if (reasons != null) {
@@ -336,13 +348,37 @@ final class LocalRoadCoverage implements AutoCloseable {
             for (Interval interval : section.getValue()) row.put(interval.start()).put(interval.end());
             majorSpans.put(row);
         }
-        // Only accepted and owner-retained physical intervals enter this derived cache.
-        return new JSONObject().put("spans", spans).put("intervals", count)
+        // Walking/running unresolved fragments are display-only evidence. The
+        // canonical road/NCN ledgers receive ONLY the proven spans above.
+        // Hold ambiguous and adjoining road fragments instead of drawing a
+        // second physical road or claiming unverified completion.
+        boolean onFoot = JourneyFilters.isFootMode(journey.optString("mode", ""));
+        FootpathResidualGeometry.Projection footResidual = null;
+        if (onFoot && !projection.residual().isEmpty()) {
+            Set<Edge> nearby = new java.util.HashSet<>();
+            footResidual = FootpathResidualGeometry.extract(projection.residual(),
+                    (ax, ay, bx, by) -> {
+                        double longitude = (ax + bx) / 2, latitude = (ay + by) / 2;
+                        // No UK tile: this belongs to the existing international
+                        // fallback instead. Do not double-render it as a UK path.
+                        if (!reference.hasIndexedTileAt(longitude, latitude)) return true;
+                        reference.collectNearby(ax, ay, bx, by, nearby);
+                        return !nearby.isEmpty();
+                    });
+        }
+        JSONObject cached = new JSONObject().put("spans", spans).put("intervals", count)
                 .put("majorSpans", majorSpans).put("majorIntervals", majorCount)
-                .put("residual", new JSONArray())
+                .put("residual", footResidual == null ? new JSONArray() : footResidual.lines())
                 .put("unresolvedMm", projection.unresolvedMm()).put("excludedMm", projection.excludedMm())
                 .put("majorOrOtherMm", projection.majorOrOtherMm())
                 .put("unresolvedLegs", new JSONObject(projection.unresolvedLegs()));
+        if (onFoot) {
+            cached.put("footResidualVersion", FootpathResidualGeometry.VERSION);
+            cached.put("footResidualTruncated", footResidual != null && footResidual.truncated());
+            cached.put("footResidualHeldNear", footResidual == null ? 0 : footResidual.heldNearby());
+            cached.put("footResidualHeldLong", footResidual == null ? 0 : footResidual.heldLong());
+        }
+        return cached;
         } catch (IllegalArgumentException limit) {
             if ("Matched route exceeds per-journey interval limit".equals(limit.getMessage())
                     || "Accepted route exceeds interval limit".equals(limit.getMessage()))
@@ -613,6 +649,30 @@ final class LocalRoadCoverage implements AutoCloseable {
             double fraction = (last ? interval.end() : interval.start()) / (double) section.length;
             double first = section.first.optDouble(1);
             return first + (section.last.optDouble(1) - first) * fraction;
+        }
+
+        /**
+         * Total accepted traversal distance across the displayed physical
+         * interval for journeys contributing at this precise tap location.
+         * Repeated walks count towards travel distance, never extra unique
+         * physical coverage. No original journey geometry is consulted.
+         */
+        long contributorMillimetresAt(double fraction) {
+            int offset = interval.start() + (int) Math.round(fraction * (interval.end() - interval.start()));
+            long total = 0;
+            for (int[] endpoints : section.history.values()) {
+                boolean contributesHere = false;
+                for (int i = 0; i < endpoints.length; i += 2)
+                    if (endpoints[i] <= offset && offset <= endpoints[i + 1]) {
+                        contributesHere = true;
+                        break;
+                    }
+                if (!contributesHere) continue;
+                for (int i = 0; i < endpoints.length; i += 2)
+                    total += Math.max(0, Math.min(interval.end(), endpoints[i + 1])
+                            - Math.max(interval.start(), endpoints[i]));
+            }
+            return total;
         }
 
         List<String> contributors(double fraction) {

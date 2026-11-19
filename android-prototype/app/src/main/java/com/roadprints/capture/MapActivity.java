@@ -861,10 +861,11 @@ public class MapActivity extends Activity {
             }
             map.beginOverviewUpdate();
             map.setOverviewLoading(false);
-            // Overview is network-only. Legacy matched routes remain in each journey
-            // detail view but must never mask a failed cumulative aggregation.
-            map.setRouteData(null, java.util.Collections.emptyList());
-            map.setFerrySegments(java.util.Collections.emptyList());
+            // Canonical road coverage remains network-only here; the separate
+            // ferry overlay restores historic recorded travel display without
+            // letting legacy matched roads mask failed cumulative aggregation.
+            map.setRouteData(null, mapRoutes.sections);
+            map.setFerrySegments(mapRoutes.ferrySections);
             map.setLocalRoadLayer(mapRoutes.localRoadLayer);
             map.setFlatRoadMapStyle(true);
             // Covered/uncovered motorway and A-road reference layers remain unchanged.
@@ -879,12 +880,17 @@ public class MapActivity extends Activity {
                             + " covered_a_roads=" + mapRoutes.coveredARoadSections.size()
                             + " uncovered_a_roads=" + mapRoutes.incompleteARoadSections.size()
                             + " cumulative_minor=" + mapRoutes.localRoadLines.size()
-                            + " historical=0");
+                            + " international_lines=" + mapRoutes.sections.size()
+                            + " ferry_lines=" + mapRoutes.ferrySections.size()
+                            + " ferry_points=" + mapRoutes.ferryPoints);
             mapView=map;
             applyCollectionLayer();
             roadPercentages = new HashMap<>(mapRoutes.roadPercentages);
             incompleteRoadSegments = new ArrayList<>(mapRoutes.incompleteRoadSegments);
-            map.setMapRoadTapListener(this::loadRoadSummaryAt);
+            displayedCorridorSections = mapRoutes.sections;
+            displayedCorridorContributors = mapRoutes.corridorContributorIds;
+            displayedFootResidualIndices = mapRoutes.footResidualIndices;
+            map.setMapRoadTapListener(this::loadOverviewRoadSummary);
             map.setLocalRoadTapListener((line, fraction) ->
                     loadLocalRoadSummary(line, fraction));
             map.setContentDescription("Interactive OpenStreetMap. Pinch to zoom and drag to move.");
@@ -1122,11 +1128,16 @@ public class MapActivity extends Activity {
         // Aggregated, non-location diagnostics reveal which travel modes have accepted A-road features.
         int[] modeAccepted = new int[3], modeWithARoad = new int[3], modeWithLocal = new int[3];
         int[] acceptedFootCanonicalA = {0}, deferredFootCanonicalA = {0};
+        final int[] overseasCounts = new int[5]; // scanned, cached, matched, lines, held
+        final int[] overseasPoints = {0};
+        final int[] footFallbackCounts = new int[3]; // lines, points, held
+        final Map<String, Integer> corridorDisplayIndices = new HashMap<>();
         PerformanceDiagnostics.ArchiveHeapSample heap = new PerformanceDiagnostics.ArchiveHeapSample();
         final MapGcDiagnostics mapGc = new MapGcDiagnostics();
         long localRoadNanos[] = {0};
         try (MapJourneyStore records = new MapJourneyStore(getApplicationContext());
-             LocalRoadCoverage local = LocalRoadCoverage.open(getApplicationContext())) {
+             LocalRoadCoverage local = LocalRoadCoverage.open(getApplicationContext());
+             CompactJourneyCache overseasCache = new CompactJourneyCache(getApplicationContext(), "map-overseas-v1")) {
         output.localReferenceAvailable = local != null;
         // Track only on actual first-use cold reconstruction; no extra index
         // or immutable snapshots on already-retained Map navigation.
@@ -1183,10 +1194,34 @@ public class MapActivity extends Activity {
             boolean selected=selection.matches(journey,today,zone);
             work[0]+=System.nanoTime()-filterStarted;
             if(!selected){counts[1]++;return;}
-            // This network-only overview does not render individual ferry routes.
-            // Ferry recordings and detail views are unchanged.
-            if ("ferry".equals(journey.optString("mode"))) {
-                counts[3]++;
+            // Restore the original, separate ferry overlay. Ferries remain
+            // excluded from road/foot/cycle attribution and NCN completion.
+            // Read only this ferry's recorded geometry, not full archive payloads
+            // for road journeys or a new geometry/matching system.
+            if ("ferry".equalsIgnoreCase(journey.optString("mode"))) {
+                int remaining = 20_000 - output.ferryPoints;
+                if (remaining < 2 || output.ferrySections.size() >= MAX_MAP_ROUTES) {
+                    output.simplified = true;
+                    counts[4]++;
+                    return;
+                }
+                JSONArray ferries = prepareFerryRecord(journey).optJSONArray("ferries");
+                int added = 0;
+                if (ferries != null) for (int i = 0; i < ferries.length()
+                        && output.ferrySections.size() < MAX_MAP_ROUTES; i++) {
+                    JSONObject preparedFerry = ferries.optJSONObject(i);
+                    JSONArray line = preparedFerry == null ? null : preparedFerry.optJSONArray("points");
+                    if (line == null || line.length() < 2) continue;
+                    if (line.length() > 20_000 - output.ferryPoints) {
+                        output.simplified = true;
+                        break;
+                    }
+                    output.ferrySections.add(line);
+                    output.ferryPoints += line.length();
+                    added++;
+                }
+                if (added > 0) { output.matchedJourneys++; counts[5]++; }
+                else counts[4]++;
                 return;
             }
             if (!"complete".equals(journey.optString("processing_status", ""))) {
@@ -1199,7 +1234,7 @@ public class MapActivity extends Activity {
                 return;
             }
             String mode=journey.optString("mode","").trim().toLowerCase(java.util.Locale.ROOT);
-            if(!JourneyFilters.isRoadMode(mode)&&!JourneyFilters.isFootMode(mode)&&!MatchingCoordinator.isCycle(mode)){counts[3]++;return;}
+            if (!OverviewJourneyScope.contributesCorridorCoverage(mode)) { counts[3]++; return; }
             MapJourneyStore.Factory factory=raw->{
                 long start=System.nanoTime();
                 JSONObject prepared=new JSONObject().put("motorway",motorwayCalculator.contribution(raw))
@@ -1251,6 +1286,34 @@ public class MapActivity extends Activity {
                 if (coverage != null && !journeyId.isEmpty()) {
                     local.add(journeyId, coverage.spans());
                     if (!coverage.spans().isEmpty()) modeWithLocal[roadModeIndex]++;
+                    // Residual matched walking/running segments too far from
+                    // any UK reference edge may be displayed, not credited.
+                    // Both this and canonical coverage originate in the same
+                    // owner-corrected accepted projection and source-token cache.
+                    if (roadModeIndex == 1 && coverage.residual() != null) {
+                        JSONArray candidates = coverage.residual();
+                        for (int i = 0; i < candidates.length(); i++) {
+                            JSONArray points = candidates.optJSONArray(i);
+                            if (points == null || points.length() < 2) continue;
+                            JSONArray footPreparedLine = projectMapRoute(points, 120);
+                            if (footPreparedLine == null || footPreparedLine.length() < 2) continue;
+                            MatchedCorridorAccumulator.Result add = MatchedCorridorAccumulator.add(
+                                    footPreparedLine, journeyId, true,
+                                    output.sections, output.corridorContributorIds,
+                                    output.footResidualIndices, corridorDisplayIndices,
+                                    500, 4_000, footFallbackCounts[0], footFallbackCounts[1]);
+                            if (add == MatchedCorridorAccumulator.Result.HELD) {
+                                footFallbackCounts[2]++;
+                                output.footFallbackIncomplete = true;
+                                break;
+                            }
+                            if (add == MatchedCorridorAccumulator.Result.ADDED) {
+                                output.retainedPoints += footPreparedLine.length();
+                                footFallbackCounts[0]++;
+                                footFallbackCounts[1] += footPreparedLine.length();
+                            }
+                        }
+                    }
                     // Merge only exact accepted OSM-identified walking intervals
                     // through the existing A-road coverage ledger. Never draw
                     // an overlapping second polyline for these sections.
@@ -1269,6 +1332,84 @@ public class MapActivity extends Activity {
                     }
                 }
                 localRoadNanos[0] += System.nanoTime() - started;
+            }
+            // Historical matched journey geometry lives in the same archive.
+            // Reuse the existing, source-token invalidated compact cache.
+            // UK-indexed tiles remain exclusive to canonical coverage; a tile-
+            // absent accepted leg is eligible for bounded overseas presentation.
+            if (local != null && journey.optBoolean("_has_stored_match", false)) {
+                overseasCounts[0]++;
+                long available = Runtime.getRuntime().maxMemory()
+                        - (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
+                if (available < 48L * 1024L * 1024L) {
+                    overseasCounts[4]++;
+                    output.internationalCoverageIncomplete = true;
+                } else {
+                    try {
+                        int hitsBefore = overseasCache.hits;
+                        JSONObject projection = overseasCache.get(record.source, file -> {
+                            JSONObject raw = record.raw();
+                            // Some legacy map-v1 projections stored major-road
+                            // summaries without the accepted route GeoJSON.
+                            // Use the original archive only for those rows;
+                            // never treat an empty disposable cache as missing
+                            // authoritative journey geometry.
+                            if (matchedSegments(raw).isEmpty()
+                                    && record.header.optBoolean("_has_stored_match", false))
+                                raw = JourneyStore.mapEvidence(getApplicationContext(), file, true);
+                            boolean[] truncated = {false};
+                            List<JSONArray> retained = OverseasMatchedGeometry.unsupportedFragments(
+                                    matchedSegments(raw), 48, 350,
+                                    local::hasUkReferenceTile, truncated);
+                            JSONArray rows = new JSONArray();
+                            for (JSONArray line : retained) {
+                                JSONArray simplified = projectMapRoute(line, 120);
+                                if (simplified != null)
+                                    rows.put(new JSONObject().put("points", simplified)
+                                            .put("original", line.length()));
+                            }
+                            return new JSONObject().put("rows", rows)
+                                    .put("truncated", truncated[0]);
+                        });
+                        if (overseasCache.hits > hitsBefore) overseasCounts[1]++;
+                        JSONArray rows = projection == null ? null : projection.optJSONArray("rows");
+                        if (projection != null && projection.optBoolean("truncated", false)) {
+                            overseasCounts[4]++;
+                            output.internationalCoverageIncomplete = true;
+                        }
+                        if (rows != null && rows.length() > 0) {
+                            overseasCounts[2]++;
+                            for (int i = 0; i < rows.length(); i++) {
+                                JSONObject item = rows.optJSONObject(i);
+                                JSONArray points = item == null ? null : item.optJSONArray("points");
+                                if (points == null || points.length() < 2) continue;
+                                // The same accepted corridor ledger also receives
+                                // unmatched UK walking lines. Mode or geography
+                                // must not create a second physical display stroke.
+                                MatchedCorridorAccumulator.Result add = MatchedCorridorAccumulator.add(
+                                        points, journey.optString("journey_id"), false,
+                                        output.sections, output.corridorContributorIds,
+                                        output.footResidualIndices, corridorDisplayIndices,
+                                        500, 6_000, overseasCounts[3], overseasPoints[0]);
+                                if (add == MatchedCorridorAccumulator.Result.HELD) {
+                                    overseasCounts[4]++;
+                                    output.internationalCoverageIncomplete = true;
+                                    break;
+                                }
+                                if (add == MatchedCorridorAccumulator.Result.ADDED) {
+                                    output.retainedPoints += points.length();
+                                    overseasPoints[0] += points.length();
+                                    overseasCounts[3]++;
+                                }
+                            }
+                        }
+                    } catch (java.util.concurrent.CancellationException cancelled) {
+                        throw cancelled;
+                    } catch (Exception unsafe) {
+                        overseasCounts[4]++;
+                        output.internationalCoverageIncomplete = true;
+                    }
+                }
             }
             output.matchedJourneys++;counts[5]++;
         });
@@ -1291,6 +1432,7 @@ public class MapActivity extends Activity {
             markMapHeap("after_local_sections");
             mapGc.checkpoint("after_sections", counts[0], 0, local.pendingChangedEdges());
             output.localCoverageDegraded |= local.held > 0 || local.overBudget > 0 || local.unresolvedMm > 0;
+            output.footFallbackIncomplete |= local.footResidualTruncated > 0;
             if (local.overBudget > 0) {
                 output.simplified = true;
                 output.localCoverageResourceDegraded = true;
@@ -1311,6 +1453,25 @@ public class MapActivity extends Activity {
                             + " foot_unresolved_reasons=" + local.footUnresolvedLegReasons
                             + (local.held == 0 ? "" : " hold_reasons=" + local.failureBreakdown()));
         }
+        PerformanceDiagnostics.timing("map_shared_corridors", 0,
+                "display_lines=" + output.sections.size()
+                        + " foot_lines=" + footFallbackCounts[0]
+                        + " other_lines=" + overseasCounts[3]
+                        + " contributor_rows=" + output.corridorContributorIds.size()
+                        + " unified=" + MatchedCorridorAccumulator.coherent(
+                                output.sections, output.corridorContributorIds,
+                                output.footResidualIndices)
+                        + " canonical_ledger_separate=true");
+        PerformanceDiagnostics.timing("map_foot_residual", 0,
+                "lines=" + footFallbackCounts[0]
+                        + " points=" + footFallbackCounts[1]
+                        + " display_holds=" + footFallbackCounts[2]
+                        + " cache_lines=" + (local == null ? 0 : local.footResidualLines)
+                        + " near_reference_held=" + (local == null ? 0 : local.footResidualHeldNear)
+                        + " long_held=" + (local == null ? 0 : local.footResidualHeldLong)
+                        + " truncated=" + (local == null ? 0 : local.footResidualTruncated)
+                        + " incomplete=" + output.footFallbackIncomplete
+                        + " credited_canonical_mm=0");
         PerformanceDiagnostics.timing("map_records",(System.nanoTime()-evidenceStarted)/1_000_000,"reused="+records.reused+" rebuilt="+records.rebuilt
                 +" source_reads="+records.sourceReads+" legacy_reads="+records.legacyReads+" oversized="+records.oversized
                 + " payload_lookup_ms=" + records.payloadLookupNanos / 1_000_000
@@ -1320,6 +1481,17 @@ public class MapActivity extends Activity {
         }
         long evidenceDuration=System.nanoTime()-evidenceStarted;
         PerformanceDiagnostics.timing("map_evidence",Math.max(0,evidenceDuration-work[0]-work[1]-work[2])/1_000_000,"compact_records_or_archive");
+        PerformanceDiagnostics.timing("map_ferry_overlay", 0,
+                "lines=" + output.ferrySections.size()
+                        + " points=" + output.ferryPoints
+                        + " within_budget=" + (output.ferryPoints <= 20_000));
+        PerformanceDiagnostics.timing("map_international", 0,
+                "candidates=" + overseasCounts[0] + " cached=" + overseasCounts[1]
+                        + " with_lines=" + overseasCounts[2]
+                        + " rendered_lines=" + overseasCounts[3]
+                        + " rendered_points=" + overseasPoints[0]
+                        + " held=" + overseasCounts[4]
+                        + " incomplete=" + output.internationalCoverageIncomplete);
         PerformanceDiagnostics.timing("map_mode_coverage", 0,
                 "accepted_road=" + modeAccepted[0] + " accepted_foot=" + modeAccepted[1]
                 + " foot_canonical_a_sections=" + acceptedFootCanonicalA[0]
@@ -1976,14 +2148,135 @@ public class MapActivity extends Activity {
     }
 
     private void loadLocalRoadSummary(LocalRoadCoverage.Line line, double fraction) {
-        if (line == null) return;
-        JSONArray first = line.points().optJSONArray(0), last = line.points().optJSONArray(1);
-        if (first == null || last == null) return;
-        double latitude = first.optDouble(1) + (last.optDouble(1) - first.optDouble(1)) * fraction;
-        double longitude = first.optDouble(0) + (last.optDouble(0) - first.optDouble(0)) * fraction;
-        String label = line.section().label;
-        loadRoadSummaryAt(latitude, longitude, label.isEmpty() ? "Unnamed road" : label,
-                line.contributors(fraction));
+        if (line == null || !mapReady || recapVisible) return;
+        // The canonical accumulator already knows exactly which accepted
+        // journeys cover the tapped physical interval. Never walk the entire
+        // historical road GeoJSON archive to rediscover this answer.
+        final List<String> ids = line.contributors(fraction);
+        final String sectionLabel = line.section().label;
+        final int requestId = ++roadSummaryRequestId;
+        showRoadSummaryLoadingCard();
+        ScreenDataLoader.execute(() -> {
+            List<JSONObject> related = new ArrayList<>();
+            boolean foot = false;
+            int unavailable = 0;
+            for (String id : ids) {
+                if (Thread.currentThread().isInterrupted() || requestId != roadSummaryRequestId) return;
+                try {
+                    JSONObject summary = JourneyStore.readSummary(
+                            JourneyStore.archiveFile(getApplicationContext(), id));
+                    if (summary == null) { unavailable++; continue; }
+                    related.add(summary);
+                    foot |= JourneyFilters.isFootMode(summary.optString("mode"));
+                } catch (Exception missing) {
+                    unavailable++;
+                }
+            }
+            related.sort(java.util.Comparator.comparing(
+                    (JSONObject row) -> row.optString("started_at", "")).reversed());
+            final String label = sectionLabel.isBlank()
+                    ? (foot ? "Public footpath" : "Unnamed road") : sectionLabel;
+            final int count = related.size();
+            final long travelledMm = line.contributorMillimetresAt(fraction);
+            final double travelled = unavailable == 0 ? travelledMm / 1000.0 : Double.NaN;
+            final String key = MapRoadTapSelection.key(label);
+            final double percent = sectionLabel.isBlank() ? Double.NaN
+                    : roadPercentages.getOrDefault(key, Double.NaN);
+            final boolean missingSummaries = unavailable != 0;
+            PerformanceDiagnostics.timing("map_canonical_foot_tap", 0,
+                    "source_ids=" + ids.size() + " resolved=" + count
+                            + " missing=" + unavailable + " geometry_scans=0");
+            mainHandler.post(() -> {
+                if (isFinishing() || requestId != roadSummaryRequestId) return;
+                showRoadSummaryCard(label, travelled, count, percent, related,
+                        missingSummaries ?
+                                "Some saved journey summaries are unavailable; distance is incomplete." : null);
+            });
+        });
+    }
+
+    private void loadOverviewRoadSummary(double latitude, double longitude) {
+        // The renderer hands us the nearest point on the actual displayed line,
+        // not the raw finger location. Resolve that identical visual geometry to
+        // its compact source-ID ledger, avoiding a 1,700-journey tap rescan.
+        int nearestIndex = -1;
+        double nearest = 15.0;
+        for (int i = 0; i < displayedCorridorSections.size()
+                && i < displayedCorridorContributors.size(); i++) {
+            double metres = lineDistanceMetres(displayedCorridorSections.get(i),
+                    latitude, longitude);
+            if (metres < nearest) { nearest = metres; nearestIndex = i; }
+        }
+        if (nearestIndex >= 0) {
+            loadInternationalRoadSummary(latitude, longitude,
+                    new ArrayList<>(displayedCorridorContributors.get(nearestIndex)),
+                    displayedFootResidualIndices.contains(nearestIndex));
+        } else loadRoadSummaryAt(latitude, longitude);
+    }
+
+    private void loadInternationalRoadSummary(double latitude, double longitude,
+                                               List<String> sourceIds, boolean unmatchedFootpath) {
+        if (!mapReady || recapVisible || sourceIds.isEmpty()) return;
+        final int requestId = ++roadSummaryRequestId;
+        showRoadSummaryLoadingCard();
+        ScreenDataLoader.execute(() -> {
+            List<JSONObject> related = new ArrayList<>();
+            String roadName = null;
+            String fallback = "Unnamed road";
+            int nameEvidenceReads = 0;
+            for (String id : sourceIds) {
+                if (Thread.currentThread().isInterrupted() || requestId != roadSummaryRequestId) return;
+                try {
+                    java.io.File source = JourneyStore.archiveFile(getApplicationContext(), id);
+                    JSONObject summary = JourneyStore.readSummary(source);
+                    if (summary == null) continue;
+                    related.add(summary);
+                    if (JourneyFilters.isFootMode(summary.optString("mode"))) fallback = "Public footpath";
+                    if (roadName != null || nameEvidenceReads >= 3) continue;
+                    nameEvidenceReads++;
+                    // Selective matched geometry only, never original GPS
+                    // samples. Corrected features cannot restore removed legs.
+                    JSONObject evidence = JourneyStore.mapEvidence(getApplicationContext(), source, true);
+                    JSONObject result = evidence.optJSONObject("processing_result");
+                    JSONArray features = roadFeaturesForTap(result);
+                    if (features == null && result != null) {
+                        JSONObject matched = result.optJSONObject("geojson");
+                        features = matched == null ? null : matched.optJSONArray("features");
+                    }
+                    if (features == null) continue;
+                    double nearest = 20.0;
+                    for (int i = 0; i < features.length(); i++) {
+                        JSONObject retained = JourneyCorrectionUtils.retainedRoadFeature(
+                                evidence, features.optJSONObject(i));
+                        if (retained == null) continue;
+                        double metres = featureDistanceMetres(retained, latitude, longitude);
+                        if (metres >= nearest) continue;
+                        nearest = metres;
+                        roadName = MapRoadTapSelection.label(
+                                retained.optJSONObject("properties"), summary.optString("mode"));
+                    }
+                } catch (Exception unavailable) {
+                    // A missing or unreadable journey is not a reason to
+                    // withdraw any other accepted contributor from the card.
+                }
+            }
+            related.sort(java.util.Comparator.comparing(
+                    (JSONObject j) -> j.optString("started_at", "")).reversed());
+            final String label = roadName == null ? fallback : roadName;
+            final int count = related.size();
+            final String note = (unmatchedFootpath
+                    ? "Accepted walking or running trace outside the canonical road network"
+                    : "International road or pathway") + " · " + count
+                    + " saved journey" + (count == 1 ? "" : "s")
+                    + ". This line does not grant UK road or NCN completion.";
+            PerformanceDiagnostics.timing("map_international_tap", 0,
+                    "contributors=" + sourceIds.size() + " resolved=" + count
+                            + " name_evidence_reads=" + nameEvidenceReads);
+            mainHandler.post(() -> {
+                if (isFinishing() || requestId != roadSummaryRequestId) return;
+                showRoadSummaryCard(label, Double.NaN, count, Double.NaN, related, note);
+            });
+        });
     }
 
     private void loadRoadSummaryAt(double latitude, double longitude) {
@@ -2022,19 +2315,13 @@ public class MapActivity extends Activity {
                         JSONObject feature = JourneyCorrectionUtils.retainedRoadFeature(journey, features.optJSONObject(i));
                         if (feature == null) continue;
                         JSONObject properties = feature.optJSONObject("properties");
-                        if (properties == null) continue;
-                        String rawRef = properties.optString("road_ref",
-                                properties.optString("ref", "")).trim();
-                        String name = properties.optString("name",
-                                properties.optString("road_name", "")).trim();
-                        String label = !rawRef.isEmpty() ? rawRef : name;
-                        if (label.isEmpty()) continue;
+                        String label = MapRoadTapSelection.label(properties, mode);
                         double distance = featureDistanceMetres(feature, latitude, longitude);
                         // The map callback supplies the nearest rendered line point,
                         // which lets us allow for small offsets between matched traces
                         // and the road catalogue without relying on the finger position.
                         if (distance > 120.0) continue;
-                        String key = label.toUpperCase(java.util.Locale.ROOT);
+                        String key = MapRoadTapSelection.key(label);
                         double travelled = properties.optDouble("distance_m", 0);
                         if (travelled <= 0) travelled = featureLengthMetres(feature);
                         candidates.add(new RoadFeatureMatch(
@@ -2060,7 +2347,8 @@ public class MapActivity extends Activity {
             if (nearest != null) {
                 Map<String, Double> distancesById = new HashMap<>();
                 for (RoadFeatureMatch candidate : candidates) {
-                    if (!roadKey.equals(candidate.key) || candidate.distanceFromTap > 120.0
+                    if (!MapRoadTapSelection.sameLocalFeature(roadName, candidate.label,
+                            nearest.distanceFromTap, candidate.distanceFromTap)
                             || candidate.journeyId.isEmpty()) continue;
                     journeysById.putIfAbsent(candidate.journeyId, candidate.journey);
                     distancesById.put(candidate.journeyId,
@@ -2287,6 +2575,9 @@ public class MapActivity extends Activity {
 
     private AlertDialog roadDialog;
     private volatile int roadSummaryRequestId;
+    private List<JSONArray> displayedCorridorSections = java.util.Collections.emptyList();
+    private List<Set<String>> displayedCorridorContributors = java.util.Collections.emptyList();
+    private Set<Integer> displayedFootResidualIndices = java.util.Collections.emptySet();
     private LinearLayout roadDialogContent;
 
     private void showRoadSummaryLoadingCard() {
@@ -2692,6 +2983,10 @@ public class MapActivity extends Activity {
     private JSONObject mapRoutesToCache(MapRoutes routes) throws Exception {
         JSONObject root = new JSONObject();
         putRouteArrays(root, "sections", routes.sections);
+        JSONArray overseasContributors = new JSONArray();
+        for (Set<String> ids : routes.corridorContributorIds)
+            overseasContributors.put(new JSONArray(ids));
+        root.put("corridorContributorIds", overseasContributors);
         putRouteArrays(root,"ferries",routes.ferrySections);
         JSONArray localRoads = new JSONArray();
         for (LocalRoadCoverage.Section section : routes.localRoadSections) localRoads.put(section.encode());
@@ -2715,6 +3010,9 @@ public class MapActivity extends Activity {
         root.put("simplified", routes.simplified);
         root.put("localCoverageDegraded", routes.localCoverageDegraded);
         root.put("localCoverageResourceDegraded", routes.localCoverageResourceDegraded);
+        root.put("internationalCoverageIncomplete", routes.internationalCoverageIncomplete);
+        root.put("footFallbackIncomplete", routes.footFallbackIncomplete);
+        root.put("footResidualIndices", new JSONArray(routes.footResidualIndices));
         root.put("localReferenceAvailable", routes.localReferenceAvailable);
         JSONObject percentages = new JSONObject();
         for (Map.Entry<String, Double> entry : routes.roadPercentages.entrySet())
@@ -2739,7 +3037,20 @@ public class MapActivity extends Activity {
                 || !root.has("localCoverageDegraded")
                 || !root.has("localCoverageResourceDegraded")) return null;
         getRouteArrays(root, "sections", routes.sections);
+        JSONArray overseasContributors = root.optJSONArray("corridorContributorIds");
+        if (overseasContributors != null) for (int i = 0; i < overseasContributors.length(); i++) {
+            JSONArray ids = overseasContributors.optJSONArray(i);
+            Set<String> sourceIds = new HashSet<>();
+            if (ids != null) for (int j = 0; j < ids.length(); j++) {
+                String id = ids.optString(j, "");
+                if (!id.isEmpty()) sourceIds.add(id);
+            }
+            routes.corridorContributorIds.add(sourceIds);
+        }
+        if (!MatchedCorridorAccumulator.coherent(
+                routes.sections, routes.corridorContributorIds, routes.footResidualIndices)) return null;
         getRouteArrays(root,"ferries",routes.ferrySections);
+        for (JSONArray ferry : routes.ferrySections) routes.ferryPoints += ferry.length();
         JSONArray localRoads = root.getJSONArray("localRoads");
         for (int i = 0; i < localRoads.length(); i++)
             routes.addLocalRoad(LocalRoadCoverage.Section.decode(localRoads.getJSONObject(i)));
@@ -2764,6 +3075,16 @@ public class MapActivity extends Activity {
         routes.simplified = root.optBoolean("simplified");
         routes.localCoverageDegraded = root.optBoolean("localCoverageDegraded");
         routes.localCoverageResourceDegraded = root.optBoolean("localCoverageResourceDegraded");
+        routes.internationalCoverageIncomplete = root.optBoolean("internationalCoverageIncomplete", false);
+        routes.footFallbackIncomplete = root.optBoolean("footFallbackIncomplete", false);
+        JSONArray footIndices = root.optJSONArray("footResidualIndices");
+        if (footIndices != null) for (int i = 0; i < footIndices.length(); i++) {
+            int idx = footIndices.optInt(i, -1);
+            if (idx < 0 || idx >= routes.sections.size()) return null;
+            routes.footResidualIndices.add(idx);
+        }
+        if (!MatchedCorridorAccumulator.coherent(
+                routes.sections, routes.corridorContributorIds, routes.footResidualIndices)) return null;
         routes.localReferenceAvailable = root.optBoolean("localReferenceAvailable", false);
         JSONObject percentages = root.optJSONObject("percentages");
         if (percentages != null) {
@@ -2810,6 +3131,10 @@ public class MapActivity extends Activity {
      * explicitly, even when motorway/A-road reference geometry is visible.
      */
     static String overviewCoverageMessage(MapRoutes routes, boolean allJourneys) {
+        if (routes.footFallbackIncomplete)
+            return "Walking and running pathway display is partial · saved journeys and verified canonical coverage are preserved.";
+        if (routes.internationalCoverageIncomplete)
+            return "International coverage partially held by memory or geometry limits · see diagnostics.";
         if (routes.localCoverageDegraded)
             return "Cumulative minor-road coverage incomplete · see diagnostics. "
                     + "Saved journeys remain available in the archive.";
@@ -2823,6 +3148,8 @@ public class MapActivity extends Activity {
 
     static final class MapRoutes {
         final List<JSONArray> sections = new ArrayList<>();
+        final Set<Integer> footResidualIndices = new HashSet<>();
+        final List<Set<String>> corridorContributorIds = new ArrayList<>();
         final List<JSONArray> ferrySections = new ArrayList<>();
         final List<LocalRoadCoverage.Section> localRoadSections = new ArrayList<>();
         // Keep only compact interval objects in the interactive map. JSON
@@ -2842,12 +3169,15 @@ public class MapActivity extends Activity {
         boolean localReferenceAvailable = true;
         boolean localCoverageDegraded;
         boolean localCoverageResourceDegraded;
+        boolean internationalCoverageIncomplete;
+        boolean footFallbackIncomplete;
         long localRoadMillimetres;
 
         /** A complete assessment with explicitly held source rows is reusable.
          * Never cache results where resource exhaustion skipped valid coverage. */
         boolean canCacheSnapshot() {
-            return localReferenceAvailable && !localCoverageResourceDegraded;
+            return localReferenceAvailable && !localCoverageResourceDegraded
+                    && !internationalCoverageIncomplete;
         }
 
         /** Reuse exactly the displayed immutable geometry on same-revision tab
