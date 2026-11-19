@@ -889,6 +889,7 @@ public class MapActivity extends Activity {
             incompleteRoadSegments = new ArrayList<>(mapRoutes.incompleteRoadSegments);
             displayedInternationalSections = mapRoutes.sections;
             displayedInternationalContributors = mapRoutes.internationalContributorIds;
+            displayedFootResidualIndices = mapRoutes.footResidualIndices;
             map.setMapRoadTapListener(this::loadOverviewRoadSummary);
             map.setLocalRoadTapListener((line, fraction) ->
                     loadLocalRoadSummary(line, fraction));
@@ -1129,6 +1130,7 @@ public class MapActivity extends Activity {
         int[] acceptedFootCanonicalA = {0}, deferredFootCanonicalA = {0};
         final int[] overseasCounts = new int[5]; // scanned, cached, matched, lines, held
         final int[] overseasPoints = {0};
+        final int[] footFallbackCounts = new int[3]; // lines, points, held
         final Map<String, Integer> overseasDisplayIndices = new HashMap<>();
         PerformanceDiagnostics.ArchiveHeapSample heap = new PerformanceDiagnostics.ArchiveHeapSample();
         final MapGcDiagnostics mapGc = new MapGcDiagnostics();
@@ -1284,6 +1286,40 @@ public class MapActivity extends Activity {
                 if (coverage != null && !journeyId.isEmpty()) {
                     local.add(journeyId, coverage.spans());
                     if (!coverage.spans().isEmpty()) modeWithLocal[roadModeIndex]++;
+                    // Residual matched walking/running segments too far from
+                    // any UK reference edge may be displayed, not credited.
+                    // Both this and canonical coverage originate in the same
+                    // owner-corrected accepted projection and source-token cache.
+                    if (roadModeIndex == 1 && coverage.residual() != null) {
+                        JSONArray candidates = coverage.residual();
+                        for (int i = 0; i < candidates.length(); i++) {
+                            JSONArray points = candidates.optJSONArray(i);
+                            if (points == null || points.length() < 2) continue;
+                            JSONArray prepared = projectMapRoute(points, 120);
+                            if (prepared == null || prepared.length() < 2) continue;
+                            String identity = "foot:" + OverseasMatchedGeometry.displayIdentity(prepared);
+                            Integer existing = overseasDisplayIndices.get(identity);
+                            if (existing != null) {
+                                output.internationalContributorIds.get(existing).add(journeyId);
+                                continue;
+                            }
+                            if (footFallbackCounts[0] >= 500 || footFallbackCounts[1] + prepared.length() > 4_000) {
+                                footFallbackCounts[2]++;
+                                output.footFallbackIncomplete = true;
+                                break;
+                            }
+                            int lineIndex = output.sections.size();
+                            overseasDisplayIndices.put(identity, lineIndex);
+                            output.sections.add(prepared);
+                            output.footResidualIndices.add(lineIndex);
+                            Set<String> contributors = new HashSet<>();
+                            contributors.add(journeyId);
+                            output.internationalContributorIds.add(contributors);
+                            output.retainedPoints += prepared.length();
+                            footFallbackCounts[0]++;
+                            footFallbackCounts[1] += prepared.length();
+                        }
+                    }
                     // Merge only exact accepted OSM-identified walking intervals
                     // through the existing A-road coverage ledger. Never draw
                     // an overlapping second polyline for these sections.
@@ -1441,6 +1477,16 @@ public class MapActivity extends Activity {
                 "lines=" + output.ferrySections.size()
                         + " points=" + output.ferryPoints
                         + " within_budget=" + (output.ferryPoints <= 20_000));
+        PerformanceDiagnostics.timing("map_foot_residual", 0,
+                "lines=" + footFallbackCounts[0]
+                        + " points=" + footFallbackCounts[1]
+                        + " display_holds=" + footFallbackCounts[2]
+                        + " cache_lines=" + (local == null ? 0 : local.footResidualLines)
+                        + " near_reference_held=" + (local == null ? 0 : local.footResidualHeldNear)
+                        + " long_held=" + (local == null ? 0 : local.footResidualHeldLong)
+                        + " truncated=" + (local == null ? 0 : local.footResidualTruncated)
+                        + " incomplete=" + output.footFallbackIncomplete
+                        + " credited_canonical_mm=0");
         PerformanceDiagnostics.timing("map_international", 0,
                 "candidates=" + overseasCounts[0] + " cached=" + overseasCounts[1]
                         + " with_lines=" + overseasCounts[2]
@@ -2165,12 +2211,13 @@ public class MapActivity extends Activity {
         }
         if (nearestIndex >= 0) {
             loadInternationalRoadSummary(latitude, longitude,
-                    new ArrayList<>(displayedInternationalContributors.get(nearestIndex)));
+                    new ArrayList<>(displayedInternationalContributors.get(nearestIndex)),
+                    displayedFootResidualIndices.contains(nearestIndex));
         } else loadRoadSummaryAt(latitude, longitude);
     }
 
     private void loadInternationalRoadSummary(double latitude, double longitude,
-                                               List<String> sourceIds) {
+                                               List<String> sourceIds, boolean unmatchedFootpath) {
         if (!mapReady || recapVisible || sourceIds.isEmpty()) return;
         final int requestId = ++roadSummaryRequestId;
         showRoadSummaryLoadingCard();
@@ -2219,9 +2266,11 @@ public class MapActivity extends Activity {
                     (JSONObject j) -> j.optString("started_at", "")).reversed());
             final String label = roadName == null ? fallback : roadName;
             final int count = related.size();
-            final String note = "International road or pathway · " + count
+            final String note = (unmatchedFootpath
+                    ? "Accepted walking or running trace outside the canonical road network"
+                    : "International road or pathway") + " · " + count
                     + " saved journey" + (count == 1 ? "" : "s")
-                    + ". UK road completion does not apply.";
+                    + ". This line does not grant UK road or NCN completion.";
             PerformanceDiagnostics.timing("map_international_tap", 0,
                     "contributors=" + sourceIds.size() + " resolved=" + count
                             + " name_evidence_reads=" + nameEvidenceReads);
@@ -2530,6 +2579,7 @@ public class MapActivity extends Activity {
     private volatile int roadSummaryRequestId;
     private List<JSONArray> displayedInternationalSections = java.util.Collections.emptyList();
     private List<Set<String>> displayedInternationalContributors = java.util.Collections.emptyList();
+    private Set<Integer> displayedFootResidualIndices = java.util.Collections.emptySet();
     private LinearLayout roadDialogContent;
 
     private void showRoadSummaryLoadingCard() {
@@ -2963,6 +3013,8 @@ public class MapActivity extends Activity {
         root.put("localCoverageDegraded", routes.localCoverageDegraded);
         root.put("localCoverageResourceDegraded", routes.localCoverageResourceDegraded);
         root.put("internationalCoverageIncomplete", routes.internationalCoverageIncomplete);
+        root.put("footFallbackIncomplete", routes.footFallbackIncomplete);
+        root.put("footResidualIndices", new JSONArray(routes.footResidualIndices));
         root.put("localReferenceAvailable", routes.localReferenceAvailable);
         JSONObject percentages = new JSONObject();
         for (Map.Entry<String, Double> entry : routes.roadPercentages.entrySet())
@@ -3025,6 +3077,13 @@ public class MapActivity extends Activity {
         routes.localCoverageDegraded = root.optBoolean("localCoverageDegraded");
         routes.localCoverageResourceDegraded = root.optBoolean("localCoverageResourceDegraded");
         routes.internationalCoverageIncomplete = root.optBoolean("internationalCoverageIncomplete", false);
+        routes.footFallbackIncomplete = root.optBoolean("footFallbackIncomplete", false);
+        JSONArray footIndices = root.optJSONArray("footResidualIndices");
+        if (footIndices != null) for (int i = 0; i < footIndices.length(); i++) {
+            int idx = footIndices.optInt(i, -1);
+            if (idx < 0 || idx >= routes.sections.size()) return null;
+            routes.footResidualIndices.add(idx);
+        }
         routes.localReferenceAvailable = root.optBoolean("localReferenceAvailable", false);
         JSONObject percentages = root.optJSONObject("percentages");
         if (percentages != null) {
@@ -3086,6 +3145,7 @@ public class MapActivity extends Activity {
 
     static final class MapRoutes {
         final List<JSONArray> sections = new ArrayList<>();
+        final Set<Integer> footResidualIndices = new HashSet<>();
         final List<Set<String>> internationalContributorIds = new ArrayList<>();
         final List<JSONArray> ferrySections = new ArrayList<>();
         final List<LocalRoadCoverage.Section> localRoadSections = new ArrayList<>();
@@ -3107,6 +3167,7 @@ public class MapActivity extends Activity {
         boolean localCoverageDegraded;
         boolean localCoverageResourceDegraded;
         boolean internationalCoverageIncomplete;
+        boolean footFallbackIncomplete;
         long localRoadMillimetres;
 
         /** A complete assessment with explicitly held source rows is reusable.
