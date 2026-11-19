@@ -1444,6 +1444,7 @@ public class MapActivity extends Activity {
             markMapHeap("after_local_sections");
             mapGc.checkpoint("after_sections", counts[0], 0, local.pendingChangedEdges());
             output.localCoverageDegraded |= local.held > 0 || local.overBudget > 0 || local.unresolvedMm > 0;
+            output.footFallbackIncomplete |= local.footResidualTruncated > 0;
             if (local.overBudget > 0) {
                 output.simplified = true;
                 output.localCoverageResourceDegraded = true;
@@ -1464,6 +1465,16 @@ public class MapActivity extends Activity {
                             + " foot_unresolved_reasons=" + local.footUnresolvedLegReasons
                             + (local.held == 0 ? "" : " hold_reasons=" + local.failureBreakdown()));
         }
+        PerformanceDiagnostics.timing("map_foot_residual", 0,
+                "lines=" + footFallbackCounts[0]
+                        + " points=" + footFallbackCounts[1]
+                        + " display_holds=" + footFallbackCounts[2]
+                        + " cache_lines=" + (local == null ? 0 : local.footResidualLines)
+                        + " near_reference_held=" + (local == null ? 0 : local.footResidualHeldNear)
+                        + " long_held=" + (local == null ? 0 : local.footResidualHeldLong)
+                        + " truncated=" + (local == null ? 0 : local.footResidualTruncated)
+                        + " incomplete=" + output.footFallbackIncomplete
+                        + " credited_canonical_mm=0");
         PerformanceDiagnostics.timing("map_records",(System.nanoTime()-evidenceStarted)/1_000_000,"reused="+records.reused+" rebuilt="+records.rebuilt
                 +" source_reads="+records.sourceReads+" legacy_reads="+records.legacyReads+" oversized="+records.oversized
                 + " payload_lookup_ms=" + records.payloadLookupNanos / 1_000_000
@@ -1477,16 +1488,6 @@ public class MapActivity extends Activity {
                 "lines=" + output.ferrySections.size()
                         + " points=" + output.ferryPoints
                         + " within_budget=" + (output.ferryPoints <= 20_000));
-        PerformanceDiagnostics.timing("map_foot_residual", 0,
-                "lines=" + footFallbackCounts[0]
-                        + " points=" + footFallbackCounts[1]
-                        + " display_holds=" + footFallbackCounts[2]
-                        + " cache_lines=" + (local == null ? 0 : local.footResidualLines)
-                        + " near_reference_held=" + (local == null ? 0 : local.footResidualHeldNear)
-                        + " long_held=" + (local == null ? 0 : local.footResidualHeldLong)
-                        + " truncated=" + (local == null ? 0 : local.footResidualTruncated)
-                        + " incomplete=" + output.footFallbackIncomplete
-                        + " credited_canonical_mm=0");
         PerformanceDiagnostics.timing("map_international", 0,
                 "candidates=" + overseasCounts[0] + " cached=" + overseasCounts[1]
                         + " with_lines=" + overseasCounts[2]
@@ -3130,6 +3131,8 @@ public class MapActivity extends Activity {
      * explicitly, even when motorway/A-road reference geometry is visible.
      */
     static String overviewCoverageMessage(MapRoutes routes, boolean allJourneys) {
+        if (routes.footFallbackIncomplete)
+            return "Walking and running pathway display is partial · saved journeys and verified canonical coverage are preserved.";
         if (routes.internationalCoverageIncomplete)
             return "International coverage partially held by memory or geometry limits · see diagnostics.";
         if (routes.localCoverageDegraded)
