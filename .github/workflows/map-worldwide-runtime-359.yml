@@ -25,7 +25,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: adamdbird-gfc/uk-road-tracker
-      JAVA_TOOL_OPTIONS: -XX:TieredStopAtLevel=1
+      JAVA_TOOL_OPTIONS: -XX:TieredStopAtLevel=1 -XX:ReservedCodeCacheSize=256m
       CERT_SHA256: 5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -75,7 +75,7 @@ jobs:
           assert s.count('versionName = "0.25.264"')==1
           p.write_text(s.replace("versionCode = 310","versionCode = 312").replace('versionName = "0.25.264"','versionName = "0.25.266"'))
           PY
-          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:assembleDebug
+          gradle --no-daemon --max-workers=2 --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:assembleDebug
           cp android-prototype/app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/roadprints-worldwide-runtime.apk"
           signer=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -n 1)
           "$signer" verify --print-certs "$RUNNER_TEMP/roadprints-baseline.apk" | grep -F "certificate SHA-256 digest: $CERT_SHA256"
