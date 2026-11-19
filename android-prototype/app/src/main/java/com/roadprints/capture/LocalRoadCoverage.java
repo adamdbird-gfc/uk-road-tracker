@@ -33,6 +33,10 @@ final class LocalRoadCoverage implements AutoCloseable {
     private final java.io.FileInputStream referenceStream;
     private final CompactJourneyCache cache;
     private final Map<Edge, Map<String, int[]>> contributors = new LinkedHashMap<>();
+    // Network-identified change journal: one pending entry per physical edge,
+    // never one retained polyline per historical journey.
+    private final java.util.LinkedHashSet<Edge> changedEdges = new java.util.LinkedHashSet<>();
+    private long changeRevision;
     private int intervalCount;
     int reused, calculated, held;
     private final Map<String, Integer> failureCounts = new LinkedHashMap<>();
@@ -446,9 +450,52 @@ final class LocalRoadCoverage implements AutoCloseable {
         for (Map.Entry<Edge, List<Interval>> section : contribution.entrySet()) {
             Map<String, int[]> history = contributors.computeIfAbsent(section.getKey(),
                     ignored -> new LinkedHashMap<>());
-            int[] previous = history.put(journeyId, endpoints(section.getValue()));
+            int[] next = endpoints(section.getValue());
+            int[] previous = history.put(journeyId, next);
             intervalCount += section.getValue().size() - (previous == null ? 0 : previous.length / 2);
+            if (!java.util.Arrays.equals(previous, next)) {
+                changedEdges.add(section.getKey());
+                changeRevision++;
+            }
         }
+    }
+
+    /** Monotonic revision of accepted canonical-edge contribution changes. */
+    long changeRevision() { return changeRevision; }
+
+    int pendingChangedEdges() { return changedEdges.size(); }
+
+    /**
+     * Read at most max distinct changed canonical edges. Each immutable
+     * section is reconstructed from the CURRENT accumulated contribution
+     * history, never from raw GPS/individual journey polylines. Revisiting a
+     * physical edge coalesces its pending change instead of appending a
+     * duplicate. The caller must replace an earlier preview for the same
+     * section id; these deltas are not append-only.
+     *
+     * Only call from the serial archive worker; this journal is not thread-safe.
+     */
+    List<Section> drainChangedSections(int max) throws Exception {
+        if (max <= 0 || changedEdges.isEmpty()) return java.util.Collections.emptyList();
+        List<Section> result = new ArrayList<>(Math.min(max, changedEdges.size()));
+        java.util.Iterator<Edge> cursor = changedEdges.iterator();
+        while (cursor.hasNext() && result.size() < max) {
+            if (Thread.currentThread().isInterrupted()) throw new CancellationException();
+            Edge edge = cursor.next();
+            Map<String, int[]> current = contributors.get(edge);
+            if (current == null) { cursor.remove(); continue; }
+            // Copy mutable ledger arrays so the published Section cannot acquire
+            // later contributions via a reference to the working accumulator.
+            Map<String, int[]> snapshot = new LinkedHashMap<>();
+            for (Map.Entry<String, int[]> row : current.entrySet())
+                snapshot.put(row.getKey(), row.getValue().clone());
+            Section section = new Section(edge.id(), edge.label, edge.mm,
+                    new JSONArray().put(ukLongitude(edge.a)).put(ukLatitude(edge.a)),
+                    new JSONArray().put(ukLongitude(edge.b)).put(ukLatitude(edge.b)), snapshot);
+            result.add(section);
+            cursor.remove();
+        }
+        return result;
     }
 
     static int[] endpoints(List<Interval> intervals) {
