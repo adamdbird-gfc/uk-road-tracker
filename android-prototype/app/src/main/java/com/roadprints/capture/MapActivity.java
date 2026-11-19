@@ -864,7 +864,7 @@ public class MapActivity extends Activity {
             // Overview is network-only. Legacy matched routes remain in each journey
             // detail view but must never mask a failed cumulative aggregation.
             map.setRouteData(null, java.util.Collections.emptyList());
-            map.setFerrySegments(java.util.Collections.emptyList());
+            map.setFerrySegments(mapRoutes.ferrySections);
             map.setLocalRoadLayer(mapRoutes.localRoadLayer);
             map.setFlatRoadMapStyle(true);
             // Covered/uncovered motorway and A-road reference layers remain unchanged.
@@ -879,7 +879,8 @@ public class MapActivity extends Activity {
                             + " covered_a_roads=" + mapRoutes.coveredARoadSections.size()
                             + " uncovered_a_roads=" + mapRoutes.incompleteARoadSections.size()
                             + " cumulative_minor=" + mapRoutes.localRoadLines.size()
-                            + " historical=0");
+                            + " historical=0 ferry_lines=" + mapRoutes.ferrySections.size()
+                            + " ferry_points=" + mapRoutes.ferryPoints);
             mapView=map;
             applyCollectionLayer();
             roadPercentages = new HashMap<>(mapRoutes.roadPercentages);
@@ -1183,10 +1184,33 @@ public class MapActivity extends Activity {
             boolean selected=selection.matches(journey,today,zone);
             work[0]+=System.nanoTime()-filterStarted;
             if(!selected){counts[1]++;return;}
-            // This network-only overview does not render individual ferry routes.
-            // Ferry recordings and detail views are unchanged.
-            if ("ferry".equals(journey.optString("mode"))) {
-                counts[3]++;
+            // Restore the original, separate ferry overlay. Ferries remain
+            // excluded from road/foot/cycle attribution and NCN completion.
+            // Read only this ferry's recorded geometry, not full archive payloads
+            // for road journeys or a new geometry/matching system.
+            if ("ferry".equalsIgnoreCase(journey.optString("mode"))) {
+                int remaining = 20_000 - output.ferryPoints;
+                if (remaining < 2 || output.ferrySections.size() >= MAX_MAP_ROUTES) {
+                    output.simplified = true;
+                    counts[4]++;
+                    return;
+                }
+                JSONArray ferries = prepareFerryRecord(journey).optJSONArray("ferries");
+                int added = 0;
+                if (ferries != null) for (int i = 0; i < ferries.length()
+                        && output.ferrySections.size() < MAX_MAP_ROUTES; i++) {
+                    JSONArray line = ferries.optJSONObject(i).optJSONArray("points");
+                    if (line == null || line.length() < 2) continue;
+                    if (line.length() > 20_000 - output.ferryPoints) {
+                        output.simplified = true;
+                        break;
+                    }
+                    output.ferrySections.add(line);
+                    output.ferryPoints += line.length();
+                    added++;
+                }
+                if (added > 0) { output.matchedJourneys++; counts[5]++; }
+                else counts[4]++;
                 return;
             }
             if (!"complete".equals(journey.optString("processing_status", ""))) {
