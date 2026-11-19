@@ -685,6 +685,7 @@ public class MapActivity extends Activity {
             }
             progressiveSavedCamera = preview.cameraState();
             preview.setFlatRoadMapStyle(true);
+            preview.setOverviewLoading(true);
             preview.clearProgressiveLocalRoadLayers();
             preview.restoreCameraState(-3.5d, 54.5d, 5.0d);
         }
@@ -809,7 +810,8 @@ public class MapActivity extends Activity {
             try {
             markMapStage("render_started", mapStartedAt);
             long renderStarted = android.os.SystemClock.elapsedRealtime();
-            hideMapLoading();
+            // Leave the existing road-fact overlay in place until final layers
+            // and camera have been installed on the Map.
             mapSubtitle.setOnClickListener(null);
             mapSubtitle.setText(overviewCoverageMessage(mapRoutes, mapFilters.isAll()));
             // The temporary UK framing must never override a saved camera or
@@ -863,7 +865,9 @@ public class MapActivity extends Activity {
             displayedFilters=mapFilters;hasDisplayedMap=true;mapLoadFailed=false;skipDiskMapCache=false;forceMapReload=false;
             completeMapWork();
             markMapStage("ready", mapStartedAt);
-            setMapReady(true);navigation.frame(mapView,"first_map","sections="+mapRoutes.sections.size());navigation.frame(mapView,"ready","sections="+mapRoutes.sections.size());
+            setMapReady(true);
+            hideMapLoading();
+            navigation.frame(mapView,"first_map","sections="+mapRoutes.sections.size());navigation.frame(mapView,"ready","sections="+mapRoutes.sections.size());
             android.util.Log.i("RoadprintsTiming","map_outcome=ready total_ms="+(android.os.SystemClock.elapsedRealtime()-mapStartedAt)+" selection="+filterKey(mapFilters));
             PerformanceDiagnostics.timing("map_render",android.os.SystemClock.elapsedRealtime()-renderStarted,"");
             PerformanceDiagnostics.timing("map_total",android.os.SystemClock.elapsedRealtime()-mapStartedAt,"");
