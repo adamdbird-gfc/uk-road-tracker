@@ -10,18 +10,29 @@ import java.util.Collection;
  */
 final class CanonicalPreviewIndex<T> {
     private final LinkedHashMap<String, Entry<T>> entries = new LinkedHashMap<>();
-    private final int maxSections, maxLines;
-    private int lines;
+    private final int maxSections, maxLines, maxEstimatedBytes;
+    private int lines, estimatedBytes, rejectedUpdates;
     private Collection<T> drawingSnapshot = java.util.Collections.emptyList();
     private boolean drawingDirty = true;
 
-    private record Entry<T>(T layer, int lines) {}
+    private record Entry<T>(T layer, int lines, int estimatedBytes) {}
 
     CanonicalPreviewIndex(int maxSections, int maxLines) {
-        if (maxSections <= 0 || maxLines <= 0)
+        this(maxSections, maxLines, Integer.MAX_VALUE);
+    }
+
+    CanonicalPreviewIndex(int maxSections, int maxLines, int maxEstimatedBytes) {
+        if (maxSections <= 0 || maxLines <= 0 || maxEstimatedBytes <= 0)
             throw new IllegalArgumentException("Invalid preview budget");
         this.maxSections = maxSections;
         this.maxLines = maxLines;
+        this.maxEstimatedBytes = maxEstimatedBytes;
+    }
+
+    // Conservative budget for canonical ID, index entry, geometry wrapper,
+    // world-unit coordinate array and object/header bookkeeping.
+    private static int estimateBytes(String id, int count) {
+        return 160 + 2 * id.length() + 32 * count;
     }
 
     boolean replace(String canonicalId, T layer, int lineCount) {
@@ -29,11 +40,18 @@ final class CanonicalPreviewIndex<T> {
                 || lineCount < 0) return false;
         Entry<T> previous = entries.get(canonicalId);
         int next = lines - (previous == null ? 0 : previous.lines()) + lineCount;
-        if (next > maxLines || (previous == null && entries.size() >= maxSections))
+        int candidateBytes = lineCount == 0 ? 0 : estimateBytes(canonicalId, lineCount);
+        long nextBytes = (long) estimatedBytes
+                - (previous == null ? 0 : previous.estimatedBytes()) + candidateBytes;
+        if (next > maxLines || nextBytes > maxEstimatedBytes
+                || (previous == null && lineCount > 0 && entries.size() >= maxSections)) {
+            rejectedUpdates++;
             return false;
+        }
         if (lineCount == 0) entries.remove(canonicalId);
-        else entries.put(canonicalId, new Entry<>(layer, lineCount));
+        else entries.put(canonicalId, new Entry<>(layer, lineCount, candidateBytes));
         lines = next;
+        estimatedBytes = (int) nextBytes;
         drawingDirty = true;
         return true;
     }
@@ -50,9 +68,13 @@ final class CanonicalPreviewIndex<T> {
 
     int sectionCount() { return entries.size(); }
     int lineCount() { return lines; }
+    int estimatedBytes() { return estimatedBytes; }
+    int rejectedUpdates() { return rejectedUpdates; }
     void clear() {
         entries.clear();
         lines = 0;
+        estimatedBytes = 0;
+        rejectedUpdates = 0;
         drawingSnapshot = java.util.Collections.emptyList();
         drawingDirty = false;
     }
