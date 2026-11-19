@@ -36,7 +36,19 @@ final class LocalRoadCoverage implements AutoCloseable {
     // Network-identified change journal: one pending entry per physical edge,
     // never one retained polyline per historical journey.
     private final java.util.LinkedHashSet<Edge> changedEdges = new java.util.LinkedHashSet<>();
+    private static final int MAX_CHANGED_EDGES = 4_096;
+    private boolean incrementalTracking;
+    private boolean deltaOverflow;
     private long changeRevision;
+
+    /** Opt-in only: ordinary map loads must not retain another edge index. */
+    void enableIncrementalTracking() {
+        incrementalTracking = true;
+        deltaOverflow = false;
+        changedEdges.clear();
+    }
+
+    boolean deltaOverflowed() { return deltaOverflow; }
     private int intervalCount;
     int reused, calculated, held;
     private final Map<String, Integer> failureCounts = new LinkedHashMap<>();
@@ -454,8 +466,16 @@ final class LocalRoadCoverage implements AutoCloseable {
             int[] previous = history.put(journeyId, next);
             intervalCount += section.getValue().size() - (previous == null ? 0 : previous.length / 2);
             if (!java.util.Arrays.equals(previous, next)) {
-                changedEdges.add(section.getKey());
                 changeRevision++;
+                if (incrementalTracking && !deltaOverflow) {
+                    changedEdges.add(section.getKey());
+                    if (changedEdges.size() > MAX_CHANGED_EDGES) {
+                        // Safety fallback: never let preview bookkeeping compete
+                        // with authoritative journey/road accumulation.
+                        deltaOverflow = true;
+                        changedEdges.clear();
+                    }
+                }
             }
         }
     }
@@ -476,7 +496,8 @@ final class LocalRoadCoverage implements AutoCloseable {
      * Only call from the serial archive worker; this journal is not thread-safe.
      */
     List<Section> drainChangedSections(int max) throws Exception {
-        if (max <= 0 || changedEdges.isEmpty()) return java.util.Collections.emptyList();
+        if (!incrementalTracking || deltaOverflow || max <= 0 || changedEdges.isEmpty())
+            return java.util.Collections.emptyList();
         List<Section> result = new ArrayList<>(Math.min(max, changedEdges.size()));
         java.util.Iterator<Edge> cursor = changedEdges.iterator();
         while (cursor.hasNext() && result.size() < max) {
