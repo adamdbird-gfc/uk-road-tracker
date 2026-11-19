@@ -19,7 +19,7 @@ final class OverseasMatchedGeometry {
     }
     private OverseasMatchedGeometry() {}
     static final double WEST = -9, EAST = 3, SOUTH = 49, NORTH = 62;
-    private static final double MAX_SINGLE_LEG_METRES = 50_000;
+    private static final double MAX_SINGLE_LEG_METRES = 30_000;
 
     static boolean outsideReference(double lon, double lat) {
         return Double.isFinite(lon) && Double.isFinite(lat)
