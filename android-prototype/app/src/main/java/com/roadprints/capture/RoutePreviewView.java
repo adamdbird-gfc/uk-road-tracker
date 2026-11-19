@@ -788,7 +788,7 @@ public class RoutePreviewView extends View {
                         flatRoadMapStyle ? null : routeHaloPaint);
             }
             if (travelVisible && ((localRoadLayer != null && !localRoadLayer.isEmpty())
-                    || !progressiveLocalRoadLayers.sectionCount() == 0)) {
+                    || progressiveLocalRoadLayers.sectionCount() != 0)) {
                 double world = mapTileSize() * Math.pow(2.0, cameraZoom);
                 double xOffset = getWidth() / 2.0 - longitudeToUnitX(centerLongitude) * world;
                 double yOffset = getHeight() / 2.0 - latitudeToUnitY(centerLatitude) * world;
