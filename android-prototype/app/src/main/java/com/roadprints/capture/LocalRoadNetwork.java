@@ -358,12 +358,16 @@ final class LocalRoadNetwork {
     static Candidate project(Edge edge, Point a, Point step, double length, double radius) {
         double dot = edge.axis.dot(step);
         if (Math.abs(dot) < HEADING * edge.length * length) return null;
-        Point relative = a.minus(edge.a);
+        // Primitive relative coordinates avoid a short-lived Point allocation
+        // for every candidate edge examined during historical archive matching.
+        double relativeX = a.x - edge.a.x;
+        double relativeY = a.y - edge.a.y;
         double denominator = edge.length * edge.length;
-        double first = relative.dot(edge.axis) / denominator, change = dot / denominator;
+        double first = (relativeX * edge.axis.x + relativeY * edge.axis.y) / denominator;
+        double change = dot / denominator;
         double lower = -first / change, upper = (1 - first) / change;
         double start = Math.max(0, Math.min(lower, upper)), end = Math.min(1, Math.max(lower, upper));
-        double lateral = edge.axis.cross(relative) / edge.length;
+        double lateral = (edge.axis.x * relativeY - edge.axis.y * relativeX) / edge.length;
         double lateralChange = edge.axis.cross(step) / edge.length;
         if (lateralChange != 0) {
             lower = (-radius - lateral) / lateralChange;
