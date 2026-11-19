@@ -7,9 +7,10 @@ import java.util.Locale;
  * and from mode-specific collections. This does not determine whether a
  * journey has sufficient accepted geometry to receive distance or coverage.
  *
- * No detail-screen point-to-point train/plane/ferry lines belong on the
- * cumulative road/path map. Ferry measurement and independent railway/flight
- * collection assessment must not be gated by this policy.
+ * No detail-screen point-to-point train/plane lines belong on the
+ * cumulative road/path layer. Ferry recordings are drawn on their own original
+ * overview layer, never counted as road/path corridor coverage. Ferry measurement
+ * and independent railway/flight collections must not be gated by this policy.
  */
 final class OverviewJourneyScope {
     private OverviewJourneyScope() {}
@@ -27,7 +28,7 @@ final class OverviewJourneyScope {
         String mode = rawMode == null ? "" : rawMode.trim().toLowerCase(Locale.ROOT);
         if ("train".equals(mode)) return "collection_railway";
         if ("plane".equals(mode) || "flight".equals(mode)) return "collection_flight";
-        if ("ferry".equals(mode)) return "ferry_measurement_only";
+        if ("ferry".equals(mode)) return "separate_ferry_layer";
         return "unsupported_mode";
     }
 }
