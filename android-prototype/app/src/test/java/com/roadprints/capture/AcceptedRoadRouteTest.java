@@ -47,6 +47,18 @@ public class AcceptedRoadRouteTest {
         assertEquals(south, aligned.alignments().get(0).span().edge());
     }
 
+    @Test public void quantisedCandidateCheckMatchesMaterialisedInterval() {
+        Edge section = edge(77, 10, 11, 0, 100, 0);
+        for (double entry : new double[]{0, .000001, .25, .49999, 1}) {
+            for (double exit : new double[]{0, .000001, .26, .50001, 1}) {
+                Candidate candidate = new Candidate(section, 0, 1, entry, exit);
+                Span span = candidate.span();
+                assertEquals(span.interval().end() > span.interval().start(),
+                        candidate.hasPositiveInterval());
+            }
+        }
+    }
+
     @Test public void reusedCandidateSetMatchesAllocatingLookupWithoutStaleEdges()
             throws Exception {
         Path pack = Files.createTempFile("roadprints-scratch-roads", ".bin");
