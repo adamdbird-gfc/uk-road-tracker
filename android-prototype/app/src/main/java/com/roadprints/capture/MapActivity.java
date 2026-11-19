@@ -2138,19 +2138,13 @@ public class MapActivity extends Activity {
                         JSONObject feature = JourneyCorrectionUtils.retainedRoadFeature(journey, features.optJSONObject(i));
                         if (feature == null) continue;
                         JSONObject properties = feature.optJSONObject("properties");
-                        if (properties == null) continue;
-                        String rawRef = properties.optString("road_ref",
-                                properties.optString("ref", "")).trim();
-                        String name = properties.optString("name",
-                                properties.optString("road_name", "")).trim();
-                        String label = !rawRef.isEmpty() ? rawRef : name;
-                        if (label.isEmpty()) continue;
+                        String label = MapRoadTapSelection.label(properties, mode);
                         double distance = featureDistanceMetres(feature, latitude, longitude);
                         // The map callback supplies the nearest rendered line point,
                         // which lets us allow for small offsets between matched traces
                         // and the road catalogue without relying on the finger position.
                         if (distance > 120.0) continue;
-                        String key = label.toUpperCase(java.util.Locale.ROOT);
+                        String key = MapRoadTapSelection.key(label);
                         double travelled = properties.optDouble("distance_m", 0);
                         if (travelled <= 0) travelled = featureLengthMetres(feature);
                         candidates.add(new RoadFeatureMatch(
@@ -2176,7 +2170,8 @@ public class MapActivity extends Activity {
             if (nearest != null) {
                 Map<String, Double> distancesById = new HashMap<>();
                 for (RoadFeatureMatch candidate : candidates) {
-                    if (!roadKey.equals(candidate.key) || candidate.distanceFromTap > 120.0
+                    if (!MapRoadTapSelection.sameLocalFeature(roadName, candidate.label,
+                            nearest.distanceFromTap, candidate.distanceFromTap)
                             || candidate.journeyId.isEmpty()) continue;
                     journeysById.putIfAbsent(candidate.journeyId, candidate.journey);
                     distancesById.put(candidate.journeyId,
