@@ -154,7 +154,7 @@ final class CanonicalRoadAttribution {
         List<LocalRoadNetwork.Candidate> candidates = new ArrayList<>();
         for (LocalRoadNetwork.Edge edge : nearby) {
             LocalRoadNetwork.Candidate candidate = LocalRoadNetwork.project(edge, first, step, length, MATCH_RADIUS);
-            if (candidate == null || candidate.span().interval().start() >= candidate.span().interval().end())
+            if (candidate == null || !candidate.hasPositiveInterval())
                 continue;
             // Matcher coordinates can round a junction vertex a few centimetres
             // over its node. Treat these terminal slivers as seam tolerance.
