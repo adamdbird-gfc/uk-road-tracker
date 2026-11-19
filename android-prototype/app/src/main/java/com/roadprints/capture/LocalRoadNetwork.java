@@ -105,6 +105,14 @@ final class LocalRoadNetwork {
                     && Math.abs(next.entry - Math.round(next.entry)) * next.edge.length <= SEAM;
         }
 
+        /** Validate the exact quantised interval without allocating Span/Interval.
+         * This runs on every projected OSM candidate, including rejected ones. */
+        boolean hasPositiveInterval() {
+            int a = (int) Math.round(entry * edge.mm);
+            int b = (int) Math.round(exit * edge.mm);
+            return a != b;
+        }
+
         Span span() {
             int a = (int) Math.round(entry * edge.mm);
             int b = (int) Math.round(exit * edge.mm);
