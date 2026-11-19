@@ -694,13 +694,24 @@ public class MapActivity extends Activity {
             Runtime runtime = Runtime.getRuntime();
             long freeHeadroom = runtime.maxMemory()
                     - (runtime.totalMemory() - runtime.freeMemory());
-            if (mapRoutes.canCacheSnapshot() && selection.isAll()
+            // Reopening the Map must reuse the SAME assembled geometry, even
+            // when memory safeguards deferred some accepted A-road sections.
+            // This is an in-process, explicitly incomplete interactive view,
+            // NOT an authoritative disk snapshot. Do not materialise another
+            // copy of its 44k local-road lines.
+            boolean retainInteractive = mapRoutes.canRetainInteractiveMap(freeHeadroom);
+            if (retainInteractive && selection.isAll()
                     && generation == mapLoadGeneration && currentRevision == revision) {
                 synchronized (MAP_CACHE_LOCK) {
                     processMapCache = mapRoutes;
                     processMapCacheRevision = revision;
                 }
             }
+            PerformanceDiagnostics.timing("map_interactive_retention", 0,
+                    "retained=" + retainInteractive
+                            + " degraded=" + mapRoutes.localCoverageResourceDegraded
+                            + " snapshot_points=" + mapRoutes.snapshotPoints()
+                            + " free_headroom_mib=" + (freeHeadroom / (1024 * 1024)));
             markMapStage("render_path_preparation", queuedAt);
             long pathStarted=android.os.SystemClock.elapsedRealtime();
             PerformanceDiagnostics.ArchiveHeapSample pathHeap = new PerformanceDiagnostics.ArchiveHeapSample();
@@ -2699,6 +2710,17 @@ public class MapActivity extends Activity {
          * Never cache results where resource exhaustion skipped valid coverage. */
         boolean canCacheSnapshot() {
             return localReferenceAvailable && !localCoverageResourceDegraded;
+        }
+
+        /** Reuse exactly the displayed immutable geometry on same-revision tab
+         * navigation, even when the visualisation explicitly reports partial
+         * coverage. Unlike canCacheSnapshot(), never serialise this result to
+         * durable Map snapshot storage. Bound retention and leave 32 MiB heap
+         * headroom for the rest of the app. */
+        boolean canRetainInteractiveMap(long freeHeadroomBytes) {
+            return localReferenceAvailable
+                    && snapshotPoints() <= 360_000
+                    && freeHeadroomBytes >= 32L * 1024L * 1024L;
         }
 
         void addLocalRoad(LocalRoadCoverage.Section section) {
