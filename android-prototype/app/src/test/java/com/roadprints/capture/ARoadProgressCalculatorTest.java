@@ -16,6 +16,53 @@ import static org.junit.Assert.*;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk=28)
 public class ARoadProgressCalculatorTest {
+    @Test public void compactAnchorSetMatchesCanonicalSetUnionIterationAndRemoval() {
+        java.util.Set<Integer> compact = new ARoadProgressCalculator.CompactAnchorSet();
+        java.util.Set<Integer> original = new java.util.HashSet<>();
+        java.util.Random rng = new java.util.Random(310);
+        for (int i = 0; i < 30_000; i++) {
+            int index = rng.nextInt(120_000);
+            assertEquals(original.add(index), compact.add(index));
+        }
+        assertEquals(original.size(), compact.size());
+        assertEquals(original, compact);
+        assertEquals(compact, original);
+        assertTrue(compact.contains(0) == original.contains(0));
+        assertFalse(compact.contains(-1));
+        assertFalse(compact.contains("not an anchor"));
+        assertEquals(original.remove(103), compact.remove(103));
+
+        java.util.Set<Integer> second = new java.util.HashSet<>();
+        for (int i = 0; i < 5000; i++) second.add(rng.nextInt(120_000));
+        compact.addAll(second);
+        original.addAll(second);
+        assertEquals(original, compact);
+        java.util.Iterator<Integer> it = compact.iterator();
+        int removed = it.next();
+        it.remove();
+        assertTrue(original.remove(removed));
+        assertEquals(original, compact);
+        assertEquals(original.size(), compact.size());
+        compact.clear();
+        assertTrue(compact.isEmpty());
+        assertEquals(0, compact.size());
+    }
+
+    @Test public void compactAnchorSetDoesNotDuplicateRepeatedCoveredReferenceIntervals()
+            throws Exception {
+        ARoadProgressCalculator.Road road = new ARoadProgressCalculator.Road(
+                "GB:A226", "A226", "GB");
+        road.referenceAvailable = true;
+        road.referenceSections = 100;
+        road.totalKm = 10;
+        road.covered.add(3);
+        road.covered.add(3);
+        road.covered.addAll(java.util.List.of(4, 5, 4, 6));
+        assertEquals(4, road.covered.size());
+        assertEquals(4.0, road.percent(), 0.00001);
+        assertEquals(0.4, road.uniqueKm(), 0.00001);
+    }
+
     @Test public void bundledCanonicalARoadProducesAggregateCoverageAndMapSections() throws Exception {
         Context app=RuntimeEnvironment.getApplication();
         JSONObject reference;

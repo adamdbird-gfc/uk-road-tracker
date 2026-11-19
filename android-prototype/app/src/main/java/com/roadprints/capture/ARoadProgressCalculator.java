@@ -36,10 +36,62 @@ final class ARoadProgressCalculator {
     private static final Map<String, Double> VERIFIED_LENGTH_KM = new HashMap<>();
     static { VERIFIED_LENGTH_KM.put("A2", 115.79); }
 
+    /** Covered canonical reference anchors are non-negative integer IDs.
+     * A bit set retains one bit per anchor instead of a boxed Integer and a
+     * HashMap entry per hit. Keep Set<Integer> semantics for attribution,
+     * serialization and all existing callers; road geometry is unchanged. */
+    static final class CompactAnchorSet extends java.util.AbstractSet<Integer> {
+        private final java.util.BitSet bits = new java.util.BitSet();
+
+        @Override public boolean add(Integer value) {
+            if (value == null) throw new NullPointerException("canonical anchor");
+            if (value < 0) throw new IllegalArgumentException("Negative canonical anchor");
+            boolean present = bits.get(value);
+            bits.set(value);
+            return !present;
+        }
+
+        @Override public boolean contains(Object value) {
+            return value instanceof Integer index && index >= 0 && bits.get(index);
+        }
+
+        @Override public boolean remove(Object value) {
+            if (!(value instanceof Integer index) || index < 0 || !bits.get(index)) return false;
+            bits.clear(index);
+            return true;
+        }
+
+        @Override public int size() { return bits.cardinality(); }
+        @Override public boolean isEmpty() { return bits.isEmpty(); }
+        @Override public void clear() { bits.clear(); }
+
+        @Override public java.util.Iterator<Integer> iterator() {
+            return new java.util.Iterator<>() {
+                private int next = bits.nextSetBit(0);
+                private int previous = -1;
+
+                @Override public boolean hasNext() { return next >= 0; }
+
+                @Override public Integer next() {
+                    if (next < 0) throw new java.util.NoSuchElementException();
+                    previous = next;
+                    next = bits.nextSetBit(previous + 1);
+                    return previous;
+                }
+
+                @Override public void remove() {
+                    if (previous < 0) throw new IllegalStateException();
+                    bits.clear(previous);
+                    previous = -1;
+                }
+            };
+        }
+    }
+
     static final class Road {
         final String id, ref, region;
         final Set<String> journeyIds = new HashSet<>();
-        final Set<Integer> covered = new HashSet<>();
+        final Set<Integer> covered = new CompactAnchorSet();
         final List<JSONArray> coveredMapSections = new ArrayList<>();
         final List<JSONArray> incompleteMapSections = new ArrayList<>();
         final List<Anchor> anchors = Collections.emptyList();
