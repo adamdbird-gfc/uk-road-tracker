@@ -59,8 +59,8 @@ public class MapActivity extends Activity {
     private volatile boolean progressiveMapActive;
     private double[] progressiveSavedCamera;
     private final java.util.concurrent.atomic.AtomicInteger progressivePending = new java.util.concurrent.atomic.AtomicInteger();
-    private static final int PROGRESSIVE_MAX_QUEUED = 2;
-    private static final int PROGRESSIVE_MAX_PREVIEW_LINES = 20_000;
+    private static final int PROGRESSIVE_MAX_QUEUED = 1;
+    private static final int PROGRESSIVE_MAX_PREVIEW_LINES = 4_096;
     private GrowingStatusControl mapStatus;
     private boolean skipDiskMapCache,forceMapReload;
     private FrameLayout mapFrame;
@@ -533,8 +533,21 @@ public class MapActivity extends Activity {
                 || mapDataRevision() != revision || progressivePending.get() >= PROGRESSIVE_MAX_QUEUED) return;
         Runtime runtime = Runtime.getRuntime();
         long available = runtime.maxMemory() - (runtime.totalMemory() - runtime.freeMemory());
-        if (available < 48L * 1024L * 1024L
-                || !MapCoverageBatchGate.canPublish(available, Thread.currentThread().isInterrupted(),
+        // A temporary preview duplicates projected coordinates while final
+        // aggregation is still growing: reserve generous room for the canonical
+        // authoritative layer rather than worsening the existing 256MiB pressure.
+        if (available < 96L * 1024L * 1024L) {
+            mainHandler.post(() -> {
+                if (generation == mapLoadGeneration && progressiveMapActive && mapView != null) {
+                    mapView.clearProgressiveLocalRoadLayers();
+                    progressiveMapActive = false;
+                    PerformanceDiagnostics.timing("map_progressive_disabled", 0,
+                            "reason=heap_headroom");
+                }
+            });
+            return;
+        }
+        if (!MapCoverageBatchGate.canPublish(available, Thread.currentThread().isInterrupted(),
                 mapDataRevision() == revision, generation == mapLoadGeneration)) return;
         int publishedLines = lines.size();
         LocalRoadLayer chunk = new LocalRoadLayer(new ArrayList<>(lines));
