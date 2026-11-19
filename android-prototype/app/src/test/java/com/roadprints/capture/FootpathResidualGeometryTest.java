@@ -38,7 +38,7 @@ public final class FootpathResidualGeometryTest {
     @Test public void excludedMiddleFragmentNeverCreatesAStraightLine() throws Exception {
         var result = FootpathResidualGeometry.extract(java.util.List.of(
                 line("[[0.37,51.44],[0.3702,51.44],[0.3704,51.44],[0.3706,51.44],[0.3708,51.44]]")),
-                (ax, ay, bx, by) -> ax > 0.3702 && ax < 0.3705);
+                (ax, ay, bx, by) -> ax >= 0.3702 && ax < 0.3706);
         assertEquals(2, result.lines().length());
         assertEquals(2, result.lines().getJSONArray(0).length());
         assertEquals(2, result.lines().getJSONArray(1).length());
