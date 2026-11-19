@@ -24,8 +24,19 @@ final class MatchedCorridorEquivalence {
 
     static boolean samePhysicalShape(JSONArray first, JSONArray second) {
         if (!usable(first) || !usable(second)) return false;
-        double referenceLatitude = (first.optJSONArray(0).optDouble(1)
-                + second.optJSONArray(0).optDouble(1)) / 2;
+        // Fast allocation-free geographic endpoint gate. Most of the bounded
+        // corridor ledger is nowhere near the candidate; do not build arrays
+        // for those pairs on a 256MiB owner device.
+        JSONArray fa = first.optJSONArray(0), fb = first.optJSONArray(first.length()-1);
+        JSONArray sa = second.optJSONArray(0), sb = second.optJSONArray(second.length()-1);
+        if (!validEndpoint(fa) || !validEndpoint(fb)
+                || !validEndpoint(sa) || !validEndpoint(sb)) return false;
+        boolean nearForward = endpointDistance(fa, sa) <= MAX_ENDPOINT_METRES
+                && endpointDistance(fb, sb) <= MAX_ENDPOINT_METRES;
+        boolean nearReverse = endpointDistance(fa, sb) <= MAX_ENDPOINT_METRES
+                && endpointDistance(fb, sa) <= MAX_ENDPOINT_METRES;
+        if (!nearForward && !nearReverse) return false;
+        double referenceLatitude = (fa.optDouble(1) + sa.optDouble(1)) / 2;
         double longitudeScale = Math.cos(Math.toRadians(referenceLatitude));
         if (longitudeScale < 0.1) return false; // Near-polar map ambiguity.
         double[][] a = projected(first, longitudeScale), b = projected(second, longitudeScale);
@@ -43,6 +54,20 @@ final class MatchedCorridorEquivalence {
         // Symmetric point-to-polyline including segment midpoints: prevents
         // the longer, differently bent route being swallowed by a shorter path.
         return closeThroughout(a, b) && closeThroughout(b, a);
+    }
+
+    private static boolean validEndpoint(JSONArray p) {
+        if (p == null || p.length() < 2) return false;
+        double x = p.optDouble(0, Double.NaN), y = p.optDouble(1, Double.NaN);
+        return Double.isFinite(x) && Double.isFinite(y)
+                && Math.abs(x) <= 180 && Math.abs(y) <= 90;
+    }
+
+    private static double endpointDistance(JSONArray a, JSONArray b) {
+        double latitude = (a.optDouble(1) + b.optDouble(1)) / 2;
+        return METRES_PER_DEGREE * Math.hypot(
+                (a.optDouble(0) - b.optDouble(0)) * Math.cos(Math.toRadians(latitude)),
+                a.optDouble(1) - b.optDouble(1));
     }
 
     private static boolean usable(JSONArray line) {
