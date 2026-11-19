@@ -353,8 +353,10 @@ public class RoutePreviewView extends View {
 
     private LocalRoadLayer localRoadLayer;
     // UI-owned, read-only during drawing. No per-journey raw polylines.
+    // The preview uses a strict ~2MiB conservative geometry/index budget.
+    // It is disposable and never retains attribution history or GPS tracks.
     private final CanonicalPreviewIndex<CanonicalPreviewGeometry> progressiveLocalRoadLayers =
-            new CanonicalPreviewIndex<>(256, 4_096);
+            new CanonicalPreviewIndex<>(8_192, 16_384, 2 * 1024 * 1024);
     void clearProgressiveLocalRoadLayers() {
         progressiveLocalRoadLayers.clear();
         invalidate();
@@ -377,6 +379,8 @@ public class RoutePreviewView extends View {
     }
     int progressivePreviewSections() { return progressiveLocalRoadLayers.sectionCount(); }
     int progressivePreviewLines() { return progressiveLocalRoadLayers.lineCount(); }
+    int progressivePreviewEstimatedBytes() { return progressiveLocalRoadLayers.estimatedBytes(); }
+    int progressivePreviewRejectedUpdates() { return progressiveLocalRoadLayers.rejectedUpdates(); }
     private final float[] localRoadBatch = new float[4096];
     private final Paint localRoadPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final List<JSONArray> ferrySegments=new ArrayList<>();
