@@ -9,7 +9,10 @@ import static org.junit.Assert.*;
 /** International presentation must not reintroduce UK parallel matched lines. */
 public final class OverseasMatchedGeometryTest {
     private static JSONArray point(double lon, double lat) {
-        return new JSONArray().put(lon).put(lat);
+        JSONArray point = new JSONArray();
+        point.put(lon);
+        point.put(lat);
+        return point;
     }
     private static JSONArray line(double... coords) {
         JSONArray a = new JSONArray();
@@ -41,7 +44,7 @@ public final class OverseasMatchedGeometryTest {
         assertTrue(OverseasMatchedGeometry.outsideReferenceFragments(
                 Arrays.asList(line(2.1, 48.2, 2.2, 48.3, 2.3, 48.4)), 10, 2).isEmpty());
     }
-    @Test public void preservePreCorrectedSegmentsWithoutRehydratingRemovedParts() {
+    @Test public void preservePreCorrectedSegmentsWithoutRehydratingRemovedParts() throws Exception {
         // Inputs are post-removal fragments, not the original journey line.
         List<JSONArray> fragments = OverseasMatchedGeometry.outsideReferenceFragments(
                 Arrays.asList(line(2.1, 48.2, 2.2, 48.3),
