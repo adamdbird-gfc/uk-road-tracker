@@ -352,22 +352,33 @@ public class RoutePreviewView extends View {
     }
 
     private LocalRoadLayer localRoadLayer;
-    // Bounded cold-load preview tiles. Never reused for authoritative map taps.
-    private final List<LocalRoadLayer> progressiveLocalRoadLayers = new ArrayList<>();
+    // UI-owned, read-only during drawing. No per-journey raw polylines.
+    private final CanonicalPreviewIndex<LocalRoadLayer> progressiveLocalRoadLayers =
+            new CanonicalPreviewIndex<>(256, 4_096);
     void clearProgressiveLocalRoadLayers() {
         progressiveLocalRoadLayers.clear();
         invalidate();
     }
-    void addProgressiveLocalRoadLayer(LocalRoadLayer layer) {
-        if (layer == null || layer.isEmpty()) return;
-        progressiveLocalRoadLayers.add(layer);
-        localRoadPaint.setColor(MapLayerPreferences.LOCAL_ROAD_COLOR);
-        localRoadPaint.setStyle(Paint.Style.STROKE);
-        localRoadPaint.setStrokeWidth(dp(4));
-        localRoadPaint.setStrokeCap(Paint.Cap.BUTT);
-        coordinatesValid = true;
-        invalidate();
+    void replaceProgressiveLocalRoadSections(
+            java.util.Map<String, LocalRoadLayer> replacements,
+            java.util.Map<String, Integer> lineCounts) {
+        boolean changed = false;
+        for (java.util.Map.Entry<String, LocalRoadLayer> row : replacements.entrySet()) {
+            Integer count = lineCounts.get(row.getKey());
+            if (count != null && progressiveLocalRoadLayers.replace(row.getKey(), row.getValue(), count))
+                changed = true;
+        }
+        if (changed) {
+            localRoadPaint.setColor(MapLayerPreferences.LOCAL_ROAD_COLOR);
+            localRoadPaint.setStyle(Paint.Style.STROKE);
+            localRoadPaint.setStrokeWidth(dp(4));
+            localRoadPaint.setStrokeCap(Paint.Cap.BUTT);
+            coordinatesValid = true;
+            invalidate();
+        }
     }
+    int progressivePreviewSections() { return progressiveLocalRoadLayers.sectionCount(); }
+    int progressivePreviewLines() { return progressiveLocalRoadLayers.lineCount(); }
     private final float[] localRoadBatch = new float[4096];
     private final Paint localRoadPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final List<JSONArray> ferrySegments=new ArrayList<>();
@@ -777,14 +788,14 @@ public class RoutePreviewView extends View {
                         flatRoadMapStyle ? null : routeHaloPaint);
             }
             if (travelVisible && ((localRoadLayer != null && !localRoadLayer.isEmpty())
-                    || !progressiveLocalRoadLayers.isEmpty())) {
+                    || !progressiveLocalRoadLayers.sectionCount() == 0)) {
                 double world = mapTileSize() * Math.pow(2.0, cameraZoom);
                 double xOffset = getWidth() / 2.0 - longitudeToUnitX(centerLongitude) * world;
                 double yOffset = getHeight() / 2.0 - latitudeToUnitY(centerLatitude) * world;
                 if (localRoadLayer != null && !localRoadLayer.isEmpty())
                     localRoadLayer.draw(canvas, localRoadPaint, xOffset, yOffset,
                             world, getWidth(), getHeight(), localRoadBatch);
-                for (LocalRoadLayer chunk : progressiveLocalRoadLayers)
+                for (LocalRoadLayer chunk : progressiveLocalRoadLayers.layers())
                     chunk.draw(canvas, localRoadPaint, xOffset, yOffset,
                             world, getWidth(), getHeight(), localRoadBatch);
             }
