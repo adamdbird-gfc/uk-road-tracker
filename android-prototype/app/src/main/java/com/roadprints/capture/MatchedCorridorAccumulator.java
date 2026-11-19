@@ -40,8 +40,12 @@ final class MatchedCorridorAccumulator {
             for (int i = 0; i < lines.size(); i++) {
                 if (!MatchedCorridorEquivalence.samePhysicalShape(acceptedLine, lines.get(i)))
                     continue;
+                if (existing != null) {
+                    // Two separate corridors both fall within the geometric
+                    // tolerance. Never arbitrarily attribute a journey to one.
+                    return Result.HELD;
+                }
                 existing = i;
-                break;
             }
         }
         if (existing != null) {
