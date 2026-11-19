@@ -1316,9 +1316,10 @@ public class MapActivity extends Activity {
                         int hitsBefore = overseasCache.hits;
                         JSONObject projection = overseasCache.get(record.source, file -> {
                             JSONObject raw = record.raw();
+                            boolean[] truncated = {false};
                             List<JSONArray> retained = OverseasMatchedGeometry.unsupportedFragments(
                                     matchedSegments(raw), 48, 350,
-                                    local::hasUkReferenceTile);
+                                    local::hasUkReferenceTile, truncated);
                             JSONArray rows = new JSONArray();
                             for (JSONArray line : retained) {
                                 JSONArray simplified = projectMapRoute(line, 120);
@@ -1326,10 +1327,15 @@ public class MapActivity extends Activity {
                                     rows.put(new JSONObject().put("points", simplified)
                                             .put("original", line.length()));
                             }
-                            return new JSONObject().put("rows", rows);
+                            return new JSONObject().put("rows", rows)
+                                    .put("truncated", truncated[0]);
                         });
                         if (overseasCache.hits > hitsBefore) overseasCounts[1]++;
                         JSONArray rows = projection == null ? null : projection.optJSONArray("rows");
+                        if (projection != null && projection.optBoolean("truncated", false)) {
+                            overseasCounts[4]++;
+                            output.internationalCoverageIncomplete = true;
+                        }
                         if (rows != null && rows.length() > 0) {
                             overseasCounts[2]++;
                             for (int i = 0; i < rows.length(); i++) {
