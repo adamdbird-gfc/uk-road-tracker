@@ -570,7 +570,9 @@ public class MapActivity extends Activity {
                             "processed=" + scanned + " sections=" + sectionCount
                                     + " lines=" + projectedLines
                                     + " retained_sections=" + mapView.progressivePreviewSections()
-                                    + " retained_lines=" + mapView.progressivePreviewLines());
+                                    + " retained_lines=" + mapView.progressivePreviewLines()
+                                    + " estimated_bytes=" + mapView.progressivePreviewEstimatedBytes()
+                                    + " budget_rejections=" + mapView.progressivePreviewRejectedUpdates());
                 } finally { progressivePending.decrementAndGet(); }
             })) progressivePending.decrementAndGet();
         } catch (Exception failure) {
