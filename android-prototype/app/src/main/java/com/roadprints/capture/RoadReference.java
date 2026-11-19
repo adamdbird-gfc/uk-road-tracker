@@ -64,8 +64,19 @@ final class RoadReference implements AutoCloseable {
     }
 
     Set<LocalRoadNetwork.Edge> nearby(double ax, double ay, double bx, double by) throws IOException {
-        nearbyQueries++;
         Set<LocalRoadNetwork.Edge> edges = new HashSet<>();
+        collectNearby(ax, ay, bx, by, edges);
+        return edges;
+    }
+
+    /**
+     * Scratch collection is owned by the caller for one serial route projection.
+     * It is cleared before each leg; no result references escape the matcher.
+     */
+    void collectNearby(double ax, double ay, double bx, double by,
+                       Set<LocalRoadNetwork.Edge> edges) throws IOException {
+        edges.clear();
+        nearbyQueries++;
         int left = tile(Math.min(ax, bx)), right = tile(Math.max(ax, bx));
         int bottom = tile(Math.min(ay, by)), top = tile(Math.max(ay, by));
         if (left < tile(WEST) || right > tile(EAST) || bottom < tile(SOUTH) || top > tile(NORTH))
@@ -80,7 +91,6 @@ final class RoadReference implements AutoCloseable {
             }
         }
         candidateEdges += edges.size();
-        return edges;
     }
 
     static LocalRoadNetwork.Point point(double lon, double lat) {
