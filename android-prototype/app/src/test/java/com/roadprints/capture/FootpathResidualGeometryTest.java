@@ -4,10 +4,15 @@ import static org.junit.Assert.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
+import org.robolectric.annotation.Config;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+@RunWith(RobolectricTestRunner.class)
+@Config(sdk = 28)
 public final class FootpathResidualGeometryTest {
     private static JSONArray line(String pairs) throws Exception { return new JSONArray(pairs); }
 
