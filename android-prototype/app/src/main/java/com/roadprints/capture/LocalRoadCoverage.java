@@ -89,6 +89,11 @@ final class LocalRoadCoverage implements AutoCloseable {
     long footUnresolvedMm, footMajorOrOtherMm;
     int footMajorIntervals;
 
+    /** Reuse the already-open UK index; never decode a tile to classify a journey. */
+    boolean hasUkReferenceTile(double longitude, double latitude) {
+        return reference.hasIndexedTileAt(longitude, latitude);
+    }
+
     RoadReference.Statistics referenceStatistics() {
         return reference.statistics();
     }
