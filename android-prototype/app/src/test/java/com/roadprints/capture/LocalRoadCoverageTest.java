@@ -33,6 +33,58 @@ public class LocalRoadCoverageTest {
     private static final String END = "2026-11-15T12:10:00Z";
     private static final long TIME = Instant.parse(START).toEpochMilli();
 
+    @Test public void canonicalDeltaCoalescesRepeatedEdgeAndPreservesEarlierSnapshot()
+            throws Exception {
+        Context context = RuntimeEnvironment.getApplication();
+        try (LocalRoadCoverage coverage = LocalRoadCoverage.open(context)) {
+            assertNotNull(coverage);
+            Edge edge = new Edge(901L, 1001L, 1002L, "Fixture Lane",
+                    new Point(0, 0), new Point(100, 0),
+                    null, true, 100_000, -1);
+            coverage.add("journey-one",
+                    Map.of(edge, List.of(new Interval(0, 25_000))));
+            assertEquals(1, coverage.pendingChangedEdges());
+            assertEquals(1, coverage.changeRevision());
+            LocalRoadCoverage.Section first = coverage.drainChangedSections(1).get(0);
+            assertEquals(25_000L, first.uniqueMillimetres);
+            assertEquals(0, coverage.pendingChangedEdges());
+
+            coverage.add("journey-two",
+                    Map.of(edge, List.of(new Interval(20_000, 70_000))));
+            coverage.add("journey-three",
+                    Map.of(edge, List.of(new Interval(65_000, 90_000))));
+            assertEquals("One physical edge, not one preview per journey",
+                    1, coverage.pendingChangedEdges());
+            List<LocalRoadCoverage.Section> updates = coverage.drainChangedSections(1);
+            assertEquals(1, updates.size());
+            assertEquals(first.id, updates.get(0).id);
+            assertEquals(90_000L, updates.get(0).uniqueMillimetres);
+            assertEquals("Published snapshots must never mutate after later journeys",
+                    25_000L, first.uniqueMillimetres);
+            assertEquals(1, first.history.size());
+            assertEquals(3, updates.get(0).history.size());
+            assertTrue(coverage.drainChangedSections(1).isEmpty());
+        }
+    }
+
+    @Test public void unchangedContributionDoesNotPublishDuplicateDelta() throws Exception {
+        try (LocalRoadCoverage coverage = LocalRoadCoverage.open(RuntimeEnvironment.getApplication())) {
+            assertNotNull(coverage);
+            Edge edge = new Edge(902L, 2001L, 2002L, "Fixture Lane",
+                    new Point(0, 0), new Point(100, 0),
+                    null, true, 100_000, -1);
+            Map<Edge, List<Interval>> intervals =
+                    Map.of(edge, List.of(new Interval(10_000, 20_000)));
+            coverage.add("same-journey", intervals);
+            assertEquals(1, coverage.drainChangedSections(1).size());
+            long revision = coverage.changeRevision();
+            coverage.add("same-journey", intervals);
+            assertEquals(revision, coverage.changeRevision());
+            assertEquals(0, coverage.pendingChangedEdges());
+            assertTrue(coverage.drainChangedSections(0).isEmpty());
+        }
+    }
+
     @Test public void ineligibleGeometryIsPersistedAsHeldWithoutGrantingPhysicalCoverage()
             throws Exception {
         Context context = RuntimeEnvironment.getApplication();
