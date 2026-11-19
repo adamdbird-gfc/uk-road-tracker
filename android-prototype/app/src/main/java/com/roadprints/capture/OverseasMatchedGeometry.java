@@ -116,6 +116,28 @@ final class OverseasMatchedGeometry {
         return result;
     }
 
+    /**
+     * Exact (metre-scale quantised) matched-shape identity for repeated accepted
+     * travel. Reversing direction must not add another identical display line.
+     * This is intentionally stricter than geographical corridor equivalence:
+     * neighbouring distinct routes must never be merged by proximity alone.
+     */
+    static String displayIdentity(JSONArray line) {
+        if (line == null || line.length() < 2) return "";
+        StringBuilder forward = new StringBuilder(line.length() * 24);
+        StringBuilder reverse = new StringBuilder(line.length() * 24);
+        for (int i = 0; i < line.length(); i++) appendQuantised(forward, line.optJSONArray(i));
+        for (int i = line.length() - 1; i >= 0; i--) appendQuantised(reverse, line.optJSONArray(i));
+        String first = forward.toString(), second = reverse.toString();
+        return first.compareTo(second) <= 0 ? first : second;
+    }
+
+    private static void appendQuantised(StringBuilder out, JSONArray point) {
+        if (!valid(point)) { out.append("invalid;"); return; }
+        out.append(Math.round(point.optDouble(0) * 100_000))
+                .append(',').append(Math.round(point.optDouble(1) * 100_000)).append(';');
+    }
+
     private static boolean valid(JSONArray point) {
         if (point == null || point.length() < 2) return false;
         double lon = point.optDouble(0, Double.NaN), lat = point.optDouble(1, Double.NaN);
