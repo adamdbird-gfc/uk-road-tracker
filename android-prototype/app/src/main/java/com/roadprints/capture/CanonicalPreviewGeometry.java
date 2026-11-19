@@ -82,11 +82,14 @@ final class CanonicalPreviewGeometry {
         return at;
     }
 
-    /** Draw in the same world-unit coordinate system as LocalRoadLayer. */
-    void draw(Canvas canvas, Paint paint, double xOffset, double yOffset,
-              double scale, int width, int height, float[] batch) {
+    /**
+     * Append visible world-unit lines into the Map's shared paint batch.
+     * Returns the current float count so adjacent canonical sections are
+     * combined into one Canvas draw call instead of one per section.
+     */
+    int appendVisibleLines(Canvas canvas, Paint paint, double xOffset, double yOffset,
+              double scale, int width, int height, float[] batch, int count) {
         double padding = paint.getStrokeWidth() + 2;
-        int count = 0;
         for (int i = 0; i < xy.length; i += 4) {
             double x1 = xOffset + xy[i] * scale, y1 = yOffset + xy[i + 1] * scale;
             double x2 = xOffset + xy[i + 2] * scale, y2 = yOffset + xy[i + 3] * scale;
@@ -101,7 +104,7 @@ final class CanonicalPreviewGeometry {
                 count = 0;
             }
         }
-        if (count != 0) canvas.drawLines(batch, 0, count, paint);
+        return count;
     }
 
     // Allows exact geometry comparison in regression tests without rendering.
