@@ -1357,7 +1357,7 @@ public class MapActivity extends Activity {
             coverageHeap.sample();
         }
         markMapHeap("after_a_road_finish");
-        mapGc.checkpoint("after_major_roads", counts[0], 0, local == null ? 0 : local.pendingChangedEdges());
+        mapGc.checkpoint("after_major_roads", counts[0], 0, 0);
         PerformanceDiagnostics.timing("map_coverage_finish",(System.nanoTime()-finishStarted)/1_000_000,
                 "peak_a_road_anchors="+aRoadCalculator.peakRetainedAnchors()
                         + " a_road_reference_reads=" + (aRoadCalculator.referenceReads() - referenceReadsBeforeFinish)
