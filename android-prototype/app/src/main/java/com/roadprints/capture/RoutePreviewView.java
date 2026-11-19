@@ -797,9 +797,13 @@ public class RoutePreviewView extends View {
                 if (localRoadLayer != null && !localRoadLayer.isEmpty())
                     localRoadLayer.draw(canvas, localRoadPaint, xOffset, yOffset,
                             world, getWidth(), getHeight(), localRoadBatch);
+                int previewBatchFloats = 0;
                 for (CanonicalPreviewGeometry chunk : progressiveLocalRoadLayers.layers())
-                    chunk.draw(canvas, localRoadPaint, xOffset, yOffset,
-                            world, getWidth(), getHeight(), localRoadBatch);
+                    previewBatchFloats = chunk.appendVisibleLines(canvas, localRoadPaint,
+                            xOffset, yOffset, world, getWidth(), getHeight(),
+                            localRoadBatch, previewBatchFloats);
+                if (previewBatchFloats != 0)
+                    canvas.drawLines(localRoadBatch, 0, previewBatchFloats, localRoadPaint);
             }
             if (remainingVisible) {
                 drawRoadLayer(canvas, incompleteMotorwaySegments, motorwayIncompletePaint);
