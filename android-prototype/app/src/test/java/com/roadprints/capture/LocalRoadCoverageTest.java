@@ -33,6 +33,46 @@ public class LocalRoadCoverageTest {
     private static final String END = "2026-11-15T12:10:00Z";
     private static final long TIME = Instant.parse(START).toEpochMilli();
 
+    @Test public void leanPreviewMatchesCanonicalUnionAndNeverRetainsHistory()
+            throws Exception {
+        try (LocalRoadCoverage coverage = LocalRoadCoverage.open(RuntimeEnvironment.getApplication())) {
+            assertNotNull(coverage);
+            coverage.enableIncrementalTracking();
+            Edge edge = new Edge(991L, 1501L, 1502L, "Memory fixture",
+                    RoadReference.point(0.375, 51.44), RoadReference.point(0.377, 51.44),
+                    null, true, 100_000, -1);
+            coverage.add("one", Map.of(edge, List.of(new Interval(0, 40_000))));
+            coverage.add("two", Map.of(edge, List.of(new Interval(30_000, 65_000))));
+            coverage.add("three", Map.of(edge, List.of(new Interval(70_000, 100_000))));
+            assertEquals(1, coverage.pendingChangedEdges());
+            CanonicalPreviewGeometry projected = coverage.drainChangedPreview(32).get(0);
+            assertEquals(edge.id(), projected.id);
+            assertEquals(2, projected.lineCount());
+            assertEquals(0, coverage.pendingChangedEdges());
+
+            // Compare both normalized Web Mercator endpoints against the
+            // authoritative union renderer, not against raw journey legs.
+            LocalRoadCoverage.Section canonical = coverage.sections().stream()
+                    .filter(section -> section.id.equals(edge.id())).findFirst().orElseThrow();
+            assertEquals(2, canonical.lines.size());
+            double[] preview = projected.projectionForTest();
+            for (int i = 0; i < canonical.lines.size(); i++)
+                for (int endpoint = 0; endpoint < 2; endpoint++) {
+                    LocalRoadCoverage.Line line = canonical.lines.get(i);
+                    double lon = line.longitude(endpoint == 1);
+                    double lat = line.latitude(endpoint == 1);
+                    assertEquals((lon + 180) / 360.0, preview[i * 4 + endpoint * 2], 1e-12);
+                    assertEquals(.5 - MapRenderGeometry.y(lat) / (2 * Math.PI * 6378137),
+                            preview[i * 4 + endpoint * 2 + 1], 1e-12);
+                }
+            coverage.add("four", Map.of(edge, List.of(new Interval(60_000, 80_000))));
+            CanonicalPreviewGeometry replacement = coverage.drainChangedPreview(32).get(0);
+            assertEquals(edge.id(), replacement.id);
+            assertEquals(1, replacement.lineCount());
+            assertEquals(2, projected.lineCount());
+        }
+    }
+
     @Test public void canonicalDeltaCoalescesRepeatedEdgeAndPreservesEarlierSnapshot()
             throws Exception {
         Context context = RuntimeEnvironment.getApplication();
