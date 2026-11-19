@@ -69,13 +69,16 @@ final class CanonicalPreviewGeometry {
     private static int writeLine(double[] target, int at, int start, int end, int mm,
             double lonA, double latA, double lonB, double latB) {
         // The packed reference uses millimetre-quantised canonical intervals.
-        for (int v : new int[]{start, end}) {
-            double t = mm == 0 ? 0 : v / (double) mm;
-            double lon = lonA + (lonB - lonA) * t;
-            double lat = latA + (latB - latA) * t;
-            target[at++] = (lon + 180.0) / 360.0;
-            target[at++] = .5 - MapRenderGeometry.y(lat) / (2 * Math.PI * 6378137);
-        }
+        double from = mm == 0 ? 0 : start / (double) mm;
+        double to = mm == 0 ? 0 : end / (double) mm;
+        double firstLon = lonA + (lonB - lonA) * from;
+        double firstLat = latA + (latB - latA) * from;
+        double lastLon = lonA + (lonB - lonA) * to;
+        double lastLat = latA + (latB - latA) * to;
+        target[at++] = (firstLon + 180.0) / 360.0;
+        target[at++] = .5 - MapRenderGeometry.y(firstLat) / (2 * Math.PI * 6378137);
+        target[at++] = (lastLon + 180.0) / 360.0;
+        target[at++] = .5 - MapRenderGeometry.y(lastLat) / (2 * Math.PI * 6378137);
         return at;
     }
 
