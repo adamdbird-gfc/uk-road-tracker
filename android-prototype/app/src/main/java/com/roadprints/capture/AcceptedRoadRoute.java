@@ -76,6 +76,9 @@ final class AcceptedRoadRoute {
         for (int index : indices) if (index < 0 || index >= legCount) return null;
         Set<String> legacyIds = indices.isEmpty() ? legacyIds(corrections) : Set.of();
 
+        // Reuse this set for every OSM candidate lookup within one accepted
+        // journey. No references escape an individual matcher invocation.
+        Set<Edge> candidateScratch = new java.util.HashSet<>();
         Map<Edge, List<CumulativeRoadUnion.Interval>> denied = new LinkedHashMap<>();
         int correctionIndex = 0;
         if (!indices.isEmpty()) for (JSONArray line : lines) {
@@ -84,7 +87,8 @@ final class AcceptedRoadRoute {
                 JSONArray a = line.optJSONArray(i - 1), b = line.optJSONArray(i);
                 if (!valid(a) || !valid(b)) continue;
                 CanonicalRoadAttribution.Leg leg = CanonicalRoadAttribution.attributeAcceptedLeg(reference,
-                        a.getDouble(0), a.getDouble(1), b.getDouble(0), b.getDouble(1), onFoot);
+                        a.getDouble(0), a.getDouble(1), b.getDouble(0), b.getDouble(1),
+                        onFoot, candidateScratch);
                 for (CanonicalRoadAttribution.Alignment alignment : leg.alignments()) {
                     Span span = alignment.span();
                     denied.computeIfAbsent(span.edge(), ignored -> new ArrayList<>())
@@ -120,7 +124,8 @@ final class AcceptedRoadRoute {
                 }
                 eligibleMm += length;
                 if (length == 0) continue;
-                CanonicalRoadAttribution.Leg leg = CanonicalRoadAttribution.attributeAcceptedLeg(reference, ax, ay, bx, by, onFoot);
+                CanonicalRoadAttribution.Leg leg = CanonicalRoadAttribution.attributeAcceptedLeg(reference, ax, ay, bx, by,
+                        onFoot, candidateScratch);
                 if (leg.unresolvedReason() != null) {
                     unresolved.merge(leg.unresolvedReason(), 1, Integer::sum);
                     unresolvedMm += length;
