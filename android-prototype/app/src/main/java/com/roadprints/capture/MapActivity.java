@@ -274,6 +274,7 @@ public class MapActivity extends Activity {
                     "phase=" + mapLoadStage);
             mapLoadGeneration++;
             cancelMapWork();
+            clearProgressivePreview();
             hideMapLoading();
         }
         locationRequest.cancel();
@@ -382,6 +383,7 @@ public class MapActivity extends Activity {
     protected void onDestroy() {
         mainHandler.removeCallbacks(observeChanges);
         cancelMapWork();
+        clearProgressivePreview();
         hideMapLoading();
         mapLoadGeneration++;
         recapGeneration++;
@@ -527,16 +529,17 @@ public class MapActivity extends Activity {
         progressiveSavedCamera = null;
     }
 
-    private void publishProgressiveLocalRoads(int generation, long revision,
-            java.util.List<LocalRoadCoverage.Line> lines, int scanned) {
-        if (lines.isEmpty() || !progressiveMapActive || generation != mapLoadGeneration
-                || mapDataRevision() != revision || progressivePending.get() >= PROGRESSIVE_MAX_QUEUED) return;
+    /** Scan-time immutable canonical-edge replacements; no raw journey lines.
+     * Called only from the single serial archive worker at a batch boundary. */
+    private void publishProgressiveChangedRoads(LocalRoadCoverage local, int scanned,
+            int generation, long revision) throws Exception {
+        if (local == null || !progressiveMapActive || local.deltaOverflowed()
+                || progressivePending.get() != 0 || generation != mapLoadGeneration
+                || loadingMapRevision != revision || mapDataRevision() != revision
+                || local.pendingChangedEdges() == 0) return;
         Runtime runtime = Runtime.getRuntime();
-        long available = runtime.maxMemory() - (runtime.totalMemory() - runtime.freeMemory());
-        // A temporary preview duplicates projected coordinates while final
-        // aggregation is still growing: reserve generous room for the canonical
-        // authoritative layer rather than worsening the existing 256MiB pressure.
-        if (available < 96L * 1024L * 1024L) {
+        long headroom = runtime.maxMemory() - (runtime.totalMemory() - runtime.freeMemory());
+        if (headroom < 96L * 1024L * 1024L) {
             mainHandler.post(() -> {
                 if (generation == mapLoadGeneration && progressiveMapActive && mapView != null) {
                     mapView.clearProgressiveLocalRoadLayers();
@@ -547,20 +550,44 @@ public class MapActivity extends Activity {
             });
             return;
         }
-        if (!MapCoverageBatchGate.canPublish(available, Thread.currentThread().isInterrupted(),
-                mapDataRevision() == revision, generation == mapLoadGeneration)) return;
-        int publishedLines = lines.size();
-        LocalRoadLayer chunk = new LocalRoadLayer(new ArrayList<>(lines));
-        progressivePending.incrementAndGet();
-        mainHandler.post(() -> {
-            try {
-                if (!progressiveMapActive || generation != mapLoadGeneration
-                        || loadingMapRevision != revision || mapView == null) return;
-                mapView.addProgressiveLocalRoadLayer(chunk);
-                PerformanceDiagnostics.timing("map_progressive_publish", 0,
-                        "scanned=" + scanned + " lines=" + publishedLines);
-            } finally { progressivePending.decrementAndGet(); }
-        });
+        if (!MapCoverageBatchGate.canPublish(headroom, Thread.currentThread().isInterrupted(),
+                true, true) || !progressivePending.compareAndSet(0, 1)) return;
+        try {
+            java.util.List<LocalRoadCoverage.Section> sections = local.drainChangedSections(32);
+            java.util.Map<String, LocalRoadLayer> changes = new java.util.LinkedHashMap<>();
+            java.util.Map<String, Integer> lineCounts = new java.util.LinkedHashMap<>();
+            int lines = 0;
+            for (LocalRoadCoverage.Section section : sections) {
+                int count = section.lines.size();
+                if (count == 0 || count > PROGRESSIVE_MAX_PREVIEW_LINES) continue;
+                // Project on the worker, not the UI. Each ID is replaced in the
+                // preview index; never append two versions of the same road.
+                changes.put(section.id, new LocalRoadLayer(section.lines));
+                lineCounts.put(section.id, count);
+                lines += count;
+            }
+            if (changes.isEmpty()) { progressivePending.decrementAndGet(); return; }
+            final int projectedLines = lines;
+            final int sectionCount = changes.size();
+            if (!mainHandler.post(() -> {
+                try {
+                    if (!progressiveMapActive || generation != mapLoadGeneration
+                            || loadingMapRevision != revision || mapView == null) return;
+                    mapView.replaceProgressiveLocalRoadSections(changes, lineCounts);
+                    PerformanceDiagnostics.timing("map_progressive_publish", 0,
+                            "processed=" + scanned + " sections=" + sectionCount
+                                    + " lines=" + projectedLines
+                                    + " retained_sections=" + mapView.progressivePreviewSections()
+                                    + " retained_lines=" + mapView.progressivePreviewLines());
+                } finally { progressivePending.decrementAndGet(); }
+            })) progressivePending.decrementAndGet();
+        } catch (Exception failure) {
+            progressivePending.decrementAndGet();
+            // A disposable preview must never stop authoritative accumulation.
+            PerformanceDiagnostics.timing("map_progressive_disabled", 0,
+                    "reason=preview_projection_error");
+            progressiveMapActive = false;
+        }
     }
 
     private void showMapRecovery(boolean failed) {
@@ -1106,6 +1133,11 @@ public class MapActivity extends Activity {
         try (MapJourneyStore records = new MapJourneyStore(getApplicationContext());
              LocalRoadCoverage local = LocalRoadCoverage.open(getApplicationContext())) {
         output.localReferenceAvailable = local != null;
+        // Track only on actual first-use cold reconstruction; no extra index
+        // or immutable snapshots on already-retained Map navigation.
+        if (local != null && progressiveMapActive) local.enableIncrementalTracking();
+        final int scanPreviewGeneration = mapLoadGeneration;
+        final long scanPreviewRevision = loadingMapRevision;
         markMapStage("journey_records_scanning", mapStartedAt);
         final long archiveScanStarted = android.os.SystemClock.elapsedRealtime();
         final long[] lastProgressAt = {archiveScanStarted};
@@ -1127,7 +1159,9 @@ public class MapActivity extends Activity {
                                 + " processed=" + batchGate.scanned()
                                 + " batch_number=" + batchGate.boundaries()
                                 + " free_headroom_mib=" + freeHeadroom / (1024 * 1024)
-                                + " phase=scan_only");
+                                + " phase=scan");
+                publishProgressiveChangedRoads(local, counts[0] - 1,
+                        scanPreviewGeneration, scanPreviewRevision);
             }
             // A slow valid contribution is not a stalled worker. A fresh scan
             // heartbeat earns at most one bounded 60-second completion window.
@@ -1245,36 +1279,14 @@ public class MapActivity extends Activity {
                     "batch_records=" + tailRecords + " processed=" + batchGate.scanned()
                             + " batch_number=" + batchGate.boundaries() + " phase=scan_tail");
         }
+        publishProgressiveChangedRoads(local, counts[0],
+                scanPreviewGeneration, scanPreviewRevision);
         if (local != null) {
             long started = System.nanoTime();
             markMapHeap("before_local_sections");
             // Each section is already retained by MapRoutes; avoid a second
             // temporary all-sections list at the highest archive heap watermark.
-            final int previewGeneration = mapLoadGeneration;
-            final long previewRevision = loadingMapRevision;
-            final java.util.List<LocalRoadCoverage.Line> previewLines = new ArrayList<>();
-            final int[] previewCount = {0};
-            final long[] previewStart = {android.os.SystemClock.elapsedRealtime()};
-            final MapCoverageBatchGate sectionBatchGate = new MapCoverageBatchGate(previewStart[0]);
-            local.forEachSection(section -> {
-                output.addLocalRoad(section);
-                if (!progressiveMapActive || previewCount[0] >= PROGRESSIVE_MAX_PREVIEW_LINES) return;
-                previewLines.addAll(section.lines);
-                previewCount[0] += section.lines.size();
-                long now = android.os.SystemClock.elapsedRealtime();
-                if (sectionBatchGate.record(now)) {
-                    sectionBatchGate.finishBoundary(now);
-                    if (previewLines.size() >= 512 || now - previewStart[0] >= 250) {
-                        publishProgressiveLocalRoads(previewGeneration, previewRevision,
-                                previewLines, counts[0]);
-                        previewLines.clear();
-                        previewStart[0] = now;
-                    }
-                }
-            });
-            if (!previewLines.isEmpty())
-                publishProgressiveLocalRoads(previewGeneration, previewRevision,
-                        previewLines, counts[0]);
+            local.forEachSection(output::addLocalRoad);
             markMapHeap("after_local_sections");
             output.localCoverageDegraded |= local.held > 0 || local.overBudget > 0 || local.unresolvedMm > 0;
             if (local.overBudget > 0) {
