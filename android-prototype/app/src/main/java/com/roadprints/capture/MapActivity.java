@@ -812,7 +812,9 @@ public class MapActivity extends Activity {
             hideMapLoading();
             mapSubtitle.setOnClickListener(null);
             mapSubtitle.setText(overviewCoverageMessage(mapRoutes, mapFilters.isAll()));
-            double[] camera = progressiveSavedCamera != null ? progressiveSavedCamera
+            // The temporary UK framing must never override a saved camera or
+            // the existing initial fit-to-coverage behaviour on readiness.
+            double[] camera = progressiveMapActive ? null
                     : mapView == null ? null : mapView.cameraState();
             RoutePreviewView map = mapView;
             if (map == null) {
