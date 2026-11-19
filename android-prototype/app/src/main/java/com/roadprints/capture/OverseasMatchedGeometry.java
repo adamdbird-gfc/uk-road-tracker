@@ -50,6 +50,13 @@ final class OverseasMatchedGeometry {
     static List<JSONArray> unsupportedFragments(List<JSONArray> correctedLines,
                                                   int maxFragments, int maxPoints,
                                                   ReferenceProximity reference) throws Exception {
+        return unsupportedFragments(correctedLines, maxFragments, maxPoints, reference, null);
+    }
+
+    static List<JSONArray> unsupportedFragments(List<JSONArray> correctedLines,
+                                                  int maxFragments, int maxPoints,
+                                                  ReferenceProximity reference,
+                                                  boolean[] truncated) throws Exception {
         List<JSONArray> result = new ArrayList<>();
         if (correctedLines == null || reference == null || maxFragments <= 0 || maxPoints < 2)
             return result;
@@ -75,23 +82,35 @@ final class OverseasMatchedGeometry {
                 if (!accepted) {
                     if (current != null && current.length() >= 2) {
                         result.add(current);
-                        if (result.size() >= maxFragments) return result;
+                        if (result.size() >= maxFragments) {
+                            if (truncated != null && truncated.length > 0) truncated[0] = true;
+                            return result;
+                        }
                     }
                     current = null;
                     continue;
                 }
                 if (current == null) {
-                    if (retained + 2 > maxPoints) return result;
+                    if (retained + 2 > maxPoints) {
+                        if (truncated != null && truncated.length > 0) truncated[0] = true;
+                        return result;
+                    }
                     current = new JSONArray().put(a);
                     retained++;
                 }
-                if (retained + 1 > maxPoints) return result;
+                if (retained + 1 > maxPoints) {
+                    if (truncated != null && truncated.length > 0) truncated[0] = true;
+                    return result;
+                }
                 current.put(b);
                 retained++;
             }
             if (current != null && current.length() >= 2) {
                 result.add(current);
-                if (result.size() >= maxFragments) return result;
+                if (result.size() >= maxFragments) {
+                            if (truncated != null && truncated.length > 0) truncated[0] = true;
+                            return result;
+                        }
             }
         }
         return result;
