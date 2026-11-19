@@ -3,18 +3,18 @@ set -euo pipefail
 package=com.roadprints.capture
 baseline="$RUNNER_TEMP/roadprints310.apk"
 candidate="$RUNNER_TEMP/roadprints-a2-runtime.apk"
-fixtures="$RUNNER_TEMP/a2-scaled-scaled-fixtures"
+fixtures="$RUNNER_TEMP/a2-scaled-fixtures"
 mkdir -p "$fixtures"
 python3 scripts/generate_dense_map_fixture_a2.py \
     --reference "$RUNNER_TEMP/uk-road-reference-v3.bin" \
     --output "$fixtures" --accepted 750 --train 925 --edges-per-journey 2
 
-tar -cf "$RUNNER_TEMP/a2-scaled-scaled-fixtures.tar" -C "$fixtures" .
+tar -cf "$RUNNER_TEMP/a2-scaled-fixtures.tar" -C "$fixtures" .
 seed_archive() {
  adb shell run-as "$package" mkdir -p files shared_prefs
- adb push "$RUNNER_TEMP/a2-scaled-scaled-fixtures.tar" /data/local/tmp/a2-scaled-scaled-fixtures.tar >/dev/null
- adb shell "run-as $package sh -c 'cd files && tar -xf /data/local/tmp/a2-scaled-scaled-fixtures.tar'"
- adb shell rm -f /data/local/tmp/a2-scaled-scaled-fixtures.tar
+ adb push "$RUNNER_TEMP/a2-scaled-fixtures.tar" /data/local/tmp/a2-scaled-fixtures.tar >/dev/null
+ adb shell "run-as $package sh -c 'cd files && tar -xf /data/local/tmp/a2-scaled-fixtures.tar'"
+ adb shell rm -f /data/local/tmp/a2-scaled-fixtures.tar
  adb shell "run-as $package sh -c 'cat > shared_prefs/roadprints_onboarding.xml'" < "$fixtures/roadprints_onboarding.xml"
 }
 launch_collect() {
