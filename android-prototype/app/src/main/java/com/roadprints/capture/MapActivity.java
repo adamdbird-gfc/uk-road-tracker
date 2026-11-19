@@ -1346,6 +1346,10 @@ public class MapActivity extends Activity {
         }
         long evidenceDuration=System.nanoTime()-evidenceStarted;
         PerformanceDiagnostics.timing("map_evidence",Math.max(0,evidenceDuration-work[0]-work[1]-work[2])/1_000_000,"compact_records_or_archive");
+        PerformanceDiagnostics.timing("map_ferry_overlay", 0,
+                "lines=" + output.ferrySections.size()
+                        + " points=" + output.ferryPoints
+                        + " within_budget=" + (output.ferryPoints <= 20_000));
         PerformanceDiagnostics.timing("map_mode_coverage", 0,
                 "accepted_road=" + modeAccepted[0] + " accepted_foot=" + modeAccepted[1]
                 + " foot_canonical_a_sections=" + acceptedFootCanonicalA[0]
@@ -2766,6 +2770,7 @@ public class MapActivity extends Activity {
                 || !root.has("localCoverageResourceDegraded")) return null;
         getRouteArrays(root, "sections", routes.sections);
         getRouteArrays(root,"ferries",routes.ferrySections);
+        for (JSONArray ferry : routes.ferrySections) routes.ferryPoints += ferry.length();
         JSONArray localRoads = root.getJSONArray("localRoads");
         for (int i = 0; i < localRoads.length(); i++)
             routes.addLocalRoad(LocalRoadCoverage.Section.decode(localRoads.getJSONObject(i)));
