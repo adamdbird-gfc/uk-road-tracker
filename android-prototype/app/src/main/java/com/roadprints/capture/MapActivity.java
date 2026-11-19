@@ -1295,29 +1295,29 @@ public class MapActivity extends Activity {
                         for (int i = 0; i < candidates.length(); i++) {
                             JSONArray points = candidates.optJSONArray(i);
                             if (points == null || points.length() < 2) continue;
-                            JSONArray prepared = projectMapRoute(points, 120);
-                            if (prepared == null || prepared.length() < 2) continue;
-                            String identity = "foot:" + OverseasMatchedGeometry.displayIdentity(prepared);
+                            JSONArray footPreparedLine = projectMapRoute(points, 120);
+                            if (footPreparedLine == null || footPreparedLine.length() < 2) continue;
+                            String identity = "foot:" + OverseasMatchedGeometry.displayIdentity(footPreparedLine);
                             Integer existing = overseasDisplayIndices.get(identity);
                             if (existing != null) {
                                 output.internationalContributorIds.get(existing).add(journeyId);
                                 continue;
                             }
-                            if (footFallbackCounts[0] >= 500 || footFallbackCounts[1] + prepared.length() > 4_000) {
+                            if (footFallbackCounts[0] >= 500 || footFallbackCounts[1] + footPreparedLine.length() > 4_000) {
                                 footFallbackCounts[2]++;
                                 output.footFallbackIncomplete = true;
                                 break;
                             }
                             int lineIndex = output.sections.size();
                             overseasDisplayIndices.put(identity, lineIndex);
-                            output.sections.add(prepared);
+                            output.sections.add(footPreparedLine);
                             output.footResidualIndices.add(lineIndex);
                             Set<String> contributors = new HashSet<>();
                             contributors.add(journeyId);
                             output.internationalContributorIds.add(contributors);
-                            output.retainedPoints += prepared.length();
+                            output.retainedPoints += footPreparedLine.length();
                             footFallbackCounts[0]++;
-                            footFallbackCounts[1] += prepared.length();
+                            footFallbackCounts[1] += footPreparedLine.length();
                         }
                     }
                     // Merge only exact accepted OSM-identified walking intervals
