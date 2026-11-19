@@ -10,8 +10,12 @@ import org.junit.Test;
 
 public final class MatchedCorridorIntervalUnionTest {
     private static JSONArray line(double ax, double ay, double bx, double by) {
-        return new JSONArray().put(new JSONArray().put(ax).put(ay))
-                .put(new JSONArray().put(bx).put(by));
+        try {
+            return new JSONArray().put(new JSONArray().put(ax).put(ay))
+                    .put(new JSONArray().put(bx).put(by));
+        } catch (org.json.JSONException invalid) {
+            throw new AssertionError(invalid);
+        }
     }
     private static final double LON = 0.375, LAT = 51.44, STEP = 0.00144;
     private static final class Input {
