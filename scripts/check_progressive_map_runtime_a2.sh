@@ -76,7 +76,7 @@ def parse(path):
   rows=[r for r in lines if name in r]
   metrics[name]={"events":len(rows),"last":rows[-1][-360:] if rows else ""}
   if rows:
-   m=re.search(r"\\bms=(\\d+)", rows[-1])
+   m=re.search(r"\bms=(\d+)", rows[-1])
    if m:metrics[name]["last_ms"]=int(m.group(1))
  assert metrics["map_outcome=ready"]["events"],path
  return metrics
