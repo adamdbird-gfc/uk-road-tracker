@@ -63,6 +63,28 @@ final class RoadReference implements AutoCloseable {
         index = read(INDEX_START, count * ENTRY_BYTES);
     }
 
+    /**
+     * Cheap indexed-tile presence check, without decoding reference road geometry.
+     * The packaging rectangle is NOT a national boundary: Calais lies within
+     * it but has no UK source tile. Safe for overseas display classification.
+     */
+    boolean hasIndexedTileAt(double longitude, double latitude) {
+        if (!Double.isFinite(longitude) || !Double.isFinite(latitude)
+                || longitude < WEST || longitude > EAST
+                || latitude < SOUTH || latitude > NORTH) return false;
+        int x = tile(longitude), y = tile(latitude);
+        int low = 0, high = index.capacity() / ENTRY_BYTES - 1;
+        while (low <= high) {
+            int middle = (low + high) >>> 1, offset = middle * ENTRY_BYTES;
+            int compare = Integer.compare(x, index.getInt(offset));
+            if (compare == 0) compare = Integer.compare(y, index.getInt(offset + 4));
+            if (compare == 0) return true;
+            if (compare < 0) high = middle - 1;
+            else low = middle + 1;
+        }
+        return false;
+    }
+
     Set<LocalRoadNetwork.Edge> nearby(double ax, double ay, double bx, double by) throws IOException {
         Set<LocalRoadNetwork.Edge> edges = new HashSet<>();
         collectNearby(ax, ay, bx, by, edges);
