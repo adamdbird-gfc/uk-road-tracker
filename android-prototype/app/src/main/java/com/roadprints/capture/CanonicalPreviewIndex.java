@@ -12,6 +12,8 @@ final class CanonicalPreviewIndex<T> {
     private final LinkedHashMap<String, Entry<T>> entries = new LinkedHashMap<>();
     private final int maxSections, maxLines;
     private int lines;
+    private Collection<T> drawingSnapshot = java.util.Collections.emptyList();
+    private boolean drawingDirty = true;
 
     private record Entry<T>(T layer, int lines) {}
 
@@ -32,16 +34,26 @@ final class CanonicalPreviewIndex<T> {
         if (lineCount == 0) entries.remove(canonicalId);
         else entries.put(canonicalId, new Entry<>(layer, lineCount));
         lines = next;
+        drawingDirty = true;
         return true;
     }
 
     Collection<T> layers() {
-        java.util.List<T> values = new java.util.ArrayList<>(entries.size());
-        for (Entry<T> entry : entries.values()) values.add(entry.layer());
-        return values;
+        if (drawingDirty) {
+            java.util.List<T> values = new java.util.ArrayList<>(entries.size());
+            for (Entry<T> entry : entries.values()) values.add(entry.layer());
+            drawingSnapshot = values;
+            drawingDirty = false;
+        }
+        return drawingSnapshot;
     }
 
     int sectionCount() { return entries.size(); }
     int lineCount() { return lines; }
-    void clear() { entries.clear(); lines = 0; }
+    void clear() {
+        entries.clear();
+        lines = 0;
+        drawingSnapshot = java.util.Collections.emptyList();
+        drawingDirty = false;
+    }
 }
