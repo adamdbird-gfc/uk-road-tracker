@@ -38,6 +38,7 @@ public class LocalRoadCoverageTest {
         Context context = RuntimeEnvironment.getApplication();
         try (LocalRoadCoverage coverage = LocalRoadCoverage.open(context)) {
             assertNotNull(coverage);
+            coverage.enableIncrementalTracking();
             Edge edge = new Edge(901L, 1001L, 1002L, "Fixture Lane",
                     new Point(0, 0), new Point(100, 0),
                     null, true, 100_000, -1);
@@ -70,6 +71,7 @@ public class LocalRoadCoverageTest {
     @Test public void unchangedContributionDoesNotPublishDuplicateDelta() throws Exception {
         try (LocalRoadCoverage coverage = LocalRoadCoverage.open(RuntimeEnvironment.getApplication())) {
             assertNotNull(coverage);
+            coverage.enableIncrementalTracking();
             Edge edge = new Edge(902L, 2001L, 2002L, "Fixture Lane",
                     new Point(0, 0), new Point(100, 0),
                     null, true, 100_000, -1);
