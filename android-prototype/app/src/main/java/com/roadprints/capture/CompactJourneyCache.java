@@ -18,13 +18,55 @@ final class CompactJourneyCache implements AutoCloseable {
     CompactJourneyCache(Context context, String kind) {
         this.kind = kind;
         measurePayload = "progress-v1".equals(kind);
-        File file = new File(context.getCacheDir(), "compact-" + kind + ".db");
+        // Accepted road projections take minutes to rebuild for an owner-sized
+        // journey archive. Android may evict getCacheDir() contents at any time,
+        // including while installing a ~1GB APK. Keep only these derived road
+        // contributions in durable no-backup app storage. Original journeys
+        // and their source tokens remain authoritative.
+        boolean durable = kind.startsWith(RoadReference.ALGORITHM + "-");
+        File file = new File(durable ? context.getNoBackupFilesDir() : context.getCacheDir(),
+                "compact-" + kind + ".db");
+        File legacy = new File(context.getCacheDir(), "compact-" + kind + ".db");
+        boolean alreadyPresent = file.exists();
         SQLiteDatabase opened;
         try {
             opened = open(file);
         } catch (android.database.sqlite.SQLiteDatabaseCorruptException corrupt) {
             SQLiteDatabase.deleteDatabase(file);
             opened = open(file);
+        }
+        if (durable && !alreadyPresent && legacy.exists()) {
+            // Migration is opportunistic and never deletes the legacy source.
+            // SQLite ATTACH reads the complete committed DB, including any WAL,
+            // while avoiding a second in-memory copy of thousands of JSON rows.
+            try {
+                opened.execSQL("ATTACH DATABASE ? AS legacy_cache",
+                        new Object[]{legacy.getAbsolutePath()});
+                try {
+                    opened.execSQL("INSERT OR IGNORE INTO rows(kind,source,token,data,sha)"
+                            + " SELECT kind,source,token,data,sha FROM legacy_cache.rows WHERE kind=?",
+                            new Object[]{kind});
+                    opened.execSQL("INSERT OR IGNORE INTO row_index(kind,source,token,data,sha)"
+                            + " SELECT kind,source,token,data,sha FROM legacy_cache.row_index WHERE kind=?",
+                            new Object[]{kind});
+                } finally {
+                    opened.execSQL("DETACH DATABASE legacy_cache");
+                }
+            } catch (android.database.sqlite.SQLiteException migrationUnavailable) {
+                android.util.Log.w("RoadprintsTiming", "local_road_cache_migration=unavailable");
+            }
+        }
+        if (durable) {
+            int rows = 0;
+            try (Cursor status = opened.rawQuery("SELECT COUNT(*) FROM rows WHERE kind=?",
+                    new String[]{kind})) {
+                if (status.moveToFirst()) rows = status.getInt(0);
+            } catch (android.database.sqlite.SQLiteException unavailable) {
+                android.util.Log.w("RoadprintsTiming", "local_road_cache_count=unavailable");
+            }
+            PerformanceDiagnostics.timing("local_road_cache_storage", 0,
+                    "store=non_backup_app_files prior_exists=" + alreadyPresent
+                            + " legacy_exists=" + legacy.exists() + " rows=" + rows);
         }
         db = opened;
         db.beginTransaction();

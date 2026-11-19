@@ -76,6 +76,84 @@ public final class CompactJourneyCacheResumeTest {
         }
     }
 
+    @Test public void acceptedRoadCacheSurvivesDeletionOfTemporaryAndroidCacheDatabase()
+            throws Exception {
+        Context context = RuntimeEnvironment.getApplication();
+        String kind = RoadReference.ALGORITHM + "-persistent-test-" + System.nanoTime();
+        File source = File.createTempFile("durable-local-", ".json", context.getFilesDir());
+        File durable = new File(context.getNoBackupFilesDir(), "compact-" + kind + ".db");
+        File temporary = new File(context.getCacheDir(), "compact-" + kind + ".db");
+        try {
+            Files.write(source.toPath(), new JSONObject().put("journey_id", "durable").toString().getBytes(StandardCharsets.UTF_8));
+            try (CompactJourneyCache first = new CompactJourneyCache(context, kind)) {
+                assertEquals(7, first.get(source, f -> new JSONObject().put("covered", 7))
+                        .getInt("covered"));
+                assertEquals(1, first.reads);
+            }
+            assertTrue("Accepted-road cache belongs in no-backup files, not evictable cache",
+                    durable.isFile());
+            android.database.sqlite.SQLiteDatabase.deleteDatabase(temporary);
+            try (CompactJourneyCache later = new CompactJourneyCache(context, kind)) {
+                assertEquals(7, later.get(source, f -> {
+                    throw new AssertionError("Eviction of temporary files must not cause rematching");
+                }).getInt("covered"));
+                assertEquals(1, later.hits);
+                assertEquals(0, later.reads);
+            }
+        } finally {
+            Files.deleteIfExists(source.toPath());
+            android.database.sqlite.SQLiteDatabase.deleteDatabase(durable);
+            android.database.sqlite.SQLiteDatabase.deleteDatabase(temporary);
+        }
+    }
+
+    @Test public void priorTemporaryAcceptedRoadCacheMigratesWithoutReassessment() throws Exception {
+        Context context = RuntimeEnvironment.getApplication();
+        String kind = RoadReference.ALGORITHM + "-legacy-migration-" + System.nanoTime();
+        File source = File.createTempFile("legacy-local-", ".json", context.getFilesDir());
+        File durable = new File(context.getNoBackupFilesDir(), "compact-" + kind + ".db");
+        File legacy = new File(context.getCacheDir(), "compact-" + kind + ".db");
+        try {
+            Files.write(source.toPath(), new JSONObject().put("journey_id", "legacy").toString().getBytes(StandardCharsets.UTF_8));
+            // Simulate the pre-309 schema under Android's evictable cache.
+            try (android.database.sqlite.SQLiteDatabase old =
+                    android.database.sqlite.SQLiteDatabase.openOrCreateDatabase(legacy, null)) {
+                old.execSQL("CREATE TABLE rows (kind TEXT,source TEXT,token TEXT,data BLOB,sha TEXT,"
+                        + "PRIMARY KEY(kind,source))");
+                old.execSQL("CREATE TABLE row_index (kind TEXT,source TEXT,token TEXT,data TEXT,sha TEXT,"
+                        + "PRIMARY KEY(kind,source))");
+                byte[] bytes = new JSONObject().put("covered", 42)
+                        .toString().getBytes(StandardCharsets.UTF_8);
+                android.content.ContentValues row = new android.content.ContentValues();
+                row.put("kind", kind);
+                row.put("source", source.getName());
+                row.put("token", JourneyStore.fileToken(source));
+                row.put("data", bytes);
+                row.put("sha", NcnJson.hash(bytes));
+                old.insertOrThrow("rows", null, row);
+            }
+            try (CompactJourneyCache migrated = new CompactJourneyCache(context, kind)) {
+                assertEquals(42, migrated.get(source, f -> {
+                    throw new AssertionError("Valid historical contribution must be migrated");
+                }).getInt("covered"));
+                assertEquals(1, migrated.hits);
+                assertEquals(0, migrated.reads);
+            }
+            assertTrue(durable.isFile());
+            android.database.sqlite.SQLiteDatabase.deleteDatabase(legacy);
+            try (CompactJourneyCache retained = new CompactJourneyCache(context, kind)) {
+                assertEquals(42, retained.get(source, f -> {
+                    throw new AssertionError("Migrated durable contribution must survive legacy removal");
+                }).getInt("covered"));
+                assertEquals(1, retained.hits);
+            }
+        } finally {
+            Files.deleteIfExists(source.toPath());
+            android.database.sqlite.SQLiteDatabase.deleteDatabase(durable);
+            android.database.sqlite.SQLiteDatabase.deleteDatabase(legacy);
+        }
+    }
+
     @Test public void changedJourneyInvalidatesOnlyItsOwnDerivedContribution() throws Exception {
         Context context = RuntimeEnvironment.getApplication();
         String kind = "map-resume-change-303-" + System.nanoTime();
