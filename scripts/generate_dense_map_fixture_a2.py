@@ -41,24 +41,30 @@ def edges_from_reference(path):
                 distinct.setdefault(key, [[lon_a,lat_a],[lon_b,lat_b]])
         return distinct
 
-def generate(reference, output, count, train_count):
+def generate(reference, output, count, train_count, edges_per_journey=1):
     edges=list(edges_from_reference(reference).values())
-    if len(edges)<count:
-        raise ValueError(f"Only {len(edges)} eligible distinct local edges, wanted {count}")
+    target=count * edges_per_journey
+    if len(edges)<target:
+        raise ValueError(f"Only {len(edges)} eligible distinct local edges, wanted {target}")
     folder=pathlib.Path(output);folder.mkdir(parents=True,exist_ok=True)
-    # deterministic spread across the tiles, to exercise more than one cached tile.
-    step=max(1,len(edges)//count)
-    picks=edges[::step][:count]
-    if len(picks)!=count:raise ValueError("Unexpected sampling underflow")
-    for i,points in enumerate(picks):
-        geom={"type":"LineString","coordinates":points}
+    # Deterministic spread across independent OSM edges, including multiple
+    # accepted LineString features per journey. No artificial links between
+    # geographically disconnected roads are ever credited.
+    step=max(1,len(edges)//target)
+    picks=edges[::step][:target]
+    if len(picks)!=target:raise ValueError("Unexpected sampling underflow")
+    for i in range(count):
+        selected=picks[i*edges_per_journey:(i+1)*edges_per_journey]
+        features=[{"type":"Feature","geometry":{"type":"LineString","coordinates":points}}
+                  for points in selected]
         journey={"journey_id":f"dense-osm-{i:04d}","mode":"driving",
                  "title":"Synthetic accepted road",
-                 "distance_meters":120.0,"transport_confirmation":"confirmed",
+                 "distance_meters":120.0*edges_per_journey,
+                 "transport_confirmation":"confirmed",
                  "started_at":"2026-11-15T12:00:00Z","ended_at":"2026-11-15T12:10:00Z",
                  "processing_status":"complete","source":{"type":"android_activity_capture"},
-                 "route_geometry":geom,"processing_result":{"status":"ok",
-                 "geojson":{"type":"FeatureCollection","features":[{"type":"Feature","geometry":geom}]}}}
+                 "route_geometry":features[0]["geometry"],"processing_result":{"status":"ok",
+                 "geojson":{"type":"FeatureCollection","features":features}}}
         (folder/f"journey_dense-osm-{i:04d}.json").write_text(json.dumps(journey))
     for i in range(train_count):
         row={"journey_id":f"railway-history-{i:04d}","mode":"train",
@@ -68,7 +74,8 @@ def generate(reference, output, count, train_count):
         (folder/f"journey_railway-history-{i:04d}.json").write_text(json.dumps(row))
     (folder/"roadprints_onboarding.xml").write_text(
         '<map><boolean name="complete" value="true"/></map>')
-    print(json.dumps({"reference_edges":len(edges),"accepted_journey_fixtures":len(picks),
+    print(json.dumps({"reference_edges":len(edges),"accepted_journey_fixtures":count,
+                      "accepted_edge_fixtures":target,"edges_per_journey":edges_per_journey,
                       "train_journey_fixtures":train_count,"total":count+train_count},sort_keys=True))
 
 if __name__=="__main__":
@@ -77,5 +84,8 @@ if __name__=="__main__":
     parser.add_argument("--output",required=True)
     parser.add_argument("--accepted",type=int,default=750)
     parser.add_argument("--train",type=int,default=925)
+    parser.add_argument("--edges-per-journey",type=int,default=1)
     args=parser.parse_args()
-    generate(args.reference,args.output,args.accepted,args.train)
+    if args.accepted < 1 or args.train < 0 or args.edges_per_journey < 1:
+        parser.error("Fixture counts must be positive")
+    generate(args.reference,args.output,args.accepted,args.train,args.edges_per_journey)
