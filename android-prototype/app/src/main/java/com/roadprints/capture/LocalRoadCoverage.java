@@ -620,6 +620,30 @@ final class LocalRoadCoverage implements AutoCloseable {
             return first + (section.last.optDouble(1) - first) * fraction;
         }
 
+        /**
+         * Total accepted traversal distance across the displayed physical
+         * interval for journeys contributing at this precise tap location.
+         * Repeated walks count towards travel distance, never extra unique
+         * physical coverage. No original journey geometry is consulted.
+         */
+        long contributorMillimetresAt(double fraction) {
+            int offset = interval.start() + (int) Math.round(fraction * (interval.end() - interval.start()));
+            long total = 0;
+            for (int[] endpoints : section.history.values()) {
+                boolean contributesHere = false;
+                for (int i = 0; i < endpoints.length; i += 2)
+                    if (endpoints[i] <= offset && offset <= endpoints[i + 1]) {
+                        contributesHere = true;
+                        break;
+                    }
+                if (!contributesHere) continue;
+                for (int i = 0; i < endpoints.length; i += 2)
+                    total += Math.max(0, Math.min(interval.end(), endpoints[i + 1])
+                            - Math.max(interval.start(), endpoints[i]));
+            }
+            return total;
+        }
+
         List<String> contributors(double fraction) {
             int offset = interval.start() + (int) Math.round(fraction * (interval.end() - interval.start()));
             List<String> ids = new ArrayList<>();
