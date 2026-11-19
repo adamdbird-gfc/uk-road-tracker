@@ -56,6 +56,18 @@ final class CompactJourneyCache implements AutoCloseable {
                 android.util.Log.w("RoadprintsTiming", "local_road_cache_migration=unavailable");
             }
         }
+        if (durable) {
+            int rows = 0;
+            try (Cursor status = opened.rawQuery("SELECT COUNT(*) FROM rows WHERE kind=?",
+                    new String[]{kind})) {
+                if (status.moveToFirst()) rows = status.getInt(0);
+            } catch (android.database.sqlite.SQLiteException unavailable) {
+                android.util.Log.w("RoadprintsTiming", "local_road_cache_count=unavailable");
+            }
+            PerformanceDiagnostics.timing("local_road_cache_storage", 0,
+                    "store=non_backup_app_files prior_exists=" + alreadyPresent
+                            + " legacy_exists=" + legacy.exists() + " rows=" + rows);
+        }
         db = opened;
         db.beginTransaction();
     }
