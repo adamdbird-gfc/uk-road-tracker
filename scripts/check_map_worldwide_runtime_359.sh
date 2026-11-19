@@ -33,6 +33,18 @@ for group,lon,lat,dx,dy,name in locations:
        "processing_result":{"geojson":{"type":"FeatureCollection","features":[feat]},
                             "road_geojson":{"type":"FeatureCollection","features":[feat]}}}
   (root/f"journey_{row['journey_id']}.json").write_text(json.dumps(row))
+  if group=="paris":
+   # Different saved matched vertices for the SAME accepted physical corridor.
+   # ~0.7m parallel drift and opposite direction on alternate journeys.
+   moved=[[round(p[0],7),round(p[1]+0.000006,7)] for p in route]
+   if i%2==0: moved=list(reversed(moved))
+   variant=json.loads(json.dumps(row))
+   variant["journey_id"]=f"worldwide-{group}-shifted-{i:03d}"
+   variant["mode"]="running" if i%3==0 else "cycling"
+   variant["route_geometry"]["coordinates"]=moved
+   for key in ("geojson","road_geojson"):
+    variant["processing_result"][key]["features"][0]["geometry"]["coordinates"]=moved
+   (root/f"journey_{variant['journey_id']}.json").write_text(json.dumps(variant))
 # Explicit ferry display, but no road/NCN credit.
 ferry={"journey_id":"worldwide-dover-calais-ferry","mode":"ferry",
  "title":"Synthetic ferry (not owner's crossing)","distance_meters":42000,
@@ -40,7 +52,7 @@ ferry={"journey_id":"worldwide-dover-calais-ferry","mode":"ferry",
  "processing_status":"complete","route_geometry":{"type":"LineString",
  "coordinates":[[1.312,51.127],[1.5,51.05],[1.85,50.95]]}}
 (root/"journey_worldwide-dover-calais-ferry.json").write_text(json.dumps(ferry))
-print("Added 36 synthetic overseas accepted journeys and one ferry to 1675 base rows")
+print("Added 36 international corridors + 12 sub-metre Paris variants + ferry to 1675 base rows")
 PY
 tar -cf "$RUNNER_TEMP/worldwide-fixtures.tar" -C "$fixtures" .
 seed_archive() {
@@ -102,10 +114,12 @@ assert base["map_outcome=ready"]["events"] and cold["map_outcome=ready"]["events
 assert cold["map_international"]["events"] > 0,"Worldwide instrumentation absent"
 assert cold["map_ferry_overlay"]["events"] > 0,"Ferry overlay instrumentation absent"
 m=re.search(r"rendered_lines=(\d+) rendered_points=(\d+)",cold["map_international"]["last"])
-assert m and int(m.group(1))>0 and int(m.group(2))>0, "No synthetic overseas matched geometry represented"
+assert m and int(m.group(1))==36 and int(m.group(2))>=72, (
+ "A shifted accepted match created a duplicate world corridor, or existing corridor was lost: "
+ + (m.group(0) if m else "no match"))
 m=re.search(r"lines=(\d+) points=(\d+)",cold["map_ferry_overlay"]["last"])
 assert m and int(m.group(1))>0 and int(m.group(2))>0, "No synthetic ferry overlay"
-result={"fixture_journeys":1712,"international_accepted":36,"ferry":1,"railway_excluded":925,
+result={"fixture_journeys":1724,"international_accepted":48,"unique_international_corridors":36,"ferry":1,"railway_excluded":925,
  "baseline":base,"candidate_cold":cold,"candidate_warm":warm,
  "note":"API35 deterministic synthetic comparison, not Pixel10 Android17 owner-archive proof. Cold and warm are process relaunches, not tab switches."}
 pathlib.Path(sys.argv[4]).write_text(json.dumps(result,indent=2))

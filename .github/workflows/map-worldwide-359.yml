@@ -1,7 +1,7 @@
 name: Roadprints worldwide Map 359 compile and regression (no APK)
 on:
   push:
-    branches: [feat/map-359-mode-scope-contract]
+    branches: [feat/map-359-mode-scope-contract, feat/map-361-corridor-equivalence]
     paths:
       - .github/workflows/map-worldwide-359.yml
       - android-prototype/**

@@ -32,8 +32,27 @@ final class MatchedCorridorAccumulator {
         String identity = OverseasMatchedGeometry.displayIdentity(acceptedLine);
         if (identity.isEmpty()) return Result.HELD;
         Integer existing = identities.get(identity);
+        if (existing == null && lines.size() <= 500) {
+            // Only inspect the bounded display ledger. The cheap endpoint/length
+            // gates inside samePhysicalShape reject unrelated physical streets.
+            // Do not search the UK canonical network here: it already owns
+            // authoritative OSM physical-road identity and credit.
+            for (int i = 0; i < lines.size(); i++) {
+                if (!MatchedCorridorEquivalence.samePhysicalShape(acceptedLine, lines.get(i)))
+                    continue;
+                if (existing != null) {
+                    // Two separate corridors both fall within the geometric
+                    // tolerance. Never arbitrarily attribute a journey to one.
+                    return Result.HELD;
+                }
+                existing = i;
+            }
+        }
         if (existing != null) {
             if (existing < 0 || existing >= lines.size()) return Result.HELD;
+            // Memoise each new accepted geometry fingerprint so a repeated
+            // correction-free journey can take the exact-key fast path.
+            identities.put(identity, existing);
             contributorIds.get(existing).add(journeyId);
             if (unresolvedFootpath) footpathIndices.add(existing);
             return Result.REUSED;

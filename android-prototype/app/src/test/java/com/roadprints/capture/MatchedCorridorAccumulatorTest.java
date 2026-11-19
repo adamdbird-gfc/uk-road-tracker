@@ -95,4 +95,97 @@ public final class MatchedCorridorAccumulatorTest {
         assertFalse(MatchedCorridorAccumulator.coherent(
                 ledger.lines, ledger.contributors, ledger.walkingFallback));
     }
+
+    @Test public void slightlyShiftedAcceptedWalkAndDriveSharePhysicalCorridor()
+            throws Exception {
+        Ledger ledger = new Ledger();
+        assertEquals(MatchedCorridorAccumulator.Result.ADDED,
+                ledger.add("[[0.375,51.44],[0.3755,51.44],[0.376,51.44]]",
+                        "walk-shared", true));
+        // The saved driving match is ~0.9m north and has different vertices.
+        assertEquals(MatchedCorridorAccumulator.Result.REUSED,
+                ledger.add("[[0.376,51.440008],[0.37575,51.440008],"
+                        + "[0.37525,51.440008],[0.375,51.440008]]",
+                        "drive-shared", false));
+        assertEquals(1, ledger.lines.size());
+        assertEquals(Set.of("walk-shared","drive-shared"), ledger.contributors.get(0));
+    }
+
+    @Test public void nearbyParallelFootpathRemainsDistinctFromDrivenRoad()
+            throws Exception {
+        Ledger ledger = new Ledger();
+        ledger.add("[[0.375,51.44],[0.376,51.44]]", "drive", false);
+        // ~3.0m north: two physical pavements/carriageway alignments may
+        // be separate; display must not silently credit either as the other.
+        assertEquals(MatchedCorridorAccumulator.Result.ADDED,
+                ledger.add("[[0.375,51.440027],[0.376,51.440027]]",
+                        "separate-footway", true));
+        assertEquals(2, ledger.lines.size());
+    }
+
+    @Test public void crossingAndSharedEndpointsDoNotConflateDifferentPaths()
+            throws Exception {
+        Ledger ledger = new Ledger();
+        ledger.add("[[0.375,51.44],[0.3755,51.44],[0.376,51.44]]",
+                "road", false);
+        assertEquals(MatchedCorridorAccumulator.Result.ADDED,
+                ledger.add("[[0.375,51.44],[0.3755,51.44008],[0.376,51.44]]",
+                        "different-arc", true));
+        assertEquals(2, ledger.lines.size());
+    }
+
+    @Test public void shortFragmentsAreNotFuzzyMergedWithoutStrongEvidence()
+            throws Exception {
+        Ledger ledger = new Ledger();
+        ledger.add("[[0.375,51.44],[0.3751,51.44]]", "short-walk", true);
+        assertEquals(MatchedCorridorAccumulator.Result.ADDED,
+                ledger.add("[[0.375,51.440005],[0.3751,51.440005]]",
+                        "short-drive", false));
+        assertEquals(2, ledger.lines.size());
+    }
+
+    @Test public void partialOverlapDoesNotEraseTheUnsharedCorridor()
+            throws Exception {
+        Ledger ledger = new Ledger();
+        ledger.add("[[2.33,48.85],[2.331,48.85]]", "long-route", false);
+        assertEquals(MatchedCorridorAccumulator.Result.ADDED,
+                ledger.add("[[2.33,48.85],[2.3305,48.85]]", "half-route", true));
+        assertEquals(2, ledger.lines.size());
+    }
+
+    @Test public void fuzzyReusePersistsDistinctContributorIdsWithoutAddingPoints()
+            throws Exception {
+        Ledger ledger = new Ledger();
+        String a = "[[1.43,38.91],[1.431,38.91]]";
+        String b = "[[1.43,38.910005],[1.431,38.910005]]";
+        assertEquals(MatchedCorridorAccumulator.Result.ADDED,
+                ledger.add(a,"ibiza-walk",true));
+        assertEquals(MatchedCorridorAccumulator.Result.REUSED,
+                ledger.add(b,"ibiza-cycle",false));
+        assertEquals(MatchedCorridorAccumulator.Result.REUSED,
+                ledger.add(b,"ibiza-cycle",false));
+        assertEquals(1,ledger.lines.size());
+        assertEquals(Set.of("ibiza-walk","ibiza-cycle"),ledger.contributors.get(0));
+        assertEquals(2,ledger.totalPoints());
+        assertTrue(MatchedCorridorAccumulator.coherent(
+                ledger.lines,ledger.contributors,ledger.walkingFallback));
+    }
+
+    @Test public void ambiguousMidwayMatchIsHeldRatherThanAssignedToEitherPath()
+            throws Exception {
+        Ledger ledger = new Ledger();
+        assertEquals(MatchedCorridorAccumulator.Result.ADDED,
+                ledger.add("[[0.375,51.44],[0.376,51.44]]", "south", false));
+        // 2.2m apart: independently accepted physical alignments.
+        assertEquals(MatchedCorridorAccumulator.Result.ADDED,
+                ledger.add("[[0.375,51.440020],[0.376,51.440020]]", "north", true));
+        assertEquals(MatchedCorridorAccumulator.Result.HELD,
+                ledger.add("[[0.375,51.440010],[0.376,51.440010]]",
+                        "ambiguous-middle", true));
+        assertEquals(2, ledger.lines.size());
+        assertEquals(Set.of("south"), ledger.contributors.get(0));
+        assertEquals(Set.of("north"), ledger.contributors.get(1));
+        assertTrue(MatchedCorridorAccumulator.coherent(
+                ledger.lines, ledger.contributors, ledger.walkingFallback));
+    }
 }
