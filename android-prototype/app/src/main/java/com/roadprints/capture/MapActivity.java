@@ -1199,7 +1199,7 @@ public class MapActivity extends Activity {
                 return;
             }
             String mode=journey.optString("mode","").trim().toLowerCase(java.util.Locale.ROOT);
-            if(!JourneyFilters.isRoadMode(mode)&&!JourneyFilters.isFootMode(mode)&&!MatchingCoordinator.isCycle(mode)){counts[3]++;return;}
+            if (!OverviewJourneyScope.contributesCorridorCoverage(mode)) { counts[3]++; return; }
             MapJourneyStore.Factory factory=raw->{
                 long start=System.nanoTime();
                 JSONObject prepared=new JSONObject().put("motorway",motorwayCalculator.contribution(raw))
