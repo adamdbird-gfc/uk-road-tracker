@@ -84,4 +84,22 @@ public final class OverseasMatchedGeometryTest {
                 Arrays.asList(line(1.3, 51.12, 1.84, 50.95)), 10, 50,
                 (longitude, latitude) -> false).isEmpty());
     }
+
+    @Test public void repeatedInternationalRouteHasSameIdentityInEitherDirection() {
+        JSONArray forward = line(2.31, 48.81, 2.32, 48.82, 2.33, 48.83);
+        JSONArray reverse = line(2.33, 48.83, 2.32, 48.82, 2.31, 48.81);
+        JSONArray otherStreet = line(2.31, 48.81, 2.322, 48.821, 2.33, 48.83);
+        assertEquals(OverseasMatchedGeometry.displayIdentity(forward),
+                OverseasMatchedGeometry.displayIdentity(reverse));
+        assertNotEquals(OverseasMatchedGeometry.displayIdentity(forward),
+                OverseasMatchedGeometry.displayIdentity(otherStreet));
+    }
+
+    @Test public void geometryBudgetClippingIsExplicit() throws Exception {
+        boolean[] truncated = {false};
+        OverseasMatchedGeometry.unsupportedFragments(
+                Arrays.asList(line(2.1, 48.1, 2.11, 48.11, 2.12, 48.12)), 10, 2,
+                (longitude, latitude) -> false, truncated);
+        assertTrue(truncated[0]);
+    }
 }
