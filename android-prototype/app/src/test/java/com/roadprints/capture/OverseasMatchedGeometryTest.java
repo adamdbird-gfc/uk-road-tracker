@@ -10,8 +10,12 @@ import static org.junit.Assert.*;
 public final class OverseasMatchedGeometryTest {
     private static JSONArray point(double lon, double lat) {
         JSONArray point = new JSONArray();
-        point.put(lon);
-        point.put(lat);
+        try {
+            point.put(lon);
+            point.put(lat);
+        } catch (org.json.JSONException impossibleForFiniteTestCoordinates) {
+            throw new AssertionError(impossibleForFiniteTestCoordinates);
+        }
         return point;
     }
     private static JSONArray line(double... coords) {
