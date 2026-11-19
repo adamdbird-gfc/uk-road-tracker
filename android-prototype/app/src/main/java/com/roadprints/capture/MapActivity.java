@@ -56,6 +56,11 @@ public class MapActivity extends Activity {
     private static long processMapCacheRevision = Long.MIN_VALUE;
     private TextView mapSubtitle, legendButton;
     private MapLoadingView loadingCard;
+    private volatile boolean progressiveMapActive;
+    private double[] progressiveSavedCamera;
+    private final java.util.concurrent.atomic.AtomicInteger progressivePending = new java.util.concurrent.atomic.AtomicInteger();
+    private static final int PROGRESSIVE_MAX_QUEUED = 2;
+    private static final int PROGRESSIVE_MAX_PREVIEW_LINES = 20_000;
     private GrowingStatusControl mapStatus;
     private boolean skipDiskMapCache,forceMapReload;
     private FrameLayout mapFrame;
@@ -508,8 +513,41 @@ public class MapActivity extends Activity {
     private void cancelMapWork() {
         if(mapDeadline!=null)mainHandler.removeCallbacks(mapDeadline);
         if(mapPending!=null){mapPending.cancel(true);mapPending=null;}
+        progressiveMapActive=false;
         loadingMapRevision=Long.MIN_VALUE;
     }
+    private void clearProgressivePreview() {
+        progressiveMapActive = false;
+        if (mapView != null) {
+            mapView.clearProgressiveLocalRoadLayers();
+            if (progressiveSavedCamera != null)
+                mapView.restoreCameraState(progressiveSavedCamera[0],
+                        progressiveSavedCamera[1], progressiveSavedCamera[2]);
+        }
+        progressiveSavedCamera = null;
+    }
+
+    private void publishProgressiveLocalRoads(int generation, long revision,
+            java.util.List<LocalRoadCoverage.Line> lines, int scanned) {
+        if (lines.isEmpty() || !progressiveMapActive || generation != mapLoadGeneration
+                || mapDataRevision() != revision || progressivePending.get() >= PROGRESSIVE_MAX_QUEUED) return;
+        Runtime runtime = Runtime.getRuntime();
+        long available = runtime.maxMemory() - (runtime.totalMemory() - runtime.freeMemory());
+        if (!MapCoverageBatchGate.canPublish(available, Thread.currentThread().isInterrupted(),
+                mapDataRevision() == revision, generation == mapLoadGeneration)) return;
+        LocalRoadLayer chunk = new LocalRoadLayer(new ArrayList<>(lines));
+        progressivePending.incrementAndGet();
+        mainHandler.post(() -> {
+            try {
+                if (!progressiveMapActive || generation != mapLoadGeneration
+                        || loadingMapRevision != revision || mapView == null) return;
+                mapView.addProgressiveLocalRoadLayer(chunk);
+                PerformanceDiagnostics.timing("map_progressive_publish", 0,
+                        "scanned=" + scanned + " lines=" + lines.size());
+            } finally { progressivePending.decrementAndGet(); }
+        });
+    }
+
     private void showMapRecovery(boolean failed) {
         if(mapRecovery!=null)mapFrame.removeView(mapRecovery);
         LinearLayout row=new LinearLayout(this);row.setGravity(Gravity.CENTER);row.setPadding(dp(12),dp(6),dp(12),dp(6));
@@ -527,7 +565,7 @@ public class MapActivity extends Activity {
         mapPending=null;loadingMapRevision=Long.MIN_VALUE;
     }
     private void cancelMapRefresh() {
-        mapLoadGeneration++;cancelMapWork();mapLoadFailed=false;forceMapReload=false;hideMapLoading();
+        mapLoadGeneration++;cancelMapWork();clearProgressivePreview();mapLoadFailed=false;forceMapReload=false;hideMapLoading();
         mapFilters=displayedFilters;persistMapFilters();mapFilterSummary.setText(mapFilters.summary());
         mapSubtitle.setOnClickListener(null);mapSubtitle.setText("Map refresh cancelled. Previous results retained.");setMapReady(hasDisplayedMap);
         android.util.Log.i("RoadprintsTiming","map_outcome=cancelled total_ms="+(android.os.SystemClock.elapsedRealtime()-mapStartedAt));
@@ -558,7 +596,7 @@ public class MapActivity extends Activity {
                 android.os.SystemClock.elapsedRealtime() - mapStageStartedAt,
                 "phase=" + mapLoadStage + " total_ms="
                         + (android.os.SystemClock.elapsedRealtime() - mapStartedAt));
-        mapLoadGeneration++;cancelMapWork();hideMapLoading();mapLoadFailed=true;
+        mapLoadGeneration++;cancelMapWork();clearProgressivePreview();hideMapLoading();mapLoadFailed=true;
         mapSubtitle.setText(message);mapSubtitle.setOnClickListener(v->retryMap());
         setMapReady(false);showMapRecovery(true);
         android.util.Log.i("RoadprintsTiming","map_outcome=failure total_ms="+(android.os.SystemClock.elapsedRealtime()-mapStartedAt));
@@ -636,6 +674,20 @@ public class MapActivity extends Activity {
         }
         mapLoadFailed=false;
         showMapLoading(hasDisplayedMap);
+        progressiveMapActive = !hasDisplayedMap && selection.isAll();
+        progressivePending.set(0);
+        if (progressiveMapActive) {
+            RoutePreviewView preview = mapView;
+            if (preview == null) {
+                preview = RoutePreviewView.overview(this);
+                mapFrame.addView(preview, 0, new FrameLayout.LayoutParams(-1, -1));
+                mapView = preview;
+            }
+            progressiveSavedCamera = preview.cameraState();
+            preview.setFlatRoadMapStyle(true);
+            preview.clearProgressiveLocalRoadLayers();
+            preview.restoreCameraState(-3.5d, 54.5d, 5.0d);
+        }
         mapDeadline=()->{
             long now = android.os.SystemClock.elapsedRealtime();
             long age = mapLastArchiveProgressAt == 0 ? Long.MAX_VALUE : now - mapLastArchiveProgressAt;
@@ -760,7 +812,8 @@ public class MapActivity extends Activity {
             hideMapLoading();
             mapSubtitle.setOnClickListener(null);
             mapSubtitle.setText(overviewCoverageMessage(mapRoutes, mapFilters.isAll()));
-            double[] camera = mapView == null ? null : mapView.cameraState();
+            double[] camera = progressiveSavedCamera != null ? progressiveSavedCamera
+                    : mapView == null ? null : mapView.cameraState();
             RoutePreviewView map = mapView;
             if (map == null) {
                 map = RoutePreviewView.overview(this);
@@ -802,6 +855,8 @@ public class MapActivity extends Activity {
                 hasSavedCamera = false;
             }
             mapView = map;
+            progressiveMapActive = false;
+            progressiveSavedCamera = null;
             displayedMapRevision = loadingMapRevision == Long.MIN_VALUE ? mapDataRevision() : loadingMapRevision;
             displayedFilters=mapFilters;hasDisplayedMap=true;mapLoadFailed=false;skipDiskMapCache=false;forceMapReload=false;
             completeMapWork();
@@ -1174,7 +1229,27 @@ public class MapActivity extends Activity {
             markMapHeap("before_local_sections");
             // Each section is already retained by MapRoutes; avoid a second
             // temporary all-sections list at the highest archive heap watermark.
-            local.forEachSection(output::addLocalRoad);
+            final int previewGeneration = mapLoadGeneration;
+            final long previewRevision = loadingMapRevision;
+            final java.util.List<LocalRoadCoverage.Line> previewLines = new ArrayList<>();
+            final int[] previewCount = {0};
+            final long[] previewStart = {android.os.SystemClock.elapsedRealtime()};
+            local.forEachSection(section -> {
+                output.addLocalRoad(section);
+                if (!progressiveMapActive || previewCount[0] >= PROGRESSIVE_MAX_PREVIEW_LINES) return;
+                previewLines.addAll(section.lines);
+                previewCount[0] += section.lines.size();
+                long now = android.os.SystemClock.elapsedRealtime();
+                if (previewLines.size() >= 512 || now - previewStart[0] >= 250) {
+                    publishProgressiveLocalRoads(previewGeneration, previewRevision,
+                            previewLines, counts[0]);
+                    previewLines.clear();
+                    previewStart[0] = now;
+                }
+            });
+            if (!previewLines.isEmpty())
+                publishProgressiveLocalRoads(previewGeneration, previewRevision,
+                        previewLines, counts[0]);
             markMapHeap("after_local_sections");
             output.localCoverageDegraded |= local.held > 0 || local.overBudget > 0 || local.unresolvedMm > 0;
             if (local.overBudget > 0) {
