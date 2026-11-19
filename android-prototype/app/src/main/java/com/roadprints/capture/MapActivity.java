@@ -533,8 +533,10 @@ public class MapActivity extends Activity {
                 || mapDataRevision() != revision || progressivePending.get() >= PROGRESSIVE_MAX_QUEUED) return;
         Runtime runtime = Runtime.getRuntime();
         long available = runtime.maxMemory() - (runtime.totalMemory() - runtime.freeMemory());
-        if (!MapCoverageBatchGate.canPublish(available, Thread.currentThread().isInterrupted(),
+        if (available < 48L * 1024L * 1024L
+                || !MapCoverageBatchGate.canPublish(available, Thread.currentThread().isInterrupted(),
                 mapDataRevision() == revision, generation == mapLoadGeneration)) return;
+        int publishedLines = lines.size();
         LocalRoadLayer chunk = new LocalRoadLayer(new ArrayList<>(lines));
         progressivePending.incrementAndGet();
         mainHandler.post(() -> {
@@ -543,7 +545,7 @@ public class MapActivity extends Activity {
                         || loadingMapRevision != revision || mapView == null) return;
                 mapView.addProgressiveLocalRoadLayer(chunk);
                 PerformanceDiagnostics.timing("map_progressive_publish", 0,
-                        "scanned=" + scanned + " lines=" + lines.size());
+                        "scanned=" + scanned + " lines=" + publishedLines);
             } finally { progressivePending.decrementAndGet(); }
         });
     }
