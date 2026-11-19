@@ -2132,6 +2132,69 @@ public class MapActivity extends Activity {
         } else loadRoadSummaryAt(latitude, longitude);
     }
 
+    private void loadInternationalRoadSummary(double latitude, double longitude,
+                                               List<String> sourceIds) {
+        if (!mapReady || recapVisible || sourceIds.isEmpty()) return;
+        final int requestId = ++roadSummaryRequestId;
+        showRoadSummaryLoadingCard();
+        ScreenDataLoader.execute(() -> {
+            List<JSONObject> related = new ArrayList<>();
+            String roadName = null;
+            String fallback = "Unnamed road";
+            int nameEvidenceReads = 0;
+            for (String id : sourceIds) {
+                if (Thread.currentThread().isInterrupted() || requestId != roadSummaryRequestId) return;
+                try {
+                    java.io.File source = JourneyStore.archiveFile(getApplicationContext(), id);
+                    JSONObject summary = JourneyStore.readSummary(source);
+                    if (summary == null) continue;
+                    related.add(summary);
+                    if (JourneyFilters.isFootMode(summary.optString("mode"))) fallback = "Public footpath";
+                    if (roadName != null || nameEvidenceReads >= 3) continue;
+                    nameEvidenceReads++;
+                    // Selective matched geometry only, never original GPS
+                    // samples. Corrected features cannot restore removed legs.
+                    JSONObject evidence = JourneyStore.mapEvidence(getApplicationContext(), source, true);
+                    JSONObject result = evidence.optJSONObject("processing_result");
+                    JSONArray features = roadFeaturesForTap(result);
+                    if (features == null && result != null) {
+                        JSONObject matched = result.optJSONObject("geojson");
+                        features = matched == null ? null : matched.optJSONArray("features");
+                    }
+                    if (features == null) continue;
+                    double nearest = 20.0;
+                    for (int i = 0; i < features.length(); i++) {
+                        JSONObject retained = JourneyCorrectionUtils.retainedRoadFeature(
+                                evidence, features.optJSONObject(i));
+                        if (retained == null) continue;
+                        double metres = featureDistanceMetres(retained, latitude, longitude);
+                        if (metres >= nearest) continue;
+                        nearest = metres;
+                        roadName = MapRoadTapSelection.label(
+                                retained.optJSONObject("properties"), summary.optString("mode"));
+                    }
+                } catch (Exception unavailable) {
+                    // A missing or unreadable journey is not a reason to
+                    // withdraw any other accepted contributor from the card.
+                }
+            }
+            related.sort(java.util.Comparator.comparing(
+                    (JSONObject j) -> j.optString("started_at", "")).reversed());
+            final String label = roadName == null ? fallback : roadName;
+            final int count = related.size();
+            final String note = "International road or pathway · " + count
+                    + " saved journey" + (count == 1 ? "" : "s")
+                    + ". UK road completion does not apply.";
+            PerformanceDiagnostics.timing("map_international_tap", 0,
+                    "contributors=" + sourceIds.size() + " resolved=" + count
+                            + " name_evidence_reads=" + nameEvidenceReads);
+            mainHandler.post(() -> {
+                if (isFinishing() || requestId != roadSummaryRequestId) return;
+                showRoadSummaryCard(label, Double.NaN, count, Double.NaN, related, note);
+            });
+        });
+    }
+
     private void loadRoadSummaryAt(double latitude, double longitude) {
         loadRoadSummaryAt(latitude, longitude, null, java.util.Collections.emptyList());
     }
