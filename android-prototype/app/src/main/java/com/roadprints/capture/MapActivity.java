@@ -553,27 +553,19 @@ public class MapActivity extends Activity {
         if (!MapCoverageBatchGate.canPublish(headroom, Thread.currentThread().isInterrupted(),
                 true, true) || !progressivePending.compareAndSet(0, 1)) return;
         try {
-            java.util.List<LocalRoadCoverage.Section> sections = local.drainChangedSections(32);
-            java.util.Map<String, LocalRoadLayer> changes = new java.util.LinkedHashMap<>();
-            java.util.Map<String, Integer> lineCounts = new java.util.LinkedHashMap<>();
-            int lines = 0;
-            for (LocalRoadCoverage.Section section : sections) {
-                int count = section.lines.size();
-                if (count == 0 || count > PROGRESSIVE_MAX_PREVIEW_LINES) continue;
-                // Project on the worker, not the UI. Each ID is replaced in the
-                // preview index; never append two versions of the same road.
-                changes.put(section.id, new LocalRoadLayer(section.lines));
-                lineCounts.put(section.id, count);
-                lines += count;
-            }
+            java.util.List<CanonicalPreviewGeometry> changes =
+                    local.drainChangedPreview(32);
             if (changes.isEmpty()) { progressivePending.decrementAndGet(); return; }
+            int lines = 0;
+            for (CanonicalPreviewGeometry section : changes)
+                lines += section.lineCount();
             final int projectedLines = lines;
             final int sectionCount = changes.size();
             if (!mainHandler.post(() -> {
                 try {
                     if (!progressiveMapActive || generation != mapLoadGeneration
                             || loadingMapRevision != revision || mapView == null) return;
-                    mapView.replaceProgressiveLocalRoadSections(changes, lineCounts);
+                    mapView.replaceProgressiveLocalRoadSections(changes);
                     PerformanceDiagnostics.timing("map_progressive_publish", 0,
                             "processed=" + scanned + " sections=" + sectionCount
                                     + " lines=" + projectedLines
