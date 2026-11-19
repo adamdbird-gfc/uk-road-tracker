@@ -67,8 +67,12 @@ final class MatchedCorridorIntervalUnion {
             return new JSONArray().put(point(start)).put(point(end));
         }
         private JSONArray point(double metres) {
-            return new JSONArray().put(longitude + metres * ux / (cosLat * METRES))
-                    .put(latitude + metres * uy / METRES);
+            try {
+                return new JSONArray().put(longitude + metres * ux / (cosLat * METRES))
+                        .put(latitude + metres * uy / METRES);
+            } catch (org.json.JSONException invalid) {
+                throw new IllegalStateException("Accepted corridor projection is non-finite", invalid);
+            }
         }
     }
     private MatchedCorridorIntervalUnion() {}
