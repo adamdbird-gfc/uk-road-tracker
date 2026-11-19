@@ -13,7 +13,7 @@ public final class OverviewJourneyScopeTest {
         }
     }
 
-    @Test public void railwayFlightAndFerryAreIntentionallyNotDisplayed() {
+    @Test public void railwayAndFlightAreHiddenButFerryUsesSeparateLayer() {
         assertFalse(OverviewJourneyScope.contributesCorridorCoverage("train"));
         assertEquals("collection_railway", OverviewJourneyScope.exclusionReason("train"));
         for (String mode : new String[]{"plane", "flight", " FLIGHT "}) {
@@ -21,7 +21,7 @@ public final class OverviewJourneyScopeTest {
             assertEquals("collection_flight", OverviewJourneyScope.exclusionReason(mode));
         }
         assertFalse(OverviewJourneyScope.contributesCorridorCoverage("ferry"));
-        assertEquals("ferry_measurement_only", OverviewJourneyScope.exclusionReason("ferry"));
+        assertEquals("separate_ferry_layer", OverviewJourneyScope.exclusionReason("ferry"));
     }
 
     @Test public void unknownIsNotMistakenForAcceptedCorridorCoverage() {
