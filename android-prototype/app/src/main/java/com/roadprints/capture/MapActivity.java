@@ -887,8 +887,8 @@ public class MapActivity extends Activity {
             applyCollectionLayer();
             roadPercentages = new HashMap<>(mapRoutes.roadPercentages);
             incompleteRoadSegments = new ArrayList<>(mapRoutes.incompleteRoadSegments);
-            displayedInternationalSections = mapRoutes.sections;
-            displayedInternationalContributors = mapRoutes.internationalContributorIds;
+            displayedCorridorSections = mapRoutes.sections;
+            displayedCorridorContributors = mapRoutes.corridorContributorIds;
             displayedFootResidualIndices = mapRoutes.footResidualIndices;
             map.setMapRoadTapListener(this::loadOverviewRoadSummary);
             map.setLocalRoadTapListener((line, fraction) ->
@@ -1131,7 +1131,7 @@ public class MapActivity extends Activity {
         final int[] overseasCounts = new int[5]; // scanned, cached, matched, lines, held
         final int[] overseasPoints = {0};
         final int[] footFallbackCounts = new int[3]; // lines, points, held
-        final Map<String, Integer> overseasDisplayIndices = new HashMap<>();
+        final Map<String, Integer> corridorDisplayIndices = new HashMap<>();
         PerformanceDiagnostics.ArchiveHeapSample heap = new PerformanceDiagnostics.ArchiveHeapSample();
         final MapGcDiagnostics mapGc = new MapGcDiagnostics();
         long localRoadNanos[] = {0};
@@ -1297,27 +1297,21 @@ public class MapActivity extends Activity {
                             if (points == null || points.length() < 2) continue;
                             JSONArray footPreparedLine = projectMapRoute(points, 120);
                             if (footPreparedLine == null || footPreparedLine.length() < 2) continue;
-                            String identity = "foot:" + OverseasMatchedGeometry.displayIdentity(footPreparedLine);
-                            Integer existing = overseasDisplayIndices.get(identity);
-                            if (existing != null) {
-                                output.internationalContributorIds.get(existing).add(journeyId);
-                                continue;
-                            }
-                            if (footFallbackCounts[0] >= 500 || footFallbackCounts[1] + footPreparedLine.length() > 4_000) {
+                            MatchedCorridorAccumulator.Result add = MatchedCorridorAccumulator.add(
+                                    footPreparedLine, journeyId, true,
+                                    output.sections, output.corridorContributorIds,
+                                    output.footResidualIndices, corridorDisplayIndices,
+                                    500, 4_000, footFallbackCounts[0], footFallbackCounts[1]);
+                            if (add == MatchedCorridorAccumulator.Result.HELD) {
                                 footFallbackCounts[2]++;
                                 output.footFallbackIncomplete = true;
                                 break;
                             }
-                            int lineIndex = output.sections.size();
-                            overseasDisplayIndices.put(identity, lineIndex);
-                            output.sections.add(footPreparedLine);
-                            output.footResidualIndices.add(lineIndex);
-                            Set<String> contributors = new HashSet<>();
-                            contributors.add(journeyId);
-                            output.internationalContributorIds.add(contributors);
-                            output.retainedPoints += footPreparedLine.length();
-                            footFallbackCounts[0]++;
-                            footFallbackCounts[1] += footPreparedLine.length();
+                            if (add == MatchedCorridorAccumulator.Result.ADDED) {
+                                output.retainedPoints += footPreparedLine.length();
+                                footFallbackCounts[0]++;
+                                footFallbackCounts[1] += footPreparedLine.length();
+                            }
                         }
                     }
                     // Merge only exact accepted OSM-identified walking intervals
@@ -1389,30 +1383,24 @@ public class MapActivity extends Activity {
                                 JSONObject item = rows.optJSONObject(i);
                                 JSONArray points = item == null ? null : item.optJSONArray("points");
                                 if (points == null || points.length() < 2) continue;
-                                // Coalesce identical matched lines while retaining
-                                // EVERY saved journey that contributed to them.
-                                String identity = OverseasMatchedGeometry.displayIdentity(points);
-                                Integer existing = overseasDisplayIndices.get(identity);
-                                String sourceId = journey.optString("journey_id");
-                                if (existing != null) {
-                                    if (!sourceId.isEmpty())
-                                        output.internationalContributorIds.get(existing).add(sourceId);
-                                    continue;
-                                }
-                                if (overseasPoints[0] + points.length() > 6_000
-                                        || overseasCounts[3] >= 500) {
+                                // The same accepted corridor ledger also receives
+                                // unmatched UK walking lines. Mode or geography
+                                // must not create a second physical display stroke.
+                                MatchedCorridorAccumulator.Result add = MatchedCorridorAccumulator.add(
+                                        points, journey.optString("journey_id"), false,
+                                        output.sections, output.corridorContributorIds,
+                                        output.footResidualIndices, corridorDisplayIndices,
+                                        500, 6_000, overseasCounts[3], overseasPoints[0]);
+                                if (add == MatchedCorridorAccumulator.Result.HELD) {
                                     overseasCounts[4]++;
                                     output.internationalCoverageIncomplete = true;
                                     break;
                                 }
-                                overseasDisplayIndices.put(identity, output.sections.size());
-                                output.sections.add(points);
-                                Set<String> contributors = new HashSet<>();
-                                if (!sourceId.isEmpty()) contributors.add(sourceId);
-                                output.internationalContributorIds.add(contributors);
-                                output.retainedPoints += points.length();
-                                overseasPoints[0] += points.length();
-                                overseasCounts[3]++;
+                                if (add == MatchedCorridorAccumulator.Result.ADDED) {
+                                    output.retainedPoints += points.length();
+                                    overseasPoints[0] += points.length();
+                                    overseasCounts[3]++;
+                                }
                             }
                         }
                     } catch (java.util.concurrent.CancellationException cancelled) {
@@ -1465,6 +1453,15 @@ public class MapActivity extends Activity {
                             + " foot_unresolved_reasons=" + local.footUnresolvedLegReasons
                             + (local.held == 0 ? "" : " hold_reasons=" + local.failureBreakdown()));
         }
+        PerformanceDiagnostics.timing("map_shared_corridors", 0,
+                "display_lines=" + output.sections.size()
+                        + " foot_lines=" + footFallbackCounts[0]
+                        + " other_lines=" + overseasCounts[3]
+                        + " contributor_rows=" + output.corridorContributorIds.size()
+                        + " unified=" + MatchedCorridorAccumulator.coherent(
+                                output.sections, output.corridorContributorIds,
+                                output.footResidualIndices)
+                        + " canonical_ledger_separate=true");
         PerformanceDiagnostics.timing("map_foot_residual", 0,
                 "lines=" + footFallbackCounts[0]
                         + " points=" + footFallbackCounts[1]
@@ -2204,15 +2201,15 @@ public class MapActivity extends Activity {
         // its compact source-ID ledger, avoiding a 1,700-journey tap rescan.
         int nearestIndex = -1;
         double nearest = 15.0;
-        for (int i = 0; i < displayedInternationalSections.size()
-                && i < displayedInternationalContributors.size(); i++) {
-            double metres = lineDistanceMetres(displayedInternationalSections.get(i),
+        for (int i = 0; i < displayedCorridorSections.size()
+                && i < displayedCorridorContributors.size(); i++) {
+            double metres = lineDistanceMetres(displayedCorridorSections.get(i),
                     latitude, longitude);
             if (metres < nearest) { nearest = metres; nearestIndex = i; }
         }
         if (nearestIndex >= 0) {
             loadInternationalRoadSummary(latitude, longitude,
-                    new ArrayList<>(displayedInternationalContributors.get(nearestIndex)),
+                    new ArrayList<>(displayedCorridorContributors.get(nearestIndex)),
                     displayedFootResidualIndices.contains(nearestIndex));
         } else loadRoadSummaryAt(latitude, longitude);
     }
@@ -2578,8 +2575,8 @@ public class MapActivity extends Activity {
 
     private AlertDialog roadDialog;
     private volatile int roadSummaryRequestId;
-    private List<JSONArray> displayedInternationalSections = java.util.Collections.emptyList();
-    private List<Set<String>> displayedInternationalContributors = java.util.Collections.emptyList();
+    private List<JSONArray> displayedCorridorSections = java.util.Collections.emptyList();
+    private List<Set<String>> displayedCorridorContributors = java.util.Collections.emptyList();
     private Set<Integer> displayedFootResidualIndices = java.util.Collections.emptySet();
     private LinearLayout roadDialogContent;
 
@@ -2987,9 +2984,9 @@ public class MapActivity extends Activity {
         JSONObject root = new JSONObject();
         putRouteArrays(root, "sections", routes.sections);
         JSONArray overseasContributors = new JSONArray();
-        for (Set<String> ids : routes.internationalContributorIds)
+        for (Set<String> ids : routes.corridorContributorIds)
             overseasContributors.put(new JSONArray(ids));
-        root.put("internationalContributorIds", overseasContributors);
+        root.put("corridorContributorIds", overseasContributors);
         putRouteArrays(root,"ferries",routes.ferrySections);
         JSONArray localRoads = new JSONArray();
         for (LocalRoadCoverage.Section section : routes.localRoadSections) localRoads.put(section.encode());
@@ -3040,7 +3037,7 @@ public class MapActivity extends Activity {
                 || !root.has("localCoverageDegraded")
                 || !root.has("localCoverageResourceDegraded")) return null;
         getRouteArrays(root, "sections", routes.sections);
-        JSONArray overseasContributors = root.optJSONArray("internationalContributorIds");
+        JSONArray overseasContributors = root.optJSONArray("corridorContributorIds");
         if (overseasContributors != null) for (int i = 0; i < overseasContributors.length(); i++) {
             JSONArray ids = overseasContributors.optJSONArray(i);
             Set<String> sourceIds = new HashSet<>();
@@ -3048,9 +3045,10 @@ public class MapActivity extends Activity {
                 String id = ids.optString(j, "");
                 if (!id.isEmpty()) sourceIds.add(id);
             }
-            routes.internationalContributorIds.add(sourceIds);
+            routes.corridorContributorIds.add(sourceIds);
         }
-        if (routes.sections.size() != routes.internationalContributorIds.size()) return null;
+        if (!MatchedCorridorAccumulator.coherent(
+                routes.sections, routes.corridorContributorIds, routes.footResidualIndices)) return null;
         getRouteArrays(root,"ferries",routes.ferrySections);
         for (JSONArray ferry : routes.ferrySections) routes.ferryPoints += ferry.length();
         JSONArray localRoads = root.getJSONArray("localRoads");
@@ -3085,6 +3083,8 @@ public class MapActivity extends Activity {
             if (idx < 0 || idx >= routes.sections.size()) return null;
             routes.footResidualIndices.add(idx);
         }
+        if (!MatchedCorridorAccumulator.coherent(
+                routes.sections, routes.corridorContributorIds, routes.footResidualIndices)) return null;
         routes.localReferenceAvailable = root.optBoolean("localReferenceAvailable", false);
         JSONObject percentages = root.optJSONObject("percentages");
         if (percentages != null) {
@@ -3149,7 +3149,7 @@ public class MapActivity extends Activity {
     static final class MapRoutes {
         final List<JSONArray> sections = new ArrayList<>();
         final Set<Integer> footResidualIndices = new HashSet<>();
-        final List<Set<String>> internationalContributorIds = new ArrayList<>();
+        final List<Set<String>> corridorContributorIds = new ArrayList<>();
         final List<JSONArray> ferrySections = new ArrayList<>();
         final List<LocalRoadCoverage.Section> localRoadSections = new ArrayList<>();
         // Keep only compact interval objects in the interactive map. JSON
