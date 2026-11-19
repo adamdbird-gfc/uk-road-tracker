@@ -80,7 +80,7 @@ final class RoadReference implements AutoCloseable {
         int left = tile(Math.min(ax, bx)), right = tile(Math.max(ax, bx));
         int bottom = tile(Math.min(ay, by)), top = tile(Math.max(ay, by));
         if (left < tile(WEST) || right > tile(EAST) || bottom < tile(SOUTH) || top > tile(NORTH))
-            return edges;
+            return;
         // Construct projected endpoints once and collect directly into the same
         // deduplicated set; do not create a temporary HashSet per intersected tile.
         LocalRoadNetwork.Point first = point(ax, ay), last = point(bx, by);
