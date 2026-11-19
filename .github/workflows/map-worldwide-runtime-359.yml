@@ -1,7 +1,7 @@
 name: Roadprints worldwide Map 359 emulator runtime and heap (no release)
 on:
   push:
-    branches: [feat/map-359-mode-scope-contract]
+    branches: [feat/map-359-mode-scope-contract, feat/map-361-corridor-equivalence]
     paths:
       - .github/workflows/map-worldwide-runtime-359.yml
       - scripts/check_map_worldwide_runtime_359.sh
