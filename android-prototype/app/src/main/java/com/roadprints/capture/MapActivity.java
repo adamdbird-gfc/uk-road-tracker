@@ -1033,9 +1033,26 @@ public class MapActivity extends Activity {
         markMapStage("journey_records_scanning", mapStartedAt);
         final long archiveScanStarted = android.os.SystemClock.elapsedRealtime();
         final long[] lastProgressAt = {archiveScanStarted};
+        // Stage A2.1: record-count/time boundaries without holding any additional
+        // journey objects. Publishing geometry is deliberately deferred until
+        // the canonical network layer can accept immutable deltas safely.
+        final MapCoverageBatchGate batchGate = new MapCoverageBatchGate(archiveScanStarted);
         records.forEach(() -> isDestroyed() || Thread.currentThread().isInterrupted(), record -> {
             JSONObject journey=record.header;
             ++counts[0];
+            long boundaryAt = android.os.SystemClock.elapsedRealtime();
+            if (batchGate.record(boundaryAt)) {
+                int batchRecords = batchGate.finishBoundary(boundaryAt);
+                Runtime batchRuntime = Runtime.getRuntime();
+                long freeHeadroom = batchRuntime.maxMemory()
+                        - (batchRuntime.totalMemory() - batchRuntime.freeMemory());
+                PerformanceDiagnostics.timing("map_batch_boundary", 0,
+                        "batch_records=" + batchRecords
+                                + " processed=" + batchGate.scanned()
+                                + " batch_number=" + batchGate.boundaries()
+                                + " free_headroom_mib=" + freeHeadroom / (1024 * 1024)
+                                + " phase=scan_only");
+            }
             // A slow valid contribution is not a stalled worker. A fresh scan
             // heartbeat earns at most one bounded 60-second completion window.
             mapLastArchiveProgressAt = android.os.SystemClock.elapsedRealtime();
@@ -1146,6 +1163,12 @@ public class MapActivity extends Activity {
             }
             output.matchedJourneys++;counts[5]++;
         });
+        if (batchGate.hasPending()) {
+            int tailRecords = batchGate.finishBoundary(android.os.SystemClock.elapsedRealtime());
+            PerformanceDiagnostics.timing("map_batch_boundary", 0,
+                    "batch_records=" + tailRecords + " processed=" + batchGate.scanned()
+                            + " batch_number=" + batchGate.boundaries() + " phase=scan_tail");
+        }
         if (local != null) {
             long started = System.nanoTime();
             markMapHeap("before_local_sections");
