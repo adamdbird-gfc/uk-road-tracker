@@ -66,6 +66,13 @@ def parse(path):
 baseline,candidate=map(parse,sys.argv[1:3])
 assert candidate["map_batch_boundary"]["events"]>0,"Candidate did not scan in batches"
 assert candidate["map_progressive_publish"]["events"]>=2,"Dense fixture never progressively published"
+last_preview=candidate["map_progressive_publish"]["last"]
+retained=re.search(r"retained_sections=(\d+)",last_preview)
+rejected=re.search(r"budget_rejections=(\d+)",last_preview)
+bytes_used=re.search(r"estimated_bytes=(\d+)",last_preview)
+assert retained and int(retained.group(1))>=1200, f"Progressive preview stopped prematurely: {last_preview}"
+assert rejected and int(rejected.group(1))==0, f"Preview budget blocked 1500-road fixture: {last_preview}"
+assert bytes_used and int(bytes_used.group(1))<=2*1024*1024, f"Preview exceeded estimated heap budget: {last_preview}"
 def sections(metrics):
  row=metrics["map_local_roads"]["last"]
  match=re.search(r"sections=(\d+) lines=(\d+) unique_mm=(\d+)",row)
