@@ -1317,6 +1317,14 @@ public class MapActivity extends Activity {
                         int hitsBefore = overseasCache.hits;
                         JSONObject projection = overseasCache.get(record.source, file -> {
                             JSONObject raw = record.raw();
+                            // Some legacy map-v1 projections stored major-road
+                            // summaries without the accepted route GeoJSON.
+                            // Use the original archive only for those rows;
+                            // never treat an empty disposable cache as missing
+                            // authoritative journey geometry.
+                            if (matchedSegments(raw).isEmpty()
+                                    && record.header.optBoolean("_has_stored_match", false))
+                                raw = JourneyStore.mapEvidence(getApplicationContext(), file, true);
                             boolean[] truncated = {false};
                             List<JSONArray> retained = OverseasMatchedGeometry.unsupportedFragments(
                                     matchedSegments(raw), 48, 350,
