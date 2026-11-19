@@ -2104,14 +2104,50 @@ public class MapActivity extends Activity {
     }
 
     private void loadLocalRoadSummary(LocalRoadCoverage.Line line, double fraction) {
-        if (line == null) return;
-        JSONArray first = line.points().optJSONArray(0), last = line.points().optJSONArray(1);
-        if (first == null || last == null) return;
-        double latitude = first.optDouble(1) + (last.optDouble(1) - first.optDouble(1)) * fraction;
-        double longitude = first.optDouble(0) + (last.optDouble(0) - first.optDouble(0)) * fraction;
-        String label = line.section().label;
-        loadRoadSummaryAt(latitude, longitude, label.isEmpty() ? "Unnamed road" : label,
-                line.contributors(fraction));
+        if (line == null || !mapReady || recapVisible) return;
+        // The canonical accumulator already knows exactly which accepted
+        // journeys cover the tapped physical interval. Never walk the entire
+        // historical road GeoJSON archive to rediscover this answer.
+        final List<String> ids = line.contributors(fraction);
+        final String sectionLabel = line.section().label;
+        final int requestId = ++roadSummaryRequestId;
+        showRoadSummaryLoadingCard();
+        ScreenDataLoader.execute(() -> {
+            List<JSONObject> related = new ArrayList<>();
+            boolean foot = false;
+            int unavailable = 0;
+            for (String id : ids) {
+                if (Thread.currentThread().isInterrupted() || requestId != roadSummaryRequestId) return;
+                try {
+                    JSONObject summary = JourneyStore.readSummary(
+                            JourneyStore.archiveFile(getApplicationContext(), id));
+                    if (summary == null) { unavailable++; continue; }
+                    related.add(summary);
+                    foot |= JourneyFilters.isFootMode(summary.optString("mode"));
+                } catch (Exception missing) {
+                    unavailable++;
+                }
+            }
+            related.sort(java.util.Comparator.comparing(
+                    (JSONObject row) -> row.optString("started_at", "")).reversed());
+            final String label = sectionLabel.isBlank()
+                    ? (foot ? "Public footpath" : "Unnamed road") : sectionLabel;
+            final int count = related.size();
+            final long travelledMm = line.contributorMillimetresAt(fraction);
+            final double travelled = unavailable == 0 ? travelledMm / 1000.0 : Double.NaN;
+            final String key = MapRoadTapSelection.key(label);
+            final double percent = sectionLabel.isBlank() ? Double.NaN
+                    : roadPercentages.getOrDefault(key, Double.NaN);
+            PerformanceDiagnostics.timing("map_canonical_foot_tap", 0,
+                    "source_ids=" + ids.size() + " resolved=" + count
+                            + " missing=" + unavailable + " geometry_scans=0");
+            mainHandler.post(() -> {
+                if (isFinishing() || requestId != roadSummaryRequestId) return;
+                showRoadSummaryCard(label, travelled, count, percent, related,
+                        unavailable == 0 ? null :
+                                "Some saved journey summaries are unavailable; distance is incomplete.");
+            });
+        });
     }
 
     private void loadOverviewRoadSummary(double latitude, double longitude) {
