@@ -887,7 +887,9 @@ public class MapActivity extends Activity {
             applyCollectionLayer();
             roadPercentages = new HashMap<>(mapRoutes.roadPercentages);
             incompleteRoadSegments = new ArrayList<>(mapRoutes.incompleteRoadSegments);
-            map.setMapRoadTapListener(this::loadRoadSummaryAt);
+            displayedInternationalSections = mapRoutes.sections;
+            displayedInternationalContributors = mapRoutes.internationalContributorIds;
+            map.setMapRoadTapListener(this::loadOverviewRoadSummary);
             map.setLocalRoadTapListener((line, fraction) ->
                     loadLocalRoadSummary(line, fraction));
             map.setContentDescription("Interactive OpenStreetMap. Pinch to zoom and drag to move.");
@@ -1127,7 +1129,7 @@ public class MapActivity extends Activity {
         int[] acceptedFootCanonicalA = {0}, deferredFootCanonicalA = {0};
         final int[] overseasCounts = new int[5]; // scanned, cached, matched, lines, held
         final int[] overseasPoints = {0};
-        final Set<String> overseasDisplayKeys = new HashSet<>();
+        final Map<String, Integer> overseasDisplayIndices = new HashMap<>();
         PerformanceDiagnostics.ArchiveHeapSample heap = new PerformanceDiagnostics.ArchiveHeapSample();
         final MapGcDiagnostics mapGc = new MapGcDiagnostics();
         long localRoadNanos[] = {0};
@@ -1351,17 +1353,27 @@ public class MapActivity extends Activity {
                                 JSONObject item = rows.optJSONObject(i);
                                 JSONArray points = item == null ? null : item.optJSONArray("points");
                                 if (points == null || points.length() < 2) continue;
-                                // Same accepted shape, even reversed, is one
-                                // geographical line with multiple journeys.
-                                if (!overseasDisplayKeys.add(
-                                        OverseasMatchedGeometry.displayIdentity(points))) continue;
+                                // Coalesce identical matched lines while retaining
+                                // EVERY saved journey that contributed to them.
+                                String identity = OverseasMatchedGeometry.displayIdentity(points);
+                                Integer existing = overseasDisplayIndices.get(identity);
+                                String sourceId = journey.optString("journey_id");
+                                if (existing != null) {
+                                    if (!sourceId.isEmpty())
+                                        output.internationalContributorIds.get(existing).add(sourceId);
+                                    continue;
+                                }
                                 if (overseasPoints[0] + points.length() > 6_000
                                         || overseasCounts[3] >= 500) {
                                     overseasCounts[4]++;
                                     output.internationalCoverageIncomplete = true;
                                     break;
                                 }
+                                overseasDisplayIndices.put(identity, output.sections.size());
                                 output.sections.add(points);
+                                Set<String> contributors = new HashSet<>();
+                                if (!sourceId.isEmpty()) contributors.add(sourceId);
+                                output.internationalContributorIds.add(contributors);
                                 output.retainedPoints += points.length();
                                 overseasPoints[0] += points.length();
                                 overseasCounts[3]++;
@@ -2102,6 +2114,24 @@ public class MapActivity extends Activity {
                 line.contributors(fraction));
     }
 
+    private void loadOverviewRoadSummary(double latitude, double longitude) {
+        // The renderer hands us the nearest point on the actual displayed line,
+        // not the raw finger location. Resolve that identical visual geometry to
+        // its compact source-ID ledger, avoiding a 1,700-journey tap rescan.
+        int nearestIndex = -1;
+        double nearest = 15.0;
+        for (int i = 0; i < displayedInternationalSections.size()
+                && i < displayedInternationalContributors.size(); i++) {
+            double metres = lineDistanceMetres(displayedInternationalSections.get(i),
+                    latitude, longitude);
+            if (metres < nearest) { nearest = metres; nearestIndex = i; }
+        }
+        if (nearestIndex >= 0) {
+            loadInternationalRoadSummary(latitude, longitude,
+                    new ArrayList<>(displayedInternationalContributors.get(nearestIndex)));
+        } else loadRoadSummaryAt(latitude, longitude);
+    }
+
     private void loadRoadSummaryAt(double latitude, double longitude) {
         loadRoadSummaryAt(latitude, longitude, null, java.util.Collections.emptyList());
     }
@@ -2398,6 +2428,8 @@ public class MapActivity extends Activity {
 
     private AlertDialog roadDialog;
     private volatile int roadSummaryRequestId;
+    private List<JSONArray> displayedInternationalSections = java.util.Collections.emptyList();
+    private List<Set<String>> displayedInternationalContributors = java.util.Collections.emptyList();
     private LinearLayout roadDialogContent;
 
     private void showRoadSummaryLoadingCard() {
@@ -2803,6 +2835,10 @@ public class MapActivity extends Activity {
     private JSONObject mapRoutesToCache(MapRoutes routes) throws Exception {
         JSONObject root = new JSONObject();
         putRouteArrays(root, "sections", routes.sections);
+        JSONArray overseasContributors = new JSONArray();
+        for (Set<String> ids : routes.internationalContributorIds)
+            overseasContributors.put(new JSONArray(ids));
+        root.put("internationalContributorIds", overseasContributors);
         putRouteArrays(root,"ferries",routes.ferrySections);
         JSONArray localRoads = new JSONArray();
         for (LocalRoadCoverage.Section section : routes.localRoadSections) localRoads.put(section.encode());
@@ -2851,6 +2887,17 @@ public class MapActivity extends Activity {
                 || !root.has("localCoverageDegraded")
                 || !root.has("localCoverageResourceDegraded")) return null;
         getRouteArrays(root, "sections", routes.sections);
+        JSONArray overseasContributors = root.optJSONArray("internationalContributorIds");
+        if (overseasContributors != null) for (int i = 0; i < overseasContributors.length(); i++) {
+            JSONArray ids = overseasContributors.optJSONArray(i);
+            Set<String> sourceIds = new HashSet<>();
+            if (ids != null) for (int j = 0; j < ids.length(); j++) {
+                String id = ids.optString(j, "");
+                if (!id.isEmpty()) sourceIds.add(id);
+            }
+            routes.internationalContributorIds.add(sourceIds);
+        }
+        if (routes.sections.size() != routes.internationalContributorIds.size()) return null;
         getRouteArrays(root,"ferries",routes.ferrySections);
         for (JSONArray ferry : routes.ferrySections) routes.ferryPoints += ferry.length();
         JSONArray localRoads = root.getJSONArray("localRoads");
@@ -2939,6 +2986,7 @@ public class MapActivity extends Activity {
 
     static final class MapRoutes {
         final List<JSONArray> sections = new ArrayList<>();
+        final List<Set<String>> internationalContributorIds = new ArrayList<>();
         final List<JSONArray> ferrySections = new ArrayList<>();
         final List<LocalRoadCoverage.Section> localRoadSections = new ArrayList<>();
         // Keep only compact interval objects in the interactive map. JSON
