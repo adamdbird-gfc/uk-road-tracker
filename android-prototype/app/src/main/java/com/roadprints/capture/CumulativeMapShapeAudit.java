@@ -53,7 +53,7 @@ final class CumulativeMapShapeAudit {
                     double portion = sample / 4.0;
                     JSONArray middle = new JSONArray()
                             .put(previous.optDouble(0) + portion
-                                    * (point.optDouble(0) - previous.optDouble(0)))
+                                    * shortestLongitudeDelta(previous.optDouble(0),point.optDouble(0)))
                             .put(previous.optDouble(1) + portion
                                     * (point.optDouble(1) - previous.optDouble(1)));
                     worst = Math.max(worst, closestInUnion(middle, cumulativeSections));
@@ -79,7 +79,7 @@ final class CumulativeMapShapeAudit {
             if (i > 0) {
                 JSONArray previous = source.optJSONArray(i - 1);
                 JSONArray midpoint = new JSONArray()
-                        .put((previous.optDouble(0) + point.optDouble(0)) / 2)
+                        .put(previous.optDouble(0) + shortestLongitudeDelta(previous.optDouble(0),point.optDouble(0)) / 2)
                         .put((previous.optDouble(1) + point.optDouble(1)) / 2);
                 maximum = Math.max(maximum, closest(midpoint, target));
             }
@@ -95,9 +95,11 @@ final class CumulativeMapShapeAudit {
         double nearest = Double.POSITIVE_INFINITY;
         for (int i = 1; i < line.length(); i++) {
             JSONArray a = line.optJSONArray(i - 1), b = line.optJSONArray(i);
-            double ax = a.optDouble(0) * scale * METRES_PER_DEGREE;
+            double ax = (point.optDouble(0) + shortestLongitudeDelta(point.optDouble(0), a.optDouble(0)))
+                    * scale * METRES_PER_DEGREE;
             double ay = a.optDouble(1) * METRES_PER_DEGREE;
-            double bx = b.optDouble(0) * scale * METRES_PER_DEGREE;
+            double bx = ax + shortestLongitudeDelta(a.optDouble(0), b.optDouble(0))
+                    * scale * METRES_PER_DEGREE;
             double by = b.optDouble(1) * METRES_PER_DEGREE;
             double dx = bx - ax, dy = by - ay;
             double squared = dx * dx + dy * dy;
@@ -107,6 +109,13 @@ final class CumulativeMapShapeAudit {
                     py - ay - portion * dy));
         }
         return nearest;
+    }
+
+    private static double shortestLongitudeDelta(double from, double to) {
+        double delta = to - from;
+        if (delta > 180) delta -= 360;
+        if (delta < -180) delta += 360;
+        return delta;
     }
 
     private static boolean validLine(JSONArray line) {
