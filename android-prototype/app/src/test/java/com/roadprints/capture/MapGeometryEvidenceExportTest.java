@@ -57,7 +57,7 @@ public final class MapGeometryEvidenceExportTest {
     }
 
     @Test public void wrapsRealCameraBoundsAtInternationalDateLine() throws Exception {
-        var bounds=MapCorridorGeometry.visibleWindow(179.95,-17.8,16,1080,1920,256*2.5);
+        var bounds=MapCorridorGeometry.visibleWindow(179.999,-17.8,16,1080,1920,256*2.5);
         assertTrue(bounds.west()>bounds.east());
         var parts=MapCorridorGeometry.clip(json("[[179.90,-17.8],[-179.90,-17.8]]"),bounds);
         assertFalse(parts.isEmpty());
