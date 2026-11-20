@@ -28,13 +28,13 @@ For each eligible saved journey, the accepted, correction-aware route shown on i
 9. **Controlled representation:** Simplification, clipping, deduplication and aggregation MAY be used only where the visible shape remains equivalent at meaningful inspection zoom levels, without losing supported branches, falsely joining gaps or merging distinct roads. No particular numerical tolerance is approved by this contract; engineering must propose and test it.
 10. **Non-destructive and usable:** Original journey files and correction evidence MUST be preserved. The Map MUST remain responsive and stable on the owner's Pixel 10 (Android 17), retain its established camera/tab navigation and existing road-facts loading overlay. Performance limitations must be surfaced, not hidden by dropping correct geometry.
 
-## Canonical acceptance examples
+## Illustrative acceptance guardrails
 
 ### A. Repeated commute on one physical road
 
 Several accepted journeys cover the same physical path. The main Map shows a single geographic line for the shared path; it does not draw N visibly overlaid strokes. Contributor history may identify all journeys separately.
 
-### B. Two directions through a roundabout
+### B. Different travelled paths through a junction (roundabout example)
 
 The owner's observed case: west-to-east and east-to-west journeys share their physical approaches but traverse distinct clockwise and anticlockwise roundabout arcs. The main Map shows one representation of each shared physical approach and **both** travelled arcs, with no straight shortcut through the central island and no duplicate overlays.
 
@@ -58,11 +58,13 @@ An individual journey's stored correction removes a false matched section. That 
 
 A journey map shows a curved street. The main Map may simplify its points, but must keep the bend's position and observable shape, rather than substituting a materially different straight chord.
 
+These scenarios are **illustrative guardrails, not an exhaustive catalogue or architectural design**. The same principles apply to every type of accepted road, footpath, cycleway, junction, interchange, turning, overlapping corridor and other geographic configuration. Engineering MUST validate the general behaviour, including cases not described here. Do not optimise the cumulative-map algorithm specifically for a roundabout fixture or hardcode special-case topology solely to satisfy these examples.
+
 ## Engineering and release checks
 
 - Trace the data lineage from **journey's accepted correction-aware geometry** to cumulative storage, union and rendering, and identify where coordinate shapes or physical paths can change.
-- Compare saved journey Map geometry with cumulative geometry for examples A–F using actual coordinate-based assertions, not only screenshot counts, segment counts or source-level algorithm descriptions.
-- Verify union is idempotent, reversible/order-independent for equivalent inputs and preserves distinct branches/arcs.
+- Compare saved journey Map geometry with cumulative geometry across a representative, varied set of real and synthetic travel patterns (including the illustrative guardrails A–F), using coordinate-based assertions, not only screenshot counts, segment counts or source-level algorithm descriptions.
+- Verify union is idempotent, reversible/order-independent for equivalent inputs and preserves all supported distinct paths, regardless of local road topology.
 - Assert no speculative connectors, no adjacent-road credit, no resurrection of removed matched sections and no change to original journey files.
 - Maintain road/NCN accounting checks separately from cumulative **display** geometry.
 - Record completeness holds and evidence-based exclusions; no hold may silently appear as fully recovered.
