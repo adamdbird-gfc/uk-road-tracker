@@ -10,7 +10,7 @@ permissions:
   contents: write
 concurrency:
   group: roadprints-recovery313-release
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   compare-runtime:
     runs-on: ubuntu-22.04
@@ -21,7 +21,7 @@ jobs:
       JAVA_TOOL_OPTIONS: -XX:TieredStopAtLevel=1 -XX:ReservedCodeCacheSize=256m
       TAG: roadprints-0.25.267-313
       APK: Roadprints-0.25.267-313.apk
-      TESTED_SHA: 3ce716884806082baf8abbe5350fd970ded12635
+      TESTED_SHA: cede2fc396d347c28e915790ad7c1e2a5ad56af5
       CERT_SHA256: 5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -30,7 +30,7 @@ jobs:
       - name: Verify exact corrective source and pinned regression evidence
         run: |
           set -euo pipefail
-          for run in 44785791712 44785802948; do
+          for run in 44787453875; do
             for attempt in $(seq 1 80); do
               state=$(gh api "repos/$GH_REPO/actions/runs/$run" --jq .status)
               if test "$state" = completed; then break; fi
@@ -125,6 +125,13 @@ jobs:
       - name: Publish signed integrated in-place owner APK only after all checks
         run: |
           set -euo pipefail
+          for attempt in $(seq 1 80); do
+            state=$(gh api "repos/$GH_REPO/actions/runs/44787462834" --jq .status)
+            if test "$state" = completed; then break; fi
+            sleep 15
+          done
+          test "$(gh api "repos/$GH_REPO/actions/runs/44787462834" --jq .conclusion)" = success
+          test "$(gh api "repos/$GH_REPO/actions/runs/44787462834" --jq .head_sha)" = "$TESTED_SHA"
           current=$(gh api "repos/$GH_REPO/git/ref/heads/${GITHUB_REF_NAME}" --jq .object.sha)
           test "$current" = "$GITHUB_SHA"
           if gh release view "$TAG" >/dev/null 2>&1; then
