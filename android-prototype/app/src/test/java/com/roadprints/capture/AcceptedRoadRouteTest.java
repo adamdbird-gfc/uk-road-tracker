@@ -47,6 +47,42 @@ public class AcceptedRoadRouteTest {
         assertEquals(south, aligned.alignments().get(0).span().edge());
     }
 
+    @Test public void quantisedCandidateCheckMatchesMaterialisedInterval() {
+        Edge section = edge(77, 10, 11, 0, 100, 0);
+        for (double entry : new double[]{0, .000001, .25, .49999, 1}) {
+            for (double exit : new double[]{0, .000001, .26, .50001, 1}) {
+                Candidate candidate = new Candidate(section, 0, 1, entry, exit);
+                Span span = candidate.span();
+                assertEquals(span.interval().end() > span.interval().start(),
+                        candidate.hasPositiveInterval());
+            }
+        }
+    }
+
+    @Test public void reusedCandidateSetMatchesAllocatingLookupWithoutStaleEdges()
+            throws Exception {
+        Path pack = Files.createTempFile("roadprints-scratch-roads", ".bin");
+        try {
+            Files.write(pack, testPack());
+            try (RoadReference reference =
+                    new RoadReference(FileChannel.open(pack), 0, Files.size(pack))) {
+                Set<Edge> scratch = new java.util.HashSet<>();
+                Set<Edge> first = reference.nearby(0.0015, 51.001, 0.002, 51.001);
+                reference.collectNearby(0.0015, 51.001, 0.002, 51.001, scratch);
+                assertEquals(first, scratch);
+                assertFalse(scratch.isEmpty());
+                // A second leg must discard all first-leg candidate IDs.
+                Set<Edge> second = reference.nearby(0.003, 51.001, 0.004, 51.001);
+                reference.collectNearby(0.003, 51.001, 0.004, 51.001, scratch);
+                assertEquals(second, scratch);
+                reference.collectNearby(-10, 51, -10, 51, scratch);
+                assertTrue(scratch.isEmpty());
+            }
+        } finally {
+            Files.deleteIfExists(pack);
+        }
+    }
+
     @Test public void sparseSavedTimelineCreditsOnlyEffectiveMatchedMinorIntervals() throws Exception {
         Path pack = Files.createTempFile("roadprints-test-roads", ".bin");
         try {

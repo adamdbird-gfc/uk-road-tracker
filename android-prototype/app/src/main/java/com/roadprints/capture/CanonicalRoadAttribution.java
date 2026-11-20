@@ -128,15 +128,25 @@ final class CanonicalRoadAttribution {
     /** A vehicle must not attribute a nearby pedestrian-only OSM section. */
     static Leg attributeAcceptedLeg(RoadReference reference, double ax, double ay, double bx, double by,
                                     boolean onFoot) throws java.io.IOException {
+        return attributeAcceptedLeg(reference, ax, ay, bx, by, onFoot,
+                new HashSet<>());
+    }
+
+    /**
+     * The accepted-route loop passes one reusable scratch set for all its legs.
+     * The result only retains immutable Spans, never this collection.
+     */
+    static Leg attributeAcceptedLeg(RoadReference reference, double ax, double ay, double bx, double by,
+                                    boolean onFoot, Set<LocalRoadNetwork.Edge> scratch) throws java.io.IOException {
         LocalRoadNetwork.Point first = RoadReference.point(ax, ay), last = RoadReference.point(bx, by);
         LocalRoadNetwork.Point step = last.minus(first);
         double length = step.length();
         if (!Double.isFinite(length) || length > MAX_MATCHED_LEG)
             return new Leg(List.of(), "invalid_or_long_leg");
         if (length < .001) return new Leg(List.of(), null);
-        Set<LocalRoadNetwork.Edge> available = reference.nearby(ax, ay, bx, by);
-        if (!onFoot) available.removeIf(edge -> edge.footOnly);
-        return attributeAcceptedLeg(first, step, length, available);
+        reference.collectNearby(ax, ay, bx, by, scratch);
+        if (!onFoot) scratch.removeIf(edge -> edge.footOnly);
+        return attributeAcceptedLeg(first, step, length, scratch);
     }
 
     static Leg attributeAcceptedLeg(LocalRoadNetwork.Point first, LocalRoadNetwork.Point step,
@@ -144,7 +154,7 @@ final class CanonicalRoadAttribution {
         List<LocalRoadNetwork.Candidate> candidates = new ArrayList<>();
         for (LocalRoadNetwork.Edge edge : nearby) {
             LocalRoadNetwork.Candidate candidate = LocalRoadNetwork.project(edge, first, step, length, MATCH_RADIUS);
-            if (candidate == null || candidate.span().interval().start() >= candidate.span().interval().end())
+            if (candidate == null || !candidate.hasPositiveInterval())
                 continue;
             // Matcher coordinates can round a junction vertex a few centimetres
             // over its node. Treat these terminal slivers as seam tolerance.

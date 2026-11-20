@@ -1,0 +1,109 @@
+name: Roadprints A2 ABBA GC and memory validation (no release)
+on:
+  push:
+    branches: [feat/workstream-a2-progressive-map]
+    paths:
+      - .github/workflows/map-a2-abba.yml
+      - scripts/check_map_abba_a2.sh
+      - scripts/generate_dense_map_fixture_a2.py
+  pull_request:
+    branches: [release/map-tab-retention-310]
+    paths:
+      - .github/workflows/map-a2-abba.yml
+      - scripts/check_map_abba_a2.sh
+      - scripts/generate_dense_map_fixture_a2.py
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: roadprints-a2-abba-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  compare-runtime:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: adamdbird-gfc/uk-road-tracker
+      JAVA_TOOL_OPTIONS: -XX:TieredStopAtLevel=1
+      CERT_SHA256: 5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Restore reference assets from accepted signed Build 310
+        run: |
+          set -euo pipefail
+          gh release download roadprints-0.25.264-310 --pattern Roadprints-0.25.264-310.apk --output "$RUNNER_TEMP/roadprints310.apk"
+          assets=android-prototype/app/src/main/assets
+          for asset in historic-counties/boundaries.bin railway/national.json railway/national.sqlite.gzip uk-road-reference-v1.bin; do
+            unzip -p "$RUNNER_TEMP/roadprints310.apk" "assets/$asset" > "$assets/$asset"
+          done
+          cp "$assets/uk-road-reference-v1.bin" "$RUNNER_TEMP/uk-road-reference-v3.bin"
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.10'
+      - name: Build A2 APK signed with same owner identity (not released)
+        env:
+          ROADPRINTS_DEBUG_KEYSTORE_B64: ${{ secrets.ROADPRINTS_DEBUG_KEYSTORE_B64 }}
+          ROADPRINTS_DEBUG_STORE_PASSWORD: ${{ secrets.ROADPRINTS_DEBUG_STORE_PASSWORD }}
+          ROADPRINTS_DEBUG_KEY_ALIAS: ${{ secrets.ROADPRINTS_DEBUG_KEY_ALIAS }}
+          ROADPRINTS_DEBUG_KEY_PASSWORD: ${{ secrets.ROADPRINTS_DEBUG_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$ROADPRINTS_DEBUG_KEYSTORE_B64"
+          test -n "$ROADPRINTS_DEBUG_STORE_PASSWORD"
+          test -n "$ROADPRINTS_DEBUG_KEY_ALIAS"
+          test -n "$ROADPRINTS_DEBUG_KEY_PASSWORD"
+          export ROADPRINTS_DEBUG_KEYSTORE="$RUNNER_TEMP/a2-owner.keystore"
+          trap 'rm -f "$ROADPRINTS_DEBUG_KEYSTORE"' EXIT
+          umask 077
+          printf '%s' "$ROADPRINTS_DEBUG_KEYSTORE_B64" | base64 --decode > "$ROADPRINTS_DEBUG_KEYSTORE"
+          unset ROADPRINTS_DEBUG_KEYSTORE_B64
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("android-prototype/app/build.gradle.kts")
+          s=p.read_text()
+          assert s.count("versionCode = 310")==1
+          assert s.count('versionName = "0.25.264"')==1
+          p.write_text(s.replace("versionCode = 310","versionCode = 311").replace('versionName = "0.25.264"','versionName = "0.25.265"'))
+          PY
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:assembleDebug
+          cp android-prototype/app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/roadprints-a2-runtime.apk"
+          signer=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -n 1)
+          "$signer" verify --print-certs "$RUNNER_TEMP/roadprints310.apk" | grep -F "certificate SHA-256 digest: $CERT_SHA256"
+          "$signer" verify --print-certs "$RUNNER_TEMP/roadprints-a2-runtime.apk" | grep -F "certificate SHA-256 digest: $CERT_SHA256"
+          "${signer%/*}/aapt" dump badging "$RUNNER_TEMP/roadprints-a2-runtime.apk" | grep -F "package: name='com.roadprints.capture' versionCode='311' versionName='0.25.265'"
+          python3 - <<'PY'
+          import hashlib,os,zipfile
+          a=os.path.join(os.environ["RUNNER_TEMP"],"roadprints310.apk")
+          b=os.path.join(os.environ["RUNNER_TEMP"],"roadprints-a2-runtime.apk")
+          with zipfile.ZipFile(a) as old,zipfile.ZipFile(b) as new:
+           for item in ("uk-road-reference-v1.bin","railway/national.sqlite.gzip","railway/national.json","historic-counties/boundaries.bin"):
+            p="assets/"+item
+            assert hashlib.sha256(old.read(p)).digest()==hashlib.sha256(new.read(p)).digest(),p
+          PY
+      - name: Enable Android emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: ABBA 750-road fresh-install comparison on Android 35
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: bash scripts/check_map_abba_a2.sh
+      - name: Upload emulator runtime receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: roadprints-a2-abba-evidence
+          path: |
+            ${{ runner.temp }}/a2-abba-*.log
+            ${{ runner.temp }}/a2-abba-*.json
+            ${{ runner.temp }}/a2-abba-*-meminfo.txt
+            ${{ runner.temp }}/a2-abba-*-am-start.log
+          if-no-files-found: ignore

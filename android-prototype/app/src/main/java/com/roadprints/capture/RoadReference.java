@@ -63,13 +63,46 @@ final class RoadReference implements AutoCloseable {
         index = read(INDEX_START, count * ENTRY_BYTES);
     }
 
+    /**
+     * Cheap indexed-tile presence check, without decoding reference road geometry.
+     * The packaging rectangle is NOT a national boundary: Calais lies within
+     * it but has no UK source tile. Safe for overseas display classification.
+     */
+    boolean hasIndexedTileAt(double longitude, double latitude) {
+        if (!Double.isFinite(longitude) || !Double.isFinite(latitude)
+                || longitude < WEST || longitude > EAST
+                || latitude < SOUTH || latitude > NORTH) return false;
+        int x = tile(longitude), y = tile(latitude);
+        int low = 0, high = index.capacity() / ENTRY_BYTES - 1;
+        while (low <= high) {
+            int middle = (low + high) >>> 1, offset = middle * ENTRY_BYTES;
+            int compare = Integer.compare(x, index.getInt(offset));
+            if (compare == 0) compare = Integer.compare(y, index.getInt(offset + 4));
+            if (compare == 0) return true;
+            if (compare < 0) high = middle - 1;
+            else low = middle + 1;
+        }
+        return false;
+    }
+
     Set<LocalRoadNetwork.Edge> nearby(double ax, double ay, double bx, double by) throws IOException {
-        nearbyQueries++;
         Set<LocalRoadNetwork.Edge> edges = new HashSet<>();
+        collectNearby(ax, ay, bx, by, edges);
+        return edges;
+    }
+
+    /**
+     * Scratch collection is owned by the caller for one serial route projection.
+     * It is cleared before each leg; no result references escape the matcher.
+     */
+    void collectNearby(double ax, double ay, double bx, double by,
+                       Set<LocalRoadNetwork.Edge> edges) throws IOException {
+        edges.clear();
+        nearbyQueries++;
         int left = tile(Math.min(ax, bx)), right = tile(Math.max(ax, bx));
         int bottom = tile(Math.min(ay, by)), top = tile(Math.max(ay, by));
         if (left < tile(WEST) || right > tile(EAST) || bottom < tile(SOUTH) || top > tile(NORTH))
-            return edges;
+            return;
         // Construct projected endpoints once and collect directly into the same
         // deduplicated set; do not create a temporary HashSet per intersected tile.
         LocalRoadNetwork.Point first = point(ax, ay), last = point(bx, by);
@@ -80,7 +113,6 @@ final class RoadReference implements AutoCloseable {
             }
         }
         candidateEdges += edges.size();
-        return edges;
     }
 
     static LocalRoadNetwork.Point point(double lon, double lat) {

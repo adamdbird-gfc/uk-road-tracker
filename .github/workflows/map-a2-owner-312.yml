@@ -1,0 +1,186 @@
+name: Roadprints Build 312 signed unified Map owner test
+on:
+  push:
+    branches: [feat/workstream-a2-progressive-map]
+    paths:
+      - .github/workflows/map-a2-owner-312.yml
+      - scripts/check_map_a2_owner_upgrade_312.sh
+      - scripts/generate_dense_map_fixture_a2.py
+permissions:
+  contents: write
+concurrency:
+  group: roadprints-a2-owner312-release
+  cancel-in-progress: false
+jobs:
+  compare-runtime:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: adamdbird-gfc/uk-road-tracker
+      JAVA_TOOL_OPTIONS: -XX:TieredStopAtLevel=1 -XX:ReservedCodeCacheSize=256m
+      TAG: roadprints-0.25.266-312
+      APK: Roadprints-0.25.266-312.apk
+      TESTED_SHA: 3da9749f2ee9ae7c7ae4ccca53e4fb0020cf144c
+      CERT_SHA256: 5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - name: Verify previously passing code, coverage and unchanged source
+        run: |
+          set -euo pipefail
+          for run in 44636480797 44636480839 44636480826; do
+            test "$(gh api "repos/$GH_REPO/actions/runs/$run" --jq .conclusion)" = success
+            test "$(gh api "repos/$GH_REPO/actions/runs/$run" --jq .head_sha)" = "$TESTED_SHA"
+          done
+          git diff --quiet "$TESTED_SHA" "$GITHUB_SHA" -- android-prototype scripts/check_map_scaled_a2.sh scripts/generate_dense_map_fixture_a2.py scripts/check_map_worldwide_runtime_359.sh
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::error::Already published: refusing to overwrite owner APK"
+            exit 1
+          fi
+      - name: Restore reference assets from accepted signed Build 311
+        run: |
+          set -euo pipefail
+          gh release download roadprints-0.25.265-311 --pattern Roadprints-0.25.265-311.apk --output "$RUNNER_TEMP/roadprints311.apk"
+          cp "$RUNNER_TEMP/roadprints311.apk" "$RUNNER_TEMP/build311.apk"
+          assets=android-prototype/app/src/main/assets
+          for asset in historic-counties/boundaries.bin railway/national.json railway/national.sqlite.gzip uk-road-reference-v1.bin; do
+            unzip -p "$RUNNER_TEMP/roadprints311.apk" "assets/$asset" > "$assets/$asset"
+          done
+          cp "$assets/uk-road-reference-v1.bin" "$RUNNER_TEMP/uk-road-reference-v3.bin"
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.10'
+      - name: Use bounded immutable road fixture for Robolectric JVM tests
+        run: |
+          set -euo pipefail
+          cp android-prototype/app/src/main/assets/uk-road-reference-v1.bin "$RUNNER_TEMP/full-uk-road-reference.bin"
+          python3 - <<'PY'
+          import os, pathlib,struct
+          original=pathlib.Path(os.environ["RUNNER_TEMP"])/"full-uk-road-reference.bin"
+          target=pathlib.Path("android-prototype/app/src/main/assets/uk-road-reference-v1.bin")
+          with original.open("rb") as stream:
+            header=stream.read(40)
+            assert header[:8]==b"RPRD0003"
+            count,=struct.unpack(">i",stream.read(4))
+            index=list(struct.iter_unpack(">iiii",stream.read(count*16)))
+            rows=[e for e in index if 17<=e[0]<=20 and 2570<=e[1]<=2573]
+            assert rows,"Bounded UK JVM reference has no usable road tiles"
+            with target.open("wb") as output:
+              output.write(header+struct.pack(">i",len(rows)))
+              offset=44+16*len(rows)
+              for x,y,_,size in rows:
+                output.write(struct.pack(">iiii",x,y,offset,size));offset+=size
+              for _,_,source,size in rows:
+                stream.seek(source)
+                block=stream.read(size)
+                assert len(block)==size
+                output.write(block)
+          PY
+      - name: Re-run canonical Map and route regression gate
+        run: |
+          set -euo pipefail
+          gradle --no-daemon -p android-prototype -Pandroid.builder.sdkDownload=false :app:testDebugUnitTest             --tests com.roadprints.capture.CanonicalPreviewIndexTest             --tests com.roadprints.capture.MapCoverageBatchGateTest             --tests com.roadprints.capture.MapActivityOverviewCoverageTest             --tests com.roadprints.capture.LocalRoadCoverageTest             --tests com.roadprints.capture.AcceptedRoadRouteTest             --tests com.roadprints.capture.CanonicalRoadAttributionTest             --tests com.roadprints.capture.RoadCandidateCollectionTest             --tests com.roadprints.capture.OverviewJourneyScopeTest             --tests com.roadprints.capture.OverseasMatchedGeometryTest             --tests com.roadprints.capture.FootpathResidualGeometryTest             --tests com.roadprints.capture.MatchedCorridorAccumulatorTest             --tests com.roadprints.capture.MatchedCorridorIntervalUnionTest
+      - name: Restore full unchanged national road reference for signed APK
+        run: |
+          set -euo pipefail
+          cp "$RUNNER_TEMP/full-uk-road-reference.bin" android-prototype/app/src/main/assets/uk-road-reference-v1.bin
+      - name: Build 312 APK with current owner signing identity
+        env:
+          ROADPRINTS_DEBUG_KEYSTORE_B64: ${{ secrets.ROADPRINTS_DEBUG_KEYSTORE_B64 }}
+          ROADPRINTS_DEBUG_STORE_PASSWORD: ${{ secrets.ROADPRINTS_DEBUG_STORE_PASSWORD }}
+          ROADPRINTS_DEBUG_KEY_ALIAS: ${{ secrets.ROADPRINTS_DEBUG_KEY_ALIAS }}
+          ROADPRINTS_DEBUG_KEY_PASSWORD: ${{ secrets.ROADPRINTS_DEBUG_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$ROADPRINTS_DEBUG_KEYSTORE_B64"
+          test -n "$ROADPRINTS_DEBUG_STORE_PASSWORD"
+          test -n "$ROADPRINTS_DEBUG_KEY_ALIAS"
+          test -n "$ROADPRINTS_DEBUG_KEY_PASSWORD"
+          export ROADPRINTS_DEBUG_KEYSTORE="$RUNNER_TEMP/a2-owner.keystore"
+          trap 'rm -f "$ROADPRINTS_DEBUG_KEYSTORE"' EXIT
+          umask 077
+          printf '%s' "$ROADPRINTS_DEBUG_KEYSTORE_B64" | base64 --decode > "$ROADPRINTS_DEBUG_KEYSTORE"
+          unset ROADPRINTS_DEBUG_KEYSTORE_B64
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("android-prototype/app/build.gradle.kts")
+          s=p.read_text()
+          assert s.count("versionCode = 310")==1
+          assert s.count('versionName = "0.25.264"')==1
+          p.write_text(s.replace("versionCode = 310","versionCode = 312").replace('versionName = "0.25.264"','versionName = "0.25.266"'))
+          PY
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:assembleDebug
+          cp android-prototype/app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/roadprints-a2-runtime.apk"
+          cp "$RUNNER_TEMP/roadprints-a2-runtime.apk" "$RUNNER_TEMP/$APK"
+          signer=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -n 1)
+          "$signer" verify --print-certs "$RUNNER_TEMP/roadprints311.apk" | grep -F "certificate SHA-256 digest: $CERT_SHA256"
+          "$signer" verify --print-certs "$RUNNER_TEMP/roadprints-a2-runtime.apk" | grep -F "certificate SHA-256 digest: $CERT_SHA256"
+          "${signer%/*}/aapt" dump badging "$RUNNER_TEMP/roadprints-a2-runtime.apk" | grep -F "package: name='com.roadprints.capture' versionCode='312' versionName='0.25.266'"
+          python3 - <<'PY'
+          import hashlib,os,zipfile
+          a=os.path.join(os.environ["RUNNER_TEMP"],"roadprints311.apk")
+          b=os.path.join(os.environ["RUNNER_TEMP"],"roadprints-a2-runtime.apk")
+          with zipfile.ZipFile(a) as old,zipfile.ZipFile(b) as new:
+           for item in ("uk-road-reference-v1.bin","railway/national.sqlite.gzip","railway/national.json","historic-counties/boundaries.bin"):
+            p="assets/"+item
+            assert hashlib.sha256(old.read(p)).digest()==hashlib.sha256(new.read(p)).digest(),p
+          PY
+      - name: Enable Android emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Confirm 311-to-312 in-place upgrade with 1675-record archive
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          heap-size: 256M
+          disable-animations: true
+          script: bash scripts/check_map_a2_owner_upgrade_312.sh
+      - name: Upload emulator runtime receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: roadprints-a2-owner312-release-evidence
+          path: |
+            ${{ runner.temp }}/mixed-mode-map.log
+            ${{ runner.temp }}/mixed-mode-final.log
+            ${{ runner.temp }}/mixed-mode-package.txt
+          if-no-files-found: ignore
+
+      - name: Publish signed integrated in-place owner APK only after all checks
+        run: |
+          set -euo pipefail
+          current=$(gh api "repos/$GH_REPO/git/ref/heads/${GITHUB_REF_NAME}" --jq .object.sha)
+          test "$current" = "$GITHUB_SHA"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::error::Owner APK already published, refusing overwrite"
+            exit 1
+          fi
+          sha256sum "$RUNNER_TEMP/$APK" > "$RUNNER_TEMP/$APK.sha256"
+          cat > "$RUNNER_TEMP/a2-owner-notes.md" <<'NOTES'
+          Roadprints 0.25.266 (312): unified cumulative Map owner test.
+
+          Install over Build 311, do not uninstall. The APK retains the same
+          package and signing certificate, preserving existing journeys, GPS,
+          manual corrections, mileage, achievements and preferences.
+
+          The road-fact loading card remains unchanged. Accepted corrected walking, running, driving, cycling, international matched paths and historical ferry overlays share the one Map. Canonical UK roads
+          are drawn progressively behind it. Drawing is limited to 2 MiB
+          estimated preview storage and automatically degrades under heap
+          pressure; final Map attribution remains authoritative.
+
+          Android 35 emulator, 1,726-journey worldwide synthetic reconciliation, A2 ABBA memory/GC and focused Android regression gates passed.
+          This release has NOT been validated against the full Pixel 10
+          Android 17 owner archive. Report performance diagnostics and any
+          ANR, crashes, preview behaviour or missing roads.
+          NOTES
+          gh release create "$TAG" "$RUNNER_TEMP/$APK" "$RUNNER_TEMP/$APK.sha256"             --target "$GITHUB_SHA" --prerelease --latest=false             --title "Roadprints 0.25.266 (312) — Unified cumulative Map owner test"             --notes-file "$RUNNER_TEMP/a2-owner-notes.md"
+          echo "Direct owner APK: https://github.com/$GH_REPO/releases/download/$TAG/$APK" >> "$GITHUB_STEP_SUMMARY"
+          echo "SHA-256: $(cut -d' ' -f1 "$RUNNER_TEMP/$APK.sha256")" >> "$GITHUB_STEP_SUMMARY"

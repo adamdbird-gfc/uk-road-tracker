@@ -33,6 +33,22 @@ final class LocalRoadCoverage implements AutoCloseable {
     private final java.io.FileInputStream referenceStream;
     private final CompactJourneyCache cache;
     private final Map<Edge, Map<String, int[]>> contributors = new LinkedHashMap<>();
+    // Network-identified change journal: one pending entry per physical edge,
+    // never one retained polyline per historical journey.
+    private final java.util.LinkedHashSet<Edge> changedEdges = new java.util.LinkedHashSet<>();
+    private static final int MAX_CHANGED_EDGES = 4_096;
+    private boolean incrementalTracking;
+    private boolean deltaOverflow;
+    private long changeRevision;
+
+    /** Opt-in only: ordinary map loads must not retain another edge index. */
+    void enableIncrementalTracking() {
+        incrementalTracking = true;
+        deltaOverflow = false;
+        changedEdges.clear();
+    }
+
+    boolean deltaOverflowed() { return deltaOverflow; }
     private int intervalCount;
     int reused, calculated, held;
     private final Map<String, Integer> failureCounts = new LinkedHashMap<>();
@@ -72,6 +88,12 @@ final class LocalRoadCoverage implements AutoCloseable {
     final Map<String, Integer> footUnresolvedLegReasons = new LinkedHashMap<>();
     long footUnresolvedMm, footMajorOrOtherMm;
     int footMajorIntervals;
+    int footResidualLines, footResidualHeldNear, footResidualHeldLong, footResidualTruncated;
+
+    /** Reuse the already-open UK index; never decode a tile to classify a journey. */
+    boolean hasUkReferenceTile(double longitude, double latitude) {
+        return reference.hasIndexedTileAt(longitude, latitude);
+    }
 
     RoadReference.Statistics referenceStatistics() {
         return reference.statistics();
@@ -89,7 +111,9 @@ final class LocalRoadCoverage implements AutoCloseable {
             // breakdown. Reassess only on-foot rows to learn why saved paths
             // remain invisible; do not invalidate the 660 driving contributions.
             if (JourneyFilters.isFootMode(record.header.optString("mode"))
-                    && (!row.has("unresolvedLegs") || !row.has("majorSpans")) && row.has("spans")) {
+                    && (!row.has("unresolvedLegs") || !row.has("majorSpans")
+                            || row.optInt("footResidualVersion", 0) < FootpathResidualGeometry.VERSION)
+                    && row.has("spans")) {
                 cache.invalidate(record.source);
                 refreshedLegacyFootRow = true;
                 row = cache.get(record.source, file -> readAcceptedContribution(reference, file));
@@ -179,6 +203,10 @@ final class LocalRoadCoverage implements AutoCloseable {
                 footUnresolvedMm += unresolved;
                 footMajorOrOtherMm += major;
                 footMajorIntervals += majorCount;
+                footResidualLines += residual.length();
+                footResidualHeldNear += row.optInt("footResidualHeldNear", 0);
+                footResidualHeldLong += row.optInt("footResidualHeldLong", 0);
+                if (row.optBoolean("footResidualTruncated", false)) footResidualTruncated++;
             }
             JSONObject reasons = row.optJSONObject("unresolvedLegs");
             if (reasons != null) {
@@ -320,13 +348,37 @@ final class LocalRoadCoverage implements AutoCloseable {
             for (Interval interval : section.getValue()) row.put(interval.start()).put(interval.end());
             majorSpans.put(row);
         }
-        // Only accepted and owner-retained physical intervals enter this derived cache.
-        return new JSONObject().put("spans", spans).put("intervals", count)
+        // Walking/running unresolved fragments are display-only evidence. The
+        // canonical road/NCN ledgers receive ONLY the proven spans above.
+        // Hold ambiguous and adjoining road fragments instead of drawing a
+        // second physical road or claiming unverified completion.
+        boolean onFoot = JourneyFilters.isFootMode(journey.optString("mode", ""));
+        FootpathResidualGeometry.Projection footResidual = null;
+        if (onFoot && !projection.residual().isEmpty()) {
+            Set<Edge> nearby = new java.util.HashSet<>();
+            footResidual = FootpathResidualGeometry.extract(projection.residual(),
+                    (ax, ay, bx, by) -> {
+                        double longitude = (ax + bx) / 2, latitude = (ay + by) / 2;
+                        // No UK tile: this belongs to the existing international
+                        // fallback instead. Do not double-render it as a UK path.
+                        if (!reference.hasIndexedTileAt(longitude, latitude)) return true;
+                        reference.collectNearby(ax, ay, bx, by, nearby);
+                        return !nearby.isEmpty();
+                    });
+        }
+        JSONObject cached = new JSONObject().put("spans", spans).put("intervals", count)
                 .put("majorSpans", majorSpans).put("majorIntervals", majorCount)
-                .put("residual", new JSONArray())
+                .put("residual", footResidual == null ? new JSONArray() : footResidual.lines())
                 .put("unresolvedMm", projection.unresolvedMm()).put("excludedMm", projection.excludedMm())
                 .put("majorOrOtherMm", projection.majorOrOtherMm())
                 .put("unresolvedLegs", new JSONObject(projection.unresolvedLegs()));
+        if (onFoot) {
+            cached.put("footResidualVersion", FootpathResidualGeometry.VERSION);
+            cached.put("footResidualTruncated", footResidual != null && footResidual.truncated());
+            cached.put("footResidualHeldNear", footResidual == null ? 0 : footResidual.heldNearby());
+            cached.put("footResidualHeldLong", footResidual == null ? 0 : footResidual.heldLong());
+        }
+        return cached;
         } catch (IllegalArgumentException limit) {
             if ("Matched route exceeds per-journey interval limit".equals(limit.getMessage())
                     || "Accepted route exceeds interval limit".equals(limit.getMessage()))
@@ -446,9 +498,84 @@ final class LocalRoadCoverage implements AutoCloseable {
         for (Map.Entry<Edge, List<Interval>> section : contribution.entrySet()) {
             Map<String, int[]> history = contributors.computeIfAbsent(section.getKey(),
                     ignored -> new LinkedHashMap<>());
-            int[] previous = history.put(journeyId, endpoints(section.getValue()));
+            int[] next = endpoints(section.getValue());
+            int[] previous = history.put(journeyId, next);
             intervalCount += section.getValue().size() - (previous == null ? 0 : previous.length / 2);
+            if (!java.util.Arrays.equals(previous, next)) {
+                changeRevision++;
+                if (incrementalTracking && !deltaOverflow) {
+                    changedEdges.add(section.getKey());
+                    if (changedEdges.size() > MAX_CHANGED_EDGES) {
+                        // Safety fallback: never let preview bookkeeping compete
+                        // with authoritative journey/road accumulation.
+                        deltaOverflow = true;
+                        changedEdges.clear();
+                    }
+                }
+            }
         }
+    }
+
+    /** Monotonic revision of accepted canonical-edge contribution changes. */
+    long changeRevision() { return changeRevision; }
+
+    int pendingChangedEdges() { return changedEdges.size(); }
+
+    /**
+     * Read at most max distinct changed canonical edges. Each immutable
+     * section is reconstructed from the CURRENT accumulated contribution
+     * history, never from raw GPS/individual journey polylines. Revisiting a
+     * physical edge coalesces its pending change instead of appending a
+     * duplicate. The caller must replace an earlier preview for the same
+     * section id; these deltas are not append-only.
+     *
+     * Only call from the serial archive worker; this journal is not thread-safe.
+     */
+    List<Section> drainChangedSections(int max) throws Exception {
+        if (!incrementalTracking || deltaOverflow || max <= 0 || changedEdges.isEmpty())
+            return java.util.Collections.emptyList();
+        List<Section> result = new ArrayList<>(Math.min(max, changedEdges.size()));
+        java.util.Iterator<Edge> cursor = changedEdges.iterator();
+        while (cursor.hasNext() && result.size() < max) {
+            if (Thread.currentThread().isInterrupted()) throw new CancellationException();
+            Edge edge = cursor.next();
+            Map<String, int[]> current = contributors.get(edge);
+            if (current == null) { cursor.remove(); continue; }
+            // Copy mutable ledger arrays so the published Section cannot acquire
+            // later contributions via a reference to the working accumulator.
+            Map<String, int[]> snapshot = new LinkedHashMap<>();
+            for (Map.Entry<String, int[]> row : current.entrySet())
+                snapshot.put(row.getKey(), row.getValue().clone());
+            Section section = new Section(edge.id(), edge.label, edge.mm,
+                    new JSONArray().put(ukLongitude(edge.a)).put(ukLatitude(edge.a)),
+                    new JSONArray().put(ukLongitude(edge.b)).put(ukLatitude(edge.b)), snapshot);
+            result.add(section);
+            cursor.remove();
+        }
+        return result;
+    }
+
+    /**
+     * Drain compact, immutable draw-only canonical coverage updates.
+     * Unlike drainChangedSections(), this does NOT copy journey IDs, JSON,
+     * Section instances or per-journey interval arrays into the UI pipeline.
+     * Serial archive worker only; no concurrent contributor mutations.
+     */
+    List<CanonicalPreviewGeometry> drainChangedPreview(int max) {
+        if (!incrementalTracking || deltaOverflow || max <= 0 || changedEdges.isEmpty())
+            return java.util.Collections.emptyList();
+        List<CanonicalPreviewGeometry> result =
+                new ArrayList<>(Math.min(max, changedEdges.size()));
+        java.util.Iterator<Edge> cursor = changedEdges.iterator();
+        while (cursor.hasNext() && result.size() < max) {
+            if (Thread.currentThread().isInterrupted()) throw new CancellationException();
+            Edge edge = cursor.next();
+            Map<String, int[]> current = contributors.get(edge);
+            if (current != null)
+                result.add(CanonicalPreviewGeometry.from(edge, current));
+            cursor.remove();
+        }
+        return result;
     }
 
     static int[] endpoints(List<Interval> intervals) {
@@ -522,6 +649,30 @@ final class LocalRoadCoverage implements AutoCloseable {
             double fraction = (last ? interval.end() : interval.start()) / (double) section.length;
             double first = section.first.optDouble(1);
             return first + (section.last.optDouble(1) - first) * fraction;
+        }
+
+        /**
+         * Total accepted traversal distance across the displayed physical
+         * interval for journeys contributing at this precise tap location.
+         * Repeated walks count towards travel distance, never extra unique
+         * physical coverage. No original journey geometry is consulted.
+         */
+        long contributorMillimetresAt(double fraction) {
+            int offset = interval.start() + (int) Math.round(fraction * (interval.end() - interval.start()));
+            long total = 0;
+            for (int[] endpoints : section.history.values()) {
+                boolean contributesHere = false;
+                for (int i = 0; i < endpoints.length; i += 2)
+                    if (endpoints[i] <= offset && offset <= endpoints[i + 1]) {
+                        contributesHere = true;
+                        break;
+                    }
+                if (!contributesHere) continue;
+                for (int i = 0; i < endpoints.length; i += 2)
+                    total += Math.max(0, Math.min(interval.end(), endpoints[i + 1])
+                            - Math.max(interval.start(), endpoints[i]));
+            }
+            return total;
         }
 
         List<String> contributors(double fraction) {

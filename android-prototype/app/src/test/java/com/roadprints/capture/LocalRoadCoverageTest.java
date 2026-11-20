@@ -33,6 +33,100 @@ public class LocalRoadCoverageTest {
     private static final String END = "2026-11-15T12:10:00Z";
     private static final long TIME = Instant.parse(START).toEpochMilli();
 
+    @Test public void leanPreviewMatchesCanonicalUnionAndNeverRetainsHistory()
+            throws Exception {
+        try (LocalRoadCoverage coverage = LocalRoadCoverage.open(RuntimeEnvironment.getApplication())) {
+            assertNotNull(coverage);
+            coverage.enableIncrementalTracking();
+            Edge edge = new Edge(991L, 1501L, 1502L, "Memory fixture",
+                    RoadReference.point(0.375, 51.44), RoadReference.point(0.377, 51.44),
+                    null, true, 100_000, -1);
+            coverage.add("one", Map.of(edge, List.of(new Interval(0, 40_000))));
+            coverage.add("two", Map.of(edge, List.of(new Interval(30_000, 65_000))));
+            coverage.add("three", Map.of(edge, List.of(new Interval(70_000, 100_000))));
+            assertEquals(1, coverage.pendingChangedEdges());
+            CanonicalPreviewGeometry projected = coverage.drainChangedPreview(32).get(0);
+            assertEquals(edge.id(), projected.id);
+            assertEquals(2, projected.lineCount());
+            assertEquals(0, coverage.pendingChangedEdges());
+
+            // Compare both normalized Web Mercator endpoints against the
+            // authoritative union renderer, not against raw journey legs.
+            LocalRoadCoverage.Section canonical = coverage.sections().stream()
+                    .filter(section -> section.id.equals(edge.id())).findFirst().orElseThrow();
+            assertEquals(2, canonical.lines.size());
+            double[] preview = projected.projectionForTest();
+            for (int i = 0; i < canonical.lines.size(); i++)
+                for (int endpoint = 0; endpoint < 2; endpoint++) {
+                    LocalRoadCoverage.Line line = canonical.lines.get(i);
+                    double lon = line.longitude(endpoint == 1);
+                    double lat = line.latitude(endpoint == 1);
+                    assertEquals((lon + 180) / 360.0, preview[i * 4 + endpoint * 2], 1e-12);
+                    assertEquals(.5 - MapRenderGeometry.y(lat) / (2 * Math.PI * 6378137),
+                            preview[i * 4 + endpoint * 2 + 1], 1e-12);
+                }
+            coverage.add("four", Map.of(edge, List.of(new Interval(60_000, 80_000))));
+            CanonicalPreviewGeometry replacement = coverage.drainChangedPreview(32).get(0);
+            assertEquals(edge.id(), replacement.id);
+            assertEquals(1, replacement.lineCount());
+            assertEquals(2, projected.lineCount());
+        }
+    }
+
+    @Test public void canonicalDeltaCoalescesRepeatedEdgeAndPreservesEarlierSnapshot()
+            throws Exception {
+        Context context = RuntimeEnvironment.getApplication();
+        try (LocalRoadCoverage coverage = LocalRoadCoverage.open(context)) {
+            assertNotNull(coverage);
+            coverage.enableIncrementalTracking();
+            Edge edge = new Edge(901L, 1001L, 1002L, "Fixture Lane",
+                    new Point(0, 0), new Point(100, 0),
+                    null, true, 100_000, -1);
+            coverage.add("journey-one",
+                    Map.of(edge, List.of(new Interval(0, 25_000))));
+            assertEquals(1, coverage.pendingChangedEdges());
+            assertEquals(1, coverage.changeRevision());
+            LocalRoadCoverage.Section first = coverage.drainChangedSections(1).get(0);
+            assertEquals(25_000L, first.uniqueMillimetres);
+            assertEquals(0, coverage.pendingChangedEdges());
+
+            coverage.add("journey-two",
+                    Map.of(edge, List.of(new Interval(20_000, 70_000))));
+            coverage.add("journey-three",
+                    Map.of(edge, List.of(new Interval(65_000, 90_000))));
+            assertEquals("One physical edge, not one preview per journey",
+                    1, coverage.pendingChangedEdges());
+            List<LocalRoadCoverage.Section> updates = coverage.drainChangedSections(1);
+            assertEquals(1, updates.size());
+            assertEquals(first.id, updates.get(0).id);
+            assertEquals(90_000L, updates.get(0).uniqueMillimetres);
+            assertEquals("Published snapshots must never mutate after later journeys",
+                    25_000L, first.uniqueMillimetres);
+            assertEquals(1, first.history.size());
+            assertEquals(3, updates.get(0).history.size());
+            assertTrue(coverage.drainChangedSections(1).isEmpty());
+        }
+    }
+
+    @Test public void unchangedContributionDoesNotPublishDuplicateDelta() throws Exception {
+        try (LocalRoadCoverage coverage = LocalRoadCoverage.open(RuntimeEnvironment.getApplication())) {
+            assertNotNull(coverage);
+            coverage.enableIncrementalTracking();
+            Edge edge = new Edge(902L, 2001L, 2002L, "Fixture Lane",
+                    new Point(0, 0), new Point(100, 0),
+                    null, true, 100_000, -1);
+            Map<Edge, List<Interval>> intervals =
+                    Map.of(edge, List.of(new Interval(10_000, 20_000)));
+            coverage.add("same-journey", intervals);
+            assertEquals(1, coverage.drainChangedSections(1).size());
+            long revision = coverage.changeRevision();
+            coverage.add("same-journey", intervals);
+            assertEquals(revision, coverage.changeRevision());
+            assertEquals(0, coverage.pendingChangedEdges());
+            assertTrue(coverage.drainChangedSections(0).isEmpty());
+        }
+    }
+
     @Test public void ineligibleGeometryIsPersistedAsHeldWithoutGrantingPhysicalCoverage()
             throws Exception {
         Context context = RuntimeEnvironment.getApplication();
@@ -248,6 +342,55 @@ public class LocalRoadCoverageTest {
         assertEquals(1, repeated.lines.size());
         assertTrue(repeated.lines.get(0).contributors(.5).contains("walk-3-to-6"));
         assertTrue(repeated.lines.get(0).contributors(.5).contains("run-3-to-6"));
+    }
+
+    @Test public void walkingRunningAndDrivingShareOneCanonicalLineButKeepTapHistory()
+            throws Exception {
+        LocalRoadNetwork network = new LocalRoadNetwork(0, 0, 1, 1);
+        Edge street = new Edge(951, 151, 152, "Shared lane",
+                new Point(20, 20), new Point(120, 20), null, true, 100_000, -1);
+        network.add(street);
+        Map<String, List<Interval>> trips = new LinkedHashMap<>();
+        trips.put("walk-morning", List.of(new Interval(0, 80_000)));
+        trips.put("run-evening", List.of(new Interval(20_000, 100_000)));
+        trips.put("drive-home", List.of(new Interval(0, 100_000)));
+        LocalRoadCoverage.Section first = section(network, street, trips);
+        assertEquals(1, first.lines.size());
+        assertEquals(100_000L, first.uniqueMillimetres);
+        LocalRoadCoverage.Line line = first.lines.get(0);
+        assertEquals(Set.of("walk-morning", "run-evening", "drive-home"),
+                Set.copyOf(line.contributors(.5)));
+        assertEquals("Three accepted travels, not three copies of the street",
+                260_000L, line.contributorMillimetresAt(.5));
+
+        // A source edit removes the whole formerly accepted run segment.
+        trips.remove("run-evening");
+        LocalRoadCoverage.Section corrected = section(network, street, trips);
+        assertEquals(1, corrected.lines.size());
+        assertEquals(100_000L, corrected.uniqueMillimetres);
+        assertEquals(Set.of("walk-morning", "drive-home"),
+                Set.copyOf(corrected.lines.get(0).contributors(.5)));
+        assertEquals(180_000L, corrected.lines.get(0).contributorMillimetresAt(.5));
+        assertEquals(3, first.lines.get(0).contributors(.5).size());
+    }
+
+    @Test public void nearbyDistinctFootpathNeverMergesIntoDrivenStreet() throws Exception {
+        LocalRoadNetwork network = new LocalRoadNetwork(0, 0, 1, 1);
+        Edge street = new Edge(952, 161, 162, "Strand",
+                new Point(20, 20), new Point(120, 20), null, true, 100_000, -1);
+        Edge promenade = new Edge(953, 171, 172, "Promenade",
+                new Point(20, 25), new Point(120, 25), null, true, 100_000, -1);
+        network.add(street);
+        network.add(promenade);
+        Map<String, List<Interval>> roadTrips = new LinkedHashMap<>();
+        roadTrips.put("drive-road", List.of(new Interval(0, 100_000)));
+        Map<String, List<Interval>> footTrips = new LinkedHashMap<>();
+        footTrips.put("walk-promenade", List.of(new Interval(0, 100_000)));
+        LocalRoadCoverage.Section driven = section(network, street, roadTrips);
+        LocalRoadCoverage.Section walked = section(network, promenade, footTrips);
+        assertNotEquals(driven.id, walked.id);
+        assertEquals(Set.of("drive-road"), Set.copyOf(driven.lines.get(0).contributors(.5)));
+        assertEquals(Set.of("walk-promenade"), Set.copyOf(walked.lines.get(0).contributors(.5)));
     }
 
     @Test public void matchedRouteCoverageEligibilityIsIndependentOfTravelMode() {

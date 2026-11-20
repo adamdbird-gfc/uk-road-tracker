@@ -352,11 +352,41 @@ public class RoutePreviewView extends View {
     }
 
     private LocalRoadLayer localRoadLayer;
+    // UI-owned, read-only during drawing. No per-journey raw polylines.
+    // The preview uses a strict ~2MiB conservative geometry/index budget.
+    // It is disposable and never retains attribution history or GPS tracks.
+    private final CanonicalPreviewIndex<CanonicalPreviewGeometry> progressiveLocalRoadLayers =
+            new CanonicalPreviewIndex<>(8_192, 16_384, 2 * 1024 * 1024);
+    void clearProgressiveLocalRoadLayers() {
+        progressiveLocalRoadLayers.clear();
+        invalidate();
+    }
+    void replaceProgressiveLocalRoadSections(
+            java.util.List<CanonicalPreviewGeometry> replacements) {
+        boolean changed = false;
+        for (CanonicalPreviewGeometry section : replacements) {
+            if (progressiveLocalRoadLayers.replace(section.id, section, section.lineCount()))
+                changed = true;
+        }
+        if (changed) {
+            localRoadPaint.setColor(MapLayerPreferences.LOCAL_ROAD_COLOR);
+            localRoadPaint.setStyle(Paint.Style.STROKE);
+            localRoadPaint.setStrokeWidth(dp(4));
+            localRoadPaint.setStrokeCap(Paint.Cap.BUTT);
+            coordinatesValid = true;
+            invalidate();
+        }
+    }
+    int progressivePreviewSections() { return progressiveLocalRoadLayers.sectionCount(); }
+    int progressivePreviewLines() { return progressiveLocalRoadLayers.lineCount(); }
+    int progressivePreviewEstimatedBytes() { return progressiveLocalRoadLayers.estimatedBytes(); }
+    int progressivePreviewRejectedUpdates() { return progressiveLocalRoadLayers.rejectedUpdates(); }
     private final float[] localRoadBatch = new float[4096];
     private final Paint localRoadPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final List<JSONArray> ferrySegments=new ArrayList<>();
     private final Paint ferryPaint=new Paint(Paint.ANTI_ALIAS_FLAG);
     void setLocalRoadLayer(LocalRoadLayer layer) {
+        progressiveLocalRoadLayers.clear();
         localRoadLayer = layer;
         localRoadPaint.setColor(MapLayerPreferences.LOCAL_ROAD_COLOR);
         localRoadPaint.setStyle(Paint.Style.STROKE);
@@ -759,12 +789,21 @@ public class RoutePreviewView extends View {
                 drawRoute(canvas, coordinates, routePaint,
                         flatRoadMapStyle ? null : routeHaloPaint);
             }
-            if (travelVisible && localRoadLayer != null && !localRoadLayer.isEmpty()) {
+            if (travelVisible && ((localRoadLayer != null && !localRoadLayer.isEmpty())
+                    || progressiveLocalRoadLayers.sectionCount() != 0)) {
                 double world = mapTileSize() * Math.pow(2.0, cameraZoom);
-                localRoadLayer.draw(canvas, localRoadPaint,
-                        getWidth() / 2.0 - longitudeToUnitX(centerLongitude) * world,
-                        getHeight() / 2.0 - latitudeToUnitY(centerLatitude) * world,
-                        world, getWidth(), getHeight(), localRoadBatch);
+                double xOffset = getWidth() / 2.0 - longitudeToUnitX(centerLongitude) * world;
+                double yOffset = getHeight() / 2.0 - latitudeToUnitY(centerLatitude) * world;
+                if (localRoadLayer != null && !localRoadLayer.isEmpty())
+                    localRoadLayer.draw(canvas, localRoadPaint, xOffset, yOffset,
+                            world, getWidth(), getHeight(), localRoadBatch);
+                int previewBatchFloats = 0;
+                for (CanonicalPreviewGeometry chunk : progressiveLocalRoadLayers.layers())
+                    previewBatchFloats = chunk.appendVisibleLines(canvas, localRoadPaint,
+                            xOffset, yOffset, world, getWidth(), getHeight(),
+                            localRoadBatch, previewBatchFloats);
+                if (previewBatchFloats != 0)
+                    canvas.drawLines(localRoadBatch, 0, previewBatchFloats, localRoadPaint);
             }
             if (remainingVisible) {
                 drawRoadLayer(canvas, incompleteMotorwaySegments, motorwayIncompletePaint);
