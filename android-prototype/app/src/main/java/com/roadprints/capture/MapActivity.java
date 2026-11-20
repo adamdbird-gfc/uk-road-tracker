@@ -1120,6 +1120,8 @@ public class MapActivity extends Activity {
     private static final long MAP_SNAPSHOT_REVISION = 3_100L + BuildConfig.VERSION_CODE
             + Integer.toUnsignedLong(RoadReference.ALGORITHM.hashCode());
 
+    private record DeferredOverseasContribution(java.io.File source, String token, String journeyId) {}
+
     private record DeferredFootContribution(java.io.File source, String token, String journeyId,
             Map<LocalRoadNetwork.Edge, List<LocalRoadNetwork.Interval>> spans) {}
 
@@ -1181,6 +1183,8 @@ public class MapActivity extends Activity {
         final int[] overseasCounts = new int[5]; // scanned, cached, matched, lines, held
         final int[] overseasPoints = {0};
         final int[] overseasExcludedCount = {0};
+        final List<DeferredOverseasContribution> deferredOverseas = new ArrayList<>();
+        final int[] overseasRetry = new int[3]; // attempted, recovered, still held
         final int[] footFallbackCounts = new int[3]; // lines, points, held
         final Map<String, Integer> corridorDisplayIndices = new HashMap<>();
         PerformanceDiagnostics.ArchiveHeapSample heap = new PerformanceDiagnostics.ArchiveHeapSample();
@@ -1438,6 +1442,8 @@ public class MapActivity extends Activity {
                                         || value.optJSONArray("rows") == null
                                         || value.optJSONArray("rows").length() > 0 ? 1 : 0));
                         if (projection == null && projectionHeld[0]) {
+                            deferredOverseas.add(new DeferredOverseasContribution(
+                                    record.source, record.token, journey.optString("journey_id")));
                             overseasCounts[4]++;
                             output.internationalCoverageIncomplete = true;
                         }
@@ -1490,6 +1496,75 @@ public class MapActivity extends Activity {
         }
         publishProgressiveChangedRoads(local, counts[0],
                 scanPreviewGeneration, scanPreviewRevision);
+        // Bounded second chance for uncached accepted overseas fragments that
+        // could not be decoded during a high-pressure archive scan. The scan
+        // has released its per-row transient objects; retry before final
+        // canonical layer assembly pushes the heap back towards its limit.
+        for (DeferredOverseasContribution candidate : deferredOverseas) {
+            long available = Runtime.getRuntime().maxMemory()
+                    - (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
+            if (available < 64L * 1024L * 1024L) break;
+            if (!candidate.token().equals(JourneyStore.fileToken(candidate.source()))) continue;
+            overseasRetry[0]++;
+            try {
+                JSONObject projection = overseasCache.get(candidate.source(), file -> {
+                    if (!candidate.token().equals(JourneyStore.fileToken(file))) return null;
+                    JSONObject raw = JourneyStore.mapEvidence(getApplicationContext(), file, true);
+                    boolean[] truncated = {false};
+                    List<JSONArray> lines = OverseasMatchedGeometry.unsupportedFragments(
+                            matchedSegments(raw), 48, 350, local::hasUkReferenceTile, truncated);
+                    JSONArray rows = new JSONArray();
+                    for (JSONArray line : lines) {
+                        JSONArray simplified = projectMapRoute(line, 120);
+                        if (simplified != null)
+                            rows.put(new JSONObject().put("points", simplified)
+                                    .put("original", line.length()));
+                    }
+                    return new JSONObject().put("rows", rows).put("truncated", truncated[0]);
+                }, index -> index.optInt(0, 1) != 0,
+                        value -> new JSONArray().put(value.optBoolean("truncated", false)
+                                || value.optJSONArray("rows") == null
+                                || value.optJSONArray("rows").length() > 0 ? 1 : 0));
+                if (projection == null) continue;
+                JSONArray rows = projection.optJSONArray("rows");
+                if (rows == null) continue;
+                boolean addedOrReused = true;
+                for (int i = 0; i < rows.length(); i++) {
+                    JSONObject item = rows.optJSONObject(i);
+                    JSONArray points = item == null ? null : item.optJSONArray("points");
+                    if (points == null || points.length() < 2) continue;
+                    MatchedCorridorAccumulator.Result add = MatchedCorridorAccumulator.add(
+                            points, candidate.journeyId(), false,
+                            output.sections, output.corridorContributorIds,
+                            output.footResidualIndices, corridorDisplayIndices,
+                            500, 6_000, overseasCounts[3], overseasPoints[0]);
+                    if (add == MatchedCorridorAccumulator.Result.HELD) {
+                        addedOrReused = false;
+                        break;
+                    }
+                    if (add == MatchedCorridorAccumulator.Result.ADDED) {
+                        output.retainedPoints += points.length();
+                        overseasPoints[0] += points.length();
+                        overseasCounts[3]++;
+                    }
+                }
+                if (addedOrReused && !projection.optBoolean("truncated", false)) {
+                    overseasRetry[1]++;
+                    overseasCounts[4]--;
+                    if (rows.length() > 0) overseasCounts[2]++;
+                }
+            } catch (java.util.concurrent.CancellationException cancelled) {
+                throw cancelled;
+            } catch (Exception unsafe) {
+                // Keep the original hold; never turn a failed retry into credit.
+            }
+        }
+        overseasRetry[2] = overseasCounts[4];
+        output.internationalCoverageIncomplete = overseasCounts[4] > 0;
+        deferredOverseas.clear();
+        PerformanceDiagnostics.timing("map_international_retry", 0,
+                "attempted=" + overseasRetry[0] + " recovered=" + overseasRetry[1]
+                        + " held=" + overseasRetry[2]);
         mapGc.checkpoint("scan_end", counts[0], 0,
                 local == null ? 0 : local.pendingChangedEdges());
         if (local != null) {
