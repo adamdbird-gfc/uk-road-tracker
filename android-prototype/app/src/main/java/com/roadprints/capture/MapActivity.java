@@ -1401,13 +1401,16 @@ public class MapActivity extends Activity {
                 overseasCounts[0]++;
                     try {
                         int hitsBefore = overseasCache.hits;
-                        int skippedBefore = overseasCache.skipped;
+                        boolean[] projectionHeld = {false};
                         JSONObject projection = overseasCache.get(record.source, file -> {
                             long available = Runtime.getRuntime().maxMemory()
                                     - (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
                             // Cached empty UK rows and bounded worldwide rows are reusable
                             // even when a new full-journey decode would be unsafe.
-                            if (available < 48L * 1024L * 1024L) return null;
+                            if (available < 48L * 1024L * 1024L) {
+                                projectionHeld[0] = true;
+                                return null;
+                            }
                             JSONObject raw = record.raw();
                             // Some legacy map-v1 projections stored major-road
                             // summaries without the accepted route GeoJSON.
@@ -1434,7 +1437,7 @@ public class MapActivity extends Activity {
                                 value -> new JSONArray().put(value.optBoolean("truncated", false)
                                         || value.optJSONArray("rows") == null
                                         || value.optJSONArray("rows").length() > 0 ? 1 : 0));
-                        if (projection == null && overseasCache.skipped == skippedBefore) {
+                        if (projection == null && projectionHeld[0]) {
                             overseasCounts[4]++;
                             output.internationalCoverageIncomplete = true;
                         }
