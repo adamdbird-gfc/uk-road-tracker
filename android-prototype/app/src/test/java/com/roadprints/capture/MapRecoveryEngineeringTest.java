@@ -17,6 +17,84 @@ import static org.junit.Assert.*;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28)
 public class MapRecoveryEngineeringTest {
+    @Test public void legacyTruncationKeepsPreviouslyDisplayedFragmentsWhenRefreshIsDeferred() throws Exception {
+        Context app = RuntimeEnvironment.getApplication();
+        File source = new File(app.getCacheDir(), "recovery-legacy-overseas-partial.json");
+        Files.write(source.toPath(), "{}".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        String stale = "{\"rows\":[{\"points\":[[10,50],[10.001,50]],\"original\":2}],\"truncated\":true}";
+        try {
+            try (CompactJourneyCache old = new CompactJourneyCache(app, "map-overseas-v1")) {
+                old.get(source, file -> new JSONObject(stale),
+                        index -> true, row -> new JSONArray().put(1));
+            }
+            try (CompactJourneyCache upgraded = new CompactJourneyCache(app, "map-overseas-v1")) {
+                JSONObject held = MapActivity.acceptedOverseasProjection(upgraded, source,
+                        file -> null, false);
+                assertNotNull(held);
+                assertEquals(stale, held.toString());
+            }
+            try (CompactJourneyCache reopened = new CompactJourneyCache(app, "map-overseas-v1")) {
+                JSONObject recovered = MapActivity.acceptedOverseasProjection(reopened, source,
+                        file -> new JSONObject(stale), true);
+                assertNotNull(recovered);
+                assertEquals(2, recovered.getInt("projectionVersion"));
+                assertEquals(1, recovered.getJSONArray("rows").length());
+            }
+        } finally { source.delete(); }
+    }
+
+    @Test public void warmBuild313TruncationIsRefreshedAndRetainedOnNextOpen() throws Exception {
+        Context app = RuntimeEnvironment.getApplication();
+        File source = new File(app.getCacheDir(), "recovery-legacy-overseas-truncated.json");
+        Files.write(source.toPath(), "{\"source\":\"accepted\"}".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        try {
+            // Simulate the previous release's durable (unversioned) projection,
+            // which discarded the accepted prefix at the point limit.
+            try (CompactJourneyCache old = new CompactJourneyCache(app, "map-overseas-v1")) {
+                JSONObject stale = old.get(source, file -> new JSONObject()
+                        .put("rows", new JSONArray()).put("truncated", true),
+                        index -> true, value -> new JSONArray().put(1));
+                assertNotNull(stale);
+                assertFalse(stale.has("projectionVersion"));
+            }
+            final int[] recomputations = {0};
+            try (CompactJourneyCache upgraded = new CompactJourneyCache(app, "map-overseas-v1")) {
+                JSONObject recovered = MapActivity.acceptedOverseasProjection(upgraded, source,
+                        file -> {
+                            recomputations[0]++;
+                            JSONArray line = new JSONArray("[[10,50],[10.001,50],[10.002,50]]");
+                            return new JSONObject().put("rows", new JSONArray().put(
+                                    new JSONObject().put("points", line).put("original", 3)))
+                                    .put("truncated", true);
+                        }, false);
+                assertNotNull("Old truncated projection must be recomputed", recovered);
+                assertEquals(1, recomputations[0]);
+                assertEquals(2, recovered.getInt("projectionVersion"));
+                assertEquals(3, recovered.getJSONArray("rows").getJSONObject(0)
+                        .getJSONArray("points").length());
+                JSONObject reused = MapActivity.acceptedOverseasProjection(upgraded, source,
+                        file -> { throw new AssertionError("Versioned result must be reused"); }, false);
+                assertNotNull(reused);
+                assertEquals(3, reused.getJSONArray("rows").getJSONObject(0)
+                        .getJSONArray("points").length());
+            }
+        } finally { source.delete(); }
+    }
+    @Test public void deferredOverseasEmptyProjectionIsResolvedAndIndexed() throws Exception {
+        Context app = RuntimeEnvironment.getApplication();
+        File source = new File(app.getCacheDir(), "recovery-overseas-empty.json");
+        Files.write(source.toPath(), "{}".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        try (CompactJourneyCache cache = new CompactJourneyCache(app, "map-overseas-v1")) {
+            JSONObject empty = cache.get(source, file -> new JSONObject()
+                    .put("rows", new JSONArray()).put("truncated", false),
+                    index -> true, value -> new JSONArray().put(
+                            value.optJSONArray("rows").length() > 0 ? 1 : 0));
+            assertNotNull("Empty accepted projection is a completed calculation", empty);
+            assertEquals(0, empty.getJSONArray("rows").length());
+            assertEquals(JourneyStore.fileToken(source),
+                    cache.excludedSources(index -> index.optInt(0, 1) != 0).get(source.getName()));
+        } finally { source.delete(); }
+    }
     @Test public void cappedWorldwideFragmentRetainsVerifiedPrefixInsteadOfDroppingIt() throws Exception {
         JSONArray line = new JSONArray("[[10,50],[10.001,50],[10.002,50],[10.003,50]]");
         boolean[] truncated = {false};

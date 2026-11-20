@@ -38,15 +38,21 @@ public final class OverseasMatchedGeometryTest {
         assertEquals(2, fragments.get(0).length());
         assertEquals(2, fragments.get(1).length());
     }
-    @Test public void boundedAndInvalidPointsNeverDrawFalseConnections() {
+    @Test public void boundedAndInvalidPointsNeverDrawFalseConnections() throws org.json.JSONException {
         assertTrue(OverseasMatchedGeometry.outsideReferenceFragments(
                 Arrays.asList(line(2.1, 48.2, 2.2, 48.3)), 0, 10).isEmpty());
         assertTrue(OverseasMatchedGeometry.outsideReferenceFragments(
                 Arrays.asList(line(2.1, 48.2, 2.2, 48.3)), 10, 1).isEmpty());
         assertTrue(OverseasMatchedGeometry.outsideReferenceFragments(
                 Arrays.asList(line(2.1, 48.2, 200, 48.3)), 10, 10).isEmpty());
-        assertTrue(OverseasMatchedGeometry.outsideReferenceFragments(
-                Arrays.asList(line(2.1, 48.2, 2.2, 48.3, 2.3, 48.4)), 10, 2).isEmpty());
+        List<JSONArray> bounded = OverseasMatchedGeometry.outsideReferenceFragments(
+                Arrays.asList(line(2.1, 48.2, 2.2, 48.3, 2.3, 48.4)), 10, 2);
+        assertEquals("Keep the supported prefix within the two-point budget", 1, bounded.size());
+        assertEquals(2, bounded.get(0).length());
+        assertEquals(2.1, bounded.get(0).getJSONArray(0).optDouble(0), 0.000001);
+        assertEquals(48.2, bounded.get(0).getJSONArray(0).optDouble(1), 0.000001);
+        assertEquals(2.2, bounded.get(0).getJSONArray(1).optDouble(0), 0.000001);
+        assertEquals(48.3, bounded.get(0).getJSONArray(1).optDouble(1), 0.000001);
     }
     @Test public void preservePreCorrectedSegmentsWithoutRehydratingRemovedParts() throws Exception {
         // Inputs are post-removal fragments, not the original journey line.
