@@ -1120,6 +1120,28 @@ public class MapActivity extends Activity {
     private static final long MAP_SNAPSHOT_REVISION = 3_100L + BuildConfig.VERSION_CODE
             + Integer.toUnsignedLong(RoadReference.ALGORITHM.hashCode());
 
+    private record DeferredFootContribution(java.io.File source, String token, String journeyId,
+            Map<LocalRoadNetwork.Edge, List<LocalRoadNetwork.Interval>> spans) {}
+
+    private static JSONObject acceptedFootProjection(CompactJourneyCache cache,
+            ARoadProgressCalculator calculator, java.io.File source, String expectedToken,
+            Map<LocalRoadNetwork.Edge, List<LocalRoadNetwork.Interval>> spans) throws Exception {
+        if (!expectedToken.equals(JourneyStore.fileToken(source))) return null;
+        CompactJourneyCache.Reader project = file -> {
+            Runtime runtime = Runtime.getRuntime();
+            long available = runtime.maxMemory() - (runtime.totalMemory() - runtime.freeMemory());
+            if (available < 40L * 1024 * 1024
+                    || !expectedToken.equals(JourneyStore.fileToken(file))) return null;
+            return calculator.acceptedFootContribution(spans);
+        };
+        JSONObject row = cache.get(source, project);
+        if (row != null && !calculator.accepts(row.getJSONArray("rows"))) {
+            cache.invalidate(source);
+            row = cache.get(source, project);
+        }
+        return row;
+    }
+
     private long mapDataRevision() {
         long revision = 31L * JourneyStore.mapRevision(getApplicationContext()) + MAP_SNAPSHOT_REVISION;
         // Relative date selections must refresh at local midnight even without a new journey.
@@ -1153,6 +1175,9 @@ public class MapActivity extends Activity {
         // Aggregated, non-location diagnostics reveal which travel modes have accepted A-road features.
         int[] modeAccepted = new int[3], modeWithARoad = new int[3], modeWithLocal = new int[3];
         int[] acceptedFootCanonicalA = {0}, deferredFootCanonicalA = {0};
+        final List<DeferredFootContribution> deferredFoot = new ArrayList<>();
+        final int[] pendingFootIntervals = {0};
+        final int[] retriedFootSections = {0};
         final int[] overseasCounts = new int[5]; // scanned, cached, matched, lines, held
         final int[] overseasPoints = {0};
         final int[] overseasExcludedCount = {0};
@@ -1347,25 +1372,17 @@ public class MapActivity extends Activity {
                     // through the existing A-road coverage ledger. Never draw
                     // an overlapping second polyline for these sections.
                     if (roadModeIndex == 1 && !coverage.majorSpans().isEmpty()) {
-                        JSONObject footRow = footMajorCache.get(record.source, file -> {
-                            Runtime runtime = Runtime.getRuntime();
-                            long available = runtime.maxMemory() - (runtime.totalMemory() - runtime.freeMemory());
-                            if (available < 40L * 1024 * 1024) return null;
-                            return aRoadCalculator.acceptedFootContribution(coverage.majorSpans());
-                        });
-                        if (footRow != null && !aRoadCalculator.accepts(footRow.getJSONArray("rows"))) {
-                            footMajorCache.invalidate(record.source);
-                            footRow = footMajorCache.get(record.source, file -> {
-                                Runtime runtime = Runtime.getRuntime();
-                                long available = runtime.maxMemory() - (runtime.totalMemory() - runtime.freeMemory());
-                                return available < 40L * 1024 * 1024 ? null
-                                        : aRoadCalculator.acceptedFootContribution(coverage.majorSpans());
-                            });
-                        }
+                        JSONObject footRow = acceptedFootProjection(footMajorCache, aRoadCalculator,
+                                record.source, record.token, coverage.majorSpans());
                         if (footRow == null) {
                             deferredFootCanonicalA[0] += coverage.majorSpans().size();
-                            output.localCoverageDegraded = true;
-                            output.localCoverageResourceDegraded = true;
+                            int intervals = 0;
+                            for (var values : coverage.majorSpans().values()) intervals += values.size();
+                            if (pendingFootIntervals[0] + intervals <= 4096) {
+                                deferredFoot.add(new DeferredFootContribution(record.source, record.token,
+                                        journeyId, coverage.majorSpans()));
+                                pendingFootIntervals[0] += intervals;
+                            }
                         } else {
                             aRoadCalculator.addContribution(journeyId, footRow.getJSONArray("rows"));
                             acceptedFootCanonicalA[0] += footRow.getInt("sections");
@@ -1478,6 +1495,26 @@ public class MapActivity extends Activity {
             // Each section is already retained by MapRoutes; avoid a second
             // temporary all-sections list at the highest archive heap watermark.
             local.drainSections(output::addLocalRoad);
+            // Reference tiles and working edge keys are no longer retained.
+            // Retry a bounded exact-foot batch before finalising A-road layers.
+            for (DeferredFootContribution pending : deferredFoot) {
+                JSONObject footRow = acceptedFootProjection(footMajorCache, aRoadCalculator,
+                        pending.source(), pending.token(), pending.spans());
+                if (footRow == null) continue;
+                aRoadCalculator.addContribution(pending.journeyId(), footRow.getJSONArray("rows"));
+                acceptedFootCanonicalA[0] += footRow.getInt("sections");
+                deferredFootCanonicalA[0] -= pending.spans().size();
+                retriedFootSections[0] += pending.spans().size();
+            }
+            deferredFoot.clear();
+            if (deferredFootCanonicalA[0] > 0) {
+                output.localCoverageDegraded = true;
+                output.localCoverageResourceDegraded = true;
+            }
+            PerformanceDiagnostics.timing("map_foot_major_retry", 0,
+                    "retried_sections=" + retriedFootSections[0]
+                            + " remaining=" + deferredFootCanonicalA[0]
+                            + " pending_interval_limit=4096");
             markMapHeap("after_local_sections");
             mapGc.checkpoint("after_sections", counts[0], 0, local.pendingChangedEdges());
             output.localCoverageDegraded |= local.held > 0 || local.overBudget > 0 || local.unresolvedMm > 0;

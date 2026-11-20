@@ -17,6 +17,23 @@ import static org.junit.Assert.*;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28)
 public class MapRecoveryEngineeringTest {
+    @Test public void deferredFootProjectionNeverCachesOldSpansAgainstANewerSourceToken() throws Exception {
+        Context app = RuntimeEnvironment.getApplication();
+        File source = new File(app.getCacheDir(), "recovery-deferred-foot.json");
+        Files.write(source.toPath(), "{}".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        String before = JourneyStore.fileToken(source);
+        var project = MapActivity.class.getDeclaredMethod("acceptedFootProjection",
+                CompactJourneyCache.class, ARoadProgressCalculator.class, File.class, String.class, Map.class);
+        project.setAccessible(true);
+        try (CompactJourneyCache cache = new CompactJourneyCache(app, "recovery-deferred-test")) {
+            cache.get(source, file -> new JSONObject().put("rows", new JSONArray()).put("sections", 0));
+            assertNotNull(project.invoke(null, cache, new ARoadProgressCalculator(app, false),
+                    source, before, Map.of()));
+            Files.write(source.toPath(), "{\"updated\":1}".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            assertNull(project.invoke(null, cache, new ARoadProgressCalculator(app, false),
+                    source, before, Map.of()));
+        } finally { source.delete(); }
+    }
     @Test public void sameRevisionDegradedMapReturnsWithoutArchiveWorkAndKeepsCamera() throws Exception {
         Context app = RuntimeEnvironment.getApplication();
         var controller = org.robolectric.Robolectric.buildActivity(MapActivity.class).create();
