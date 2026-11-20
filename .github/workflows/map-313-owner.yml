@@ -55,6 +55,10 @@ jobs:
           cp "$assets/uk-road-reference-v1.bin" "$RUNNER_TEMP/uk-road-reference-v3.bin"
           echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
           echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+      - name: Prepare and verify the full geometry-volume fixture before compilation
+        run: |
+          set -euo pipefail
+          python3 scripts/generate_map_recovery_fixture.py --reference "$RUNNER_TEMP/uk-road-reference-v3.bin" --output "$RUNNER_TEMP/scale-fixtures" --assets canonical-a-roads-v5
       - uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: '8.10'

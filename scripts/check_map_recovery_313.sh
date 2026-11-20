@@ -3,7 +3,8 @@ set -euo pipefail
 package=com.roadprints.capture
 fixtures="$RUNNER_TEMP/scale-fixtures"
 mkdir -p "$fixtures"
-python3 scripts/generate_map_recovery_fixture.py --reference "$RUNNER_TEMP/uk-road-reference-v3.bin" --output "$fixtures" --assets android-prototype/app/src/main/assets
+test -f "$fixtures/journey_dense-osm-0000.json"
+test -f "$fixtures/journey_scale-ferry-1.json"
 tar -cf "$RUNNER_TEMP/scale-fixtures.tar" -C "$fixtures" .
 adb install "$RUNNER_TEMP/roadprints312.apk" >/dev/null
 adb shell am start -W -n "$package/.OnboardingActivity" >/dev/null
