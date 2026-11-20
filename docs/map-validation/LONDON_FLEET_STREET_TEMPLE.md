@@ -88,9 +88,9 @@ The development branch now contains an **opt-in, bounded, read-only** Map geomet
 
 **Owner procedure after an authorised signed upgrade:**
 
-1. Open the **main cumulative Map** and wait for the existing Map-ready state. Leave the road-fact loading overlay behaviour unchanged.
-2. Select **All transport / All statuses / All dates**. Zoom into the Fleet Street / Temple problem area so only the relevant street block is visible. Keep a screenshot of the Map at this camera position.
-3. **Long-press the Map's Legend control** (ordinary tap still opens the legend). Confirm the private-location warning, then use the Android document picker to save `roadprints-visible-map-evidence.json`.
+1. Open **Utilities → Export Map geometry** and wait for the cumulative Map-ready state. Leave the road-fact loading overlay behaviour unchanged.
+2. From **Utilities → Export Map geometry**, open the cumulative Map in its dedicated export mode (the normal Map and Legend are unchanged). Select **All transport / All statuses / All dates** and zoom into the Fleet Street / Temple problem area. Keep a screenshot at this camera position.
+3. Tap the visible **Save visible geometry** control available only in this Utilities-launched mode. Confirm the private-location warning, then use the Android document picker to save `roadprints-visible-map-evidence.json`.
 4. If the app reports a dense or oversized view, zoom further into a smaller area and repeat; **never silently omit sections**. The exported file is limited to 512 intersecting segments, 8,192 vertices and 384 KiB.
 5. Privately supply the JSON file together with the accepted individual-journey diagnostic already provided, and the same-camera screenshot. The export includes **precise travelled location coordinates**; do not post it in a public issue or commit it to GitHub.
 
