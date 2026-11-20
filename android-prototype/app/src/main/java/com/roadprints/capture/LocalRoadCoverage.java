@@ -104,7 +104,8 @@ final class LocalRoadCoverage implements AutoCloseable {
         String phase = "read_or_compute";
         try {
             int hits = cache.hits;
-            JSONObject row = cache.get(record.source, file -> readAcceptedContribution(reference, file));
+            boolean onFoot = JourneyFilters.isFootMode(record.header.optString("mode"));
+            JSONObject row = cache.getRoad(record.source, file -> readAcceptedContribution(reference, file), onFoot);
             if (row == null || !record.token.equals(JourneyStore.fileToken(record.source))) return null;
             boolean refreshedLegacyFootRow = false;
             // Older disposable rows contain covered intervals but no reason
@@ -116,7 +117,7 @@ final class LocalRoadCoverage implements AutoCloseable {
                     && row.has("spans")) {
                 cache.invalidate(record.source);
                 refreshedLegacyFootRow = true;
-                row = cache.get(record.source, file -> readAcceptedContribution(reference, file));
+                row = cache.getRoad(record.source, file -> readAcceptedContribution(reference, file), onFoot);
                 if (row == null) return null;
             }
             // Earlier builds incorrectly stored {} for a non-projectable route.
@@ -124,7 +125,7 @@ final class LocalRoadCoverage implements AutoCloseable {
             if (row.length() == 0) {
                 cache.invalidate(record.source);
                 refreshedLegacyFootRow = true;
-                row = cache.get(record.source, file -> readAcceptedContribution(reference, file));
+                row = cache.getRoad(record.source, file -> readAcceptedContribution(reference, file), onFoot);
                 if (row == null) return null;
             }
             boolean reusedRow = cache.hits != hits && !refreshedLegacyFootRow;
@@ -174,8 +175,8 @@ final class LocalRoadCoverage implements AutoCloseable {
             excludedMm += excluded;
             long major = row.optLong("majorOrOtherMm", 0);
             majorOrOtherMm += major;
-            JSONArray retainedMajor = row.optJSONArray("majorSpans");
-            int majorCount = row.optInt("majorIntervals", 0);
+            JSONArray retainedMajor = onFoot ? row.optJSONArray("majorSpans") : null;
+            int majorCount = onFoot ? row.optInt("majorIntervals", 0) : 0;
             if (majorCount < 0 || majorCount > MAX_INTERVALS_PER_JOURNEY
                     || (retainedMajor == null && majorCount != 0))
                 throw new IllegalArgumentException("Invalid major-road attribution count");
@@ -198,7 +199,6 @@ final class LocalRoadCoverage implements AutoCloseable {
                 if (validated != majorCount)
                     throw new IllegalArgumentException("Invalid major-road interval total");
             }
-            boolean onFoot = JourneyFilters.isFootMode(record.header.optString("mode"));
             if (onFoot) {
                 footUnresolvedMm += unresolved;
                 footMajorOrOtherMm += major;
@@ -831,3 +831,4 @@ final class LocalRoadCoverage implements AutoCloseable {
         }
     }
 }
+

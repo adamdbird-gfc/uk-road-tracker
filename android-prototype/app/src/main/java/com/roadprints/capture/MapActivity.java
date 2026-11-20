@@ -53,7 +53,10 @@ public class MapActivity extends Activity {
     private static final int MAX_MAP_ROUTES = 5_000;
     private static final Object MAP_CACHE_LOCK = new Object();
     private static MapRoutes processMapCache;
+    private static java.lang.ref.WeakReference<MapRoutes> displayedMapCache =
+            new java.lang.ref.WeakReference<>(null);
     private static long processMapCacheRevision = Long.MIN_VALUE;
+    private MapRoutes displayedRoutes;
     private TextView mapSubtitle, legendButton;
     private MapLoadingView loadingCard;
     private volatile boolean progressiveMapActive;
@@ -692,13 +695,22 @@ public class MapActivity extends Activity {
         final java.time.ZoneId zone = java.time.ZoneId.systemDefault();
         MapRoutes cached = null;
         synchronized (MAP_CACHE_LOCK) {
-            if (selection.isAll() && processMapCacheRevision == revision) cached = processMapCache;
+            if (selection.isAll() && processMapCacheRevision == revision) {
+                cached = processMapCache != null ? processMapCache : displayedMapCache.get();
+            }
             else if (selection.isAll() && processMapCacheRevision != revision) {
                 processMapCache = null;
                 processMapCacheRevision = Long.MIN_VALUE;
             }
         }
         mapStartedAt=android.os.SystemClock.elapsedRealtime();
+        PerformanceDiagnostics.timing("map_cache_identity", 0,
+                "pid=" + android.os.Process.myPid()
+                        + " activity=" + System.identityHashCode(this)
+                        + " displayed=" + hasDisplayedMap
+                        + " revision=" + revision + " displayed_revision=" + displayedMapRevision
+                        + " process_revision=" + processMapCacheRevision
+                        + " reuse=" + (cached != null));
         mapLoadStage="request";
         mapStageStartedAt=mapStartedAt;
         mapLastArchiveProgressAt=0;
@@ -793,6 +805,7 @@ public class MapActivity extends Activity {
                     && generation == mapLoadGeneration && currentRevision == revision) {
                 synchronized (MAP_CACHE_LOCK) {
                     processMapCache = mapRoutes;
+                    displayedMapCache = new java.lang.ref.WeakReference<>(mapRoutes);
                     processMapCacheRevision = revision;
                 }
             }
@@ -836,7 +849,18 @@ public class MapActivity extends Activity {
         MapRenderGeometry.clearPrepared();
         synchronized (MAP_CACHE_LOCK) {
             processMapCache = null;
+            displayedMapCache.clear();
             processMapCacheRevision = Long.MIN_VALUE;
+        }
+    }
+
+    /** Drop extra strong ownership without invalidating geometry a live Map still owns. */
+    static void trimProcessMapCache(int level) {
+        MapRenderGeometry.clearPrepared();
+        synchronized (MAP_CACHE_LOCK) {
+            processMapCache = null;
+            PerformanceDiagnostics.timing("map_cache_trim", 0,
+                    "level=" + level + " live_snapshot=" + (displayedMapCache.get() != null));
         }
     }
 
@@ -901,6 +925,7 @@ public class MapActivity extends Activity {
                 hasSavedCamera = false;
             }
             mapView = map;
+            displayedRoutes = mapRoutes;
             progressiveMapActive = false;
             progressiveSavedCamera = null;
             displayedMapRevision = loadingMapRevision == Long.MIN_VALUE ? mapDataRevision() : loadingMapRevision;
@@ -1096,7 +1121,7 @@ public class MapActivity extends Activity {
             + Integer.toUnsignedLong(RoadReference.ALGORITHM.hashCode());
 
     private long mapDataRevision() {
-        long revision = 31L * JourneyStore.geometryRevision(getApplicationContext()) + MAP_SNAPSHOT_REVISION;
+        long revision = 31L * JourneyStore.mapRevision(getApplicationContext()) + MAP_SNAPSHOT_REVISION;
         // Relative date selections must refresh at local midnight even without a new journey.
         String preset = mapFilters.date.preset;
         if (!getIntent().hasExtra("settlement_code") && ("today".equals(preset)
@@ -1130,6 +1155,7 @@ public class MapActivity extends Activity {
         int[] acceptedFootCanonicalA = {0}, deferredFootCanonicalA = {0};
         final int[] overseasCounts = new int[5]; // scanned, cached, matched, lines, held
         final int[] overseasPoints = {0};
+        final int[] overseasExcludedCount = {0};
         final int[] footFallbackCounts = new int[3]; // lines, points, held
         final Map<String, Integer> corridorDisplayIndices = new HashMap<>();
         PerformanceDiagnostics.ArchiveHeapSample heap = new PerformanceDiagnostics.ArchiveHeapSample();
@@ -1137,7 +1163,10 @@ public class MapActivity extends Activity {
         long localRoadNanos[] = {0};
         try (MapJourneyStore records = new MapJourneyStore(getApplicationContext());
              LocalRoadCoverage local = LocalRoadCoverage.open(getApplicationContext());
-             CompactJourneyCache overseasCache = new CompactJourneyCache(getApplicationContext(), "map-overseas-v1")) {
+             CompactJourneyCache overseasCache = new CompactJourneyCache(getApplicationContext(), "map-overseas-v1");
+             CompactJourneyCache footMajorCache = new CompactJourneyCache(getApplicationContext(), "map-foot-major-v1")) {
+        final Map<String, String> overseasExcluded = overseasCache.excludedSources(
+                index -> index.optInt(0, 1) != 0);
         output.localReferenceAvailable = local != null;
         // Track only on actual first-use cold reconstruction; no extra index
         // or immutable snapshots on already-retained Map navigation.
@@ -1318,16 +1347,28 @@ public class MapActivity extends Activity {
                     // through the existing A-road coverage ledger. Never draw
                     // an overlapping second polyline for these sections.
                     if (roadModeIndex == 1 && !coverage.majorSpans().isEmpty()) {
-                        Runtime runtime = Runtime.getRuntime();
-                        long available = runtime.maxMemory()
-                                - (runtime.totalMemory() - runtime.freeMemory());
-                        if (available < 40L * 1024 * 1024) {
+                        JSONObject footRow = footMajorCache.get(record.source, file -> {
+                            Runtime runtime = Runtime.getRuntime();
+                            long available = runtime.maxMemory() - (runtime.totalMemory() - runtime.freeMemory());
+                            if (available < 40L * 1024 * 1024) return null;
+                            return aRoadCalculator.acceptedFootContribution(coverage.majorSpans());
+                        });
+                        if (footRow != null && !aRoadCalculator.accepts(footRow.getJSONArray("rows"))) {
+                            footMajorCache.invalidate(record.source);
+                            footRow = footMajorCache.get(record.source, file -> {
+                                Runtime runtime = Runtime.getRuntime();
+                                long available = runtime.maxMemory() - (runtime.totalMemory() - runtime.freeMemory());
+                                return available < 40L * 1024 * 1024 ? null
+                                        : aRoadCalculator.acceptedFootContribution(coverage.majorSpans());
+                            });
+                        }
+                        if (footRow == null) {
                             deferredFootCanonicalA[0] += coverage.majorSpans().size();
                             output.localCoverageDegraded = true;
                             output.localCoverageResourceDegraded = true;
                         } else {
-                            acceptedFootCanonicalA[0] += aRoadCalculator.addAcceptedFootSections(
-                                    journeyId, coverage.majorSpans());
+                            aRoadCalculator.addContribution(journeyId, footRow.getJSONArray("rows"));
+                            acceptedFootCanonicalA[0] += footRow.getInt("sections");
                         }
                     }
                 }
@@ -1337,17 +1378,19 @@ public class MapActivity extends Activity {
             // Reuse the existing, source-token invalidated compact cache.
             // UK-indexed tiles remain exclusive to canonical coverage; a tile-
             // absent accepted leg is eligible for bounded overseas presentation.
-            if (local != null && journey.optBoolean("_has_stored_match", false)) {
+            boolean knownUkOnly = record.token.equals(overseasExcluded.get(record.source.getName()));
+            if (knownUkOnly) overseasExcludedCount[0]++;
+            if (local != null && journey.optBoolean("_has_stored_match", false) && !knownUkOnly) {
                 overseasCounts[0]++;
-                long available = Runtime.getRuntime().maxMemory()
-                        - (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
-                if (available < 48L * 1024L * 1024L) {
-                    overseasCounts[4]++;
-                    output.internationalCoverageIncomplete = true;
-                } else {
                     try {
                         int hitsBefore = overseasCache.hits;
+                        int skippedBefore = overseasCache.skipped;
                         JSONObject projection = overseasCache.get(record.source, file -> {
+                            long available = Runtime.getRuntime().maxMemory()
+                                    - (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
+                            // Cached empty UK rows and bounded worldwide rows are reusable
+                            // even when a new full-journey decode would be unsafe.
+                            if (available < 48L * 1024L * 1024L) return null;
                             JSONObject raw = record.raw();
                             // Some legacy map-v1 projections stored major-road
                             // summaries without the accepted route GeoJSON.
@@ -1370,7 +1413,14 @@ public class MapActivity extends Activity {
                             }
                             return new JSONObject().put("rows", rows)
                                     .put("truncated", truncated[0]);
-                        });
+                        }, index -> index.optInt(0, 1) != 0,
+                                value -> new JSONArray().put(value.optBoolean("truncated", false)
+                                        || value.optJSONArray("rows") == null
+                                        || value.optJSONArray("rows").length() > 0 ? 1 : 0));
+                        if (projection == null && overseasCache.skipped == skippedBefore) {
+                            overseasCounts[4]++;
+                            output.internationalCoverageIncomplete = true;
+                        }
                         if (overseasCache.hits > hitsBefore) overseasCounts[1]++;
                         JSONArray rows = projection == null ? null : projection.optJSONArray("rows");
                         if (projection != null && projection.optBoolean("truncated", false)) {
@@ -1409,7 +1459,6 @@ public class MapActivity extends Activity {
                         overseasCounts[4]++;
                         output.internationalCoverageIncomplete = true;
                     }
-                }
             }
             output.matchedJourneys++;counts[5]++;
         });
@@ -1536,7 +1585,8 @@ public class MapActivity extends Activity {
                         + " points=" + output.ferryPoints
                         + " within_budget=" + (output.ferryPoints <= 20_000));
         PerformanceDiagnostics.timing("map_international", 0,
-                "candidates=" + overseasCounts[0] + " cached=" + overseasCounts[1]
+                "known_uk_excluded=" + overseasExcludedCount[0]
+                        + " candidates=" + overseasCounts[0] + " cached=" + overseasCounts[1]
                         + " with_lines=" + overseasCounts[2]
                         + " rendered_lines=" + overseasCounts[3]
                         + " rendered_points=" + overseasPoints[0]
@@ -3319,6 +3369,7 @@ public class MapActivity extends Activity {
 
     }
 }
+
 
 
 

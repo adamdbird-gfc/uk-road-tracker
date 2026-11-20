@@ -105,8 +105,16 @@ final class CompactJourneyCache implements AutoCloseable {
     JSONObject get(File file, Reader reader) throws Exception {
         return get(file, reader, null, null);
     }
+    JSONObject getRoad(File file, Reader reader, boolean includeMajorSpans) throws Exception {
+        return get(file, reader, null, null, !includeMajorSpans);
+    }
     JSONObject get(File file, Reader reader, java.util.function.Predicate<JSONArray> wanted,
                    java.util.function.Function<JSONObject, JSONArray> indexer) throws Exception {
+        return get(file, reader, wanted, indexer, false);
+    }
+    private JSONObject get(File file, Reader reader, java.util.function.Predicate<JSONArray> wanted,
+                   java.util.function.Function<JSONObject, JSONArray> indexer,
+                   boolean omitMajorSpans) throws Exception {
         String token=JourneyStore.fileToken(file);
         JSONArray index = null;
         if (wanted != null) {
@@ -137,7 +145,8 @@ final class CompactJourneyCache implements AutoCloseable {
                     payloadBytes += data.length;
                 }
                 if (NcnJson.hash(data).equals(expected)) {
-                    value = new JSONObject(new String(data, StandardCharsets.UTF_8));
+                    value = omitMajorSpans ? readLocalSpans(data)
+                            : new JSONObject(new String(data, StandardCharsets.UTF_8));
                     hits++;
                 }
             }
@@ -180,6 +189,23 @@ final class CompactJourneyCache implements AutoCloseable {
         } catch (android.database.sqlite.SQLiteException optional) { /* Original evidence is authoritative. */ }
         return wanted != null && index != null && !wanted.test(index) ? null : value;
     }
+    /** Driving/cycling do not consume the walking-to-A-road reconciliation payload. */
+    private static JSONObject readLocalSpans(byte[] data) throws Exception {
+        JSONObject value = new JSONObject();
+        try (android.util.JsonReader reader = new android.util.JsonReader(
+                new java.io.InputStreamReader(new java.io.ByteArrayInputStream(data),
+                        StandardCharsets.UTF_8))) {
+            reader.beginObject();
+            while (reader.hasNext()) {
+                String field = reader.nextName();
+                if ("majorSpans".equals(field) || "majorIntervals".equals(field))
+                    reader.skipValue();
+                else value.put(field, JourneyStore.readEvidenceValue(reader));
+            }
+            reader.endObject();
+        }
+        return value;
+    }
     private ContentValues key(File file, String token) {
         ContentValues row = new ContentValues();
         row.put("kind", kind);
@@ -203,3 +229,4 @@ final class CompactJourneyCache implements AutoCloseable {
     }
     @Override public void close(){if(db.inTransaction()){db.setTransactionSuccessful();db.endTransaction();}db.close();}
 }
+
