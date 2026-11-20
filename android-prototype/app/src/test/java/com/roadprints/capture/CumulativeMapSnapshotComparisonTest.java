@@ -85,6 +85,21 @@ public final class CumulativeMapSnapshotComparisonTest {
         assertNotEquals(one.geometryFingerprint(), shifted.geometryFingerprint());
     }
 
+    @Test public void refusesToCompareDifferentAcceptedGeometryEvenWithSameCount()
+            throws Exception {
+        var old = CumulativeMapSnapshotComparison.snapshot("same-location",
+                List.of(line("[[0,50],[0.001,50]]")),
+                List.of(line("[[0,50],[0.001,50]]")));
+        var changedEvidence = CumulativeMapSnapshotComparison.snapshot("same-location",
+                List.of(line("[[0,50],[0.001,50.001]]")),
+                List.of(line("[[0,50],[0.001,50.001]]")));
+        assertNotEquals(old.acceptedFingerprint(), changedEvidence.acceptedFingerprint());
+        try {
+            CumulativeMapSnapshotComparison.compare(old, changedEvidence);
+            fail("A/B must reject changed accepted source data even with equal line counts");
+        } catch (IllegalArgumentException expected) { /* pass */ }
+    }
+
     @Test public void refusesToCompareDifferentScenariosOrEvidenceCounts()
             throws Exception {
         var a = CumulativeMapSnapshotComparison.snapshot("a",
