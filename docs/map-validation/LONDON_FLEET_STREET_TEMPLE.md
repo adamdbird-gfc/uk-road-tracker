@@ -32,6 +32,21 @@ These are **visual observations**, not proof that individual strokes are wrong: 
 - A candidate that produces fewer lines is not automatically more correct. Report both missing and unjustified **extra** strokes, with attribution to accepted evidence.
 - Reuse a fixed source archive, stable camera and renderer settings for every A/B run; compare coverage and performance against the exact same baseline.
 
+## First executable A/B evidence (synthetic only)
+
+`CumulativeMapSnapshotComparisonTest` generates a repeatable geometry-only report with `cumulative_map_ab=` in its test output. This report includes:
+
+- accepted-evidence SHA-256 fingerprint (must match between comparisons)
+- displayed-geometry SHA-256 fingerprint (direction/order independent)
+- before/after display line and point counts
+- maximum accepted-to-displayed deviation, to expose omitted or distorted travel
+- maximum displayed-to-accepted deviation, to expose unsupported extra strokes
+- signed before/after deltas for both deviation measurements
+
+The Fleet Street-style fixture is synthetic and does **not** reproduce the owner's real journey locations or screenshot. The snapshot comparison fails closed if the accepted evidence differs between baseline and candidate, even when its record count is unchanged.
+
+**Not yet implemented:** production renderer screenshots, real archived London geometry exports and pixel-level screenshot diffs. Those require matching actual Android camera/view settings and access to owner-approved accepted journey evidence. Never label synthetic report values as device evidence.
+
 ## Data acquisition boundary
 
 **Available today:** screenshot and owner description identifying this as a problematic location.  
