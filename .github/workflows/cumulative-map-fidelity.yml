@@ -8,6 +8,10 @@ on:
       - 'android-prototype/app/src/main/java/com/roadprints/capture/MapCorridorGeometry.java'
       - 'android-prototype/app/src/main/java/com/roadprints/capture/CumulativeMapShapeAudit.java'
       - 'android-prototype/app/src/main/java/com/roadprints/capture/CumulativeMapSnapshotComparison.java'
+      - 'android-prototype/app/src/main/java/com/roadprints/capture/MapGeometryEvidenceExport.java'
+      - 'android-prototype/app/src/main/java/com/roadprints/capture/RoutePreviewView.java'
+      - 'android-prototype/app/src/main/java/com/roadprints/capture/MapActivity.java'
+      - 'android-prototype/app/src/test/java/com/roadprints/capture/MapGeometryEvidenceExportTest.java'
       - 'android-prototype/app/src/test/java/com/roadprints/capture/*GeometryTest.java'
       - 'android-prototype/app/src/test/java/com/roadprints/capture/Cumulative*Test.java'
   workflow_dispatch:
@@ -54,6 +58,7 @@ jobs:
             --tests 'com.roadprints.capture.CumulativeMapSnapshotComparisonTest' \
             --tests 'com.roadprints.capture.CumulativePreparedOverviewSnapshotTest' \
             --tests 'com.roadprints.capture.MapCorridorGeometryTest' \
+            --tests 'com.roadprints.capture.MapGeometryEvidenceExportTest' \
             --tests 'com.roadprints.capture.MatchedCorridorAccumulatorTest'
       - name: Upload test output
         if: always()
