@@ -32,6 +32,20 @@
 
 **Known limitations:** The current shape metric uses a local planar approximation and bounded vertex/edge sample points. It is fit for **regional fidelity diagnostics**, not a global geodesic guarantee, topological identity proof, road-lane attribution or polar projection acceptance. At near-polar latitudes or for very long accepted legs, a separate geodesic method and explicit gap verification are required. The production renderer is **not** modified by this PR.
 
+## Opt-in visible Map geometry evidence export (development branch)
+
+The cumulative Map now has a private, user-initiated diagnostic action: **long-press the Legend button** after the Map reports ready, then confirm **SAVE** and choose a JSON document location. Normal Legend tap behaviour is unchanged; the view, accepted journey files and all source coverage remain untouched.
+
+This diagnostic stores only travelled line segments intersecting the **currently visible** Map camera window, calculated from the actual Mercator camera, zoom, screen dimensions and density-adjusted tile size. It includes compact layer names, map revision, active journey-filter identity, camera, wrapped window bounds, coverage-completeness flags and explicit segment/point counts; it does not include journey IDs or the archive. It neither uploads data nor runs automatically. The file contains **precise historic location coordinates**: the owner should choose whether and where to share it.
+
+The export reads **`displayedRoutes`**, the immutable prepared snapshot already supplied to `RoutePreviewView`. The local-road intervals are quickly screened by coordinate endpoints before JSON is generated. Work is executed on a dedicated background thread after the document destination is selected; no new archive scan or Map renderer change. The current maximum is **512 clipped sections, 8,192 points and 384 KiB**. An over-budget request fails clearly and requires zooming closer, rather than silently discarding travelled geometry. This is a *per-view* export, not a claim to globally serialise every route in one document.
+
+`MapGeometryEvidenceExport.capture()` generates the data; `CumulativeMapSnapshotComparison.compareSavedEvidence()` reads the same schema for private offline comparison with a separately supplied accepted route. The reader validates layer names and section/point counts. Synthetic regression checks exercise real prepared `MapRoutes` collections, persistence round-trip, absent coverage, wrapped Date Line windows, extra road provenance and failure on truncated or oversized captures.
+
+**Owner acceptance procedure (only after signed integrated test APK):** Open the cumulative Map and wait for Map ready; set desired zoom and camera around a problematic area; long-press Legend; confirm Save and choose a private file location. Export the corresponding individual journey diagnostic separately and compare accepted match against Map evidence in a protected analysis environment. Repeat on distinct geographic/network scenarios before any worldwide rendering-correction decision. Do not publish the JSON files in public GitHub issues or PRs.
+
+**Status:** Code and tests committed on PR #369, not yet validated for this increment by Android CI or Pixel 10. An export from an older installed APK (such as Build 313) is not available through this action; it requires a new integrated build after validation and owner release approval.
+
 ## Validation before release
 
 1. Compile and execute geometry tests, including the international cases above.
