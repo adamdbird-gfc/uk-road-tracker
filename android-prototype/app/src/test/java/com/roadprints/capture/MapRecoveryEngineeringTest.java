@@ -17,6 +17,28 @@ import static org.junit.Assert.*;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28)
 public class MapRecoveryEngineeringTest {
+    @Test public void firstLoadUkOnlyFallbackIsExcludedWithoutReportingWorldwideHold() throws Exception {
+        Context app = RuntimeEnvironment.getApplication();
+        JourneyStore.deleteAll(app);
+        JSONObject row = journey("recovery-first-uk");
+        row.put("processing_result", new JSONObject().put("geojson",
+                new JSONObject().put("type", "FeatureCollection").put("features",
+                        new JSONArray().put(new JSONObject().put("type", "Feature")
+                                .put("geometry", new JSONObject().put("type", "LineString")
+                                        .put("coordinates", new JSONArray("[[0.375,51.44],[0.376,51.44]]")))))));
+        JourneyStore.save(app, row);
+        var controller = org.robolectric.Robolectric.buildActivity(MapActivity.class).create();
+        try {
+            var read = MapActivity.class.getDeclaredMethod("readMapRoutes", JourneyFilters.class,
+                    java.time.LocalDate.class, java.time.ZoneId.class);
+            read.setAccessible(true);
+            MapActivity.MapRoutes routes = (MapActivity.MapRoutes) read.invoke(controller.get(),
+                    JourneyFilters.all(), java.time.LocalDate.of(2026, 11, 20), java.time.ZoneId.of("UTC"));
+            assertTrue(routes.localReferenceAvailable);
+            assertFalse("A new verified empty UK fallback row is not a resource hold",
+                    routes.internationalCoverageIncomplete);
+        } finally { controller.destroy(); JourneyStore.deleteAll(app); }
+    }
     @Test public void deferredFootProjectionNeverCachesOldSpansAgainstANewerSourceToken() throws Exception {
         Context app = RuntimeEnvironment.getApplication();
         File source = new File(app.getCacheDir(), "recovery-deferred-foot.json");
