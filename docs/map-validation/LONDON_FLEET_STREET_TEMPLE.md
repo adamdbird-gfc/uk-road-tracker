@@ -64,6 +64,10 @@ Verified from the owner-provided diagnostic export:
 
 **Evidence status:** This supplies a real accepted-journey reference, but **not** the cumulative Map's displayed section coordinates or the exact shared camera settings. Thus we cannot yet quantify the candidate-to-real-Map geographic deviation, prove why individual cumulative lines diverge, or claim an owner acceptance result. Do not substitute synthetic fixture values for this journey's measurements.
 
+**Geometry self-check (private local analysis):** The 276 accepted route coordinates sum to **1,980.7 metres** using geodesic segment distances, agreeing with the diagnostic's `matched_distance_m`. This confirms that the file's matched LineString is internally consistent with the reported journey length; it does **not** validate Map coverage or road attribution.
+
+**Read-only reproducibility adapter added:** `CumulativeMapSnapshotComparison.acceptedUncorrectedDiagnostic()` extracts accepted matched LineStrings only from complete, `status=ok` uncorrected diagnostic exports (never raw GPS); it refuses any `journey_corrections` field so edited routes cannot be silently misread. `snapshotSerializedOverview()` reconstructs travelled display geometry from the same serialised Map snapshot collections emitted by `MapActivity.mapRoutesToCache()`, including actual decoded local-road interval lines, bounded to 512 sections / 8,192 points. Both inputs remain private for real journey testing; the committed unit tests use synthetic data only.
+
 **Next reproducible comparison:** In a protected/local validation environment, load this unchanged saved route as the accepted-source side, and capture a cropped `MapRoutes` output assembled from the **same Build 313 archive**, without uploading the owner file or private coordinates publicly. Compare all contributing cumulative segments using the bounded A/B helper on a geographically scoped fixture, and separately capture fixed-camera screenshots. A candidate must preserve the 276-point accepted geographic shape as a **union**, not as 276 identical display points or a duplicate overlay.
 
 ## Data acquisition boundary
