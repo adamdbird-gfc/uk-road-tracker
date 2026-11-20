@@ -26,6 +26,51 @@ final class CumulativeMapShapeAudit {
         return Double.isFinite(max) ? max : Double.POSITIVE_INFINITY;
     }
 
+    /**
+     * Measure whether a saved accepted fragment is represented anywhere in
+     * the cumulative union, which may split one source polyline into many
+     * smaller visible physical sections. This deliberately does not require
+     * one-to-one journey/display line matching or add any geometry to the Map.
+     *
+     * Unrepresented sections must register as a positive deviation. Use this
+     * only on bounded review fixtures, not during Android Map drawing.
+     */
+    static double acceptedToCumulativeDeviationMetres(JSONArray accepted,
+            java.util.List<JSONArray> cumulativeSections) {
+        if (!validLine(accepted) || cumulativeSections == null
+                || cumulativeSections.isEmpty()) return Double.POSITIVE_INFINITY;
+        for (JSONArray section : cumulativeSections)
+            if (!validLine(section)) return Double.POSITIVE_INFINITY;
+        double worst = 0;
+        for (int i = 0; i < accepted.length(); i++) {
+            JSONArray point = accepted.optJSONArray(i);
+            worst = Math.max(worst, closestInUnion(point, cumulativeSections));
+            if (i > 0) {
+                JSONArray previous = accepted.optJSONArray(i - 1);
+                // Sampling at multiple positions detects a large uncovered
+                // part even when both source endpoints meet existing sections.
+                for (int sample = 1; sample < 4; sample++) {
+                    double portion = sample / 4.0;
+                    JSONArray middle = new JSONArray()
+                            .put(previous.optDouble(0) + portion
+                                    * (point.optDouble(0) - previous.optDouble(0)))
+                            .put(previous.optDouble(1) + portion
+                                    * (point.optDouble(1) - previous.optDouble(1)));
+                    worst = Math.max(worst, closestInUnion(middle, cumulativeSections));
+                }
+            }
+        }
+        return worst;
+    }
+
+    private static double closestInUnion(JSONArray point,
+            java.util.List<JSONArray> cumulativeSections) {
+        double best = Double.POSITIVE_INFINITY;
+        for (JSONArray section : cumulativeSections)
+            best = Math.min(best, closest(point, section));
+        return best;
+    }
+
     private static double directed(JSONArray source, JSONArray target) {
         double maximum = 0;
         for (int i = 0; i < source.length(); i++) {
