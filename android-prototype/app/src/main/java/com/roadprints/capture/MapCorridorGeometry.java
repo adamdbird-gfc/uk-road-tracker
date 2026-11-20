@@ -151,7 +151,7 @@ final class MapCorridorGeometry {
     }
 
     private static JSONArray point(double lon,double lat) {
-        return new JSONArray().put(lon).put(lat);
+        return new JSONArray(java.util.Arrays.asList(lon, lat));
     }
 
     private static double[] segmentClip(double ax,double ay,double bx,double by,
