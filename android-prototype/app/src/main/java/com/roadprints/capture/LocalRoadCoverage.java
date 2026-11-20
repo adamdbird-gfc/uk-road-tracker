@@ -588,6 +588,9 @@ final class LocalRoadCoverage implements AutoCloseable {
         return result;
     }
 
+    /** Exact count before draining, without materialising another collection. */
+    int pendingSectionCount() { return contributors.size(); }
+
     /** Emits sections directly into the cumulative Map. Avoid a second 44k-item
      * temporary list of already retained Section objects during peak heap use. */
     void forEachSection(java.util.function.Consumer<Section> accept) throws Exception {

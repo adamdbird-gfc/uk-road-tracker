@@ -1497,6 +1497,10 @@ public class MapActivity extends Activity {
             markMapHeap("before_local_sections");
             // Each section is already retained by MapRoutes; avoid a second
             // temporary all-sections list at the highest archive heap watermark.
+            // Reserve once before transferring ~44k canonical edges. Repeated
+            // ArrayList growth here temporarily retains both old and new backing
+            // arrays precisely when the Map is closest to the ART heap limit.
+            output.reserveLocalRoadCapacity(local.pendingSectionCount());
             local.drainSections(output::addLocalRoad);
             // Reference tiles and working edge keys are no longer retained.
             // Retry a bounded exact-foot batch before finalising A-road layers.
@@ -3293,10 +3297,10 @@ public class MapActivity extends Activity {
         final Set<Integer> footResidualIndices = new HashSet<>();
         final List<Set<String>> corridorContributorIds = new ArrayList<>();
         final List<JSONArray> ferrySections = new ArrayList<>();
-        final List<LocalRoadCoverage.Section> localRoadSections = new ArrayList<>();
+        final ArrayList<LocalRoadCoverage.Section> localRoadSections = new ArrayList<>();
         // Keep only compact interval objects in the interactive map. JSON
         // coordinates are generated lazily for replay/compatibility callers.
-        final List<LocalRoadCoverage.Line> localRoadSegments = new ArrayList<>();
+        final ArrayList<LocalRoadCoverage.Line> localRoadSegments = new ArrayList<>();
         final Map<JSONArray, LocalRoadCoverage.Line> localRoadByLine = new java.util.WeakHashMap<>();
         final List<JSONArray> localRoadLines = new java.util.AbstractList<>() {
             @Override public int size() { return localRoadSegments.size(); }
@@ -3331,6 +3335,14 @@ public class MapActivity extends Activity {
             return localReferenceAvailable
                     && snapshotPoints() <= 360_000
                     && freeHeadroomBytes >= 32L * 1024L * 1024L;
+        }
+
+        void reserveLocalRoadCapacity(int sections) {
+            if (sections <= 0) return;
+            localRoadSections.ensureCapacity(sections);
+            // Most physical edges yield one draw interval. This is a lower
+            // bound only: addAll still grows safely for split intervals.
+            localRoadSegments.ensureCapacity(sections);
         }
 
         void addLocalRoad(LocalRoadCoverage.Section section) {
