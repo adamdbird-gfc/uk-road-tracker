@@ -109,6 +109,25 @@ final class MapCorridorGeometry {
         return Math.toDegrees(Math.atan(Math.sinh(Math.PI*(1-2*y))));
     }
 
+    /** Fast allocation-free, conservative test for a local accepted interval.
+     * False positives are allowed; no segment crossing the window may be lost.
+     */
+    static boolean possiblyIntersectsSegment(Bounds box,double lon1,double lat1,
+                                             double lon2,double lat2) {
+        if (box == null || !valid(lon1,lat1) || !valid(lon2,lat2))
+            throw new IllegalArgumentException("Invalid segment or window");
+        if (Math.max(lat1,lat2)<box.south() || Math.min(lat1,lat2)>box.north())
+            return false;
+        double west=box.west(), east=box.east()<=west?box.east()+360:box.east();
+        double dx=lon2-lon1;
+        if(dx>180)dx-=360;
+        if(dx< -180)dx+=360;
+        double mid=lon1+dx/2;
+        double shift=360*Math.rint(((west+east)/2-mid)/360);
+        double x1=lon1+shift,x2=lon1+dx+shift;
+        return Math.max(x1,x2)>=west && Math.min(x1,x2)<=east;
+    }
+
     /** Returns all clipped in-window pieces in input order without joining
      * across disjoint gaps. A wrapped west>east viewport is valid, and segments
      * follow the shortest longitude displacement across the antimeridian.
