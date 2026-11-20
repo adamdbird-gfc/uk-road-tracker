@@ -171,11 +171,20 @@ public class ARoadProgressCalculatorTest {
         assertNotNull("Expected exact road geometry to hit an A1 reference anchor", correct);
         var full = java.util.Map.of(correct, java.util.List.of(
                 new LocalRoadNetwork.Interval(0, correct.mm)));
+        JSONObject compact = calc.acceptedFootContribution(full);
+        assertTrue(compact.getInt("sections") > 0);
+        ARoadProgressCalculator cached = new ARoadProgressCalculator(app, false);
+        assertTrue(cached.accepts(compact.getJSONArray("rows")));
+        cached.addContribution("walking-first", compact.getJSONArray("rows"));
+        cached.addContribution("walking-repeat", compact.getJSONArray("rows"));
         assertTrue(calc.addAcceptedFootSections("walking-repeat", full) > 0);
         ARoadProgressCalculator.Summary summary = calc.finish();
         ARoadProgressCalculator.Road road = summary.roads.stream()
                 .filter(r -> r.ref.equals("A1")).findFirst().orElseThrow();
         assertEquals(2, road.journeyIds.size());
+        ARoadProgressCalculator.Road cachedRoad = cached.finish().roads.get(0);
+        assertEquals(road.covered, cachedRoad.covered);
+        assertEquals(road.journeyIds, cachedRoad.journeyIds);
         assertTrue(road.percent() > 0);
 
         // Ten metres alongside the reference is a distinct physical road.
@@ -252,4 +261,5 @@ public class ARoadProgressCalculatorTest {
         assertSame(counted,stats.finish());assertSame(mapped,map.finish());
     }
 }
+
 

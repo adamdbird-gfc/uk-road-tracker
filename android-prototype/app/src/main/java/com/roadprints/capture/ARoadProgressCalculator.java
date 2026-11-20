@@ -274,7 +274,24 @@ final class ARoadProgressCalculator {
     JSONArray contribution(JSONObject journey) throws Exception {
         Map<String,Road> previous=roads;roads=new TreeMap<>();
         try {
-            addJourney(journey);JSONArray rows=new JSONArray();
+            addJourney(journey);
+            return encodeContributions();
+        } finally {roads=previous;}
+    }
+
+    /** Same physical-evidence rules, but persist compact reference anchors per source. */
+    JSONObject acceptedFootContribution(
+            Map<LocalRoadNetwork.Edge, List<LocalRoadNetwork.Interval>> sections) throws Exception {
+        Map<String, Road> previous = roads;
+        roads = new TreeMap<>();
+        try {
+            int credited = addAcceptedFootSections("", sections);
+            return new JSONObject().put("rows", encodeContributions()).put("sections", credited);
+        } finally { roads = previous; }
+    }
+
+    private JSONArray encodeContributions() throws Exception {
+            JSONArray rows=new JSONArray();
             for(Road road:roads.values()) {
                 String signature=info(road).signature;
                 JSONArray indices=new JSONArray();for(int index:road.covered)indices.put(index);
@@ -282,7 +299,6 @@ final class ARoadProgressCalculator {
                         .put("metres",road.matchedMetres).put("indices",indices).put("reference",signature));
             }
             return rows;
-        } finally {roads=previous;}
     }
 
     /** Validate every reference before merging anything, so a failed cache hit is atomic. */
@@ -664,5 +680,6 @@ final class ARoadProgressCalculator {
     private static double[] mercator(double lng,double lat){double x=6378137*Math.toRadians(lng),y=6378137*Math.log(Math.tan(Math.PI/4+Math.toRadians(Math.max(-85,Math.min(85,lat)))/2));return new double[]{x,y};}
     private static double distance(double lng1,double lat1,double lng2,double lat2){double a=Math.toRadians(lat1),b=Math.toRadians(lat2),dl=Math.toRadians(lng2-lng1),dp=b-a;double h=Math.sin(dp/2)*Math.sin(dp/2)+Math.cos(a)*Math.cos(b)*Math.sin(dl/2)*Math.sin(dl/2);return 2*EARTH_RADIUS_M*Math.atan2(Math.sqrt(h),Math.sqrt(1-h));}
 }
+
 
 

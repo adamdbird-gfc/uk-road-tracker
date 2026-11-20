@@ -1,0 +1,104 @@
+name: Roadprints Build312 recovery regression (no APK)
+on:
+  push:
+    branches: [fix/map-312-performance-recovery]
+    paths:
+      - .github/workflows/map-312-recovery.yml
+      - android-prototype/**
+  pull_request:
+    branches: [feat/workstream-a2-progressive-map]
+    paths:
+      - .github/workflows/map-312-recovery.yml
+      - android-prototype/**
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: map-worldwide-359-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  diagnostic-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: adamdbird-gfc/uk-road-tracker
+      JAVA_TOOL_OPTIONS: -XX:TieredStopAtLevel=1
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Restore packaged immutable assets from owner Build 299
+        run: |
+          set -euo pipefail
+          gh release download roadprints-0.25.253-299 --pattern Roadprints-0.25.253-299.apk --output "$RUNNER_TEMP/build299.apk"
+          assets=android-prototype/app/src/main/assets
+          for asset in historic-counties/boundaries.bin railway/national.json railway/national.sqlite.gzip; do
+            unzip -p "$RUNNER_TEMP/build299.apk" "assets/$asset" > "$assets/$asset"
+          done
+          unzip -p "$RUNNER_TEMP/build299.apk" assets/uk-road-reference-v1.bin > "$RUNNER_TEMP/uk-road-reference-v3.bin"
+      - name: Extract bounded real v3 reference tiles for JVM tests
+        run: |
+          python - <<'PY'
+          import os,pathlib,struct
+          source=pathlib.Path(os.environ['RUNNER_TEMP'])/'uk-road-reference-v3.bin'
+          target=pathlib.Path('android-prototype/app/src/main/assets/uk-road-reference-v1.bin')
+          with source.open('rb') as r:
+              header=r.read(40)
+              assert header[:8]==b'RPRD0003'
+              count,=struct.unpack('>i',r.read(4))
+              rows=[x for x in struct.iter_unpack('>iiii',r.read(count*16)) if 17<=x[0]<=20 and 2570<=x[1]<=2573]
+              assert rows
+              with target.open('wb') as w:
+                  w.write(header+struct.pack('>i',len(rows)))
+                  offset=44+16*len(rows)
+                  for x,y,_,size in rows:
+                      w.write(struct.pack('>iiii',x,y,offset,size))
+                      offset+=size
+                  for _,_,original,size in rows:
+                      r.seek(original)
+                      data=r.read(size)
+                      assert len(data)==size
+                      w.write(data)
+          PY
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.10'
+      - name: Compile and run worldwide Map, NCN and memory regressions
+        run: |
+          set -euo pipefail
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:testDebugUnitTest \
+            --tests com.roadprints.capture.MapRecoveryEngineeringTest \
+            --tests com.roadprints.capture.ARoadProgressCalculatorTest \
+            --tests com.roadprints.capture.MapLoadingNavigationTest \
+            --tests com.roadprints.capture.NavigationPerformanceTest \
+            --tests com.roadprints.capture.MapWorkerQueueTest \
+            --tests com.roadprints.capture.RoadCandidateCollectionTest \
+            --tests com.roadprints.capture.AcceptedRoadRouteTest \
+            --tests com.roadprints.capture.CompactJourneyCacheResumeTest \
+            --tests com.roadprints.capture.MapActivityOverviewCoverageTest \
+            --tests com.roadprints.capture.MapCoverageBatchGateTest \
+            --tests com.roadprints.capture.CanonicalPreviewIndexTest \
+            --tests com.roadprints.capture.MapJourneyStoreCacheMigrationTest \
+            --tests com.roadprints.capture.RailwayTrialWorkerTest \
+            --tests com.roadprints.capture.LocalRoadCoverageTest \
+            --tests com.roadprints.capture.OverviewJourneyScopeTest \
+            --tests com.roadprints.capture.OverseasMatchedGeometryTest \
+            --tests com.roadprints.capture.MapRoadTapSelectionTest \
+            --tests com.roadprints.capture.FootpathResidualGeometryTest \
+            --tests com.roadprints.capture.MatchedCorridorAccumulatorTest \
+            --tests com.roadprints.capture.MatchedCorridorIntervalUnionTest \
+            > "$RUNNER_TEMP/map-worldwide-359.log" 2>&1 || {
+              grep -nE -A3 -B2 '(error:|FAILED|failure|AssertionError|Caused by:)' "$RUNNER_TEMP/map-worldwide-359.log" | head -90 || true
+              tail -n 70 "$RUNNER_TEMP/map-worldwide-359.log"
+              exit 1
+            }
+          tail -n 30 "$RUNNER_TEMP/map-worldwide-359.log"
+      - name: Upload investigation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: map-worldwide-359
+          path: |
+            ${{ runner.temp }}/map-worldwide-359.log
+            android-prototype/app/build/test-results/testDebugUnitTest/**
+          if-no-files-found: ignore
+

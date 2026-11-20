@@ -28,6 +28,8 @@ public final class JourneyStore {
     private static final String DATA_REVISION = "journey_archive_revision";
     private static final String PROGRESS_REVISION = "journey_progress_revision";
     private static final String RAILWAY_INPUT_REVISION = "railway_input_revision";
+    private static final String MAP_INPUT_REVISION = "map_evidence_revision_v1";
+    private static final String NO_MAP_EVIDENCE = "no-map-geometry-v1";
     private static final String RAILWAY_WRITE_PENDING = "railway_distance_pending_id";
     private static volatile boolean railwayWriteRecovered;
     private static final String PREFIX = "journey_";
@@ -88,6 +90,15 @@ public final class JourneyStore {
                 temporary.delete();return; // No new evidence, metadata, revision or observer work.
             }
             SharedPreferences inputs=context.getSharedPreferences("roadprints_ncn_inputs",0);
+            SharedPreferences mapInputs=context.getSharedPreferences("roadprints_map_inputs_v1",0);
+            String mapHash = titleOnly ? null : mapEvidenceHash(journey);
+            String previousMapHash = mapInputs.getString(id, null);
+            if (!titleOnly && !newRecording && previousMapHash == null) {
+                JSONObject previous = read(target);
+                if (previous != null) previousMapHash = mapEvidenceHash(previous);
+            }
+            boolean mapChanged = !titleOnly && (newRecording
+                    ? !NO_MAP_EVIDENCE.equals(mapHash) : !mapHash.equals(previousMapHash));
             String previousNcnHash=null;
             if (!titleOnly && !newRecording) {
                 previousNcnHash=inputs.getString(id,null);
@@ -107,7 +118,8 @@ public final class JourneyStore {
             }
             context.getSharedPreferences("roadprints_ncn_metadata",0).edit()
                     .putString(id,ncnMetadata(journey).toString()).apply();
-            bumpDataRevision(context, ncnChanged, titleOnly);
+            if (!titleOnly) mapInputs.edit().putString(id, mapHash).apply();
+            bumpDataRevision(context, ncnChanged, titleOnly, mapChanged);
             if (titleOnly) return;
             PlaceAnchorStore.record(context,journey);
             AchievementStore.recordCapture(context, journey);
@@ -805,8 +817,11 @@ public final class JourneyStore {
         migrateLegacy(context);
         File file = new File(context.getFilesDir(), PREFIX + journeyId + SUFFIX);
         if (file.exists()) {
+            SharedPreferences mapInputs = context.getSharedPreferences("roadprints_map_inputs_v1", 0);
+            boolean mapChanged = !NO_MAP_EVIDENCE.equals(mapInputs.getString(journeyId, null));
             if (!file.delete()) throw new IllegalStateException("Could not delete journey archive");
-            bumpDataRevision(context);
+            bumpDataRevision(context, true, false, mapChanged);
+            mapInputs.edit().remove(journeyId).apply();
             JourneyReconciliation.forget(context, journeyId);
             RailwayTrialWorker.deleteResult(context, journeyId);
             ServiceStationStore.forgetJourney(context,journeyId);
@@ -1076,18 +1091,53 @@ public final class JourneyStore {
         bumpDataRevision(context, ncnChanged, false);
     }
     private static void bumpDataRevision(Context context, boolean ncnChanged, boolean titleOnly) {
+        bumpDataRevision(context, ncnChanged, titleOnly, !titleOnly);
+    }
+    private static void bumpDataRevision(Context context, boolean ncnChanged, boolean titleOnly,
+                                         boolean mapChanged) {
         SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         long archive = preferences.getLong(DATA_REVISION, 0);
         long ncn = preferences.getLong("ncn_evidence_revision", archive);
         long geometry = preferences.getLong(RAILWAY_INPUT_REVISION, archive);
         long progress = preferences.getLong(PROGRESS_REVISION, archive);
+        long map = preferences.getLong(MAP_INPUT_REVISION, geometry);
         preferences.edit().putLong(DATA_REVISION, archive + 1)
+                .putLong(MAP_INPUT_REVISION, map + (mapChanged ? 1 : 0))
                 .putLong(RAILWAY_INPUT_REVISION, titleOnly ? geometry : archive + 1)
                 .putLong(PROGRESS_REVISION, titleOnly ? progress : archive + 1)
                 .putLong("ncn_evidence_revision", ncn + (ncnChanged ? 1 : 0)).apply();
         if (!titleOnly) NcnProgressStore.changed(context);
         MilepostReconciliationJob.archiveChanged(context);
         RailwayTrialWorker.archiveChanged(context);
+    }
+
+    /** Map invalidation follows selected geometry and filters, not dwell/retry telemetry. */
+    static long mapRevision(Context context) {
+        SharedPreferences preferences = context.getSharedPreferences(PREFS, 0);
+        return preferences.getLong(MAP_INPUT_REVISION, geometryRevision(context));
+    }
+
+    static String mapEvidenceHash(JSONObject journey) throws org.json.JSONException {
+        String mode = journey.optString("mode", "").trim().toLowerCase(java.util.Locale.ROOT);
+        // The overview excludes train/aircraft and unfinished road matching.
+        // Capture/retry telemetry for those rows cannot change a displayed corridor.
+        if (!"ferry".equals(mode) && (!"complete".equals(journey.optString("processing_status"))
+                || !OverviewJourneyScope.contributesCorridorCoverage(mode)))
+            return NO_MAP_EVIDENCE;
+        JSONObject evidence = new JSONObject();
+        for (String key : new String[]{"journey_id", "mode", "processing_status", "started_at",
+                "ended_at", "gps_point_count", "capture_quality", "walking_outcome",
+                "journey_corrections", "route_geometry", "source"})
+            if (journey.has(key)) evidence.put(key, journey.opt(key));
+        JSONObject result = journey.optJSONObject("processing_result");
+        if (result != null) {
+            JSONObject geometry = new JSONObject();
+            for (String key : new String[]{"geojson", "road_geojson", "motorway_geojson",
+                    "a_road_geojson", "cycling_geojson"})
+                if (result.has(key)) geometry.put(key, result.opt(key));
+            evidence.put("processing_result", geometry);
+        }
+        return MapEvidenceFingerprint.digest(evidence);
     }
 
     private static JSONObject read(File file) {
@@ -1126,4 +1176,5 @@ public final class JourneyStore {
         preferences.edit().putBoolean(MIGRATED, true).apply();
     }
 }
+
 

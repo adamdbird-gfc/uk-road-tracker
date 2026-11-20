@@ -38,6 +38,7 @@ final class RoadReference implements AutoCloseable {
     Statistics statistics() {
         return new Statistics(nearbyQueries, tileCacheHits, tileDecodes, candidateEdges);
     }
+    void releaseDecodedTiles() { tiles.clear(); }
 
     RoadReference(FileChannel channel, long start, long length) throws IOException {
         this.channel = channel;
@@ -208,3 +209,4 @@ final class RoadReference implements AutoCloseable {
         channel.close();
     }
 }
+

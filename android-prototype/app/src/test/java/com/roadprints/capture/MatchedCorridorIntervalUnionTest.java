@@ -9,6 +9,37 @@ import org.json.JSONArray;
 import org.junit.Test;
 
 public final class MatchedCorridorIntervalUnionTest {
+    @Test public void differentlySampledStraightPartialRoutesKeepExactContributorIntervals() throws Exception {
+        Input input = new Input();
+        input.add(0, 1, 0, "full-drive", false);
+        input.lines.set(0, new JSONArray().put(new JSONArray().put(LON).put(LAT))
+                .put(new JSONArray().put(LON + STEP * .4).put(LAT))
+                .put(new JSONArray().put(LON + STEP).put(LAT)));
+        input.add(.2, .6, 0, "partial-run", true);
+        assertEquals(2, MatchedCorridorIntervalUnion.eligibleInputs(input.lines));
+        var result = input.union();
+        assertEquals(1, result.mergedInputs());
+        assertEquals(3, result.lines().size());
+        assertEquals(Set.of("full-drive", "partial-run"), result.contributors().get(1));
+        assertEquals(Set.of("full-drive"), result.contributors().get(0));
+        assertEquals(Set.of("full-drive"), result.contributors().get(2));
+    }
+
+    @Test public void sampledCurveOrRetracedStraightLineDoesNotCollapseToEndpoints() throws Exception {
+        Input input = new Input();
+        input.add(0, 1, 0, "base", false);
+        input.add(.2, .6, 0, "curve", true);
+        input.lines.set(1, new JSONArray().put(new JSONArray().put(LON + STEP * .2).put(LAT))
+                .put(new JSONArray().put(LON + STEP * .4).put(LAT + .000001))
+                .put(new JSONArray().put(LON + STEP * .6).put(LAT)));
+        assertEquals(1, MatchedCorridorIntervalUnion.eligibleInputs(input.lines));
+        assertEquals(0, input.union().mergedInputs());
+        input.lines.set(1, new JSONArray().put(new JSONArray().put(LON + STEP * .2).put(LAT))
+                .put(new JSONArray().put(LON + STEP * .5).put(LAT))
+                .put(new JSONArray().put(LON + STEP * .3).put(LAT))
+                .put(new JSONArray().put(LON + STEP * .6).put(LAT)));
+        assertEquals(0, input.union().mergedInputs());
+    }
     private static JSONArray line(double ax, double ay, double bx, double by) {
         try {
             return new JSONArray().put(new JSONArray().put(ax).put(ay))
@@ -125,3 +156,4 @@ public final class MatchedCorridorIntervalUnionTest {
         assertEquals(Set.of("partial"),result.contributors().get(1));
     }
 }
+
