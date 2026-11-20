@@ -11,6 +11,7 @@ on:
       - 'android-prototype/app/src/main/java/com/roadprints/capture/MapGeometryEvidenceExport.java'
       - 'android-prototype/app/src/main/java/com/roadprints/capture/RoutePreviewView.java'
       - 'android-prototype/app/src/main/java/com/roadprints/capture/MapActivity.java'
+      - 'android-prototype/app/src/main/java/com/roadprints/capture/UtilitiesActivity.java'
       - 'android-prototype/app/src/test/java/com/roadprints/capture/MapGeometryEvidenceExportTest.java'
       - 'android-prototype/app/src/test/java/com/roadprints/capture/*GeometryTest.java'
       - 'android-prototype/app/src/test/java/com/roadprints/capture/Cumulative*Test.java'
@@ -60,6 +61,17 @@ jobs:
             --tests 'com.roadprints.capture.MapCorridorGeometryTest' \
             --tests 'com.roadprints.capture.MapGeometryEvidenceExportTest' \
             --tests 'com.roadprints.capture.MatchedCorridorAccumulatorTest'
+      - name: Check Utilities-only export entry
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'menuItem("Export Map geometry"' android-prototype/app/src/main/java/com/roadprints/capture/UtilitiesActivity.java
+          grep -q 'putExtra(MapActivity.EXTRA_GEOMETRY_EXPORT_MODE, true)' android-prototype/app/src/main/java/com/roadprints/capture/UtilitiesActivity.java
+          grep -q 'getBooleanExtra(EXTRA_GEOMETRY_EXPORT_MODE, false)' android-prototype/app/src/main/java/com/roadprints/capture/MapActivity.java
+          if grep -q 'legendButton.setOnLongClickListener' android-prototype/app/src/main/java/com/roadprints/capture/MapActivity.java; then
+            echo "::error::Export must not be hidden on the ordinary Map Legend"
+            exit 1
+          fi
       - name: Upload test output
         if: always()
         uses: actions/upload-artifact@v4
