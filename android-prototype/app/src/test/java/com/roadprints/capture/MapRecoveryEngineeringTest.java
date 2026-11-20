@@ -17,6 +17,21 @@ import static org.junit.Assert.*;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28)
 public class MapRecoveryEngineeringTest {
+    @Test public void deferredOverseasEmptyProjectionIsResolvedAndIndexed() throws Exception {
+        Context app = RuntimeEnvironment.getApplication();
+        File source = new File(app.getCacheDir(), "recovery-overseas-empty.json");
+        Files.write(source.toPath(), "{}".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        try (CompactJourneyCache cache = new CompactJourneyCache(app, "map-overseas-v1")) {
+            JSONObject empty = cache.get(source, file -> new JSONObject()
+                    .put("rows", new JSONArray()).put("truncated", false),
+                    index -> true, value -> new JSONArray().put(
+                            value.optJSONArray("rows").length() > 0 ? 1 : 0));
+            assertNotNull("Empty accepted projection is a completed calculation", empty);
+            assertEquals(0, empty.getJSONArray("rows").length());
+            assertEquals(JourneyStore.fileToken(source),
+                    cache.excludedSources(index -> index.optInt(0, 1) != 0).get(source.getName()));
+        } finally { source.delete(); }
+    }
     @Test public void cappedWorldwideFragmentRetainsVerifiedPrefixInsteadOfDroppingIt() throws Exception {
         JSONArray line = new JSONArray("[[10,50],[10.001,50],[10.002,50],[10.003,50]]");
         boolean[] truncated = {false};
