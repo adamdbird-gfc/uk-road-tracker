@@ -21,7 +21,7 @@ final class CumulativeMapSnapshotComparison {
 
     record Snapshot(String scenarioId, int acceptedSections, int displaySections,
                     int displayPoints, double missingMetres, double unsupportedMetres,
-                    String geometryFingerprint) {
+                    String acceptedFingerprint, String geometryFingerprint) {
         JSONObject json() throws Exception {
             return new JSONObject().put("scenario", scenarioId)
                     .put("accepted_sections", acceptedSections)
@@ -29,6 +29,7 @@ final class CumulativeMapSnapshotComparison {
                     .put("display_points", displayPoints)
                     .put("max_accepted_to_display_m", missingMetres)
                     .put("max_display_to_accepted_m", unsupportedMetres)
+                    .put("accepted_fingerprint_sha256", acceptedFingerprint)
                     .put("display_fingerprint_sha256", geometryFingerprint);
         }
     }
@@ -56,7 +57,7 @@ final class CumulativeMapSnapshotComparison {
             unsupported = Math.max(unsupported, deviation);
         }
         return new Snapshot(scenarioId, accepted.size(), displayed.size(), points,
-                missing, unsupported, fingerprint(displayed));
+                missing, unsupported, fingerprint(accepted), fingerprint(displayed));
     }
 
     /** The same physical vertices in reverse direction or different list order
@@ -88,7 +89,7 @@ final class CumulativeMapSnapshotComparison {
     static JSONObject compare(Snapshot baseline, Snapshot candidate) throws Exception {
         if (baseline == null || candidate == null
                 || !baseline.scenarioId().equals(candidate.scenarioId())
-                || baseline.acceptedSections() != candidate.acceptedSections())
+                || !baseline.acceptedFingerprint().equals(candidate.acceptedFingerprint()))
             throw new IllegalArgumentException("A/B snapshots must share scenario and accepted evidence");
         return new JSONObject().put("scenario", baseline.scenarioId())
                 .put("baseline", baseline.json())
