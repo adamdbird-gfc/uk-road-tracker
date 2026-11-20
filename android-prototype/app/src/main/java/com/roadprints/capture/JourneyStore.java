@@ -1126,7 +1126,7 @@ public final class JourneyStore {
                 if (result.has(key)) geometry.put(key, result.opt(key));
             evidence.put("processing_result", geometry);
         }
-        return NcnJson.digest(evidence);
+        return MapEvidenceFingerprint.digest(evidence);
     }
 
     private static JSONObject read(File file) {

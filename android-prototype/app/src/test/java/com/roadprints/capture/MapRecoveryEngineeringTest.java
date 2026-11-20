@@ -112,6 +112,36 @@ public class MapRecoveryEngineeringTest {
         assertNotEquals(JourneyStore.mapEvidenceHash(before), JourneyStore.mapEvidenceHash(after));
     }
 
+    @Test public void mapFingerprintIgnoresNumericStorageTypesButPreservesRealChanges() throws Exception {
+        JSONObject original = new JSONObject().put("coordinates",
+                new JSONArray().put(new JSONArray().put(0d).put(51d))
+                        .put(new JSONArray().put(.125).put(51.5)));
+        JSONObject stored = new JSONObject(original.toString());
+        assertEquals(MapEvidenceFingerprint.digest(original), MapEvidenceFingerprint.digest(stored));
+        stored.getJSONArray("coordinates").getJSONArray(0).put(0, .0001);
+        assertNotEquals(MapEvidenceFingerprint.digest(original), MapEvidenceFingerprint.digest(stored));
+    }
+
+    @Test public void worldwideAndFootMajorCachesSurviveDisposableCacheRemoval() throws Exception {
+        Context app = RuntimeEnvironment.getApplication();
+        File source = new File(app.getFilesDir(), "recovery-durable-source.json");
+        Files.write(source.toPath(), "{}".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        try {
+            for (String kind : new String[]{"map-overseas-v1", "map-foot-major-v1"}) {
+                try (CompactJourneyCache cache = new CompactJourneyCache(app, kind)) {
+                    cache.get(source, file -> new JSONObject().put("marker", 7));
+                }
+                assertTrue(new File(app.getNoBackupFilesDir(), "compact-" + kind + ".db").isFile());
+                android.database.sqlite.SQLiteDatabase.deleteDatabase(
+                        new File(app.getCacheDir(), "compact-" + kind + ".db"));
+                try (CompactJourneyCache cache = new CompactJourneyCache(app, kind)) {
+                    JSONObject row = cache.get(source, file -> { throw new AssertionError("Lost durable row"); });
+                    assertEquals(7, row.getInt("marker"));
+                }
+            }
+        } finally { source.delete(); }
+    }
+
     @Test public void negativeWorldwideIndexSurvivesReopenAndSourceChangesInvalidateIt() throws Exception {
         Context app = RuntimeEnvironment.getApplication();
         File source = new File(app.getCacheDir(), "recovery-world-row.json");

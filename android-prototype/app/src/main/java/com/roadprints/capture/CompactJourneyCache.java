@@ -23,7 +23,8 @@ final class CompactJourneyCache implements AutoCloseable {
         // including while installing a ~1GB APK. Keep only these derived road
         // contributions in durable no-backup app storage. Original journeys
         // and their source tokens remain authoritative.
-        boolean durable = kind.startsWith(RoadReference.ALGORITHM + "-");
+        boolean durable = kind.startsWith(RoadReference.ALGORITHM + "-")
+                || "map-overseas-v1".equals(kind) || "map-foot-major-v1".equals(kind);
         File file = new File(durable ? context.getNoBackupFilesDir() : context.getCacheDir(),
                 "compact-" + kind + ".db");
         File legacy = new File(context.getCacheDir(), "compact-" + kind + ".db");
