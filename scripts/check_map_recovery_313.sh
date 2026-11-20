@@ -56,11 +56,28 @@ collect candidate
 hash_archive > "$RUNNER_TEMP/scale-ready.sha256"
 cmp "$RUNNER_TEMP/scale-before.sha256" "$RUNNER_TEMP/scale-ready.sha256"
 
+tap_tab() {
+  local label="$1" file="$RUNNER_TEMP/scale-nav-$1.xml"
+  adb shell uiautomator dump --compressed /sdcard/roadprints-navigation.xml >/dev/null
+  adb exec-out cat /sdcard/roadprints-navigation.xml > "$file"
+  local point
+  point=$(python3 - "$file" "$label" <<'PYCODE'
+import re,sys,xml.etree.ElementTree as E
+root=E.parse(sys.argv[1]).getroot()
+node=next(n for n in root.iter('node') if n.get('content-desc')==sys.argv[2])
+x1,y1,x2,y2=map(int,re.findall(r'\d+',node.get('bounds')))
+assert x2>x1 and y2>y1
+print((x1+x2)//2,(y1+y2)//2)
+PYCODE
+  )
+  adb shell input tap $point
+}
+
 # Actual in-process tab navigation, not force-stop/relaunch masquerading as retention.
-adb shell am start -W -n "$package/.JourneyListActivity" -f 0x20020000 >/dev/null
+tap_tab Journeys
 adb shell am send-trim-memory "$package" RUNNING_LOW
 adb logcat -c
-adb shell am start -W -n "$package/.MapActivity" -f 0x20020000 > "$RUNNER_TEMP/scale-tab-start.log"
+tap_tab Map
 for attempt in $(seq 1 25); do
   adb logcat -d -s RoadprintsTiming AndroidRuntime > "$RUNNER_TEMP/scale-tab.log"
   if grep -Eq 'source=(retained_view|process_snapshot)|map_outcome=failure|FATAL EXCEPTION' "$RUNNER_TEMP/scale-tab.log"; then break; fi
