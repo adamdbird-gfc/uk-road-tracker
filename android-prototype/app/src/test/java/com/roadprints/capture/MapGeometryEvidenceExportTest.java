@@ -37,6 +37,65 @@ public final class MapGeometryEvidenceExportTest {
         assertEquals(-0.120,result.getJSONObject("window").getDouble("west"),0.00001);
     }
 
+    @Test public void savedFileProducesSameAcceptedCoverageAsPreparedMap()
+            throws Exception {
+        JSONArray accepted=json("[[-0.119,51.512],[-0.115,51.5122],[-0.111,51.512]]");
+        MapActivity.MapRoutes routes=new MapActivity.MapRoutes();
+        routes.sections.add(json("[[-0.119,51.512],[-0.115,51.5122]]"));
+        routes.sections.add(json("[[-0.115,51.5122],[-0.111,51.512]]"));
+        routes.sections.add(json("[[-0.119,51.514],[-0.111,51.514]]"));
+        var original=CumulativeMapSnapshotComparison.comparePreparedCorridor(
+                "real-evidence-format",java.util.List.of(accepted),routes,LONDON);
+        JSONObject exported=MapGeometryEvidenceExport.capture(
+                routes,LONDON,CAMERA,313,"all");
+        var imported=CumulativeMapSnapshotComparison.compareSavedEvidence(
+                "real-evidence-format",java.util.List.of(accepted),exported);
+        assertEquals(original.displayFingerprint(),imported.displayFingerprint());
+        assertEquals(original.acceptedFingerprint(),imported.acceptedFingerprint());
+        assertEquals(0,imported.maxUnrepresentedMetres(),0.001);
+        assertEquals(3,imported.displayedPieces());
+    }
+
+    @Test public void savedFileRejectsMissingSectionsAndUnknownLayer()
+            throws Exception {
+        MapActivity.MapRoutes routes=new MapActivity.MapRoutes();
+        routes.sections.add(json("[[-0.119,51.512],[-0.111,51.512]]"));
+        JSONObject export=MapGeometryEvidenceExport.capture(
+                routes,LONDON,CAMERA,313,"all");
+        export.put("display_sections",2);
+        try {
+            CumulativeMapSnapshotComparison.compareSavedEvidence("integrity",
+                    java.util.List.of(json("[[-0.119,51.512],[-0.111,51.512]]")),
+                    export);
+            fail("Truncated file cannot pass integrity check");
+        } catch(IllegalArgumentException expected) {
+            assertTrue(expected.getMessage().contains("Incomplete"));
+        }
+        export.put("display_sections",1);
+        export.getJSONArray("segments").getJSONObject(0)
+                .put("layer","untravelled_reference_background");
+        try {
+            CumulativeMapSnapshotComparison.compareSavedEvidence("integrity",
+                    java.util.List.of(json("[[-0.119,51.512],[-0.111,51.512]]")),
+                    export);
+            fail("Unsupported layers must not silently count as accepted travel");
+        } catch(IllegalArgumentException expected) {
+            assertTrue(expected.getMessage().contains("Unknown"));
+        }
+    }
+
+    @Test public void intervalPrefilterPreservesCrossingAndRejectsDistantSegments() {
+        assertTrue(MapCorridorGeometry.possiblyIntersectsSegment(LONDON,
+                -0.13,51.512,-0.10,51.512));
+        assertFalse(MapCorridorGeometry.possiblyIntersectsSegment(LONDON,
+                10,51.512,11,51.512));
+        var pacific=new MapCorridorGeometry.Bounds(179.9,-18.0,-179.9,-17.0);
+        assertTrue(MapCorridorGeometry.possiblyIntersectsSegment(pacific,
+                179.8,-17.8,-179.8,-17.8));
+        assertFalse(MapCorridorGeometry.possiblyIntersectsSegment(pacific,
+                0,-17.8,1,-17.8));
+    }
+
     @Test public void noCoverageIsValidAndExplicit() throws Exception {
         JSONObject result=MapGeometryEvidenceExport.capture(
                 new MapActivity.MapRoutes(),LONDON,CAMERA,313,"all");
