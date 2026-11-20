@@ -37,7 +37,7 @@ final class MatchedCorridorIntervalUnion {
         final List<Member> members = new ArrayList<>();
         double min, max;
         Group(int index, JSONArray line, double metres) {
-            JSONArray start = line.optJSONArray(0), end = line.optJSONArray(1);
+            JSONArray start = line.optJSONArray(0), end = line.optJSONArray(line.length() - 1);
             longitude = start.optDouble(0);
             latitude = start.optDouble(1);
             cosLat = Math.cos(Math.toRadians(latitude));
@@ -48,7 +48,7 @@ final class MatchedCorridorIntervalUnion {
             min = 0; max = metres;
         }
         Member project(int index, JSONArray line) {
-            JSONArray a = line.optJSONArray(0), b = line.optJSONArray(1);
+            JSONArray a = line.optJSONArray(0), b = line.optJSONArray(line.length() - 1);
             double ax = (a.optDouble(0) - longitude) * cosLat * METRES;
             double ay = (a.optDouble(1) - latitude) * METRES;
             double bx = (b.optDouble(0) - longitude) * cosLat * METRES;
@@ -159,9 +159,18 @@ final class MatchedCorridorIntervalUnion {
         return new Result(resultLines, resultIds, resultFoot, merged, split, ambiguous, false);
     }
 
+    static int eligibleInputs(List<JSONArray> lines) {
+        int count = 0;
+        for (JSONArray line : lines) {
+            double metres = twoPointMetres(line);
+            if (metres >= MIN_SEGMENT_METRES && metres <= MAX_SEGMENT_METRES) count++;
+        }
+        return count;
+    }
+
     private static double twoPointMetres(JSONArray line) {
-        if (line == null || line.length() != 2) return -1;
-        JSONArray a = line.optJSONArray(0), b = line.optJSONArray(1);
+        if (line == null || line.length() < 2 || line.length() > 128) return -1;
+        JSONArray a = line.optJSONArray(0), b = line.optJSONArray(line.length() - 1);
         if (a == null || b == null || a.length() < 2 || b.length() < 2) return -1;
         double ax = a.optDouble(0, Double.NaN), ay = a.optDouble(1, Double.NaN);
         double bx = b.optDouble(0, Double.NaN), by = b.optDouble(1, Double.NaN);
@@ -169,6 +178,26 @@ final class MatchedCorridorIntervalUnion {
                 || !Double.isFinite(bx) || !Double.isFinite(by)
                 || Math.abs(ax)>180 || Math.abs(bx)>180 || Math.abs(ay)>90 || Math.abs(by)>90)
             return -1;
-        return METRES * Math.hypot((bx-ax)*Math.cos(Math.toRadians((ay+by)/2)),by-ay);
+        double cos = Math.cos(Math.toRadians((ay + by) / 2));
+        double dx = (bx - ax) * cos * METRES, dy = (by - ay) * METRES;
+        double metres = Math.hypot(dx, dy);
+        if (metres <= 0) return -1;
+        double previous = 0;
+        for (int i = 1; i < line.length() - 1; i++) {
+            JSONArray p = line.optJSONArray(i);
+            if (p == null) return -1;
+            double x = (p.optDouble(0, Double.NaN) - ax) * cos * METRES;
+            double y = (p.optDouble(1, Double.NaN) - ay) * METRES;
+            double along = (x * dx + y * dy) / metres;
+            // Sampling density is not topology. Only collapse a monotonic,
+            // straight sampled shape, within the existing 2cm boundary epsilon.
+            // Curves, reversals and bends keep their original accepted geometry.
+            if (!Double.isFinite(along) || along < previous || along > metres
+                    || Math.abs(dx * y - dy * x) / metres > BOUNDARY_EPSILON_METRES)
+                return -1;
+            previous = along;
+        }
+        return metres;
     }
 }
+

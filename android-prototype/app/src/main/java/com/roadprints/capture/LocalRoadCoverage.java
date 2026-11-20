@@ -601,6 +601,24 @@ final class LocalRoadCoverage implements AutoCloseable {
         }
     }
 
+    /** End-of-scan ownership transfer: retain history once, release working edges and tiles. */
+    void drainSections(java.util.function.Consumer<Section> accept) throws Exception {
+        incrementalTracking = false;
+        changedEdges.clear();
+        reference.releaseDecodedTiles();
+        var entries = contributors.entrySet().iterator();
+        while (entries.hasNext()) {
+            if (Thread.currentThread().isInterrupted()) throw new CancellationException();
+            var entry = entries.next();
+            Edge edge = entry.getKey();
+            accept.accept(new Section(edge.id(), edge.label, edge.mm,
+                    new JSONArray().put(ukLongitude(edge.a)).put(ukLatitude(edge.a)),
+                    new JSONArray().put(ukLongitude(edge.b)).put(ukLatitude(edge.b)),
+                    entry.getValue()));
+            entries.remove();
+        }
+    }
+
     /** Retained for callers that explicitly need a standalone list. */
     List<Section> sections() throws Exception {
         List<Section> sections = new ArrayList<>();

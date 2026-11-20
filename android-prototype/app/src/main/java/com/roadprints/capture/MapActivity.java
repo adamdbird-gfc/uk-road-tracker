@@ -1477,7 +1477,7 @@ public class MapActivity extends Activity {
             markMapHeap("before_local_sections");
             // Each section is already retained by MapRoutes; avoid a second
             // temporary all-sections list at the highest archive heap watermark.
-            local.forEachSection(output::addLocalRoad);
+            local.drainSections(output::addLocalRoad);
             markMapHeap("after_local_sections");
             mapGc.checkpoint("after_sections", counts[0], 0, local.pendingChangedEdges());
             output.localCoverageDegraded |= local.held > 0 || local.overBudget > 0 || local.unresolvedMm > 0;
@@ -1506,6 +1506,7 @@ public class MapActivity extends Activity {
         // the SAME worldwide corridor display ledger. Atomic segments carry
         // contributor IDs only where the corresponding accepted journey
         // actually travelled. Canonical UK OSM/NCN credit stays untouched.
+        int partialEligible = MatchedCorridorIntervalUnion.eligibleInputs(output.sections);
         int partialMerged = 0, partialAtoms = 0, partialAmbiguous = 0;
         String partialStatus = "not_needed";
         if (output.sections.size() >= 2) {
@@ -1551,7 +1552,8 @@ public class MapActivity extends Activity {
                         + " ambiguity_holds=" + partialAmbiguous
                         + " displayed_lines=" + output.sections.size()
                         + " section_contributors=" + output.corridorContributorIds.size()
-                        + " canonical_credit_unchanged=true");
+                        + " canonical_credit_unchanged=true"
+                        + " eligible_inputs=" + partialEligible);
         PerformanceDiagnostics.timing("map_shared_corridors", 0,
                 "display_lines=" + output.sections.size()
                         + " foot_lines=" + footFallbackCounts[0]

@@ -17,6 +17,53 @@ import static org.junit.Assert.*;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28)
 public class MapRecoveryEngineeringTest {
+    @Test public void sameRevisionDegradedMapReturnsWithoutArchiveWorkAndKeepsCamera() throws Exception {
+        Context app = RuntimeEnvironment.getApplication();
+        var controller = org.robolectric.Robolectric.buildActivity(MapActivity.class).create();
+        MapActivity screen = controller.get();
+        try {
+            RoutePreviewView view = RoutePreviewView.overview(screen);
+            view.layout(0, 0, 800, 800);
+            view.restoreCameraState(.375, 51.44, 14);
+            Field map = MapActivity.class.getDeclaredField("mapView");
+            Field shown = MapActivity.class.getDeclaredField("hasDisplayedMap");
+            Field revision = MapActivity.class.getDeclaredField("displayedMapRevision");
+            var current = MapActivity.class.getDeclaredMethod("mapDataRevision");
+            var refresh = MapActivity.class.getDeclaredMethod("refreshMap");
+            for (Field field : new Field[]{map, shown, revision}) field.setAccessible(true);
+            current.setAccessible(true); refresh.setAccessible(true);
+            map.set(screen, view); shown.setBoolean(screen, true);
+            revision.setLong(screen, (long) current.invoke(screen));
+            MapActivity.trimProcessMapCache(android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW);
+            org.robolectric.shadows.ShadowLog.clear();
+            refresh.invoke(screen);
+            assertSame(view, map.get(screen));
+            assertArrayEquals(new double[]{.375, 51.44, 14}, view.cameraState(), .000001);
+            assertTrue(org.robolectric.shadows.ShadowLog.getLogsForTag("RoadprintsTiming").stream()
+                    .anyMatch(log -> log.msg.contains("source=retained_view")));
+            assertFalse(org.robolectric.shadows.ShadowLog.getLogsForTag("RoadprintsTiming").stream()
+                    .anyMatch(log -> log.msg.startsWith("map_request_queued")));
+        } finally { controller.destroy(); }
+    }
+
+    @Test public void finalSectionTransferPreservesUniqueCoverageAndContributorIntervals() throws Exception {
+        Context app = RuntimeEnvironment.getApplication();
+        try (LocalRoadCoverage local = LocalRoadCoverage.open(app)) {
+            assertNotNull(local);
+            LocalRoadNetwork.Edge edge = new LocalRoadNetwork.Edge(123, 1, 2, "Shared street",
+                    RoadReference.point(.375, 51.44), RoadReference.point(.376, 51.44),
+                    0, true, 100000, -1);
+            local.add("drive", Map.of(edge, java.util.List.of(new LocalRoadNetwork.Interval(0, 100000))));
+            local.add("walk", Map.of(edge, java.util.List.of(new LocalRoadNetwork.Interval(20000, 60000))));
+            var expected = local.sections().get(0);
+            java.util.List<LocalRoadCoverage.Section> transferred = new java.util.ArrayList<>();
+            local.drainSections(transferred::add);
+            assertEquals(1, transferred.size());
+            assertEquals(expected.uniqueMillimetres, transferred.get(0).uniqueMillimetres);
+            assertArrayEquals(expected.history.get("walk"), transferred.get(0).history.get("walk"));
+            assertTrue(local.sections().isEmpty());
+        }
+    }
     private JSONObject journey(String id) throws Exception {
         return new JSONObject().put("journey_id", id).put("mode", "walking")
                 .put("processing_status", "complete").put("started_at", "2026-11-20T12:00:00Z")
@@ -68,7 +115,7 @@ public class MapRecoveryEngineeringTest {
     @Test public void negativeWorldwideIndexSurvivesReopenAndSourceChangesInvalidateIt() throws Exception {
         Context app = RuntimeEnvironment.getApplication();
         File source = new File(app.getCacheDir(), "recovery-world-row.json");
-        Files.writeString(source.toPath(), "{}");
+        Files.write(source.toPath(), "{}".getBytes(java.nio.charset.StandardCharsets.UTF_8));
         try {
             try (CompactJourneyCache cache = new CompactJourneyCache(app, "recovery-world-test")) {
                 cache.get(source, file -> new JSONObject().put("rows", new JSONArray()),
@@ -80,7 +127,7 @@ public class MapRecoveryEngineeringTest {
                 assertNull(cache.get(source, file -> { throw new AssertionError("UK row decoded again"); },
                         index -> index.optInt(0, 1) != 0, value -> new JSONArray().put(0)));
                 assertEquals(1, cache.skipped);
-                Files.writeString(source.toPath(), "{\"changed\":true}");
+                Files.write(source.toPath(), "{\"changed\":true}".getBytes(java.nio.charset.StandardCharsets.UTF_8));
                 assertNotEquals(JourneyStore.fileToken(source), excluded.get(source.getName()));
                 JSONObject changed = cache.get(source,
                         file -> new JSONObject().put("rows", new JSONArray("[1]")),
@@ -93,7 +140,7 @@ public class MapRecoveryEngineeringTest {
     @Test public void drivingCacheReadSkipsUnusedMajorGeometryWithoutChangingStoredFootPayload() throws Exception {
         Context app = RuntimeEnvironment.getApplication();
         File source = new File(app.getCacheDir(), "recovery-major-row.json");
-        Files.writeString(source.toPath(), "{}");
+        Files.write(source.toPath(), "{}".getBytes(java.nio.charset.StandardCharsets.UTF_8));
         try {
             try (CompactJourneyCache cache = new CompactJourneyCache(app, "recovery-major-test")) {
                 cache.get(source, file -> new JSONObject().put("spans", new JSONArray())
