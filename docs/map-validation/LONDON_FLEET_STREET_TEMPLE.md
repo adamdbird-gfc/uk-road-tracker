@@ -49,10 +49,27 @@ The Fleet Street-style fixture is synthetic and does **not** reproduce the owner
 
 **Not yet implemented:** production renderer screenshots, real archived London geometry exports and pixel-level screenshot diffs. Those require matching actual Android camera/view settings and access to owner-approved accepted journey evidence. Never label synthetic report values as device evidence.
 
+## Owner journey evidence received (20 November 2026)
+
+Owner supplied a journey-map screenshot and the **Build 313** individual-journey diagnostic export for a walking route dated **16 November 2026**, from the Charing Cross side through the Fleet Street / Temple corridor to the east. The export was inspected privately and **must not be committed** to this public repository.
+
+Verified from the owner-provided diagnostic export:
+
+- `processing_status=complete`, matched result `status=ok`, walking; matcher `preloaded_pedestrian_network_v4`
+- Accepted `processing_result.geojson` has **one LineString, 276 vertices**; its summed matched geometry is approximately **1.98 km**
+- `matched_distance_m` and saved journey `distance_meters` both report **1,980.7 m**
+- There is no `journey_corrections` field in the exported journey, and the route-editor screenshot displays **0 route sections removed**
+- The raw capture is much noisier (701 raw capture samples). **Do not treat raw GPS as the authoritative accepted line.**
+- The real-world individual journey screenshot shows a visually continuous route across this corridor at a wider viewport than the previously supplied close-up cumulative Map screenshot
+
+**Evidence status:** This supplies a real accepted-journey reference, but **not** the cumulative Map's displayed section coordinates or the exact shared camera settings. Thus we cannot yet quantify the candidate-to-real-Map geographic deviation, prove why individual cumulative lines diverge, or claim an owner acceptance result. Do not substitute synthetic fixture values for this journey's measurements.
+
+**Next reproducible comparison:** In a protected/local validation environment, load this unchanged saved route as the accepted-source side, and capture a cropped `MapRoutes` output assembled from the **same Build 313 archive**, without uploading the owner file or private coordinates publicly. Compare all contributing cumulative segments using the bounded A/B helper on a geographically scoped fixture, and separately capture fixed-camera screenshots. A candidate must preserve the 276-point accepted geographic shape as a **union**, not as 276 identical display points or a duplicate overlay.
+
 ## Data acquisition boundary
 
 **Available today:** screenshot and owner description identifying this as a problematic location.  
-**Still required for automated geographic truth:** one or more owner-approved accepted journey route exports for this specific viewport, plus exact Map camera/zoom and a genuine current-renderer screenshot/geometry export. The screenshot alone cannot supply authoritative sub-metre route coordinates or journey attribution. Build privacy-safe synthetic topology tests separately; never claim they reproduce the owner's London journeys exactly.
+**Still required for automated real-output comparison:** the cumulative Map's actual prepared/displayed coordinates for the same viewport, plus exact Map camera/zoom and a genuine fixed-camera baseline-versus-candidate screenshot pair. One private accepted journey diagnostic export is now available to this conversation but is not copied to GitHub. The screenshot alone cannot supply authoritative sub-metre route coordinates or journey attribution. Build privacy-safe synthetic topology tests separately; never claim they reproduce the owner's London journeys exactly.
 
 ## Engineering scope
 
