@@ -81,9 +81,14 @@ import re,sys
 lines=open(sys.argv[1]).read().splitlines()
 rows=[line for line in lines if "map_network_layers" in line]
 assert rows, "Map did not reach network layer rendering"
-values={k:int(v) for k,v in re.findall(r"(cumulative_minor|historical)=(\d+)",rows[-1])}
-print("Rendered network",values,flush=True)
-assert values.get("cumulative_minor",0)>0 and values.get("historical")==0,values
+values={k:int(v) for k,v in re.findall(
+    r"(cumulative_minor|international_lines|ferry_lines|ferry_points)=(\d+)", rows[-1])}
+print("Rendered unified network",values,flush=True)
+assert values.get("cumulative_minor",0)>0,values
+assert all(key in values for key in ("international_lines","ferry_lines","ferry_points")),values
+# Train journeys must not appear as a historical-trace layer on the overview.
+# The Map no longer reports a legacy "historical" field.
+assert "historical=" not in rows[-1], rows[-1]
 assert not any("FATAL EXCEPTION" in line or "OutOfMemoryError" in line for line in lines)
 PYLAYERS
 grep -q 'map_stage.*phase=archive_geometry_processing' "$RUNNER_TEMP/mixed-mode-map.log"
