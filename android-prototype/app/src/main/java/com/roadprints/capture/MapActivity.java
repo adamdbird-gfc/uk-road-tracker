@@ -1145,8 +1145,22 @@ public class MapActivity extends Activity {
         JSONObject row = cache.get(source, versioned, wanted, indexer);
         if (row != null && row.optBoolean("truncated", false)
                 && row.optInt("projectionVersion", 0) < OVERSEAS_PROJECTION_VERSION) {
+            // A legacy row may still have usable fragments before its cutoff.
+            // Keep those visible if the replacement cannot be computed yet.
+            String token = JourneyStore.fileToken(source);
+            JSONObject refreshed;
+            try {
+                refreshed = versioned.read(source);
+            } catch (java.util.concurrent.CancellationException cancelled) {
+                throw cancelled;
+            } catch (Exception unavailable) {
+                return row;
+            }
+            if (!token.equals(JourneyStore.fileToken(source))) return null;
+            if (refreshed == null) return row;
             cache.invalidate(source);
-            row = cache.get(source, versioned, wanted, indexer);
+            row = cache.get(source, file -> token.equals(JourneyStore.fileToken(file))
+                    ? refreshed : null, wanted, indexer);
         }
         return row;
     }
@@ -1464,10 +1478,10 @@ public class MapActivity extends Activity {
                             return new JSONObject().put("rows", rows)
                                     .put("truncated", truncated[0]);
                         }, false);
-                        if (projection == null && projectionHeld[0]) {
+                        if (projectionHeld[0]) {
                             deferredOverseas.add(new DeferredOverseasContribution(
                                     record.source, record.token, journey.optString("journey_id")));
-                            overseasCounts[4]++;
+                            if (projection == null) overseasCounts[4]++;
                             output.internationalCoverageIncomplete = true;
                         }
                         if (overseasCache.hits > hitsBefore) overseasCounts[1]++;
