@@ -25,9 +25,24 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
-      - name: Install Android 35 compiler SDK
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      # GitHub-hosted Ubuntu runners already provide Android cmdline-tools.
+      # setup-android@v3 tried to install obsolete SDK package 'tools' and
+      # exited before Gradle or any fidelity test could begin.
+      - name: Install Android 35 compiler SDK from runner command-line tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${ANDROID_HOME:?GitHub runner must provide Android SDK}"
+          SDKMANAGER="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
+          if [[ ! -x "$SDKMANAGER" ]]; then
+            SDKMANAGER="$(command -v sdkmanager || true)"
+          fi
+          if [[ -z "$SDKMANAGER" || ! -x "$SDKMANAGER" ]]; then
+            echo "::error::Android SDK command-line tools unavailable on runner"
+            exit 1
+          fi
+          "$SDKMANAGER" --version
+          "$SDKMANAGER" --install "platforms;android-35" "build-tools;35.0.0"
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.10.2'
