@@ -17,6 +17,32 @@ import static org.junit.Assert.*;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28)
 public class MapRecoveryEngineeringTest {
+    @Test public void legacyTruncationKeepsPreviouslyDisplayedFragmentsWhenRefreshIsDeferred() throws Exception {
+        Context app = RuntimeEnvironment.getApplication();
+        File source = new File(app.getCacheDir(), "recovery-legacy-overseas-partial.json");
+        Files.writeString(source.toPath(), "{}");
+        String stale = "{\"rows\":[{\"points\":[[10,50],[10.001,50]],\"original\":2}],\"truncated\":true}";
+        try {
+            try (CompactJourneyCache old = new CompactJourneyCache(app, "map-overseas-v1")) {
+                old.get(source, file -> new JSONObject(stale),
+                        index -> true, row -> new JSONArray().put(1));
+            }
+            try (CompactJourneyCache upgraded = new CompactJourneyCache(app, "map-overseas-v1")) {
+                JSONObject held = MapActivity.acceptedOverseasProjection(upgraded, source,
+                        file -> null, false);
+                assertNotNull(held);
+                assertEquals(stale, held.toString());
+            }
+            try (CompactJourneyCache reopened = new CompactJourneyCache(app, "map-overseas-v1")) {
+                JSONObject recovered = MapActivity.acceptedOverseasProjection(reopened, source,
+                        file -> new JSONObject(stale), true);
+                assertNotNull(recovered);
+                assertEquals(2, recovered.getInt("projectionVersion"));
+                assertEquals(1, recovered.getJSONArray("rows").length());
+            }
+        } finally { source.delete(); }
+    }
+
     @Test public void warmBuild313TruncationIsRefreshedAndRetainedOnNextOpen() throws Exception {
         Context app = RuntimeEnvironment.getApplication();
         File source = new File(app.getCacheDir(), "recovery-legacy-overseas-truncated.json");

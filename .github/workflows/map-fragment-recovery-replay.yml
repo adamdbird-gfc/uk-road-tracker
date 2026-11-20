@@ -15,17 +15,15 @@ jobs:
       JAVA_TOOL_OPTIONS: -XX:TieredStopAtLevel=1 -XX:ReservedCodeCacheSize=256m
       NCN_TEST_DATABASE: ${{ github.workspace }}/.cache/ncn/catalogue.db
       BASELINE: 95cc2d28051a7eca37ab0774e693616e2b5d8874
-      ENGINEERING: 26464f06662e9910dd96e498b169848aa1cccb13
+      ENGINEERING: 54da3eec09ac5346229e7f6e00abd9ab712cb560
       CERT_SHA256: 5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
-      - name: Verify exact engineering source and Gate A success
+      - name: Verify exact engineering source and Build 313 baseline
         run: |
           set -euo pipefail
-          test "$(gh api "repos/$GH_REPO/actions/runs/44803545704" --jq .conclusion)" = success
-          test "$(gh api "repos/$GH_REPO/actions/runs/44803545704" --jq .head_sha)" = 8dcf5b2d081a427f1b5cf3badb808ee0058f67b6
           test "$(git rev-parse 'roadprints-0.25.267-313^{}')" = "$BASELINE"
           git diff --exit-code "$ENGINEERING" HEAD -- android-prototype
           git diff --exit-code "$BASELINE" "$ENGINEERING" -- android-prototype/app/src/main/assets android-prototype/app/src/main/res ':(glob)**/Ncn*.java'
@@ -104,6 +102,15 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: '8.10'
+      - name: Gate A – compile Android and run focused fragment regressions
+        run: |
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:compileDebugJavaWithJavac :app:testDebugUnitTest \
+            --tests '*.MapRecoveryEngineeringTest.warmBuild313TruncationIsRefreshedAndRetainedOnNextOpen' \
+            --tests '*.MapRecoveryEngineeringTest.deferredOverseasEmptyProjectionIsResolvedAndIndexed' \
+            --tests '*.MapRecoveryEngineeringTest.cappedWorldwideFragmentRetainsVerifiedPrefixInsteadOfDroppingIt' \
+            --tests '*.MapRecoveryEngineeringTest.legacyTruncationKeepsPreviouslyDisplayedFragmentsWhenRefreshIsDeferred'
+      - name: Save focused regression receipts
+        run: cp -R android-prototype/app/build/test-results/testDebugUnitTest "$RUNNER_TEMP/gate-a-tests"
       - name: Gate B – Map, Android navigation and canonical coverage regression suite
         run: |
           set -euo pipefail
@@ -223,6 +230,7 @@ jobs:
             ${{ runner.temp }}/scale-*.sha256
             ${{ runner.temp }}/scale-*meminfo.txt
             ${{ runner.temp }}/scale-summary.json
+            ${{ runner.temp }}/gate-a-tests/
             android-prototype/app/build/test-results/testDebugUnitTest/
           if-no-files-found: ignore
       - name: Save the verified signed APK for the gated release
