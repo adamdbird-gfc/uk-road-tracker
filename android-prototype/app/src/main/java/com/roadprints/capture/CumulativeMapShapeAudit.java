@@ -51,10 +51,10 @@ final class CumulativeMapShapeAudit {
                 // part even when both source endpoints meet existing sections.
                 for (int sample = 1; sample < 4; sample++) {
                     double portion = sample / 4.0;
-                    JSONArray middle = new JSONArray()
-                            .put(previous.optDouble(0) + portion
-                                    * shortestLongitudeDelta(previous.optDouble(0),point.optDouble(0)))
-                            .put(previous.optDouble(1) + portion
+                    JSONArray middle = coordinate(
+                            previous.optDouble(0) + portion
+                                    * shortestLongitudeDelta(previous.optDouble(0),point.optDouble(0)),
+                            previous.optDouble(1) + portion
                                     * (point.optDouble(1) - previous.optDouble(1)));
                     worst = Math.max(worst, closestInUnion(middle, cumulativeSections));
                 }
@@ -78,9 +78,9 @@ final class CumulativeMapShapeAudit {
             maximum = Math.max(maximum, closest(point, target));
             if (i > 0) {
                 JSONArray previous = source.optJSONArray(i - 1);
-                JSONArray midpoint = new JSONArray()
-                        .put(previous.optDouble(0) + shortestLongitudeDelta(previous.optDouble(0),point.optDouble(0)) / 2)
-                        .put((previous.optDouble(1) + point.optDouble(1)) / 2);
+                JSONArray midpoint = coordinate(
+                        previous.optDouble(0) + shortestLongitudeDelta(previous.optDouble(0),point.optDouble(0)) / 2,
+                        (previous.optDouble(1) + point.optDouble(1)) / 2);
                 maximum = Math.max(maximum, closest(midpoint, target));
             }
         }
@@ -109,6 +109,12 @@ final class CumulativeMapShapeAudit {
                     py - ay - portion * dy));
         }
         return nearest;
+    }
+
+    // JSONArray(Collection) does not require the checked JSONException that
+    // Android's JSONArray.put(double) can throw. Keep this audit pure.
+    private static JSONArray coordinate(double lon, double lat) {
+        return new JSONArray(java.util.Arrays.asList(lon, lat));
     }
 
     private static double shortestLongitudeDelta(double from, double to) {
