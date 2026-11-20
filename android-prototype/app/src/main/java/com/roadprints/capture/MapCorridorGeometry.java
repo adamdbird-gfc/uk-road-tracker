@@ -108,8 +108,7 @@ final class MapCorridorGeometry {
             double centre = (west + east) / 2;
             double shift = 360 * Math.rint((centre - (ax + bx) / 2) / 360);
             ax += shift; bx += shift;
-            double[] interval = segmentClip(ax, ay, bx, by,
-                    new Bounds(west, box.south(), east, box.north()), true);
+            double[] interval = segmentClip(ax, ay, bx, by, west, box.south(), east, box.north());
             if (interval == null || interval[1]-interval[0] <= 1e-12) {
                 if (current != null && current.length() >= 2) output.add(current);
                 current = null;
@@ -153,10 +152,11 @@ final class MapCorridorGeometry {
         return new JSONArray().put(lon).put(lat);
     }
 
-    private static double[] segmentClip(double ax,double ay,double bx,double by,Bounds box, boolean unwrapped) {
+    private static double[] segmentClip(double ax,double ay,double bx,double by,
+                                        double west,double south,double east,double north) {
         double dx=bx-ax,dy=by-ay;
         double[] p={-dx,dx,-dy,dy};
-        double[] q={ax-box.west(),box.east()-ax,ay-box.south(),box.north()-ay};
+        double[] q={ax-west,east-ax,ay-south,north-ay};
         double lo=0,hi=1;
         for (int i=0;i<4;i++) {
             if (Math.abs(p[i])<1e-15) {
