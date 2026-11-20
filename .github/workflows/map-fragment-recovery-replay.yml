@@ -64,6 +64,21 @@ jobs:
                       assert len(data)==size
                       w.write(data)
           PY
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.10'
+      - name: Gate A – compile Android and run focused fragment regressions
+        run: |
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:compileDebugJavaWithJavac :app:testDebugUnitTest \
+            --tests '*.MapRecoveryEngineeringTest.warmBuild313TruncationIsRefreshedAndRetainedOnNextOpen' \
+            --tests '*.MapRecoveryEngineeringTest.deferredOverseasEmptyProjectionIsResolvedAndIndexed' \
+            --tests '*.MapRecoveryEngineeringTest.cappedWorldwideFragmentRetainsVerifiedPrefixInsteadOfDroppingIt' \
+            --tests '*.MapRecoveryEngineeringTest.legacyTruncationKeepsPreviouslyDisplayedFragmentsWhenRefreshIsDeferred'
+      - name: Save focused regression receipts
+        run: cp -R android-prototype/app/build/test-results/testDebugUnitTest "$RUNNER_TEMP/gate-a-tests"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
           path: .cache/ncn/catalogue.db
@@ -99,18 +114,6 @@ jobs:
           assert valid(target,manifest['sha256'],manifest['database_bytes'])
           print('Verified exact pinned NCN test database',manifest['sha256'])
           PYTHON
-      - uses: gradle/actions/setup-gradle@v6
-        with:
-          gradle-version: '8.10'
-      - name: Gate A – compile Android and run focused fragment regressions
-        run: |
-          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:compileDebugJavaWithJavac :app:testDebugUnitTest \
-            --tests '*.MapRecoveryEngineeringTest.warmBuild313TruncationIsRefreshedAndRetainedOnNextOpen' \
-            --tests '*.MapRecoveryEngineeringTest.deferredOverseasEmptyProjectionIsResolvedAndIndexed' \
-            --tests '*.MapRecoveryEngineeringTest.cappedWorldwideFragmentRetainsVerifiedPrefixInsteadOfDroppingIt' \
-            --tests '*.MapRecoveryEngineeringTest.legacyTruncationKeepsPreviouslyDisplayedFragmentsWhenRefreshIsDeferred'
-      - name: Save focused regression receipts
-        run: cp -R android-prototype/app/build/test-results/testDebugUnitTest "$RUNNER_TEMP/gate-a-tests"
       - name: Gate B – Map, Android navigation and canonical coverage regression suite
         run: |
           set -euo pipefail
