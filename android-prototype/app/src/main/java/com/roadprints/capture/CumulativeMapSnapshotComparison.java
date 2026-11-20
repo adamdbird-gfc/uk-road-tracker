@@ -183,7 +183,12 @@ final class CumulativeMapSnapshotComparison {
                     .put("accepted_pieces", acceptedPieces)
                     .put("displayed_pieces", displayedPieces)
                     .put("displayed_points", displayedPoints)
-                    .put("max_accepted_to_display_m", maxUnrepresentedMetres)
+                    .put("max_accepted_to_display_m",
+                            Double.isFinite(maxUnrepresentedMetres)
+                                    ? maxUnrepresentedMetres : JSONObject.NULL)
+                    .put("accepted_coverage_status",
+                            Double.isFinite(maxUnrepresentedMetres)
+                                    ? "measured" : "no_display_coverage")
                     .put("accepted_fingerprint_sha256", acceptedFingerprint)
                     .put("display_fingerprint_sha256", displayFingerprint)
                     .put("extra_lines_attribution", "unassessed_other_journeys_may_contribute");
