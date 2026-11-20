@@ -146,6 +146,43 @@ public final class CumulativeMapShapeAuditTest {
         assertEquals(2, section.history.size());
     }
 
+    @Test public void fleetStreetStyleCorridorAndTurnsAreNotReplacedByCrossConnections()
+            throws Exception {
+        // Synthetic, anonymised street-grid topology inspired by the owner's
+        // Fleet Street / Temple regression area. NOT traced from a real journey,
+        // map screenshot or OSM coordinate. Same algorithm must work everywhere.
+        JSONArray mainRoad = line("[[0.001,51.51],[0.002,51.51003],"
+                + "[0.003,51.51007],[0.004,51.5101]]");
+        JSONArray northTurn = line("[[0.002,51.51003],[0.00208,51.5104]]");
+        JSONArray southTurn = line("[[0.003,51.51007],[0.00306,51.5097]]");
+        java.util.List<JSONArray> acceptedUnion = java.util.List.of(
+                line("[[0.001,51.51],[0.002,51.51003]]"),
+                line("[[0.002,51.51003],[0.003,51.51007]]"),
+                line("[[0.003,51.51007],[0.004,51.5101]]"),
+                northTurn, southTurn);
+        assertEquals(0, CumulativeMapShapeAudit.acceptedToCumulativeDeviationMetres(
+                mainRoad, acceptedUnion), 0.001);
+        assertEquals(0, CumulativeMapShapeAudit.acceptedToCumulativeDeviationMetres(
+                northTurn, acceptedUnion), 0.001);
+        assertEquals(0, CumulativeMapShapeAudit.acceptedToCumulativeDeviationMetres(
+                southTurn, acceptedUnion), 0.001);
+
+        // A direct diagonal between the side street tips is not supported.
+        JSONArray inventedCrossConnection = line(
+                "[[0.00208,51.5104],[0.00306,51.5097]]");
+        assertTrue("A visual shortcut joining two different street entrances is unsupported",
+                CumulativeMapShapeAudit.acceptedToCumulativeDeviationMetres(
+                        inventedCrossConnection, acceptedUnion) > 10);
+
+        // Do not turn the existence of a nearby parallel road into proof that
+        // the accepted east-west main road is already represented.
+        java.util.List<JSONArray> wrongParallel = java.util.List.of(
+                line("[[0.001,51.51012],[0.004,51.51022]]"),
+                northTurn, southTurn);
+        assertTrue(CumulativeMapShapeAudit.acceptedToCumulativeDeviationMetres(
+                mainRoad, wrongParallel) > 4);
+    }
+
     @Test public void invalidOrMissingEvidenceIsNotEquivalent() throws Exception {
         JSONArray path = line("[[0.3747,51.44],[0.3753,51.44]]");
         assertEquals(Double.POSITIVE_INFINITY,
