@@ -15,7 +15,7 @@ jobs:
       JAVA_TOOL_OPTIONS: -XX:TieredStopAtLevel=1 -XX:ReservedCodeCacheSize=256m
       NCN_TEST_DATABASE: ${{ github.workspace }}/.cache/ncn/catalogue.db
       BASELINE: 95cc2d28051a7eca37ab0774e693616e2b5d8874
-      ENGINEERING: 026451fb5a9004d6d0633b95327c4d22a6a4ba45
+      ENGINEERING: 050cef0667e375fd83f9bace0d25ee4b25ab688c
       CERT_SHA256: 5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
