@@ -35,6 +35,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class MapActivity extends Activity {
+    /** Development-only entry from Utilities; the regular Map has no diagnostic gesture. */
+    static final String EXTRA_GEOMETRY_EXPORT_MODE = "roadprints.geometry_export_mode";
     private final NavigationTrace navigation=new NavigationTrace("main_map");
     private static final int NAVY = 0xFF0B1C50;
     private static final int NAV_BAR = 0xFF10275D;
@@ -57,6 +59,13 @@ public class MapActivity extends Activity {
             new java.lang.ref.WeakReference<>(null);
     private static long processMapCacheRevision = Long.MIN_VALUE;
     private MapRoutes displayedRoutes;
+    private static final int EXPORT_VISIBLE_MAP_DOCUMENT = 4821;
+    private MapRoutes pendingEvidenceRoutes;
+    private MapCorridorGeometry.Bounds pendingEvidenceBounds;
+    private double[] pendingEvidenceCamera;
+    private long pendingEvidenceRevision;
+    private String pendingEvidenceFilter;
+    private boolean mapEvidenceExportBusy;
     private TextView mapSubtitle, legendButton;
     private MapLoadingView loadingCard;
     private volatile boolean progressiveMapActive;
@@ -215,10 +224,31 @@ public class MapActivity extends Activity {
         legendButton=new TextView(this);legendButton.setText("☷ Legend");legendButton.setTextSize(14);legendButton.setTextColor(NAVY);
         legendButton.setTypeface(null,Typeface.BOLD);legendButton.setGravity(Gravity.CENTER);legendButton.setMinHeight(dp(48));
         legendButton.setPadding(dp(14),dp(10),dp(14),dp(10));legendButton.setBackground(roundRect(GOLD,dp(14)));legendButton.setTag("map_legend_button");
-        legendButton.setContentDescription("Legend, map layer visibility and collection selection");
+        legendButton.setContentDescription("Legend and map layers.");
         legendButton.setOnClickListener(v->MapLegendPanel.show(this,getIntent().hasExtra("settlement_code"),this::applyCollectionLayer));
+        // No hidden long-press diagnostics on the regular Map's Legend.
         FrameLayout.LayoutParams legendParams=new FrameLayout.LayoutParams(-2,-2,Gravity.START|Gravity.BOTTOM);
         legendParams.setMargins(dp(12),dp(12),dp(12),dp(12));mapFrame.addView(legendButton,legendParams);
+        if (getIntent().getBooleanExtra(EXTRA_GEOMETRY_EXPORT_MODE, false)
+                && !getIntent().hasExtra("settlement_code")) {
+            TextView exportControl = new TextView(this);
+            exportControl.setText("Save visible geometry");
+            exportControl.setTextColor(NAVY);
+            exportControl.setTextSize(14);
+            exportControl.setTypeface(null, Typeface.BOLD);
+            exportControl.setGravity(Gravity.CENTER);
+            exportControl.setMinHeight(dp(48));
+            exportControl.setPadding(dp(14), dp(10), dp(14), dp(10));
+            exportControl.setBackground(roundRect(GOLD, dp(14)));
+            exportControl.setContentDescription(
+                    "Save private cumulative Map geometry for the visible area");
+            exportControl.setTag("utilities_map_geometry_export");
+            exportControl.setOnClickListener(v -> requestVisibleMapEvidenceExport());
+            FrameLayout.LayoutParams exportParams = new FrameLayout.LayoutParams(
+                    -2, -2, Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
+            exportParams.setMargins(dp(8), dp(12), dp(8), dp(12));
+            mapFrame.addView(exportControl, exportParams);
+        }
         if (!getIntent().hasExtra("settlement_code")){
             addMapFilters();
             locateControl=MapLocationControl.add(mapFrame,this::locateMe);
@@ -862,6 +892,118 @@ public class MapActivity extends Activity {
             PerformanceDiagnostics.timing("map_cache_trim", 0,
                     "level=" + level + " live_snapshot=" + (displayedMapCache.get() != null));
         }
+    }
+
+    /** User-initiated save, no automatic telemetry or archive reread. */
+    private void requestVisibleMapEvidenceExport() {
+        if (mapEvidenceExportBusy || !mapReady || recapVisible
+                || displayedRoutes == null || mapView == null
+                || displayedMapRevision != mapDataRevision()) {
+            android.widget.Toast.makeText(this,
+                    "Open a ready, up-to-date Map before exporting.",
+                    android.widget.Toast.LENGTH_LONG).show();
+            return;
+        }
+        final MapCorridorGeometry.Bounds bounds;
+        final double[] camera;
+        try {
+            bounds = mapView.visibleGeometryWindow();
+            camera = mapView.cameraState();
+        } catch (IllegalArgumentException invalidView) {
+            android.widget.Toast.makeText(this,
+                    "Zoom in to a smaller Map area first.",
+                    android.widget.Toast.LENGTH_LONG).show();
+            return;
+        }
+        new AlertDialog.Builder(this)
+                .setTitle("Save visible Map geometry")
+                .setMessage("Save a private JSON file of the travelled Map lines visible "
+                        + "at this camera position. This includes precise coordinates "
+                        + "from your journeys. It does not change your Map or upload "
+                        + "anything. Dense views may require zooming in.")
+                .setNegativeButton("CANCEL",null)
+                .setPositiveButton("SAVE", (dialog, which) -> {
+                    pendingEvidenceRoutes=displayedRoutes;
+                    pendingEvidenceBounds=bounds;
+                    pendingEvidenceCamera=camera;
+                    pendingEvidenceRevision=displayedMapRevision;
+                    pendingEvidenceFilter=filterKey(displayedFilters);
+                    mapEvidenceExportBusy=true;
+                    try {
+                        Intent save = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                        save.addCategory(Intent.CATEGORY_OPENABLE);
+                        save.setType("application/json");
+                        save.putExtra(Intent.EXTRA_TITLE,
+                                "roadprints-visible-map-evidence.json");
+                        startActivityForResult(save, EXPORT_VISIBLE_MAP_DOCUMENT);
+                    } catch (Exception unavailable) {
+                        clearPendingMapEvidence();
+                        android.widget.Toast.makeText(this,
+                                "No document-saving app available.",
+                                android.widget.Toast.LENGTH_LONG).show();
+                    }
+                }).show();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode,int resultCode,Intent data) {
+        super.onActivityResult(requestCode,resultCode,data);
+        if (requestCode != EXPORT_VISIBLE_MAP_DOCUMENT) return;
+        if (resultCode != RESULT_OK || data == null || data.getData() == null
+                || pendingEvidenceRoutes == null || pendingEvidenceBounds == null) {
+            clearPendingMapEvidence();
+            return;
+        }
+        final android.net.Uri destination = data.getData();
+        final MapRoutes source = pendingEvidenceRoutes;
+        final MapCorridorGeometry.Bounds bounds = pendingEvidenceBounds;
+        final double[] camera = pendingEvidenceCamera;
+        final long revision = pendingEvidenceRevision;
+        final String filter = pendingEvidenceFilter;
+        // Keep the original prepared snapshot, not a later/partially
+        // refreshed Map; reject if the source changed during the file picker.
+        if (source != displayedRoutes || revision != displayedMapRevision) {
+            clearPendingMapEvidence();
+            android.widget.Toast.makeText(this,
+                    "Map changed; reopen Save from the ready Map.",
+                    android.widget.Toast.LENGTH_LONG).show();
+            return;
+        }
+        new Thread(() -> {
+            String error = null;
+            try {
+                JSONObject evidence = MapGeometryEvidenceExport.capture(
+                        source,bounds,camera,revision,filter);
+                try (java.io.OutputStream output =
+                        getContentResolver().openOutputStream(destination, "wt")) {
+                    if (output == null) throw new java.io.IOException("No writable destination");
+                    output.write(evidence.toString()
+                            .getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                    output.flush();
+                }
+            } catch (Exception failure) {
+                error = failure instanceof IllegalArgumentException
+                        ? failure.getMessage() : "Could not save Map evidence.";
+            }
+            final String message = error == null
+                    ? "Visible Map geometry saved. Share only if you choose."
+                    : error;
+            mainHandler.post(() -> {
+                clearPendingMapEvidence();
+                if (!isFinishing() && !isDestroyed())
+                    android.widget.Toast.makeText(this,message,
+                            android.widget.Toast.LENGTH_LONG).show();
+            });
+        },"RoadprintsMapEvidenceExport").start();
+    }
+
+    private void clearPendingMapEvidence() {
+        pendingEvidenceRoutes=null;
+        pendingEvidenceBounds=null;
+        pendingEvidenceCamera=null;
+        pendingEvidenceFilter=null;
+        pendingEvidenceRevision=Long.MIN_VALUE;
+        mapEvidenceExportBusy=false;
     }
 
     private void displayMapRoutes(MapRoutes mapRoutes, int generation) {

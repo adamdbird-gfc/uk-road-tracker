@@ -1,0 +1,84 @@
+name: Cumulative Map Fidelity (focused JVM)
+on:
+  push:
+    branches:
+      - feat/cumulative-map-roundabout-fidelity
+    paths:
+      - '.github/workflows/cumulative-map-fidelity.yml'
+      - 'android-prototype/app/src/main/java/com/roadprints/capture/MapCorridorGeometry.java'
+      - 'android-prototype/app/src/main/java/com/roadprints/capture/CumulativeMapShapeAudit.java'
+      - 'android-prototype/app/src/main/java/com/roadprints/capture/CumulativeMapSnapshotComparison.java'
+      - 'android-prototype/app/src/main/java/com/roadprints/capture/MapGeometryEvidenceExport.java'
+      - 'android-prototype/app/src/main/java/com/roadprints/capture/RoutePreviewView.java'
+      - 'android-prototype/app/src/main/java/com/roadprints/capture/MapActivity.java'
+      - 'android-prototype/app/src/main/java/com/roadprints/capture/UtilitiesActivity.java'
+      - 'android-prototype/app/src/test/java/com/roadprints/capture/MapGeometryEvidenceExportTest.java'
+      - 'android-prototype/app/src/test/java/com/roadprints/capture/*GeometryTest.java'
+      - 'android-prototype/app/src/test/java/com/roadprints/capture/Cumulative*Test.java'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  geometry-jvm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      # GitHub-hosted Ubuntu runners already provide Android cmdline-tools.
+      # setup-android@v3 tried to install obsolete SDK package 'tools' and
+      # exited before Gradle or any fidelity test could begin.
+      - name: Install Android 35 compiler SDK from runner command-line tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${ANDROID_HOME:?GitHub runner must provide Android SDK}"
+          SDKMANAGER="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
+          if [[ ! -x "$SDKMANAGER" ]]; then
+            SDKMANAGER="$(command -v sdkmanager || true)"
+          fi
+          if [[ -z "$SDKMANAGER" || ! -x "$SDKMANAGER" ]]; then
+            echo "::error::Android SDK command-line tools unavailable on runner"
+            exit 1
+          fi
+          "$SDKMANAGER" --version
+          "$SDKMANAGER" --install "platforms;android-35" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+      - name: Compile and execute focused geometry regressions
+        working-directory: android-prototype
+        run: |
+          gradle --no-daemon --stacktrace :app:testAcceptanceUnitTest \
+            --tests 'com.roadprints.capture.CumulativeMapShapeAuditTest' \
+            --tests 'com.roadprints.capture.CumulativeMapSnapshotComparisonTest' \
+            --tests 'com.roadprints.capture.CumulativePreparedOverviewSnapshotTest' \
+            --tests 'com.roadprints.capture.MapCorridorGeometryTest' \
+            --tests 'com.roadprints.capture.MapGeometryEvidenceExportTest' \
+            --tests 'com.roadprints.capture.MatchedCorridorAccumulatorTest'
+      - name: Check Utilities-only export entry
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'menuItem("Export Map geometry"' android-prototype/app/src/main/java/com/roadprints/capture/UtilitiesActivity.java
+          grep -q 'putExtra(MapActivity.EXTRA_GEOMETRY_EXPORT_MODE, true)' android-prototype/app/src/main/java/com/roadprints/capture/UtilitiesActivity.java
+          grep -q 'getBooleanExtra(EXTRA_GEOMETRY_EXPORT_MODE, false)' android-prototype/app/src/main/java/com/roadprints/capture/MapActivity.java
+          if grep -q 'legendButton.setOnLongClickListener' android-prototype/app/src/main/java/com/roadprints/capture/MapActivity.java; then
+            echo "::error::Export must not be hidden on the ordinary Map Legend"
+            exit 1
+          fi
+      - name: Upload test output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cumulative-map-fidelity-test-results
+          path: |
+            android-prototype/app/build/test-results/testAcceptanceUnitTest
+            android-prototype/app/build/reports/tests/testAcceptanceUnitTest
+          if-no-files-found: ignore
+          retention-days: 7

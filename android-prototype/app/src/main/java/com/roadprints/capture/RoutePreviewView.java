@@ -1578,6 +1578,13 @@ public class RoutePreviewView extends View {
         return new double[]{centerLongitude, centerLatitude, cameraZoom};
     }
 
+    /** Bounds of the pixels currently visible to the user, for explicit export. */
+    MapCorridorGeometry.Bounds visibleGeometryWindow() {
+        double[] camera = cameraState();
+        return MapCorridorGeometry.visibleWindow(camera[0],camera[1],camera[2],
+                getWidth(),getHeight(),mapTileSize());
+    }
+
     /** Restores a saved view and prevents the initial route fit from replacing it. */
     public void restoreCameraState(double longitude, double latitude, double zoom) {
         if (!Double.isFinite(longitude) || !Double.isFinite(latitude)

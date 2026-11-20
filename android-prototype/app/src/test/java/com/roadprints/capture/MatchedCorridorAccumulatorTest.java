@@ -28,6 +28,50 @@ public final class MatchedCorridorAccumulatorTest {
         int totalPoints() { return lines.stream().mapToInt(JSONArray::length).sum(); }
     }
 
+    @Test public void acceptedRoundaboutArcsAccumulateWithoutDuplicateTravelledPaths()
+            throws Exception {
+        Ledger map = new Ledger();
+        // Cardinal points of a compact four-exit roundabout, with distinct
+        // curved quarter-arcs. The shared approach and the four physical arcs
+        // are independent accepted geometric units for the union.
+        String approachWest = "[[0.3742,51.44],[0.3747,51.44]]";
+        String approachEast = "[[0.3753,51.44],[0.3758,51.44]]";
+        String northWest = "[[0.3747,51.44],[0.374788,51.440141],[0.375,51.4402]]";
+        String northEast = "[[0.375,51.4402],[0.375212,51.440141],[0.3753,51.44]]";
+        String southEast = "[[0.3753,51.44],[0.375212,51.439859],[0.375,51.4398]]";
+        String southWest = "[[0.375,51.4398],[0.374788,51.439859],[0.3747,51.44]]";
+
+        assertEquals(MatchedCorridorAccumulator.Result.ADDED,
+                map.add(approachWest, "west-to-east", false));
+        assertEquals(MatchedCorridorAccumulator.Result.ADDED,
+                map.add(approachEast, "west-to-east", false));
+        assertEquals(MatchedCorridorAccumulator.Result.ADDED,
+                map.add(northWest, "west-to-east", false));
+        assertEquals(MatchedCorridorAccumulator.Result.ADDED,
+                map.add(northEast, "west-to-east", false));
+
+        assertEquals(MatchedCorridorAccumulator.Result.REUSED,
+                map.add(approachEast, "east-to-west", false));
+        assertEquals(MatchedCorridorAccumulator.Result.REUSED,
+                map.add(approachWest, "east-to-west", false));
+        assertEquals(MatchedCorridorAccumulator.Result.ADDED,
+                map.add(southEast, "east-to-west", false));
+        assertEquals(MatchedCorridorAccumulator.Result.ADDED,
+                map.add(southWest, "east-to-west", false));
+        assertEquals("Two shared approaches and four distinct arcs", 6, map.lines.size());
+
+        // A third journey covering the same already-accepted east/north arc
+        // adds no new roundabout geometry, but contributes its own journey ID.
+        assertEquals(MatchedCorridorAccumulator.Result.REUSED,
+                map.add(northEast, "third-exit", false));
+        assertEquals(MatchedCorridorAccumulator.Result.REUSED,
+                map.add(southWest, "third-exit", false));
+        assertEquals(6, map.lines.size());
+        assertEquals(Set.of("west-to-east", "third-exit"), map.contributors.get(3));
+        assertTrue(MatchedCorridorAccumulator.coherent(
+                map.lines, map.contributors, map.walkingFallback));
+    }
+
     @Test public void walkingAndDrivingOnSameAcceptedGeometryAreOneCorridor()
             throws Exception {
         Ledger ledger = new Ledger();
