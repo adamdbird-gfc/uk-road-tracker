@@ -40,6 +40,62 @@ public final class CumulativeMapShapeAuditTest {
                 accepted, withInventedDetour) > 15);
     }
 
+    @Test public void acceptedStreetCanBeRepresentedBySplitUnionWithoutStackingJourneys()
+            throws Exception {
+        JSONArray accepted = line("[[0.374,51.44],[0.375,51.44],[0.376,51.44]]");
+        java.util.List<JSONArray> split = java.util.List.of(
+                line("[[0.374,51.44],[0.3745,51.44]]"),
+                line("[[0.3745,51.44],[0.375,51.44]]"),
+                line("[[0.375,51.44],[0.3755,51.44]]"),
+                line("[[0.3755,51.44],[0.376,51.44]]"));
+        assertEquals(0, CumulativeMapShapeAudit.acceptedToCumulativeDeviationMetres(
+                accepted, split), 0.0001);
+        assertEquals(0, CumulativeMapShapeAudit.acceptedToCumulativeDeviationMetres(
+                line("[[0.376,51.44],[0.375,51.44],[0.374,51.44]]"), split), 0.0001);
+    }
+
+    @Test public void genericCurvedPathMustNotBeReplacedByEndpointChord()
+            throws Exception {
+        JSONArray accepted = line("[[0.374,51.44],[0.3744,51.44012],"
+                + "[0.375,51.4402],[0.3756,51.44012],[0.376,51.44]]");
+        java.util.List<JSONArray> canonicalChords = java.util.List.of(
+                line("[[0.374,51.44],[0.376,51.44]]"));
+        assertTrue("A reconstructed chord cannot represent the accepted street bend",
+                CumulativeMapShapeAudit.acceptedToCumulativeDeviationMetres(
+                        accepted, canonicalChords) > 15);
+    }
+
+    @Test public void unrelatedParallelPathCannotSatisfyRepresentation()
+            throws Exception {
+        JSONArray accepted = line("[[0.374,51.44],[0.376,51.44]]");
+        java.util.List<JSONArray> adjacent = java.util.List.of(
+                line("[[0.374,51.44005],[0.376,51.44005]]"));
+        assertTrue(CumulativeMapShapeAudit.acceptedToCumulativeDeviationMetres(
+                accepted, adjacent) > 5);
+    }
+
+    @Test public void onlyPartiallyCoveredPathReportsMissingMiddle()
+            throws Exception {
+        JSONArray accepted = line("[[0.374,51.44],[0.376,51.44]]");
+        java.util.List<JSONArray> separated = java.util.List.of(
+                line("[[0.374,51.44],[0.3745,51.44]]"),
+                line("[[0.3755,51.44],[0.376,51.44]]"));
+        assertTrue("Covered endpoints must not conceal an unrepresented middle",
+                CumulativeMapShapeAudit.acceptedToCumulativeDeviationMetres(
+                        accepted, separated) > 20);
+    }
+
+    @Test public void unionOrderAndRepeatedSectionsDoNotChangeDeviation()
+            throws Exception {
+        JSONArray accepted = line("[[0.374,51.44],[0.375,51.44],[0.376,51.44]]");
+        JSONArray a = line("[[0.374,51.44],[0.375,51.44]]");
+        JSONArray b = line("[[0.375,51.44],[0.376,51.44]]");
+        double initial = CumulativeMapShapeAudit.acceptedToCumulativeDeviationMetres(
+                accepted, java.util.List.of(a,b));
+        assertEquals(initial, CumulativeMapShapeAudit.acceptedToCumulativeDeviationMetres(
+                accepted, java.util.List.of(b,a,b,a)), 0.0001);
+    }
+
     @Test public void invalidOrMissingEvidenceIsNotEquivalent() throws Exception {
         JSONArray path = line("[[0.3747,51.44],[0.3753,51.44]]");
         assertEquals(Double.POSITIVE_INFINITY,
