@@ -17,6 +17,16 @@ import static org.junit.Assert.*;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28)
 public class MapRecoveryEngineeringTest {
+    @Test public void cappedWorldwideFragmentRetainsVerifiedPrefixInsteadOfDroppingIt() throws Exception {
+        JSONArray line = new JSONArray("[[10,50],[10.001,50],[10.002,50],[10.003,50]]");
+        boolean[] truncated = {false};
+        java.util.List<JSONArray> fragments = OverseasMatchedGeometry.unsupportedFragments(
+                java.util.List.of(line), 48, 3, (longitude, latitude) -> false, truncated);
+        assertTrue("Budget must be reported", truncated[0]);
+        assertEquals("Already accepted prefix must remain visible", 1, fragments.size());
+        assertEquals(3, fragments.get(0).length());
+        assertEquals(10.002, fragments.get(0).getJSONArray(2).getDouble(0), 0.000001);
+    }
     @Test public void trainAircraftAndUnfinishedMatchingDoNotInvalidateRoadMap() throws Exception {
         Context app = RuntimeEnvironment.getApplication();
         JourneyStore.save(app, journey("recovery-scope-existing"));
