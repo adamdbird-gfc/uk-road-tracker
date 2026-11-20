@@ -38,7 +38,7 @@ public final class OverseasMatchedGeometryTest {
         assertEquals(2, fragments.get(0).length());
         assertEquals(2, fragments.get(1).length());
     }
-    @Test public void boundedAndInvalidPointsNeverDrawFalseConnections() {
+    @Test public void boundedAndInvalidPointsNeverDrawFalseConnections() throws org.json.JSONException {
         assertTrue(OverseasMatchedGeometry.outsideReferenceFragments(
                 Arrays.asList(line(2.1, 48.2, 2.2, 48.3)), 0, 10).isEmpty());
         assertTrue(OverseasMatchedGeometry.outsideReferenceFragments(
