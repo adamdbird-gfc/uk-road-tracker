@@ -77,6 +77,74 @@ public final class CumulativePreparedOverviewSnapshotTest {
         assertTrue(snapshot.unsupportedMetres() > 100);
     }
 
+    @Test public void serializedRealMapSnapshotMatchesPreparedDisplay()
+            throws Exception {
+        JSONArray accepted = line("[[0.374,51.44],[0.375,51.4402],[0.376,51.44]]");
+        MapActivity.MapRoutes routes = new MapActivity.MapRoutes();
+        routes.addLocalRoad(section("west", "[0.374,51.44]", "[0.375,51.4402]"));
+        routes.addLocalRoad(section("east", "[0.375,51.4402]", "[0.376,51.44]"));
+        var prepared = CumulativeMapSnapshotComparison.snapshotPreparedOverview(
+                "same-fixture", List.of(accepted), routes);
+        org.json.JSONObject saved = new org.json.JSONObject()
+                .put("sections", new JSONArray())
+                .put("coveredMotorways", new JSONArray())
+                .put("coveredARoads", new JSONArray())
+                .put("ferries", new JSONArray())
+                .put("localRoads", new JSONArray()
+                        .put(routes.localRoadSections.get(0).encode())
+                        .put(routes.localRoadSections.get(1).encode()));
+        var restored = CumulativeMapSnapshotComparison.snapshotSerializedOverview(
+                "same-fixture", List.of(accepted), saved);
+        assertEquals(prepared.geometryFingerprint(), restored.geometryFingerprint());
+        assertEquals(prepared.acceptedFingerprint(), restored.acceptedFingerprint());
+        assertEquals(prepared.displaySections(), restored.displaySections());
+        assertEquals(0, restored.missingMetres(), 0.001);
+        assertEquals(0, restored.unsupportedMetres(), 0.001);
+    }
+
+    @Test public void diagnosticSourceUsesMatchedGeometryNotNoisyRawCapture()
+            throws Exception {
+        JSONArray accepted = line("[[0.374,51.44],[0.375,51.4402],[0.376,51.44]]");
+        org.json.JSONObject diagnostic = new org.json.JSONObject()
+                .put("format", "roadprints_journey_diagnostics")
+                .put("journey", new org.json.JSONObject()
+                        .put("processing_status", "complete")
+                        .put("raw_capture_geometry", new org.json.JSONObject()
+                                .put("coordinates", line("[[0,50],[10,60]]")))
+                        .put("processing_result", new org.json.JSONObject()
+                                .put("status", "ok")
+                                .put("geojson", new org.json.JSONObject()
+                                        .put("features", new JSONArray().put(
+                                                new org.json.JSONObject().put("geometry",
+                                                        new org.json.JSONObject()
+                                                                .put("type", "LineString")
+                                                                .put("coordinates", accepted))))));
+        var lines = CumulativeMapSnapshotComparison.acceptedUncorrectedDiagnostic(diagnostic);
+        assertEquals(1, lines.size());
+        assertEquals(accepted.toString(), lines.get(0).toString());
+
+        diagnostic.getJSONObject("journey").put("journey_corrections",
+                new org.json.JSONObject());
+        try {
+            CumulativeMapSnapshotComparison.acceptedUncorrectedDiagnostic(diagnostic);
+            fail("A diagnostic wrapper may not silently disregard saved corrections");
+        } catch (IllegalArgumentException expected) {
+            assertTrue(expected.getMessage().contains("correction"));
+        }
+    }
+
+    @Test public void serializedSnapshotRejectsMissingTravelledCollections()
+            throws Exception {
+        try {
+            CumulativeMapSnapshotComparison.snapshotSerializedOverview("invalid",
+                    List.of(line("[[0,50],[0.001,50]]")),
+                    new org.json.JSONObject().put("localRoads", new JSONArray()));
+            fail("Incomplete cache snapshot must not be treated as authoritative");
+        } catch (IllegalArgumentException expected) {
+            assertTrue(expected.getMessage().contains("Missing"));
+        }
+    }
+
     @Test public void refusesOwnerSizedSnapshotRatherThanSilentlySamplingIt()
             throws Exception {
         JSONArray accepted = line("[[0.37,51.44],[0.371,51.44]]");
