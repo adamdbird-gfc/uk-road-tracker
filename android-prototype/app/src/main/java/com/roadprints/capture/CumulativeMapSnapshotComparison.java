@@ -104,6 +104,71 @@ final class CumulativeMapSnapshotComparison {
         }
     }
 
+    /**
+     * Read an existing Map snapshot in the same wire format emitted by
+     * MapActivity.mapRoutesToCache(). Only derived travelled geometry is read.
+     * This is deliberately offline, bounded and non-mutating. Never load the
+     * owner's full Map on the Android UI thread for audit purposes.
+     */
+    static Snapshot snapshotSerializedOverview(String scenarioId, List<JSONArray> accepted,
+                                               JSONObject persisted) throws Exception {
+        if (persisted == null || !persisted.has("sections")
+                || !persisted.has("localRoads") || !persisted.has("coveredMotorways")
+                || !persisted.has("coveredARoads") || !persisted.has("ferries"))
+            throw new IllegalArgumentException("Missing Map snapshot geometry collections");
+        List<JSONArray> displayed = new ArrayList<>();
+        final int maxSections = 512, maxPoints = 8192;
+        int[] points = {0};
+        for (String key : new String[]{"sections", "coveredMotorways", "coveredARoads", "ferries"}) {
+            JSONArray rows = persisted.getJSONArray(key);
+            for (int i = 0; i < rows.length(); i++) {
+                JSONArray line = rows.optJSONArray(i);
+                if (line == null || line.length() < 2
+                        || displayed.size() >= maxSections
+                        || line.length() > maxPoints - points[0])
+                    throw new IllegalArgumentException("Map A/B fixture exceeds bounded geometry budget");
+                displayed.add(line);
+                points[0] += line.length();
+            }
+        }
+        JSONArray locals = persisted.getJSONArray("localRoads");
+        for (int i = 0; i < locals.length(); i++) {
+            if (i >= maxSections)
+                throw new IllegalArgumentException("Map A/B fixture exceeds bounded local roads");
+            LocalRoadCoverage.Section section =
+                    LocalRoadCoverage.Section.decode(locals.getJSONObject(i));
+            for (LocalRoadCoverage.Line interval : section.lines) {
+                if (displayed.size() >= maxSections || points[0] + 2 > maxPoints)
+                    throw new IllegalArgumentException("Map A/B fixture exceeds bounded geometry budget");
+                displayed.add(interval.points());
+                points[0] += 2;
+            }
+        }
+        return snapshot(scenarioId, accepted, displayed);
+    }
+
+    /**
+     * Diagnostic exports are NOT the actual saved journey file format.
+     * Only accept a complete, uncorrected matched journey, because applying
+     * owner removals needs the full correction-aware production path.
+     */
+    static List<JSONArray> acceptedUncorrectedDiagnostic(JSONObject diagnostic) {
+        if (diagnostic == null || !"roadprints_journey_diagnostics".equals(
+                diagnostic.optString("format")))
+            throw new IllegalArgumentException("Expected Roadprints journey diagnostic export");
+        JSONObject journey = diagnostic.optJSONObject("journey");
+        if (journey == null || !"complete".equals(journey.optString("processing_status"))
+                || journey.has("journey_corrections"))
+            throw new IllegalArgumentException(
+                    "Use production correction-aware geometry for corrected journeys");
+        JSONObject processing = journey.optJSONObject("processing_result");
+        if (processing == null || !"ok".equals(processing.optString("status")))
+            throw new IllegalArgumentException("Expected complete accepted match");
+        List<JSONArray> matched = AcceptedRoadRoute.matchedLines(processing);
+        if (matched.isEmpty()) throw new IllegalArgumentException("No accepted route geometry");
+        return matched;
+    }
+
     /** The same physical vertices in reverse direction or different list order
      * produce an identical fingerprint. No accepted points are rounded away:
      * the fingerprint identifies exact test geometry, not fuzzy equivalence. */
