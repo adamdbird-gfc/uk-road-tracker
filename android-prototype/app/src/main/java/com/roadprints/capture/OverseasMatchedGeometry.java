@@ -99,6 +99,9 @@ final class OverseasMatchedGeometry {
                     retained++;
                 }
                 if (retained + 1 > maxPoints) {
+                    // Keep the valid prefix already assembled. Dropping it here
+                    // silently loses an otherwise accepted journey fragment.
+                    if (current.length() >= 2) result.add(current);
                     if (truncated != null && truncated.length > 0) truncated[0] = true;
                     return result;
                 }
