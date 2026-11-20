@@ -82,6 +82,24 @@ The comparison draws on the real travelled `MapRoutes` collections or the persis
 
 **Remaining blocker:** Build 313 uses a revision-keyed `map-routes` persistent snapshot only when resource headroom allows, and may retain the prepared Map only in process memory. No full cumulative geometry export was supplied. This PR therefore supplies the comparison code and synthetic regression tests, but no measured accepted-to-real-cumulative deviation yet. A real scoped export from the current Map assembly or an authorised existing Map cache is needed in a subsequent validation session.
 
+## Device evidence collection — implementation present, release gated
+
+The development branch now contains an **opt-in, bounded, read-only** Map geometry export. It is **not available in the owner's currently installed Build 313** until a signed integrated upgrade containing these changes has passed release gates and been installed.
+
+**Owner procedure after an authorised signed upgrade:**
+
+1. Open the **main cumulative Map** and wait for the existing Map-ready state. Leave the road-fact loading overlay behaviour unchanged.
+2. Select **All transport / All statuses / All dates**. Zoom into the Fleet Street / Temple problem area so only the relevant street block is visible. Keep a screenshot of the Map at this camera position.
+3. **Long-press the Map's Legend control** (ordinary tap still opens the legend). Confirm the private-location warning, then use the Android document picker to save `roadprints-visible-map-evidence.json`.
+4. If the app reports a dense or oversized view, zoom further into a smaller area and repeat; **never silently omit sections**. The exported file is limited to 512 intersecting segments, 8,192 vertices and 384 KiB.
+5. Privately supply the JSON file together with the accepted individual-journey diagnostic already provided, and the same-camera screenshot. The export includes **precise travelled location coordinates**; do not post it in a public issue or commit it to GitHub.
+
+The export captures **actual currently prepared travelled Map sections**, not raw GPS, a rebuilt archive, or an inferred reference-road network. It records camera, geographic window, revision, filter selection, counts and incomplete-coverage flags. The existing `compareSavedEvidence()` adapter can measure the accepted journey against the exported cumulative union without labelling unrelated valid journeys as unsupported.
+
+**Release/validation boundaries:** Run the focused JVM test suite including `MapGeometryEvidenceExportTest`; compile the Android application; verify UI gesture and document-picker flow on a test device/emulator; preserve the original archive; then deliver a single signed in-place integrated APK by direct GitHub Release asset URL. A successful focused JVM run alone does **not** establish the device export is operational or that the cumulative Map is accurate.
+
+**Scope:** This is a global-purpose evidence facility: the viewport can be anywhere on Earth, including across the antimeridian. Fleet Street is the first owner's real-world regression, not a location-specific production algorithm.
+
 ## Data acquisition boundary
 
 **Available today:** screenshot and owner description identifying this as a problematic location.  
