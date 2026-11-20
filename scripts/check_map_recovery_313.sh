@@ -100,7 +100,8 @@ def read(label):
         return int(match[1]) if match else None
     local=event('map_local_roads'); nav=event('map_navigation'); gc=event('map_gc_checkpoint')
     return {'ready':'map_outcome=ready' in log,'time_ms':number(event('map_total'),'ms'),
-            'heap_peak_mib':number(nav,'sampled_heap_peak_mib'),
+            'heap_peak_mib':max(map(int,re.findall(r'sampled_heap_peak_mib=(\d+)',log))),
+            'heap_limit_mib':number(nav,'heap_limit_mib'),
             'gc_runs':number(gc,'gc_runs'),'gc_ms':number(gc,'gc_time_ms'),
             'sections':number(local,'sections'),'lines':number(local,'lines'),
             'unique_mm':number(local,'unique_mm'),'local':local,
@@ -109,7 +110,7 @@ def read(label):
 base,candidate,warm=[read(x) for x in ('baseline','candidate','warm')]
 assert candidate['ready'] and warm['ready']
 assert candidate['lines'] >= 44000,candidate
-assert candidate['heap_peak_mib'] is not None and candidate['heap_peak_mib'] < 240,candidate
+assert candidate['heap_peak_mib'] is not None and candidate['heap_peak_mib'] < min(240, candidate['heap_limit_mib'] - 16),candidate
 if base['ready']:
     assert [base[k] for k in ('sections','lines','unique_mm')]==[candidate[k] for k in ('sections','lines','unique_mm')],(base,candidate)
     assert candidate['heap_peak_mib'] <= base['heap_peak_mib'],(base,candidate)
@@ -123,7 +124,7 @@ result={'fixture':'1681 records; 45260 distinct UK input edges with eight contri
         'baseline312':base,'candidate313':candidate,'process_relaunch313':warm,
         'in_place_upgrade':'all 1681 archive files byte-identical; map preferences retained',
         'tab_return_after_running_low':'retained without archive work',
-        'limitations':'Synthetic geometry-volume test, API35 256MiB heap. Not the actual owner archive or Pixel10 Android17 measurements.'}
+        'limitations':'Synthetic geometry-volume test, API35; actual ART heap limit is recorded from diagnostics, independent of the AVD heap setting. Not the actual owner archive or Pixel10 Android17 measurements.'}
 (root/'scale-summary.json').write_text(json.dumps(result,indent=2))
 print(json.dumps(result,indent=2))
 PY
