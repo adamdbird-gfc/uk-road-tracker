@@ -70,6 +70,18 @@ Verified from the owner-provided diagnostic export:
 
 **Next reproducible comparison:** In a protected/local validation environment, load this unchanged saved route as the accepted-source side, and capture a cropped `MapRoutes` output assembled from the **same Build 313 archive**, without uploading the owner file or private coordinates publicly. Compare all contributing cumulative segments using the bounded A/B helper on a geographically scoped fixture, and separately capture fixed-camera screenshots. A candidate must preserve the 276-point accepted geographic shape as a **union**, not as 276 identical display points or a duplicate overlay.
 
+## Geographic corridor comparison adapter (new engineering increment)
+
+The new `MapCorridorGeometry` clips line segments against a fixed geographic bounding box. It keeps a segment that crosses the box even if both endpoints lie outside, and keeps genuinely disconnected fragments separate. `CumulativeMapSnapshotComparison.comparePreparedCorridor()` and `compareSerializedCorridor()` use the same clipped union to measure how far **one accepted journey** is from the travelled cumulative geometry.
+
+The comparison draws on the real travelled `MapRoutes` collections or the persisted `MapActivity.mapRoutesToCache()` wire format, including decoded `LocalRoadCoverage.Section` interval lines. It excludes untravelled background roads and fails closed if more than **512 intersecting display fragments or 8,192 displayed points** would be retained. The check is designed for **offline/fixture validation**, not an on-device UI drawing callback.
+
+**Interpretation guardrail:** `max_accepted_to_display_m` measures proximity to the represented union; it is **not** by itself a proof of correct network identity, topology, or completeness. Other legitimate journeys can appear on the main Map, so their additional strokes MUST NOT be called invented geometry merely because the reference file covers only one walk. No reverse extra-geometry verdict is made until a full set of contributing accepted journeys is available.
+
+**Private route bounds (not committed as literal coordinates):** The submitted matched route extends across central London, from the Charing Cross side to the Temple/Fleet Street corridor. The future validation runner should derive exact source bounds with `MapCorridorGeometry.around(accepted, marginMetres)`, preserving the full accepted path in private memory. The owner-provided screenshot is wider than the earlier problematic cumulative zoom, so compare actual routes using geographic bounds first and fixed-camera screenshots second.
+
+**Remaining blocker:** Build 313 uses a revision-keyed `map-routes` persistent snapshot only when resource headroom allows, and may retain the prepared Map only in process memory. No full cumulative geometry export was supplied. This PR therefore supplies the comparison code and synthetic regression tests, but no measured accepted-to-real-cumulative deviation yet. A real scoped export from the current Map assembly or an authorised existing Map cache is needed in a subsequent validation session.
+
 ## Data acquisition boundary
 
 **Available today:** screenshot and owner description identifying this as a problematic location.  
