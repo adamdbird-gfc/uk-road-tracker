@@ -96,6 +96,56 @@ public final class CumulativeMapShapeAuditTest {
                 accepted, java.util.List.of(b,a,b,a)), 0.0001);
     }
 
+    @Test public void actualCanonicalSectionProjectionExposesCurvedJourneyMismatch()
+            throws Exception {
+        // This exercises the production LocalRoadCoverage.Section -> Line.points()
+        // display conversion rather than a hand-crafted stand-in chord.
+        JSONArray acceptedBend = line("[[0.374,51.44],[0.3744,51.44012],"
+                + "[0.375,51.4402],[0.3756,51.44012],[0.376,51.44]]");
+        LocalRoadCoverage.Section canonical = new LocalRoadCoverage.Section(
+                "fixture-edge", "Example curved road", 100_000,
+                new JSONArray("[0.374,51.44]"), new JSONArray("[0.376,51.44]"),
+                java.util.Map.of("accepted-journey", new int[]{0,100_000}));
+        assertEquals(1, canonical.lines.size());
+        JSONArray actualDisplayLine = canonical.lines.get(0).points();
+        assertEquals("Canonical interval display currently contains only the two endpoints",
+                2, actualDisplayLine.length());
+        assertTrue("Real canonical projection can distort the shape of accepted travel",
+                CumulativeMapShapeAudit.acceptedToCumulativeDeviationMetres(
+                        acceptedBend, java.util.List.of(actualDisplayLine)) > 15);
+        // This test records a verified fidelity gap. It does not fix the
+        // renderer or claim that every reference edge is misaligned.
+    }
+
+    @Test public void actualCanonicalSectionsCanRepresentAPathAsMultipleSegments()
+            throws Exception {
+        JSONArray acceptedBend = line("[[0.374,51.44],[0.375,51.4402],[0.376,51.44]]");
+        LocalRoadCoverage.Section left = new LocalRoadCoverage.Section(
+                "fixture-left", "Bend section 1", 50_000,
+                new JSONArray("[0.374,51.44]"), new JSONArray("[0.375,51.4402]"),
+                java.util.Map.of("accepted-journey", new int[]{0,50_000}));
+        LocalRoadCoverage.Section right = new LocalRoadCoverage.Section(
+                "fixture-right", "Bend section 2", 50_000,
+                new JSONArray("[0.375,51.4402]"), new JSONArray("[0.376,51.44]"),
+                java.util.Map.of("accepted-journey", new int[]{0,50_000}));
+        assertEquals(0, CumulativeMapShapeAudit.acceptedToCumulativeDeviationMetres(
+                acceptedBend, java.util.List.of(left.lines.get(0).points(),
+                        right.lines.get(0).points())), 0.0001);
+    }
+
+    @Test public void canonicalIntervalUnionReusesOneDisplaySectionForRepeatedTravel()
+            throws Exception {
+        LocalRoadCoverage.Section section = new LocalRoadCoverage.Section(
+                "shared-edge", "Shared physical street", 100_000,
+                new JSONArray("[0.374,51.44]"), new JSONArray("[0.376,51.44]"),
+                java.util.Map.of("journey-1", new int[]{0,80_000},
+                        "journey-2", new int[]{20_000,100_000}));
+        assertEquals("Overlapping journeys must produce one physical interval",
+                1, section.lines.size());
+        assertEquals(100_000, section.uniqueMillimetres);
+        assertEquals(2, section.history.size());
+    }
+
     @Test public void invalidOrMissingEvidenceIsNotEquivalent() throws Exception {
         JSONArray path = line("[[0.3747,51.44],[0.3753,51.44]]");
         assertEquals(Double.POSITIVE_INFINITY,
