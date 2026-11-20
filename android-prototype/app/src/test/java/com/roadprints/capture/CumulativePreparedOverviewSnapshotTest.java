@@ -105,20 +105,22 @@ public final class CumulativePreparedOverviewSnapshotTest {
     @Test public void diagnosticSourceUsesMatchedGeometryNotNoisyRawCapture()
             throws Exception {
         JSONArray accepted = line("[[0.374,51.44],[0.375,51.4402],[0.376,51.44]]");
+        org.json.JSONObject geometry = new org.json.JSONObject()
+                .put("type", "LineString").put("coordinates", accepted);
+        org.json.JSONObject feature = new org.json.JSONObject()
+                .put("geometry", geometry);
+        org.json.JSONObject geojson = new org.json.JSONObject()
+                .put("features", new JSONArray().put(feature));
+        org.json.JSONObject processing = new org.json.JSONObject()
+                .put("status", "ok").put("geojson", geojson);
+        org.json.JSONObject journey = new org.json.JSONObject()
+                .put("processing_status", "complete")
+                .put("raw_capture_geometry", new org.json.JSONObject()
+                        .put("coordinates", line("[[0,50],[10,60]]")))
+                .put("processing_result", processing);
         org.json.JSONObject diagnostic = new org.json.JSONObject()
                 .put("format", "roadprints_journey_diagnostics")
-                .put("journey", new org.json.JSONObject()
-                        .put("processing_status", "complete")
-                        .put("raw_capture_geometry", new org.json.JSONObject()
-                                .put("coordinates", line("[[0,50],[10,60]]")))
-                        .put("processing_result", new org.json.JSONObject()
-                                .put("status", "ok")
-                                .put("geojson", new org.json.JSONObject()
-                                        .put("features", new JSONArray().put(
-                                                new org.json.JSONObject().put("geometry",
-                                                        new org.json.JSONObject()
-                                                                .put("type", "LineString")
-                                                                .put("coordinates", accepted))))));
+                .put("journey", journey);
         var lines = CumulativeMapSnapshotComparison.acceptedUncorrectedDiagnostic(diagnostic);
         assertEquals(1, lines.size());
         assertEquals(accepted.toString(), lines.get(0).toString());
