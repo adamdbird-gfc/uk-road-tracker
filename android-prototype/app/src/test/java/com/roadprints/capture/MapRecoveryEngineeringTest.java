@@ -17,6 +17,37 @@ import static org.junit.Assert.*;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28)
 public class MapRecoveryEngineeringTest {
+    @Test public void trainAircraftAndUnfinishedMatchingDoNotInvalidateRoadMap() throws Exception {
+        Context app = RuntimeEnvironment.getApplication();
+        JourneyStore.save(app, journey("recovery-scope-existing"));
+        long map = JourneyStore.mapRevision(app);
+        for (String mode : new String[]{"train", "plane", "walking", "driving", "cycling"}) {
+            JSONObject row = journey("recovery-scope-" + mode).put("mode", mode)
+                    .put("processing_status", "pending");
+            JourneyStore.save(app, row);
+            assertEquals(mode, map, JourneyStore.mapRevision(app));
+            row.put("processing_status", "processing");
+            JourneyStore.save(app, row);
+            row.put("processing_status", "failed");
+            JourneyStore.save(app, row);
+            assertEquals(mode, map, JourneyStore.mapRevision(app));
+            row.put("processing_status", "complete");
+            JourneyStore.save(app, row);
+            if ("train".equals(mode) || "plane".equals(mode)) {
+                assertEquals(mode, map, JourneyStore.mapRevision(app));
+                JourneyStore.delete(app, row.getString("journey_id"));
+                assertEquals(mode, map, JourneyStore.mapRevision(app));
+            } else {
+                assertTrue(mode, JourneyStore.mapRevision(app) > map);
+                map = JourneyStore.mapRevision(app);
+            }
+        }
+        JSONObject road = JourneyStore.get(app, "recovery-scope-driving").put("processing_status", "pending");
+        JourneyStore.save(app, road);
+        assertTrue("Withdrawing previously complete coverage still invalidates",
+                JourneyStore.mapRevision(app) > map);
+        JourneyStore.deleteAll(app);
+    }
     @Test public void firstLoadUkOnlyFallbackIsExcludedWithoutReportingWorldwideHold() throws Exception {
         Context app = RuntimeEnvironment.getApplication();
         JourneyStore.deleteAll(app);

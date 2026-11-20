@@ -29,6 +29,7 @@ public final class JourneyStore {
     private static final String PROGRESS_REVISION = "journey_progress_revision";
     private static final String RAILWAY_INPUT_REVISION = "railway_input_revision";
     private static final String MAP_INPUT_REVISION = "map_evidence_revision_v1";
+    private static final String NO_MAP_EVIDENCE = "no-map-geometry-v1";
     private static final String RAILWAY_WRITE_PENDING = "railway_distance_pending_id";
     private static volatile boolean railwayWriteRecovered;
     private static final String PREFIX = "journey_";
@@ -96,7 +97,8 @@ public final class JourneyStore {
                 JSONObject previous = read(target);
                 if (previous != null) previousMapHash = mapEvidenceHash(previous);
             }
-            boolean mapChanged = !titleOnly && (newRecording || !mapHash.equals(previousMapHash));
+            boolean mapChanged = !titleOnly && (newRecording
+                    ? !NO_MAP_EVIDENCE.equals(mapHash) : !mapHash.equals(previousMapHash));
             String previousNcnHash=null;
             if (!titleOnly && !newRecording) {
                 previousNcnHash=inputs.getString(id,null);
@@ -815,8 +817,11 @@ public final class JourneyStore {
         migrateLegacy(context);
         File file = new File(context.getFilesDir(), PREFIX + journeyId + SUFFIX);
         if (file.exists()) {
+            SharedPreferences mapInputs = context.getSharedPreferences("roadprints_map_inputs_v1", 0);
+            boolean mapChanged = !NO_MAP_EVIDENCE.equals(mapInputs.getString(journeyId, null));
             if (!file.delete()) throw new IllegalStateException("Could not delete journey archive");
-            bumpDataRevision(context);
+            bumpDataRevision(context, true, false, mapChanged);
+            mapInputs.edit().remove(journeyId).apply();
             JourneyReconciliation.forget(context, journeyId);
             RailwayTrialWorker.deleteResult(context, journeyId);
             ServiceStationStore.forgetJourney(context,journeyId);
@@ -1113,6 +1118,12 @@ public final class JourneyStore {
     }
 
     static String mapEvidenceHash(JSONObject journey) throws org.json.JSONException {
+        String mode = journey.optString("mode", "").trim().toLowerCase(java.util.Locale.ROOT);
+        // The overview excludes train/aircraft and unfinished road matching.
+        // Capture/retry telemetry for those rows cannot change a displayed corridor.
+        if (!"ferry".equals(mode) && (!"complete".equals(journey.optString("processing_status"))
+                || !OverviewJourneyScope.contributesCorridorCoverage(mode)))
+            return NO_MAP_EVIDENCE;
         JSONObject evidence = new JSONObject();
         for (String key : new String[]{"journey_id", "mode", "processing_status", "started_at",
                 "ended_at", "gps_point_count", "capture_quality", "walking_outcome",
