@@ -66,11 +66,13 @@ def main():
             break
     assert len(references) == 56
     for i, (ref, coords) in enumerate(references):
-        path = target / f"journey_dense-osm-{i:04d}.json"
+        path = target / f"journey_dense-osm-{660+i:04d}.json"
         row = json.loads(path.read_text())
         row["processing_result"]["a_road_geojson"] = {"type": "FeatureCollection", "features": [
             {"type": "Feature", "properties": {"road_ref": ref, "distance_m": 1000},
              "geometry": {"type": "LineString", "coordinates": coords}}]}
+        row["processing_result"]["geojson"]["features"].append(
+            row["processing_result"]["a_road_geojson"]["features"][0])
         path.write_text(json.dumps(row))
     for i in range(10):
         coords = [[2.35 + i * .003, 48.86], [2.352 + i * .003, 48.86]]
