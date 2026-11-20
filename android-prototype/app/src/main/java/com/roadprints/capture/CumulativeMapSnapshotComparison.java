@@ -60,6 +60,50 @@ final class CumulativeMapSnapshotComparison {
                 missing, unsupported, fingerprint(accepted), fingerprint(displayed));
     }
 
+    /**
+     * Capture the actual prepared MapRoutes geometry passed to the overview
+     * renderer, not a parallel hand-written approximation of the accumulator.
+     * Only TRAVELLED lines are included; incomplete reference-road background
+     * layers must never masquerade as accepted journey coverage.
+     *
+     * Runs only on bounded validation fixtures. It allocates JSON for compact
+     * local intervals just as MapRoutes.localRoadLines does for replay; never
+     * invoke it on the owner's full archive or the UI drawing thread.
+     */
+    static Snapshot snapshotPreparedOverview(String scenarioId, List<JSONArray> accepted,
+                                             MapActivity.MapRoutes prepared) throws Exception {
+        if (prepared == null) throw new IllegalArgumentException("Missing prepared Map");
+        List<JSONArray> displayed = new ArrayList<>();
+        final int maxSections = 512;
+        final int maxPoints = 8192;
+        int[] totalPoints = {0};
+        // Same travelled-geometry sources as displayMapRoutes(): its
+        // setRouteData(null, sections), setLocalRoadLayer(localRoadLayer),
+        // setMotorwayCoverageSegments(incomplete, covered) and
+        // setARoadCoverageSegments(incomplete, covered).
+        appendBounded(displayed, prepared.sections, maxSections, maxPoints, totalPoints);
+        appendBounded(displayed, prepared.localRoadLines, maxSections, maxPoints, totalPoints);
+        appendBounded(displayed, prepared.coveredMotorwaySections,
+                maxSections, maxPoints, totalPoints);
+        appendBounded(displayed, prepared.coveredARoadSections,
+                maxSections, maxPoints, totalPoints);
+        appendBounded(displayed, prepared.ferrySections,
+                maxSections, maxPoints, totalPoints);
+        return snapshot(scenarioId, accepted, displayed);
+    }
+
+    private static void appendBounded(List<JSONArray> destination, List<JSONArray> source,
+                                      int maxSections, int maxPoints, int[] totalPoints) {
+        for (JSONArray geometry : source) {
+            if (destination.size() >= maxSections || geometry == null
+                    || geometry.length() < 2
+                    || geometry.length() > maxPoints - totalPoints[0])
+                throw new IllegalArgumentException("Map A/B fixture exceeds bounded geometry budget");
+            destination.add(geometry);
+            totalPoints[0] += geometry.length();
+        }
+    }
+
     /** The same physical vertices in reverse direction or different list order
      * produce an identical fingerprint. No accepted points are rounded away:
      * the fingerprint identifies exact test geometry, not fuzzy equivalence. */
