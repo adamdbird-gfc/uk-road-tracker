@@ -45,6 +45,8 @@ These are **visual observations**, not proof that individual strokes are wrong: 
 
 The Fleet Street-style fixture is synthetic and does **not** reproduce the owner's real journey locations or screenshot. The snapshot comparison fails closed if the accepted evidence differs between baseline and candidate, even when its record count is unchanged.
 
+**Next adapter now committed:** `CumulativeMapSnapshotComparison.snapshotPreparedOverview` extracts the **actual prepared MapRoutes display collections** (accepted matched corridors, local canonical interval lines, covered major roads and ferries), explicitly excluding untravelled incomplete-road background overlays. `CumulativePreparedOverviewSnapshotTest` validates this integration with production `MapRoutes.addLocalRoad` and `LocalRoadCoverage.Section` against synthetic evidence. It is intentionally bounded to 512 sections / 8,192 display points and rejects oversize inputs rather than silently sampling the owner archive. **These tests are committed but not yet executed.** It does not yet compare the owner's private Fleet Street archive or extract screenshots from Android.
+
 **Not yet implemented:** production renderer screenshots, real archived London geometry exports and pixel-level screenshot diffs. Those require matching actual Android camera/view settings and access to owner-approved accepted journey evidence. Never label synthetic report values as device evidence.
 
 ## Data acquisition boundary
