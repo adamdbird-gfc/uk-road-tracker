@@ -35,6 +35,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class MapActivity extends Activity {
+    /** Development-only entry from Utilities; the regular Map has no diagnostic gesture. */
+    static final String EXTRA_GEOMETRY_EXPORT_MODE = "roadprints.geometry_export_mode";
     private final NavigationTrace navigation=new NavigationTrace("main_map");
     private static final int NAVY = 0xFF0B1C50;
     private static final int NAV_BAR = 0xFF10275D;
@@ -222,16 +224,31 @@ public class MapActivity extends Activity {
         legendButton=new TextView(this);legendButton.setText("☷ Legend");legendButton.setTextSize(14);legendButton.setTextColor(NAVY);
         legendButton.setTypeface(null,Typeface.BOLD);legendButton.setGravity(Gravity.CENTER);legendButton.setMinHeight(dp(48));
         legendButton.setPadding(dp(14),dp(10),dp(14),dp(10));legendButton.setBackground(roundRect(GOLD,dp(14)));legendButton.setTag("map_legend_button");
-        legendButton.setContentDescription("Legend and map layers. Long press to save the visible Map geometry diagnostic.");
+        legendButton.setContentDescription("Legend and map layers.");
         legendButton.setOnClickListener(v->MapLegendPanel.show(this,getIntent().hasExtra("settlement_code"),this::applyCollectionLayer));
-        // Deliberate diagnostic-only gesture; does not alter normal Legend
-        // behaviour or execute expensive work during Map drawing.
-        legendButton.setOnLongClickListener(v -> {
-            requestVisibleMapEvidenceExport();
-            return true;
-        });
+        // No hidden long-press diagnostics on the regular Map's Legend.
         FrameLayout.LayoutParams legendParams=new FrameLayout.LayoutParams(-2,-2,Gravity.START|Gravity.BOTTOM);
         legendParams.setMargins(dp(12),dp(12),dp(12),dp(12));mapFrame.addView(legendButton,legendParams);
+        if (getIntent().getBooleanExtra(EXTRA_GEOMETRY_EXPORT_MODE, false)
+                && !getIntent().hasExtra("settlement_code")) {
+            TextView exportControl = new TextView(this);
+            exportControl.setText("Save visible geometry");
+            exportControl.setTextColor(NAVY);
+            exportControl.setTextSize(14);
+            exportControl.setTypeface(null, Typeface.BOLD);
+            exportControl.setGravity(Gravity.CENTER);
+            exportControl.setMinHeight(dp(48));
+            exportControl.setPadding(dp(14), dp(10), dp(14), dp(10));
+            exportControl.setBackground(roundRect(GOLD, dp(14)));
+            exportControl.setContentDescription(
+                    "Save private cumulative Map geometry for the visible area");
+            exportControl.setTag("utilities_map_geometry_export");
+            exportControl.setOnClickListener(v -> requestVisibleMapEvidenceExport());
+            FrameLayout.LayoutParams exportParams = new FrameLayout.LayoutParams(
+                    -2, -2, Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
+            exportParams.setMargins(dp(8), dp(12), dp(8), dp(12));
+            mapFrame.addView(exportControl, exportParams);
+        }
         if (!getIntent().hasExtra("settlement_code")){
             addMapFilters();
             locateControl=MapLocationControl.add(mapFrame,this::locateMe);
