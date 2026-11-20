@@ -1,0 +1,36 @@
+name: Map fragment recovery Android validation
+on:
+  push:
+    branches: [validation/map-fragment-recovery-314]
+permissions:
+  contents: read
+jobs:
+  android:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      JAVA_TOOL_OPTIONS: -XX:TieredStopAtLevel=1
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 26464f06662e9910dd96e498b169848aa1cccb13
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.10'
+      - name: Compile Android and run all three fragment regressions
+        run: |
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:compileDebugJavaWithJavac :app:testDebugUnitTest \
+            --tests '*.MapRecoveryEngineeringTest.warmBuild313TruncationIsRefreshedAndRetainedOnNextOpen' \
+            --tests '*.MapRecoveryEngineeringTest.deferredOverseasEmptyProjectionIsResolvedAndIndexed' \
+            --tests '*.MapRecoveryEngineeringTest.cappedWorldwideFragmentRetainsVerifiedPrefixInsteadOfDroppingIt'
+      - name: Upload focused test receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fragment-recovery-focused-tests
+          path: android-prototype/app/build/test-results/testDebugUnitTest/
+          if-no-files-found: ignore
