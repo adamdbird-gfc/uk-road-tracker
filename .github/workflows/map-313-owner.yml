@@ -1,0 +1,169 @@
+name: Roadprints Build 313 archive-volume recovery and signed owner release
+on:
+  push:
+    branches: [release/map-recovery-313]
+    paths:
+      - .github/workflows/map-313-owner.yml
+      - scripts/check_map_recovery_313.sh
+      - scripts/generate_map_recovery_fixture.py
+permissions:
+  contents: write
+concurrency:
+  group: roadprints-recovery313-release
+  cancel-in-progress: true
+jobs:
+  compare-runtime:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: adamdbird-gfc/uk-road-tracker
+      JAVA_TOOL_OPTIONS: -XX:TieredStopAtLevel=1 -XX:ReservedCodeCacheSize=256m
+      TAG: roadprints-0.25.267-313
+      APK: Roadprints-0.25.267-313.apk
+      TESTED_SHA: 262d18f4942e25ca11ae2fb042462269aca1f00d
+      CERT_SHA256: 5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - name: Verify exact corrective source and pinned regression evidence
+        run: |
+          set -euo pipefail
+          for run in 44788385193; do
+            for attempt in $(seq 1 80); do
+              state=$(gh api "repos/$GH_REPO/actions/runs/$run" --jq .status)
+              if test "$state" = completed; then break; fi
+              sleep 15
+            done
+            test "$(gh api "repos/$GH_REPO/actions/runs/$run" --jq .conclusion)" = success
+            test "$(gh api "repos/$GH_REPO/actions/runs/$run" --jq .head_sha)" = "$TESTED_SHA"
+          done
+          git diff --quiet "$TESTED_SHA" "$GITHUB_SHA" -- android-prototype
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::error::Already published; refusing overwrite"
+            exit 1
+          fi
+      - name: Restore reference assets from installed signed Build 312
+        run: |
+          set -euo pipefail
+          gh release download roadprints-0.25.266-312 --pattern Roadprints-0.25.266-312.apk --output "$RUNNER_TEMP/roadprints312.apk"
+          assets=android-prototype/app/src/main/assets
+          for asset in historic-counties/boundaries.bin railway/national.json railway/national.sqlite.gzip uk-road-reference-v1.bin; do
+            unzip -p "$RUNNER_TEMP/roadprints312.apk" "assets/$asset" > "$assets/$asset"
+          done
+          cp "$assets/uk-road-reference-v1.bin" "$RUNNER_TEMP/uk-road-reference-v3.bin"
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+      - name: Prepare and verify the full geometry-volume fixture before compilation
+        run: |
+          set -euo pipefail
+          python3 scripts/generate_map_recovery_fixture.py --reference "$RUNNER_TEMP/uk-road-reference-v3.bin" --output "$RUNNER_TEMP/scale-fixtures" --assets canonical-a-roads-v5
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.10'
+      - name: Build 313 APK with current owner signing identity
+        env:
+          ROADPRINTS_DEBUG_KEYSTORE_B64: ${{ secrets.ROADPRINTS_DEBUG_KEYSTORE_B64 }}
+          ROADPRINTS_DEBUG_STORE_PASSWORD: ${{ secrets.ROADPRINTS_DEBUG_STORE_PASSWORD }}
+          ROADPRINTS_DEBUG_KEY_ALIAS: ${{ secrets.ROADPRINTS_DEBUG_KEY_ALIAS }}
+          ROADPRINTS_DEBUG_KEY_PASSWORD: ${{ secrets.ROADPRINTS_DEBUG_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$ROADPRINTS_DEBUG_KEYSTORE_B64"
+          test -n "$ROADPRINTS_DEBUG_STORE_PASSWORD"
+          test -n "$ROADPRINTS_DEBUG_KEY_ALIAS"
+          test -n "$ROADPRINTS_DEBUG_KEY_PASSWORD"
+          export ROADPRINTS_DEBUG_KEYSTORE="$RUNNER_TEMP/a2-owner.keystore"
+          trap 'rm -f "$ROADPRINTS_DEBUG_KEYSTORE"' EXIT
+          umask 077
+          printf '%s' "$ROADPRINTS_DEBUG_KEYSTORE_B64" | base64 --decode > "$ROADPRINTS_DEBUG_KEYSTORE"
+          unset ROADPRINTS_DEBUG_KEYSTORE_B64
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("android-prototype/app/build.gradle.kts")
+          s=p.read_text()
+          assert s.count("versionCode = 310")==1
+          assert s.count('versionName = "0.25.264"')==1
+          p.write_text(s.replace("versionCode = 310","versionCode = 313").replace('versionName = "0.25.264"','versionName = "0.25.267"'))
+          PY
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:assembleDebug
+          cp android-prototype/app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/roadprints-recovery.apk"
+          cp "$RUNNER_TEMP/roadprints-recovery.apk" "$RUNNER_TEMP/$APK"
+          signer=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -n 1)
+          "$signer" verify --print-certs "$RUNNER_TEMP/roadprints312.apk" | grep -F "certificate SHA-256 digest: $CERT_SHA256"
+          "$signer" verify --print-certs "$RUNNER_TEMP/roadprints-recovery.apk" | grep -F "certificate SHA-256 digest: $CERT_SHA256"
+          "${signer%/*}/aapt" dump badging "$RUNNER_TEMP/roadprints-recovery.apk" | grep -F "package: name='com.roadprints.capture' versionCode='313' versionName='0.25.267'"
+          python3 - <<'PY'
+          import hashlib,os,zipfile
+          a=os.path.join(os.environ["RUNNER_TEMP"],"roadprints312.apk")
+          b=os.path.join(os.environ["RUNNER_TEMP"],"roadprints-recovery.apk")
+          with zipfile.ZipFile(a) as old,zipfile.ZipFile(b) as new:
+           for item in ("uk-road-reference-v1.bin","railway/national.sqlite.gzip","railway/national.json","historic-counties/boundaries.bin"):
+            p="assets/"+item
+            assert hashlib.sha256(old.read(p)).digest()==hashlib.sha256(new.read(p)).digest(),p
+          PY
+      - name: Enable Android emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Profile 45260 input edges and verify 312-to-313 upgrade and tab retention
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          heap-size: 256M
+          disable-animations: true
+          script: bash scripts/check_map_recovery_313.sh
+      - name: Upload emulator runtime receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: roadprints-recovery313-release-evidence
+          path: |
+            ${{ runner.temp }}/scale-*
+          if-no-files-found: ignore
+
+      - name: Publish signed integrated in-place owner APK only after all checks
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 80); do
+            state=$(gh api "repos/$GH_REPO/actions/runs/44788399682" --jq .status)
+            if test "$state" = completed; then break; fi
+            sleep 15
+          done
+          test "$(gh api "repos/$GH_REPO/actions/runs/44788399682" --jq .conclusion)" = success
+          test "$(gh api "repos/$GH_REPO/actions/runs/44788399682" --jq .head_sha)" = "$TESTED_SHA"
+          current=$(gh api "repos/$GH_REPO/git/ref/heads/${GITHUB_REF_NAME}" --jq .object.sha)
+          test "$current" = "$GITHUB_SHA"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::error::Owner APK already published, refusing overwrite"
+            exit 1
+          fi
+          sha256sum "$RUNNER_TEMP/$APK" > "$RUNNER_TEMP/$APK.sha256"
+          cat > "$RUNNER_TEMP/a2-owner-notes.md" <<'NOTES'
+          Roadprints 0.25.267 (313): cumulative Map performance recovery.
+
+          Install over Build 312. Same application ID and signing certificate.
+          Corrects metadata-driven Map invalidation, retains a live displayed
+          snapshot through memory trims, reuses worldwide exclusion indexes and
+          foot-to-A-road anchor projections, and reduces final-geometry allocation.
+          Straight partially overlapping routes can reconcile despite additional
+          sampling vertices; physical thresholds and NCN completion rules remain unchanged.
+
+          Gates: focused Android regressions; worldwide emulator corridor/ferry
+          validation; API35 256MiB synthetic archive-volume profiling with 1681
+          records, 45260 UK input edges and 793 UK walking/running sources;
+          byte-preserving in-place upgrade and actual tab return after memory trim.
+
+          Limits: this is not a replay of the actual owner archive or a Pixel10
+          measurement. Complex curved/ambiguous pathways still remain separate.
+          First load after real geometry changes can rebuild derived coverage.
+          The existing rotating road-fact loading card is preserved.
+          NOTES
+          gh release create "$TAG" "$RUNNER_TEMP/$APK" "$RUNNER_TEMP/$APK.sha256"             --target "$GITHUB_SHA" --prerelease --latest=false             --title "Roadprints 0.25.267 (313) — Cumulative Map recovery"             --notes-file "$RUNNER_TEMP/a2-owner-notes.md"
+          echo "Direct owner APK: https://github.com/$GH_REPO/releases/download/$TAG/$APK" >> "$GITHUB_STEP_SUMMARY"
+          echo "SHA-256: $(cut -d' ' -f1 "$RUNNER_TEMP/$APK.sha256")" >> "$GITHUB_STEP_SUMMARY"
+
