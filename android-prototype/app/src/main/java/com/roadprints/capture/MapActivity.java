@@ -1125,6 +1125,32 @@ public class MapActivity extends Activity {
     private record DeferredFootContribution(java.io.File source, String token, String journeyId,
             Map<LocalRoadNetwork.Edge, List<LocalRoadNetwork.Interval>> spans) {}
 
+    // Build 313 persisted truncated worldwide projections without the accepted
+    // prefix retained by the corrected extractor. Only migrate those affected
+    // rows, preserving valid cached UK exclusions and complete worldwide rows.
+    private static final int OVERSEAS_PROJECTION_VERSION = 2;
+
+    static JSONObject acceptedOverseasProjection(CompactJourneyCache cache, java.io.File source,
+            CompactJourneyCache.Reader projector) throws Exception {
+        java.util.function.Predicate<JSONArray> wanted = index -> index.optInt(0, 1) != 0;
+        java.util.function.Function<JSONObject, JSONArray> indexer = value ->
+                new JSONArray().put(value.optBoolean("truncated", false)
+                        || value.optJSONArray("rows") == null
+                        || value.optJSONArray("rows").length() > 0 ? 1 : 0);
+        CompactJourneyCache.Reader versioned = file -> {
+            JSONObject projected = projector.read(file);
+            if (projected != null) projected.put("projectionVersion", OVERSEAS_PROJECTION_VERSION);
+            return projected;
+        };
+        JSONObject row = cache.get(source, versioned, wanted, indexer);
+        if (row != null && row.optBoolean("truncated", false)
+                && row.optInt("projectionVersion", 0) < OVERSEAS_PROJECTION_VERSION) {
+            cache.invalidate(source);
+            row = cache.get(source, versioned, wanted, indexer);
+        }
+        return row;
+    }
+
     private static JSONObject acceptedFootProjection(CompactJourneyCache cache,
             ARoadProgressCalculator calculator, java.io.File source, String expectedToken,
             Map<LocalRoadNetwork.Edge, List<LocalRoadNetwork.Interval>> spans) throws Exception {
@@ -1406,7 +1432,7 @@ public class MapActivity extends Activity {
                     try {
                         int hitsBefore = overseasCache.hits;
                         boolean[] projectionHeld = {false};
-                        JSONObject projection = overseasCache.get(record.source, file -> {
+                        JSONObject projection = acceptedOverseasProjection(overseasCache, record.source, file -> {
                             long available = Runtime.getRuntime().maxMemory()
                                     - (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
                             // Cached empty UK rows and bounded worldwide rows are reusable
@@ -1437,10 +1463,7 @@ public class MapActivity extends Activity {
                             }
                             return new JSONObject().put("rows", rows)
                                     .put("truncated", truncated[0]);
-                        }, index -> index.optInt(0, 1) != 0,
-                                value -> new JSONArray().put(value.optBoolean("truncated", false)
-                                        || value.optJSONArray("rows") == null
-                                        || value.optJSONArray("rows").length() > 0 ? 1 : 0));
+                        });
                         if (projection == null && projectionHeld[0]) {
                             deferredOverseas.add(new DeferredOverseasContribution(
                                     record.source, record.token, journey.optString("journey_id")));
@@ -1507,7 +1530,7 @@ public class MapActivity extends Activity {
             if (!candidate.token().equals(JourneyStore.fileToken(candidate.source()))) continue;
             overseasRetry[0]++;
             try {
-                JSONObject projection = overseasCache.get(candidate.source(), file -> {
+                JSONObject projection = acceptedOverseasProjection(overseasCache, candidate.source(), file -> {
                     if (!candidate.token().equals(JourneyStore.fileToken(file))) return null;
                     JSONObject raw = JourneyStore.mapEvidence(getApplicationContext(), file, true);
                     boolean[] truncated = {false};
@@ -1521,10 +1544,7 @@ public class MapActivity extends Activity {
                                     .put("original", line.length()));
                     }
                     return new JSONObject().put("rows", rows).put("truncated", truncated[0]);
-                }, index -> true, // Include valid empty projections: absence is a resolved result.
-                        value -> new JSONArray().put(value.optBoolean("truncated", false)
-                                || value.optJSONArray("rows") == null
-                                || value.optJSONArray("rows").length() > 0 ? 1 : 0));
+                });
                 if (projection == null) continue;
                 JSONArray rows = projection.optJSONArray("rows");
                 if (rows == null) continue;
