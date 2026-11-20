@@ -169,6 +169,104 @@ final class CumulativeMapSnapshotComparison {
         return matched;
     }
 
+    /**
+     * Compare one accepted journey with a geographically scoped union of
+     * prepared Map lines. Other archived journeys may legitimately contribute
+     * extra roads; their presence must NOT be labelled invented geometry here.
+     * No unfiltered full-archive geometry is materialised by this helper.
+     */
+    record CorridorReport(String scenarioId, int acceptedPieces, int displayedPieces,
+                          int displayedPoints, double maxUnrepresentedMetres,
+                          String acceptedFingerprint, String displayFingerprint) {
+        JSONObject json() throws Exception {
+            return new JSONObject().put("scenario", scenarioId)
+                    .put("accepted_pieces", acceptedPieces)
+                    .put("displayed_pieces", displayedPieces)
+                    .put("displayed_points", displayedPoints)
+                    .put("max_accepted_to_display_m", maxUnrepresentedMetres)
+                    .put("accepted_fingerprint_sha256", acceptedFingerprint)
+                    .put("display_fingerprint_sha256", displayFingerprint)
+                    .put("extra_lines_attribution", "unassessed_other_journeys_may_contribute");
+        }
+    }
+
+    static CorridorReport comparePreparedCorridor(String scenarioId, List<JSONArray> accepted,
+            MapActivity.MapRoutes prepared, MapCorridorGeometry.Bounds window) throws Exception {
+        if (prepared == null || accepted == null || accepted.isEmpty() || window == null)
+            throw new IllegalArgumentException("Missing prepared Map or corridor evidence");
+        List<JSONArray> visible = new ArrayList<>();
+        int[] points = {0};
+        appendCorridor(visible, prepared.sections, window, points);
+        appendCorridor(visible, prepared.localRoadLines, window, points);
+        appendCorridor(visible, prepared.coveredMotorwaySections, window, points);
+        appendCorridor(visible, prepared.coveredARoadSections, window, points);
+        appendCorridor(visible, prepared.ferrySections, window, points);
+        return compareCorridorLines(scenarioId, accepted, visible, window);
+    }
+
+    static CorridorReport compareSerializedCorridor(String scenarioId, List<JSONArray> accepted,
+            JSONObject persisted, MapCorridorGeometry.Bounds window) throws Exception {
+        if (persisted == null || window == null || accepted == null || accepted.isEmpty()
+                || !persisted.has("sections") || !persisted.has("localRoads")
+                || !persisted.has("coveredMotorways") || !persisted.has("coveredARoads")
+                || !persisted.has("ferries"))
+            throw new IllegalArgumentException("Incomplete Map snapshot or accepted evidence");
+        List<JSONArray> visible = new ArrayList<>();
+        int[] points = {0};
+        for (String key : new String[]{"sections","coveredMotorways","coveredARoads","ferries"}) {
+            JSONArray source = persisted.getJSONArray(key);
+            for (int i=0;i<source.length();i++) {
+                JSONArray line = source.optJSONArray(i);
+                if (line == null) throw new IllegalArgumentException("Malformed Map snapshot line");
+                addClipped(visible, line, window, points);
+            }
+        }
+        JSONArray locals=persisted.getJSONArray("localRoads");
+        for (int i=0;i<locals.length();i++) {
+            LocalRoadCoverage.Section section =
+                    LocalRoadCoverage.Section.decode(locals.getJSONObject(i));
+            for (LocalRoadCoverage.Line interval : section.lines)
+                addClipped(visible, interval.points(), window, points);
+        }
+        return compareCorridorLines(scenarioId, accepted, visible, window);
+    }
+
+    private static CorridorReport compareCorridorLines(String scenarioId,
+            List<JSONArray> accepted, List<JSONArray> visible,
+            MapCorridorGeometry.Bounds window) throws Exception {
+        if (scenarioId == null || scenarioId.isBlank() || window == null)
+            throw new IllegalArgumentException("Missing corridor ID or bounds");
+        List<JSONArray> acceptedVisible=new ArrayList<>();
+        for (JSONArray route:accepted) {
+            acceptedVisible.addAll(MapCorridorGeometry.clip(route,window));
+        }
+        if (acceptedVisible.isEmpty())
+            throw new IllegalArgumentException("Accepted journey does not cross corridor");
+        double worst=0;
+        for (JSONArray route:acceptedVisible) {
+            double deviation=CumulativeMapShapeAudit.acceptedToCumulativeDeviationMetres(route,visible);
+            worst=Math.max(worst,deviation);
+        }
+        return new CorridorReport(scenarioId,acceptedVisible.size(),visible.size(),
+                visible.stream().mapToInt(JSONArray::length).sum(),
+                worst,fingerprint(acceptedVisible),fingerprint(visible));
+    }
+
+    private static void appendCorridor(List<JSONArray> destination, List<JSONArray> source,
+            MapCorridorGeometry.Bounds window, int[] points) {
+        for (JSONArray line : source) addClipped(destination,line,window,points);
+    }
+
+    private static void addClipped(List<JSONArray> destination,JSONArray line,
+            MapCorridorGeometry.Bounds window,int[] points) {
+        for (JSONArray piece:MapCorridorGeometry.clip(line,window)) {
+            if (destination.size() >= 512 || points[0]+piece.length() > 8192)
+                throw new IllegalArgumentException("Map corridor fixture exceeds bounded geometry budget");
+            destination.add(piece);
+            points[0] += piece.length();
+        }
+    }
+
     /** The same physical vertices in reverse direction or different list order
      * produce an identical fingerprint. No accepted points are rounded away:
      * the fingerprint identifies exact test geometry, not fuzzy equivalence. */
