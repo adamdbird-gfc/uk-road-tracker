@@ -236,6 +236,43 @@ final class CumulativeMapSnapshotComparison {
         return compareCorridorLines(scenarioId, accepted, visible, window);
     }
 
+    /** Evaluate an owner-saved, geographically scoped Map evidence file.
+     * The accepted journey diagnostics are supplied separately and privately.
+     * Never claim a complete snapshot if the reported section/point counts
+     * differ, or if unknown layers are substituted for travelled geometry.
+     */
+    static CorridorReport compareSavedEvidence(String scenarioId, List<JSONArray> accepted,
+                                               JSONObject evidence) throws Exception {
+        if (evidence == null || !"roadprints_map_geometry_evidence".equals(
+                evidence.optString("format")) || evidence.optInt("format_version",-1)!=1)
+            throw new IllegalArgumentException("Unsupported Map evidence export");
+        JSONObject box=evidence.getJSONObject("window");
+        MapCorridorGeometry.Bounds bounds=new MapCorridorGeometry.Bounds(
+                box.getDouble("west"),box.getDouble("south"),
+                box.getDouble("east"),box.getDouble("north"));
+        JSONArray sections=evidence.getJSONArray("segments");
+        List<JSONArray> displayed=new ArrayList<>();
+        int points=0;
+        java.util.Set<String> allowed=java.util.Set.of(
+                "matched_corridors","ferries","covered_motorways",
+                "covered_a_roads","accepted_local_roads");
+        for(int i=0;i<sections.length();i++) {
+            JSONObject segment=sections.getJSONObject(i);
+            if(!allowed.contains(segment.optString("layer")))
+                throw new IllegalArgumentException("Unknown evidence layer");
+            JSONArray shape=segment.getJSONArray("geometry");
+            if(shape.length()<2 || displayed.size()>=512
+                    || shape.length()>8192-points)
+                throw new IllegalArgumentException("Malformed or oversized Map evidence");
+            displayed.add(shape);
+            points+=shape.length();
+        }
+        if (evidence.getInt("display_sections")!=displayed.size()
+                || evidence.getInt("display_points")!=points)
+            throw new IllegalArgumentException("Incomplete Map evidence counts");
+        return compareCorridorLines(scenarioId,accepted,displayed,bounds);
+    }
+
     private static CorridorReport compareCorridorLines(String scenarioId,
             List<JSONArray> accepted, List<JSONArray> visible,
             MapCorridorGeometry.Bounds window) throws Exception {
