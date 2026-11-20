@@ -1,6 +1,8 @@
 # Roadprints coding-agent instructions
 
-Read [Development Governance](docs/DEVELOPMENT_GOVERNANCE.md) before making code or infrastructure changes. Its approval gates, baseline verification, definition of done and required delivery report remain mandatory. Use the [development handover](docs/development-handover.md) for the current entrypoint; older delivery sections are historical evidence.
+Read [Development Governance](docs/DEVELOPMENT_GOVERNANCE.md) before making code or infrastructure changes.
+
+For any cumulative Map geometry, consolidation, rendering or release task, also read the [owner-defined cumulative Map product contract](docs/CUMULATIVE_MAP_CONTRACT.md). Accepted journey geometry must be represented with equivalent geographic shape without stacking repeated journeys or merging distinct travelled paths. A technical change does not override that contract; escalate any proposed deviation for owner approval. Its approval gates, baseline verification, definition of done and required delivery report remain mandatory. Use the [development handover](docs/development-handover.md) for the current entrypoint; older delivery sections are historical evidence.
 
 The current validated `main` branch is the authoritative development and source integration baseline. Android **0.25.223 (269)** release source and the #262 on-foot correction are integrated into main; physical-device acceptance remains outstanding. The #254 Deal NCN correction is integrated as an offline candidate, not published. See `docs/controlled-integration-20261104.md` for current delivery evidence and the next bounded NCN task. Previously, Android 0.25.220 (266) was integrated, and the historical stacked Android and NCN development branches have been reconciled. Do not restart new work from obsolete historical branches or repeat the completed reconciliation.
 
