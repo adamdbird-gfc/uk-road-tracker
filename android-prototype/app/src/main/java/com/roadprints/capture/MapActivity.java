@@ -1521,7 +1521,7 @@ public class MapActivity extends Activity {
                                     .put("original", line.length()));
                     }
                     return new JSONObject().put("rows", rows).put("truncated", truncated[0]);
-                }, index -> index.optInt(0, 1) != 0,
+                }, index -> true, // Include valid empty projections: absence is a resolved result.
                         value -> new JSONArray().put(value.optBoolean("truncated", false)
                                 || value.optJSONArray("rows") == null
                                 || value.optJSONArray("rows").length() > 0 ? 1 : 0));
