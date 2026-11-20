@@ -101,7 +101,7 @@ assert 'foot_canonical_a_heap_deferred=0' in candidate['mode'],candidate
 if 'source=archive' in warm['navigation']:
     match=re.search(r'known_uk_excluded=(\d+)',warm['international'])
     assert match and int(match[1]) >= 1400,warm
-result={'fixture':'1681 records; 45260 distinct UK input edges, 793 UK walking/running sources, 10 worldwide sources, 2 ferries',
+result={'fixture':'1681 records; 45260 distinct UK input edges with eight contributors each (362080 input intervals), 793 UK walking/running sources, 10 worldwide sources, 2 ferries',
         'baseline312':base,'candidate313':candidate,'process_relaunch313':warm,
         'in_place_upgrade':'all 1681 archive files byte-identical; map preferences retained',
         'tab_return_after_running_low':'retained without archive work',

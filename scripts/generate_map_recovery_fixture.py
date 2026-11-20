@@ -41,12 +41,20 @@ def main():
     dense.edges_from_reference = pool
     dense.generate(args.reference, args.output, 1460, 209, 31)
     target = pathlib.Path(args.output)
+    original = [json.loads((target / f"journey_dense-osm-{i:04d}.json").read_text())
+                for i in range(1460)]
     for i in range(1460):
         path = target / f"journey_dense-osm-{i:04d}.json"
         row = json.loads(path.read_text())
         row["mode"] = "driving" if i < 660 else "walking" if i < 1453 else "cycling"
         if 660 <= i < 1453 and i % 3 == 0:
             row["mode"] = "running"
+        # Eight accepted contributors per physical edge: repeated history is
+        # retained without multiplying displayed road geometry.
+        row["processing_result"]["geojson"]["features"] = [
+            feature for shift in range(8)
+            for feature in original[(i + shift) % 1460]["processing_result"]["geojson"]["features"]]
+        row["distance_meters"] *= 8
         row["journey_corrections"] = {}
         path.write_text(json.dumps(row))
     # Add independently accepted major-road features to stress the national
@@ -89,7 +97,8 @@ def main():
         (target / f"journey_scale-ferry-{i}.json").write_text(json.dumps(row))
     assert len(list(target.glob("journey_*.json"))) == 1681
     print(json.dumps({"records": 1681, "canonical_input_edges": 45260,
-                      "uk_foot_sources": 793, "major_road_references": 56, "worldwide_sources": 10, "ferries": 2,
+                      "uk_foot_sources": 793, "canonical_contributor_inputs": 362080,
+                      "major_road_references": 56, "worldwide_sources": 10, "ferries": 2,
                       "limitation": "Synthetic independent-edge geometry, no owner movement data"}))
 
 if __name__ == "__main__":
