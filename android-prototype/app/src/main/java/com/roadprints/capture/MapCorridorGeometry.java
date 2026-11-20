@@ -81,6 +81,34 @@ final class MapCorridorGeometry {
         return Math.abs(wrapped + 180) < 1e-10 && x > 0 ? 180 : wrapped;
     }
 
+    /** Screen-space Web Mercator window for the CURRENT rendered camera.
+     * Same tile-size/zoom formula as RoutePreviewView; never assumes UK bounds.
+     * The caller passes the real Android-density-adjusted tile size.
+     */
+    static Bounds visibleWindow(double centreLon, double centreLat, double zoom,
+                                int widthPx, int heightPx, double tilePx) {
+        if (!Double.isFinite(centreLon) || !Double.isFinite(centreLat)
+                || !Double.isFinite(zoom) || !Double.isFinite(tilePx)
+                || centreLon < -180 || centreLon > 180
+                || centreLat < -85.05112878 || centreLat > 85.05112878
+                || zoom < 0 || zoom > 25 || widthPx <= 0 || heightPx <= 0 || tilePx <= 0)
+            throw new IllegalArgumentException("Invalid Map camera");
+        double world=tilePx*Math.pow(2,zoom);
+        double halfLongitude=widthPx*180.0/world;
+        if (halfLongitude <= 0 || halfLongitude >= 180)
+            throw new IllegalArgumentException("Map viewport too wide for bounded export");
+        double y=(1-Math.log(Math.tan(Math.PI/4+Math.toRadians(centreLat)/2))/Math.PI)/2;
+        double halfY=heightPx/(2*world);
+        double north=mercatorLatitude(Math.max(0,y-halfY));
+        double south=mercatorLatitude(Math.min(1,y+halfY));
+        return new Bounds(wrapLongitude(centreLon-halfLongitude),south,
+                wrapLongitude(centreLon+halfLongitude),north);
+    }
+
+    private static double mercatorLatitude(double y) {
+        return Math.toDegrees(Math.atan(Math.sinh(Math.PI*(1-2*y))));
+    }
+
     /** Returns all clipped in-window pieces in input order without joining
      * across disjoint gaps. A wrapped west>east viewport is valid, and segments
      * follow the shortest longitude displacement across the antimeridian.
