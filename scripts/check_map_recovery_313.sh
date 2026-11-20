@@ -18,19 +18,23 @@ adb shell "run-as $package sh -c 'cat > shared_prefs/roadprints_map_layers_v1.xm
 
 collect() {
   local label="$1" log="$RUNNER_TEMP/scale-$1.log"
+  local diagnostic="$RUNNER_TEMP/scale-$1-ui.xml"
+  : > "$diagnostic"
   adb shell am force-stop "$package"
   adb logcat -c
   adb shell am start -W -n "$package/.OnboardingActivity" > "$RUNNER_TEMP/scale-$label-start.log"
   for attempt in $(seq 1 110); do
-    adb logcat -d -s RoadprintsTiming AndroidRuntime > "$log"
+    adb logcat -d -s RoadprintsTiming AndroidRuntime ActivityManager > "$log"
+    adb exec-out run-as "$package" cat shared_prefs/roadprints_performance_diagnostics.xml >> "$diagnostic" 2>/dev/null || true
     if grep -Eq 'map_outcome=(ready|failure)|FATAL EXCEPTION' "$log"; then break; fi
     sleep 2
   done
-  adb logcat -d -s RoadprintsTiming AndroidRuntime > "$log"
+  adb logcat -d -s RoadprintsTiming AndroidRuntime ActivityManager > "$log"
   adb shell dumpsys meminfo "$package" > "$RUNNER_TEMP/scale-$label-meminfo.txt"
   if [[ "$label" != baseline* ]]; then
     grep -q 'map_outcome=ready' "$log"
-    ! grep -Eq 'FATAL EXCEPTION|OutOfMemoryError' "$log"
+    ! grep -Eq 'FATAL EXCEPTION|OutOfMemoryError|ANR in com.roadprints.capture' "$log"
+    ! grep -q 'foreground_ui_stall_ms=' "$diagnostic"
   fi
 }
 hash_archive() {
@@ -46,6 +50,7 @@ cmp "$RUNNER_TEMP/scale-before.sha256" "$RUNNER_TEMP/scale-after.sha256"
 adb exec-out run-as "$package" cat shared_prefs/roadprints_map_layers_v1.xml | cmp - "$RUNNER_TEMP/scale-settings.xml"
 adb shell dumpsys package "$package" > "$RUNNER_TEMP/scale-package.txt"
 grep -q 'versionCode=313' "$RUNNER_TEMP/scale-package.txt"
+adb shell run-as "$package" rm -f shared_prefs/roadprints_performance_diagnostics.xml
 collect candidate
 hash_archive > "$RUNNER_TEMP/scale-ready.sha256"
 cmp "$RUNNER_TEMP/scale-before.sha256" "$RUNNER_TEMP/scale-ready.sha256"
