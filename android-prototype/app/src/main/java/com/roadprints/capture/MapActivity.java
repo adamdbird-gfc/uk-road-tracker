@@ -222,7 +222,7 @@ public class MapActivity extends Activity {
         legendButton=new TextView(this);legendButton.setText("☷ Legend");legendButton.setTextSize(14);legendButton.setTextColor(NAVY);
         legendButton.setTypeface(null,Typeface.BOLD);legendButton.setGravity(Gravity.CENTER);legendButton.setMinHeight(dp(48));
         legendButton.setPadding(dp(14),dp(10),dp(14),dp(10));legendButton.setBackground(roundRect(GOLD,dp(14)));legendButton.setTag("map_legend_button");
-        legendButton.setContentDescription("Legend, map layer visibility and collection selection");
+        legendButton.setContentDescription("Legend and map layers. Long press to save the visible Map geometry diagnostic.");
         legendButton.setOnClickListener(v->MapLegendPanel.show(this,getIntent().hasExtra("settlement_code"),this::applyCollectionLayer));
         // Deliberate diagnostic-only gesture; does not alter normal Legend
         // behaviour or execute expensive work during Map drawing.
