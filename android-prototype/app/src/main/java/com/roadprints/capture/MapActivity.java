@@ -1131,8 +1131,8 @@ public class MapActivity extends Activity {
     private static final int OVERSEAS_PROJECTION_VERSION = 2;
 
     static JSONObject acceptedOverseasProjection(CompactJourneyCache cache, java.io.File source,
-            CompactJourneyCache.Reader projector) throws Exception {
-        java.util.function.Predicate<JSONArray> wanted = index -> index.optInt(0, 1) != 0;
+            CompactJourneyCache.Reader projector, boolean includeEmpty) throws Exception {
+        java.util.function.Predicate<JSONArray> wanted = index -> includeEmpty || index.optInt(0, 1) != 0;
         java.util.function.Function<JSONObject, JSONArray> indexer = value ->
                 new JSONArray().put(value.optBoolean("truncated", false)
                         || value.optJSONArray("rows") == null
@@ -1463,7 +1463,7 @@ public class MapActivity extends Activity {
                             }
                             return new JSONObject().put("rows", rows)
                                     .put("truncated", truncated[0]);
-                        });
+                        }, false);
                         if (projection == null && projectionHeld[0]) {
                             deferredOverseas.add(new DeferredOverseasContribution(
                                     record.source, record.token, journey.optString("journey_id")));
@@ -1544,7 +1544,7 @@ public class MapActivity extends Activity {
                                     .put("original", line.length()));
                     }
                     return new JSONObject().put("rows", rows).put("truncated", truncated[0]);
-                });
+                }, true);
                 if (projection == null) continue;
                 JSONArray rows = projection.optJSONArray("rows");
                 if (rows == null) continue;
