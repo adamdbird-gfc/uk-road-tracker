@@ -19,7 +19,9 @@ final class MapCorridorGeometry {
             if (!Double.isFinite(west) || !Double.isFinite(east)
                     || !Double.isFinite(south) || !Double.isFinite(north)
                     || west == east || south >= north
-                    || west < -180 || east > 180 || south < -90 || north > 90)
+                    || west < -180 || west > 180 || east < -180 || east > 180
+                    || south < -90 || north > 90
+                    || (west == -180 && east == 180))
                 throw new IllegalArgumentException("Invalid geographic bounds");
         }
     }
