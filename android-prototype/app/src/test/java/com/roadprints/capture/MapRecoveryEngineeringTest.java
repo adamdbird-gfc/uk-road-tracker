@@ -20,7 +20,7 @@ public class MapRecoveryEngineeringTest {
     @Test public void legacyTruncationKeepsPreviouslyDisplayedFragmentsWhenRefreshIsDeferred() throws Exception {
         Context app = RuntimeEnvironment.getApplication();
         File source = new File(app.getCacheDir(), "recovery-legacy-overseas-partial.json");
-        Files.writeString(source.toPath(), "{}");
+        Files.write(source.toPath(), "{}".getBytes(java.nio.charset.StandardCharsets.UTF_8));
         String stale = "{\"rows\":[{\"points\":[[10,50],[10.001,50]],\"original\":2}],\"truncated\":true}";
         try {
             try (CompactJourneyCache old = new CompactJourneyCache(app, "map-overseas-v1")) {
