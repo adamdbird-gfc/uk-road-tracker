@@ -1497,6 +1497,10 @@ public class MapActivity extends Activity {
             markMapHeap("before_local_sections");
             // Each section is already retained by MapRoutes; avoid a second
             // temporary all-sections list at the highest archive heap watermark.
+            // Reserve once before transferring ~44k canonical edges. Repeated
+            // ArrayList growth here temporarily retains both old and new backing
+            // arrays precisely when the Map is closest to the ART heap limit.
+            output.reserveLocalRoadCapacity(local.pendingSectionCount());
             local.drainSections(output::addLocalRoad);
             // Reference tiles and working edge keys are no longer retained.
             // Retry a bounded exact-foot batch before finalising A-road layers.
@@ -3331,6 +3335,14 @@ public class MapActivity extends Activity {
             return localReferenceAvailable
                     && snapshotPoints() <= 360_000
                     && freeHeadroomBytes >= 32L * 1024L * 1024L;
+        }
+
+        void reserveLocalRoadCapacity(int sections) {
+            if (sections <= 0) return;
+            ((ArrayList<LocalRoadCoverage.Section>) localRoadSections).ensureCapacity(sections);
+            // Most physical edges yield one draw interval. This is a lower
+            // bound only: addAll still grows safely for split intervals.
+            ((ArrayList<LocalRoadCoverage.Line>) localRoadSegments).ensureCapacity(sections);
         }
 
         void addLocalRoad(LocalRoadCoverage.Section section) {
