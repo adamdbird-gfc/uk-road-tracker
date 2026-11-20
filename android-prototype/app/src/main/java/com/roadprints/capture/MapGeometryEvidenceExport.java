@@ -30,8 +30,12 @@ final class MapGeometryEvidenceExport {
         append(segments, routes.coveredARoadSections, area, "covered_a_roads", counts);
         // Iterate compact local intervals directly; do NOT enumerate the
         // lazy localRoadLines list or materialise the entire UK road network.
-        for (LocalRoadCoverage.Line interval : routes.localRoadSegments)
+        for (LocalRoadCoverage.Line interval : routes.localRoadSegments) {
+            if (!MapCorridorGeometry.possiblyIntersectsSegment(area,
+                    interval.longitude(false), interval.latitude(false),
+                    interval.longitude(true), interval.latitude(true))) continue;
             add(segments, interval.points(), area, "accepted_local_roads", counts);
+        }
         JSONObject metadata = new JSONObject()
                 .put("format","roadprints_map_geometry_evidence")
                 .put("format_version",1)
