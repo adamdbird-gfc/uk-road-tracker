@@ -17,6 +17,43 @@ import static org.junit.Assert.*;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 28)
 public class MapRecoveryEngineeringTest {
+    @Test public void warmBuild313TruncationIsRefreshedAndRetainedOnNextOpen() throws Exception {
+        Context app = RuntimeEnvironment.getApplication();
+        File source = new File(app.getCacheDir(), "recovery-legacy-overseas-truncated.json");
+        Files.write(source.toPath(), "{\"source\":\"accepted\"}".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        try {
+            // Simulate the previous release's durable (unversioned) projection,
+            // which discarded the accepted prefix at the point limit.
+            try (CompactJourneyCache old = new CompactJourneyCache(app, "map-overseas-v1")) {
+                JSONObject stale = old.get(source, file -> new JSONObject()
+                        .put("rows", new JSONArray()).put("truncated", true),
+                        index -> true, value -> new JSONArray().put(1));
+                assertNotNull(stale);
+                assertFalse(stale.has("projectionVersion"));
+            }
+            final int[] recomputations = {0};
+            try (CompactJourneyCache upgraded = new CompactJourneyCache(app, "map-overseas-v1")) {
+                JSONObject recovered = MapActivity.acceptedOverseasProjection(upgraded, source,
+                        file -> {
+                            recomputations[0]++;
+                            JSONArray line = new JSONArray("[[10,50],[10.001,50],[10.002,50]]");
+                            return new JSONObject().put("rows", new JSONArray().put(
+                                    new JSONObject().put("points", line).put("original", 3)))
+                                    .put("truncated", true);
+                        }, false);
+                assertNotNull("Old truncated projection must be recomputed", recovered);
+                assertEquals(1, recomputations[0]);
+                assertEquals(2, recovered.getInt("projectionVersion"));
+                assertEquals(3, recovered.getJSONArray("rows").getJSONObject(0)
+                        .getJSONArray("points").length());
+                JSONObject reused = MapActivity.acceptedOverseasProjection(upgraded, source,
+                        file -> { throw new AssertionError("Versioned result must be reused"); }, false);
+                assertNotNull(reused);
+                assertEquals(3, reused.getJSONArray("rows").getJSONObject(0)
+                        .getJSONArray("points").length());
+            }
+        } finally { source.delete(); }
+    }
     @Test public void deferredOverseasEmptyProjectionIsResolvedAndIndexed() throws Exception {
         Context app = RuntimeEnvironment.getApplication();
         File source = new File(app.getCacheDir(), "recovery-overseas-empty.json");
