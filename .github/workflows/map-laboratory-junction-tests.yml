@@ -36,3 +36,6 @@ jobs:
 
       - name: Check competing junction credit
         run: node map-laboratory/tests/junction-singleton.test.cjs
+
+      - name: Check road-transition boundary evidence
+        run: node map-laboratory/tests/transition-boundary.test.cjs

@@ -1,0 +1,19 @@
+// Synthetic boundary tests. No private journey coordinates or street-specific exceptions.
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
+const start=html.indexOf('function prepareEvidence(j){'),end=html.indexOf('function match(j){',start);
+assert.ok(start>0&&end>start);
+const M=111320,D=Math.PI/180;
+const metres=(a,b)=>Math.hypot((a[0]-b[0])*M*Math.cos((a[1]+b[1])*.5*D),(a[1]-b[1])*M);
+const xyz=(a,o)=>[(a[0]-o[0])*M*Math.cos(o[1]*D),(a[1]-o[1])*M];
+const proj=(a,b,p)=>{const v=[b[0]-a[0],b[1]-a[1]],d=v[0]*v[0]+v[1]*v[1];if(d<.001)return 1e9;const t=Math.max(0,Math.min(1,((p[0]-a[0])*v[0]+(p[1]-a[1])*v[1])/d));return Math.hypot(p[0]-a[0]-t*v[0],p[1]-a[1]-t*v[1])};
+const {prepareEvidence,unsupportedTurnInterval}=new Function('metres','xyz','proj',html.slice(start,end)+';return {prepareEvidence,unsupportedTurnInterval}')(metres,xyz,proj);
+const p=(x,y=0)=>[x/M,y/M];
+const corner=[p(-50),p(0),p(50),p(50,30)];
+assert.equal(unsupportedTurnInterval(corner,1,{p:p(50),q:p(58)}),true,'do not credit beyond sharp turn');
+assert.equal(unsupportedTurnInterval(corner,1,{p:p(42),q:p(50)}),false,'retain road before turn');
+assert.equal(unsupportedTurnInterval([p(-50),p(0),p(50),p(100)],1,{p:p(50),q:p(58)}),false,'retain straight continued travel');
+assert.equal(unsupportedTurnInterval([p(-50),p(0),p(50),p(50,30)],1,{p:p(35),q:p(43)}),false,'do not exclude full traversed interval');
+assert.equal(prepareEvidence([null,null,null,[[p(0),p(120),p(145),p(148,9)]]]).endpointHooks,1,'small angled endpoint after meaningful road');
+assert.equal(prepareEvidence([null,null,null,[[p(0),p(120),p(145),p(155,9),p(155,40)]]]).endpointHooks,0,'not an endpoint when walking continues');
+console.log('PASS: turn boundary, through-road preservation, nearby interval and terminal hook confidence');
