@@ -171,9 +171,17 @@ for(let i=0;i<roadNetwork.length;i++){
  if(roadKinds.has(r.kind))road.push(r);
  if(pathKinds.has(r.kind)&&ids.has(i)){paths.push(r);support.set(r.group,(support.get(r.group)||0)+1)}
 }
-const nearest=(point,items)=>{
+const cell=.00016,makeGrid=(items)=>{
+ const grid=new Map(),key=(x,y)=>Math.floor(x/cell)+','+Math.floor(y/cell);
+ for(const r of items){const x=(r.p[0]+r.q[0])/2,y=(r.p[1]+r.q[1])/2,k=key(x,y);
+  if(!grid.has(k))grid.set(k,[]);grid.get(k).push(r)
+ }return grid;
+};
+const roadGrid=makeGrid(road),pathGrid=makeGrid(paths);
+const nearest=(point,grid)=>{
  let best=null,d=Infinity;
- for(const r of items){
+ const cx=Math.floor(point[0]/cell),cy=Math.floor(point[1]/cell);
+ for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++)for(const r of grid.get((cx+dx)+','+(cy+dy))||[]){
   const v=xyz(r.q,r.p),p=xyz(point,r.p),z=v[0]*v[0]+v[1]*v[1];
   if(z<.01)continue;
   const t=Math.max(0,Math.min(1,(v[0]*p[0]+v[1]*p[1])/z));
@@ -184,13 +192,13 @@ const nearest=(point,items)=>{
 const aligned=(a,b,r)=>{const v=xyz(b,a),w=xyz(r.q,r.p);return Math.abs((v[0]*w[0]+v[1]*w[1])/(Math.hypot(...v)*Math.hypot(...w)||1))};
 for(const line of lines){
  for(let start=0;start<line.length-1;start++){
-  const r0=nearest(line[start],road);
+  const r0=nearest(line[start],roadGrid);
   if(!r0||r0.distance>3.5)continue;
   let cumulative=0;
   for(let end=start+1;end<=Math.min(start+4,line.length-1);end++){
    cumulative+=metres(line[end-1],line[end]);
    if(cumulative>35)break;
-   const pathEnd=nearest(line[end],paths);
+   const pathEnd=nearest(line[end],pathGrid);
    if(!pathEnd||pathEnd.distance>3.5||support.get(pathEnd.r.group)<3)continue;
    if(metres(r0.point,pathEnd.point)<4)continue;
    // The source must leave the road corridor, not simply run in parallel
