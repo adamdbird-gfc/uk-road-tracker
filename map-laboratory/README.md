@@ -1,0 +1,27 @@
+# Roadprints hosted Map Laboratory (experimental)
+
+A mobile-first, static GitHub Pages-compatible laboratory for replaying accepted Roadprints journey geometry **without publishing the owner's private location history**.
+
+## Owner workflow
+1. Open a deployed `map-laboratory/` page over HTTPS on the Pixel 10.
+2. Download the separate private file `Roadprints-Lab-Private-Journeys.json.gz` provided outside GitHub.
+3. Tap **Choose journey file**, select the compressed JSON once. The browser stores it locally in IndexedDB.
+4. Use Next / Back / slider and toggle between **Road centrelines** and **Original lines**.
+5. Start with journey 1, Cross Lane East / Singlewell Road. Red = first use on reference, black = historical, green = repeated road.
+
+## Privacy
+- **NEVER commit** the Roadprints backup or a compressed journey bundle to this repository, GitHub Pages, release assets, diagnostics or CI logs.
+- The import is local via FileReader/File arrayBuffer; the compressed bytes persist in the user's browser IndexedDB for repeat visits.
+- The page requests *geographic bounding boxes only* from public OpenStreetMap Overpass services; these requests disclose the approximate area being examined, not the archive, times, or journey IDs.
+- OpenStreetMap background tile requests similarly reveal viewed locations. Avoid third-party location lookups if full offline privacy is required.
+- Clearing this site's browser storage removes the remembered imported dataset.
+- Loading the page requires Leaflet from a CDN and online basemap/Overpass for uncached road-reference regions.
+- No backend, authentication, cloud storage, or data upload.
+
+## Engineering status
+Experimental. Road intervals are 8-metre stable slices of reference ways; matched if source samples lie within 15 metres of a road interval and agree in road direction within 45 degrees (direction reversed is accepted). Source journey records never change. A road visited from either pavement or direction is credited once on its reference line. Unmatched samples earn no coverage. Distinct OSM way IDs are not yet merged into a canonical physical road identity.
+
+This is **not** production Roadprints road credit. No automatic correction can be accepted until the first five journeys and broader regression corpus have been reviewed. The case of the Cross Lane East spur is deliberately preserved in the source and must be checked against independently retrieved reference geometry.
+
+## Deployment
+Files are staged under `map-laboratory/`. This branch does **not** alter the existing Pages configuration or publish a new web root; confirm the Pages publishing source and deploy the folder under the existing site before providing a production Pages URL.
