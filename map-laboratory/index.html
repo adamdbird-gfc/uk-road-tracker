@@ -406,7 +406,7 @@ function selectPhysicalCorridorCandidates(candidates,network){
     if(proj([0,0],pv,xyz(midpoint,p.p))>8)return false;
     return true;
   });
-  if(equivalent)rescues.push({...c,score:c.score-1.5,roadsideCandidate:true});
+  if(equivalent)rescues.push({...c,score:c.score-3.5,roadsideCandidate:true});
  }
  return [...normal,...rescues.slice(0,3)].sort((a,b)=>a.score-b.score);
 }
