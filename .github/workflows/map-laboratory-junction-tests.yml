@@ -68,3 +68,6 @@ jobs:
 
       - name: Check evidence-backed short road junction gaps
         run: node map-laboratory/tests/evidence-backed-road-gaps.test.cjs
+
+      - name: Trace selected and uncredited physical-network intervals
+        run: node map-laboratory/tests/coverage-stage-trace.test.cjs
