@@ -53,3 +53,6 @@ jobs:
 
       - name: Check continuous route choice and retained real-path gaps
         run: node map-laboratory/tests/continuity-path.test.cjs
+
+      - name: Check physical-road candidates before continuity replay
+        run: node map-laboratory/tests/equivalence-aware-continuity.test.cjs
