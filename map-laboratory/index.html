@@ -42,16 +42,29 @@ async function ensure(j){const b=bbox(j);if(regions.some(x=>contains(x,b)))retur
 // A retraced excursion is eligible for suppression only if another, separate
 // source leg follows the same corridor; genuine unique out-and-back stays.
 function prepareEvidence(j){
-let endpointHooks=0,redundantReturns=0;
+let endpointHooks=0,redundantReturns=0,microReversals=0;
 const lines=j[3].map(raw=>{
 const path=raw.slice();if(path.length<3)return path;
-const hook=(a,b,c)=>{const ab=xyz(b,a),bc=xyz(c,a),u=Math.hypot(...ab),v=Math.hypot(bc[0]-ab[0],bc[1]-ab[1]);if(u<.1||v<.1)return false;return u<=8&&v>=20&&Math.abs((ab[0]*(bc[0]-ab[0])+ab[1]*(bc[1]-ab[1]))/(u*v))<.5};
+const hook=(a,b,c)=>{const ab=xyz(b,a),bc=xyz(c,a),u=Math.hypot(...ab),v=Math.hypot(bc[0]-ab[0],bc[1]-ab[1]);if(u<.1||v<.1)return false;return u<=18&&v>=50&&Math.abs((ab[0]*(bc[0]-ab[0])+ab[1]*(bc[1]-ab[1]))/(u*v))<.38};
 if(hook(path[0],path[1],path[2])){path.shift();endpointHooks++}
 if(path.length>=3&&hook(path[path.length-1],path[path.length-2],path[path.length-3])){path.pop();endpointHooks++}
 const kept=[];
 for(let i=0;i<path.length;i++){
 if(i>0&&i+1<path.length){
 const before=path[i-1],tip=path[i],after=path[i+1],out=metres(before,tip);
+// A one-point sideways return between long, aligned through-legs is weak
+// evidence of branch coverage. Retain the source, omit the retraced spike
+// from experimental cumulative credit only. Never suppress multi-point
+// visits, connecting paths, or longer out-and-back movements.
+if(i>=2&&i+2<path.length&&out>=4&&out<=20&&metres(before,after)<=2){
+const prev=xyz(before,path[i-2]),exc=xyz(tip,before),next=xyz(path[i+2],after);
+const lp=Math.hypot(...prev),le=Math.hypot(...exc),ln=Math.hypot(...next);
+const dot=(a,b)=>((a[0]*b[0]+a[1]*b[1])/(Math.hypot(...a)*Math.hypot(...b)));
+if(lp>=30&&ln>=30&&le>=4&&Math.abs(dot(prev,exc))<=.42&&dot(prev,next)>=.82){
+microReversals++;i++;continue;
+}
+}
+
 if(out>=4&&out<=36&&metres(before,after)<=2){
 const base=xyz(tip,before),length=Math.hypot(...base);
 const supportedElsewhere=path.some((_,k)=>{
@@ -83,7 +96,7 @@ kept.push(path[i]);
 }
 return kept;
 });
-return {lines,endpointHooks,redundantReturns};
+return {lines,endpointHooks,redundantReturns,microReversals};
 }
 
 function match(j){
@@ -102,7 +115,7 @@ for(let k=1;k<touched.length;k++){const left=roads[touched[k-1]],right=roads[tou
 // Never discard geometrically supported journey evidence just for being short.
 for(const id of along)ids.add(id);
 }
-return {ids,failed,tries,bridged,held,endpointHooks:prepared.endpointHooks,redundantReturns:prepared.redundantReturns}
+return {ids,failed,tries,bridged,held,endpointHooks:prepared.endpointHooks,redundantReturns:prepared.redundantReturns,microReversals:prepared.microReversals}
 }
 async function advance(n){if(!data||busy)return;n=Math.min(data.journeys.length,Math.max(0,n));clearError();if(mode==='original'||n<=step){step=n;update();return}busy=true;controls();try{for(let i=step;i<n;i++){tell('Matching journey '+(i+1)+' of '+data.journeys.length+'…');await ensure(data.journeys[i]);let m=cache.get(i);if(!m){m=match(data.journeys[i]);cache.set(i,m);for(const id of m.ids){const r=roads[id];if(r.first===Infinity)r.first=i;else if(r.first!==i&&r.second===Infinity)r.second=i}}step=i+1;update();if(i%3===2)await new Promise(r=>setTimeout(r,0))}}catch(e){problem(e.message||String(e));stop()}finally{busy=false;update();if(!error.textContent||error.style.display==='none')tell('Ready · '+step+' / '+data.journeys.length+' journeys matched')}}
 function stroke(lines,color,width){if(!lines.length)return;ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();for(const [a,b] of lines){const p=map.latLngToContainerPoint([a[1],a[0]]),q=map.latLngToContainerPoint([b[1],b[0]]);ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y)}ctx.stroke()}
@@ -115,7 +128,7 @@ stroke(old,'#151a21',3.5);if(mode==='original'&&step){for(const path of data.jou
 }
 function schedule(){if(drawPending)return;drawPending=true;requestAnimationFrame(()=>{drawPending=false;draw()})}
 function controls(){for(const id of ['back','next','seek','play','center','original'])$(id).disabled=!data||busy;$('back').disabled||=step===0;$('next').disabled||=!!data&&step===data.journeys.length}
-function update(){if(!data)return;seek.max=data.journeys.length;seek.value=step;$('count').textContent=step+' / '+data.journeys.length;if(step){const j=data.journeys[step-1];$('title').textContent=j[1];$('meta').textContent=j[0]+' · '+j[2]+' · journey '+step;const m=cache.get(step-1);$('detail').textContent=mode==='center'&&m?m.ids.size+' road/path intervals · '+m.bridged+' same-way gaps joined · '+m.endpointHooks+' endpoint hooks · '+m.redundantReturns+' redundant returns · '+m.failed+' unmatched samples':'Original journey evidence preserved'}else{$('title').textContent='Starting point — no journeys yet';$('meta').textContent='Press Next to add your first journey'}controls();schedule()}
+function update(){if(!data)return;seek.max=data.journeys.length;seek.value=step;$('count').textContent=step+' / '+data.journeys.length;if(step){const j=data.journeys[step-1];$('title').textContent=j[1];$('meta').textContent=j[0]+' · '+j[2]+' · journey '+step;const m=cache.get(step-1);$('detail').textContent=mode==='center'&&m?m.ids.size+' road/path intervals · '+m.bridged+' same-way gaps joined · '+m.endpointHooks+' endpoint hooks · '+m.redundantReturns+' redundant returns · '+m.microReversals+' tiny reversals · '+m.failed+' unmatched samples':'Original journey evidence preserved'}else{$('title').textContent='Starting point — no journeys yet';$('meta').textContent='Press Next to add your first journey'}controls();schedule()}
 function focus(){if(!step||!data)return;const b=data.journeys[step-1][4];map.fitBounds([[b[1],b[0]],[b[3],b[2]]],{padding:[25,25],maxZoom:17,animate:false})}
 function stop(){if(timer){clearInterval(timer);timer=null;$('play').textContent='▶ Play'}}
 function openStore(){return new Promise((yes,no)=>{const request=indexedDB.open('roadprints-map-lab',1);request.onupgradeneeded=()=>request.result.createObjectStore('files');request.onsuccess=()=>yes(request.result);request.onerror=()=>no(request.error)})}
