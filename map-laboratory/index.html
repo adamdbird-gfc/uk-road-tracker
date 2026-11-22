@@ -157,35 +157,56 @@ return dropped;
 // Display-only micro-links backed by an accepted on-foot source segment.
 // A mapped road and a distinct, strongly evidenced frontage footway must
 // each anchor an end; this never awards additional road/path completion.
+// Build short, source-backed visual connections ONLY between two already
+// credited, distinct mapped corridors. This does not create road coverage.
+// Multi-point source transitions are permitted; every displayed piece comes
+// from the original accepted journey, with endpoints projected onto network.
 function evidenceBackedWalkingLinks(lines,ids,roadNetwork){
 const roadKinds=new Set(['primary','secondary','tertiary','unclassified','residential','living_street','service','road','trunk']);
 const pathKinds=new Set(['footway','path','pedestrian','steps']);
-const roads=[],paths=[],links=[];
+const road=[],paths=[],links=[],seen=new Set(),support=new Map();
 for(let i=0;i<roadNetwork.length;i++){
- const r=roadNetwork[i];
- if(roadKinds.has(r.kind)&&(r.first!==Infinity||ids.has(i)))roads.push(r);
- if(pathKinds.has(r.kind)&&ids.has(i))paths.push(r);
+ const r=roadNetwork[i],credit=ids.has(i)||r.first!==Infinity;
+ if(!credit)continue;
+ if(roadKinds.has(r.kind))road.push(r);
+ if(pathKinds.has(r.kind)&&ids.has(i)){paths.push(r);support.set(r.group,(support.get(r.group)||0)+1)}
 }
-const close=(point,r)=>proj([0,0],xyz(r.q,r.p),xyz(point,r.p));
-const angle=(p,q,r)=>{
- const u=xyz(q,p),v=xyz(r.q,r.p),d=(u[0]*v[0]+u[1]*v[1])/(Math.hypot(...u)*Math.hypot(...v)||1);
- return Math.acos(Math.max(-1,Math.min(1,Math.abs(d))));
+const nearest=(point,items)=>{
+ let best=null,d=Infinity;
+ for(const r of items){
+  const v=xyz(r.q,r.p),p=xyz(point,r.p),z=v[0]*v[0]+v[1]*v[1];
+  if(z<.01)continue;
+  const t=Math.max(0,Math.min(1,(v[0]*p[0]+v[1]*p[1])/z));
+  const projected=[r.p[0]+(r.q[0]-r.p[0])*t,r.p[1]+(r.q[1]-r.p[1])*t],distance=metres(point,projected);
+  if(distance<d){d=distance;best={r,point:projected,distance}}
+ }return best;
 };
-const enough=new Map();
-for(const path of paths)enough.set(path.group,(enough.get(path.group)||0)+1);
-for(const line of lines)for(let i=0;i<line.length-1;i++){
- const a=line[i],b=line[i+1],len=metres(a,b);
- if(len<2||len>12)continue;
- // Crossing a road edge rather than simply retracing its parallel footway.
- const road=roads.find(r=>(close(a,r)<4.5||close(b,r)<4.5)&&angle(a,b,r)>Math.PI/4);
- if(!road)continue;
- const foot=paths.find(r=>enough.get(r.group)>=3&&
-  (close(a,r)<4.5||close(b,r)<4.5)&&r.group!==road.group&&
-  (close(a,r)<4.5&&close(b,road)<4.5||close(b,r)<4.5&&close(a,road)<4.5));
- if(!foot)continue;
- // Source itself establishes a short physical traversal, not simply
- // map proximity. It is deliberately *not* an extra credited road interval.
- if(!links.some(([x,y])=>metres(x,a)<2&&metres(y,b)<2||metres(x,b)<2&&metres(y,a)<2))links.push([a,b]);
+const aligned=(a,b,r)=>{const v=xyz(b,a),w=xyz(r.q,r.p);return Math.abs((v[0]*w[0]+v[1]*w[1])/(Math.hypot(...v)*Math.hypot(...w)||1))};
+for(const line of lines){
+ for(let start=0;start<line.length-1;start++){
+  const r0=nearest(line[start],road);
+  if(!r0||r0.distance>3.5)continue;
+  let cumulative=0;
+  for(let end=start+1;end<=Math.min(start+4,line.length-1);end++){
+   cumulative+=metres(line[end-1],line[end]);
+   if(cumulative>35)break;
+   const pathEnd=nearest(line[end],paths);
+   if(!pathEnd||pathEnd.distance>3.5||support.get(pathEnd.r.group)<3)continue;
+   if(metres(r0.point,pathEnd.point)<4)continue;
+   // The source must leave the road corridor, not simply run in parallel
+   // on its pavement. The linked reference path is a distinct walked way.
+   if(aligned(line[start],line[end],r0.r)>.8)continue;
+   if(pathEnd.r.group===r0.r.group)continue;
+   // Avoid drawing a long excursion that has already been matched.
+   const pts=[r0.point,...line.slice(start+1,end),pathEnd.point];
+   const key=pts.map(v=>v.map(n=>n.toFixed(5)).join(',')).join(';');
+   const reverse=[...pts].reverse().map(v=>v.map(n=>n.toFixed(5)).join(',')).join(';');
+   if(seen.has(key)||seen.has(reverse))break;
+   seen.add(key);
+   for(let k=0;k+1<pts.length;k++)if(metres(pts[k],pts[k+1])>.5)links.push([pts[k],pts[k+1]]);
+   break;
+  }
+ }
 }
 return links;
 }
