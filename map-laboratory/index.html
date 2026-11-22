@@ -403,7 +403,7 @@ for(let k=1;k<touched.length;k++){const left=roads[touched[k-1]],right=roads[tou
 // Never discard geometrically supported journey evidence just for being short.
 for(const id of along)ids.add(id);
 }
-const roadPromotions=promoteRoads?promoteParallelRoadCentrelines(ids,roads):{promoted:new Set(),equivalent:new Set(),acceptedRuns:0};
+const roadPromotions=(typeof promoteRoads==='undefined'||promoteRoads)?promoteParallelRoadCentrelines(ids,roads):{promoted:new Set(),equivalent:new Set(),acceptedRuns:0};
 for(const id of roadPromotions.promoted)ids.add(id);
 for(const id of roadPromotions.equivalent)ids.delete(id);
 const equivalentFootways=roadEquivalentFootways(ids,roads);
