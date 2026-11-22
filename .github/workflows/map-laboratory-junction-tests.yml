@@ -89,3 +89,6 @@ jobs:
 
       - name: Verify ordered matched pedestrian references
         run: node map-laboratory/tests/chronological-footway-support.test.cjs
+
+      - name: Verify graph-constrained connected route shadow
+        run: node map-laboratory/tests/connected-route-shadow.test.cjs
