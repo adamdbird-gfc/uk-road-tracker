@@ -259,6 +259,45 @@ const da=(start[0]*v[0]+start[1]*v[1])/l;
 const db=(end[0]*v[0]+end[1]*v[1])/l;
 return (da>l+3&&db>l+3)||(da< -3&&db< -3);
 }
+// A pedestrian interval at the *edge of an observed run* must not be
+// credited just because a source sample touched its inboard endpoint.
+// Out-and-back samples at the same point are one location, not proof of
+// movement along that segment. Only hold an outlying footway interval when
+// an independently supported, multi-interval run continues beyond a gap.
+// Genuine walked endcaps with multiple distinct positions remain eligible.
+function unsupportedFootwayEndcaps(roadNetwork,groups,evidence,hits){
+ const pedestrian=new Set(['footway','path','steps','cycleway','pedestrian','bridleway']);
+ const withheld=new Set();
+ for(const list of groups.values()){
+  const touched=list.filter(id=>evidence.has(id));
+  if(touched.length<5)continue;
+  for(const id of touched){
+   const r=roadNetwork[id],samples=hits.get(id)||[];
+   if(!pedestrian.has(r.kind)||!samples.length)continue;
+   // Even the same GPS point recorded on an outward and return walk is
+   // still a single geographical observation of this road interval.
+   const positions=samples.map(h=>h.sourcePoint);
+   if(positions.some(p=>metres(p,positions[0])>1.25))continue;
+   const others=touched.filter(x=>x!==id),near=(dir)=>{
+    const candidates=others.filter(x=>dir*(roadNetwork[x].index-r.index)>0&&
+      dir*(roadNetwork[x].index-r.index)<=9).sort((a,b)=>dir*(roadNetwork[a].index-roadNetwork[b].index));
+    const first=candidates[0];
+    if(first===undefined)return false;
+    const gap=dir*(roadNetwork[first].index-r.index);
+    if(gap<2||gap>3)return false;
+    // A robust run on one side of the candidate: at least four
+    // directly supported intervals in the next nine reference intervals.
+    if(candidates.length<4)return false;
+    if(others.some(x=>dir*(roadNetwork[x].index-r.index)<0&&
+      -dir*(roadNetwork[x].index-r.index)<=9))return false;
+    const inboard=dir>0?r.q:r.p;
+    return metres(positions[0],inboard)<=1.5;
+   };
+   if(near(1)||near(-1))withheld.add(id);
+  }
+ }
+ return withheld;
+}
 function match(j){
 const grid=new Map(),S=.00024,key=(x,y)=>Math.floor(x/S)+','+Math.floor(y/S),groups=new Map();
 roads.forEach((r,i)=>{const k=key((r.p[0]+r.q[0])/2,(r.p[1]+r.q[1])/2);if(!grid.has(k))grid.set(k,[]);grid.get(k).push(i);if(!groups.has(r.group))groups.set(r.group,[]);groups.get(r.group).push(i)});
@@ -295,9 +334,10 @@ for(const [group,list] of groups){
 return unsupportedJunction;
 }
 const unsupportedJunction=excludedJunctionSingletons(roads,groups,evidence,hits);
+const unsupportedFootEnds=unsupportedFootwayEndcaps(roads,groups,evidence,hits);
 const ids=new Set();let bridged=0,held=0;
 for(const list of groups.values()){
-const touched=list.filter(id=>evidence.has(id)&&!unsupportedJunction.has(id));if(!touched.length)continue;
+const touched=list.filter(id=>evidence.has(id)&&!unsupportedJunction.has(id)&&!unsupportedFootEnds.has(id));if(!touched.length)continue;
 const along=new Set(touched);
 for(let k=1;k<touched.length;k++){const left=roads[touched[k-1]],right=roads[touched[k]];if(right.index-left.index>1&&right.index-left.index<=4){for(const id of list)if(roads[id].index>left.index&&roads[id].index<right.index){along.add(id);bridged++}}}
 // A short OSM way or real connecting footpath may contain only one interval.
@@ -307,7 +347,7 @@ for(const id of along)ids.add(id);
 const equivalentFootways=roadEquivalentFootways(ids,roads);
 for(const id of equivalentFootways)ids.delete(id);
 const walkingLinks=j[2]==='walking'?evidenceBackedWalkingLinks(prepared.lines,ids,roads):[];
-return {ids,hits,direct:evidence,unsupportedJunction,equivalentFootways,walkingLinks,failed,tries,bridged,held,turnCreditsHeld,endpointHooks:prepared.endpointHooks,redundantReturns:prepared.redundantReturns,microReversals:prepared.microReversals}
+return {ids,hits,direct:evidence,unsupportedJunction,unsupportedFootEnds,equivalentFootways,walkingLinks,failed,tries,bridged,held,turnCreditsHeld,endpointHooks:prepared.endpointHooks,redundantReturns:prepared.redundantReturns,microReversals:prepared.microReversals}
 }
 async function advance(n){if(!data||busy)return;n=Math.min(data.journeys.length,Math.max(0,n));clearError();if(mode==='original'||n<=step){step=n;update();return}busy=true;controls();try{for(let i=step;i<n;i++){tell('Matching journey '+(i+1)+' of '+data.journeys.length+'…');await ensure(data.journeys[i]);let m=cache.get(i);if(!m){m=match(data.journeys[i]);cache.set(i,m);for(const id of m.ids){const r=roads[id];if(r.first===Infinity)r.first=i;else if(r.first!==i&&r.second===Infinity)r.second=i}}step=i+1;update();if(i%3===2)await new Promise(r=>setTimeout(r,0))}}catch(e){problem(e.message||String(e));stop()}finally{busy=false;update();if(!error.textContent||error.style.display==='none')tell('Ready · '+step+' / '+data.journeys.length+' journeys matched')}}
 function stroke(lines,color,width){if(!lines.length)return;ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();for(const [a,b] of lines){const p=map.latLngToContainerPoint([a[1],a[0]]),q=map.latLngToContainerPoint([b[1],b[0]]);ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y)}ctx.stroke()}
@@ -349,7 +389,7 @@ return {
 function examineRoad(evt){if(!inspectMode||!data||!step||mode!=='center')return;let best=-1,distance=25;for(let id=0;id<roads.length;id++){const r=roads[id];if(r.first>=step)continue;const d=pointSegmentPixels(evt.latlng,r.p,r.q);if(d<distance){best=id;distance=d}}if(best<0){$('inspectInfo').textContent='Tap directly on a coloured road or footpath section.';$('inspectPanel').style.display='block';return}selectedRoad=best;const r=roads[best],here=[(r.p[0]+r.q[0])/2,(r.p[1]+r.q[1])/2],m=cache.get(step-1),firstMatch=cache.get(r.first),direct=m?.hits?.get(best)||[],firstHits=firstMatch?.hits?.get(best)||[];const neighbours=roads.map((other,id)=>({other,id,d:metres(here,[(other.p[0]+other.q[0])/2,(other.p[1]+other.q[1])/2])})).filter(x=>x.id!==best&&x.d<=25).sort((a,b)=>a.d-b.d).slice(0,9).map(x=>({osmWay:x.other.group,road:x.other.name||x.other.kind,metresAway:Number(x.d.toFixed(1)),credited:x.other.first<step,creditedFirstJourney:x.other.first===Infinity?null:x.other.first+1}));selectedReport={laboratory:'roadprints-lab-junction-inspector-v2',journeySelected:step,journeyDate:data.journeys[step-1][0],wholeWay:inspectWayEvidence(best,step-1),reference:{osmWay:r.group,kind:r.kind,name:r.name,interval:r.index,start:r.p,end:r.q},credit:{firstJourney:r.first+1,repeatedByJourney:r.second===Infinity?null:r.second+1,source:direct.length?'direct sample':(m?.ids?.has(best)?'bounded same-way bridge':'credited by earlier journey'),currentJourneyDirectSamples:direct,firstJourneyDirectSamples:firstHits},nearbyReferenceWays:neighbours,notice:'Local selected way evidence includes private location points. Only share intentionally.'};$('inspectInfo').textContent='OSM way '+r.group+' · '+(r.name||r.kind)+'\nInterval '+r.index+' · first credited journey '+(r.first+1)+'\nSelected journey: '+(direct.length?direct.length+' direct samples':m?.ids?.has(best)?'coverage bridged from other intervals':'not newly credited')+'\nNearby ways: '+neighbours.map(n=>n.osmWay+' ('+n.road+', '+n.metresAway+'m)').join('; ')+'\nWay-wide evidence: '+selectedReport.wholeWay.firstJourneyDirectIntervals+' directly matched intervals / '+selectedReport.wholeWay.firstJourneyCreditedIntervals+' credited; '+selectedReport.wholeWay.firstJourneyDistinctSourceLegs.length+' unique source legs'+'\nFirst-credit reason: '+selectedReport.wholeWay.firstCreditReason+'\nCopy selected evidence for full bounded report.';$('inspectPanel').style.display='block';schedule()}
 function schedule(){if(drawPending)return;drawPending=true;requestAnimationFrame(()=>{drawPending=false;draw()})}
 function controls(){for(const id of ['back','next','seek','play','center','original'])$(id).disabled=!data||busy;$('back').disabled||=step===0;$('next').disabled||=!!data&&step===data.journeys.length}
-function update(){if(!data)return;seek.max=data.journeys.length;seek.value=step;$('count').textContent=step+' / '+data.journeys.length;if(step){const j=data.journeys[step-1];$('title').textContent=j[1];$('meta').textContent=j[0]+' · '+j[2]+' · journey '+step;const m=cache.get(step-1);$('detail').textContent=mode==='center'&&m?m.ids.size+' road/path intervals · '+m.equivalentFootways.size+' road-adjacent path duplicates consolidated · '+m.walkingLinks.length+' source-backed micro-links (display only) · '+m.unsupportedJunction.size+' junction singleton credits held · '+m.turnCreditsHeld+' turn-only samples held · '+m.bridged+' same-way gaps joined · '+m.endpointHooks+' endpoint hooks · '+m.redundantReturns+' redundant returns · '+m.microReversals+' tiny reversals · '+m.failed+' unmatched samples':'Original journey evidence preserved'}else{$('title').textContent='Starting point — no journeys yet';$('meta').textContent='Press Next to add your first journey'}controls();schedule()}
+function update(){if(!data)return;seek.max=data.journeys.length;seek.value=step;$('count').textContent=step+' / '+data.journeys.length;if(step){const j=data.journeys[step-1];$('title').textContent=j[1];$('meta').textContent=j[0]+' · '+j[2]+' · journey '+step;const m=cache.get(step-1);$('detail').textContent=mode==='center'&&m?m.ids.size+' road/path intervals · '+m.equivalentFootways.size+' road-adjacent path duplicates consolidated · '+m.walkingLinks.length+' source-backed micro-links (display only) · '+m.unsupportedJunction.size+' junction singleton credits held · '+m.unsupportedFootEnds.size+' unsupported footway endcaps held · '+m.turnCreditsHeld+' turn-only samples held · '+m.bridged+' same-way gaps joined · '+m.endpointHooks+' endpoint hooks · '+m.redundantReturns+' redundant returns · '+m.microReversals+' tiny reversals · '+m.failed+' unmatched samples':'Original journey evidence preserved'}else{$('title').textContent='Starting point — no journeys yet';$('meta').textContent='Press Next to add your first journey'}controls();schedule()}
 function focus(){if(!step||!data)return;const b=data.journeys[step-1][4];map.fitBounds([[b[1],b[0]],[b[3],b[2]]],{padding:[25,25],maxZoom:17,animate:false})}
 function stop(){if(timer){clearInterval(timer);timer=null;$('play').textContent='▶ Play'}}
 function openStore(){return new Promise((yes,no)=>{const request=indexedDB.open('roadprints-map-lab',1);request.onupgradeneeded=()=>request.result.createObjectStore('files');request.onsuccess=()=>yes(request.result);request.onerror=()=>no(request.error)})}
