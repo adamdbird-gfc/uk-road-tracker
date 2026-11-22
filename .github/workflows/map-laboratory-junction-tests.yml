@@ -62,3 +62,6 @@ jobs:
 
       - name: Verify canonical pedestrian links cannot duplicate road coverage
         run: node map-laboratory/tests/canonical-walking-links.test.cjs
+
+      - name: Check final canonical-network connectivity audit
+        run: node map-laboratory/tests/postcanonical-continuity.test.cjs
