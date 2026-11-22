@@ -77,3 +77,6 @@ jobs:
 
       - name: Check independent pedestrian-first road-centreline shadow comparison
         run: node map-laboratory/tests/pedestrian-first-road-shadow.test.cjs
+
+      - name: Check visible pedestrian-first preview toggle feedback
+        run: node map-laboratory/tests/preview-toggle-feedback.test.cjs
