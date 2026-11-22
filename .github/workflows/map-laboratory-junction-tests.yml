@@ -71,3 +71,6 @@ jobs:
 
       - name: Trace selected and uncredited physical-network intervals
         run: node map-laboratory/tests/coverage-stage-trace.test.cjs
+
+      - name: Check direct isolated journey jump and highlighted gap candidates
+        run: node map-laboratory/tests/direct-journey-navigation.test.cjs
