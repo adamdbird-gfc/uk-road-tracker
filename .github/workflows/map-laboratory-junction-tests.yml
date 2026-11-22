@@ -65,3 +65,6 @@ jobs:
 
       - name: Check final canonical-network connectivity audit
         run: node map-laboratory/tests/postcanonical-continuity.test.cjs
+
+      - name: Check evidence-backed short road junction gaps
+        run: node map-laboratory/tests/evidence-backed-road-gaps.test.cjs
