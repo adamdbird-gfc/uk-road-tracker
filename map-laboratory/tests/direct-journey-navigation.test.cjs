@@ -10,7 +10,7 @@ const roads=Array.from({length:10},()=>({first:Infinity,second:Infinity}));
 const cache=new Map(),calls=[],notice=[],elements=new Map();
 const $=id=>{if(!elements.has(id))elements.set(id,{style:{}});return elements.get(id)};
 const nav=new Function('data','roads','cache','$','ensure','match','stop','clearError','controls','tell','update','focus','problem','state',
-view+';return {jumpTo,resetAttribution};')(
+'let busy=false,step=0,isolated=false,selectedRoad=-1,selectedReport=null;'+view+';return {jumpTo,resetAttribution,get:()=>({busy,step,isolated})};')(
 data,roads,cache,$,async j=>calls.push(j.id),j=>({ids:new Set([2,4,6]),candidateRefs:new Set([1,2,3,4,6])}),
 ()=>{},()=>{},()=>{},text=>notice.push(text),()=>{},()=>{},text=>notice.push(text),{});
  // State mutations are local to the extracted functions, not persisted into
@@ -19,12 +19,12 @@ data,roads,cache,$,async j=>calls.push(j.id),j=>({ids:new Set([2,4,6]),candidate
  await nav.jumpTo(1200);
  assert.deepEqual(calls,[1199],'no prior journeys fetched or matched');
  assert.deepEqual([...cache.keys()],[1199],'only requested match cached');
- assert.equal(roads[2].first,1199);
+ assert.equal(roads[2].first,1199);assert.deepEqual(nav.get(),{busy:false,step:1200,isolated:true});
  assert.equal(roads[3].first,Infinity,'unselected reference remains uncredited');
  await nav.jumpTo(6);
  assert.deepEqual(calls,[1199,5],'changing target loads only the new journey');
  assert.deepEqual([...cache.keys()],[5],'old isolated match cleared');
- assert.equal(roads[2].first,5,'isolated attribution reset');
+ assert.equal(roads[2].first,5,'isolated attribution reset');assert.equal(nav.get().step,6);
  await nav.jumpTo(1501);
  assert.equal(calls.length,2,'invalid journey never triggers matching');
  assert(page.includes('id="jumpForm"'),'number entry exposed');
