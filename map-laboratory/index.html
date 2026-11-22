@@ -403,11 +403,10 @@ function comparePedestrianRoadCentrelines(lines,network,credited){
    const along=p=>(p[0]*w[0]+p[1]*w[1])/lw;
    const overlap=Math.max(0,Math.min(lw,Math.max(along(A),along(B)))-Math.max(0,Math.min(along(A),along(B))));
    if(overlap<Math.min(3,lw*.55))continue;
-   const distance=proj([0,0],w,xyz(centre,leg.a));
-   // Project the physical-road midpoint onto the observed walking leg,
-   // not the other way round: reject nonoverlapping parallel extrapolation.
+   // The centreline midpoint must sit within 8m of the actual walked
+   // leg; interval overlap above also prevents parallel extrapolation.
    const lateral=proj([0,0],v,xyz(centre,leg.a));
-   if(lateral>8||distance>8)continue;
+   if(lateral>8)continue;
    const score=lateral+(1-parallel)*25;
    if(!best||score<best.score)best={id,way:road.group,index:road.index,overlap,offset:lateral,score,leg:i};
   }
