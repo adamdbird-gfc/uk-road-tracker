@@ -832,6 +832,12 @@ function connectedRouteShadow(probes,network,roadPreference=0){
  // Public-road preference applies only if a sustained, source-plausible
  // road corridor exists across neighbouring probes. Service roads do not
  // receive a bonus. Pedestrian-only legs keep their original scores.
+ const touching=(a,b)=>{
+  if(a===b)return true;
+  const p=network[a],q=network[b];if(!p||!q)return false;
+  // Only actual shared OSM endpoints, not midline proximity or crossings.
+  return [p.p,p.q].some(x=>[q.p,q.q].some(y=>metres(x,y)<=1.5));
+ };
  const publicRoad=id=>roadKinds.has(network[id]?.kind)&&network[id].kind!=='service';
  const roadCandidate=(probe)=>probe.candidates.filter(c=>publicRoad(c.id)&&c.score<=8);
  const roadSupported=new Set();
@@ -839,12 +845,6 @@ function connectedRouteShadow(probes,network,roadPreference=0){
   const prev=roadCandidate(probes[i-1]),middle=roadCandidate(probes[i]),next=roadCandidate(probes[i+1]);
   if(middle.some(b=>prev.some(a=>touching(a.id,b.id))&&next.some(c=>touching(b.id,c.id))))roadSupported.add(i);
  }
- const touching=(a,b)=>{
-  if(a===b)return true;
-  const p=network[a],q=network[b];if(!p||!q)return false;
-  // Only actual shared OSM endpoints, not midline proximity or crossings.
-  return [p.p,p.q].some(x=>[q.p,q.q].some(y=>metres(x,y)<=1.5));
- };
  const runs=[];let breaks=0,unresolved=0;
  let active=null;
  const flush=()=>{const path=active?.path||[];if(path.length>=3&&new Set(path.map(v=>v.id)).size>=3){const distinct=[...new Set(path.map(v=>v.id))];runs.push({ids:distinct,start:path[0].at,end:path[path.length-1].at,sourceSegments:[...new Set(path.map(v=>v.sourceSegment))],samples:path.length,previewOnly:true})}active=null};
