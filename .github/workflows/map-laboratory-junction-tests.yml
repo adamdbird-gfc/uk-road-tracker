@@ -83,3 +83,6 @@ jobs:
 
       - name: Verify matched pedestrian-reference evidence for road preview
         run: node map-laboratory/tests/matched-footway-road-evidence.test.cjs
+
+      - name: Verify conservative pedestrian corridor correspondence
+        run: node map-laboratory/tests/pedestrian-corridor-correspondence.test.cjs
