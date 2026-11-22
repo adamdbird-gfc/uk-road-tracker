@@ -80,3 +80,6 @@ jobs:
 
       - name: Check visible pedestrian-first preview toggle feedback
         run: node map-laboratory/tests/preview-toggle-feedback.test.cjs
+
+      - name: Verify matched pedestrian-reference evidence for road preview
+        run: node map-laboratory/tests/matched-footway-road-evidence.test.cjs
