@@ -27,7 +27,7 @@ const deadEnd=run([p(0),p(40),p(65),p(40),p(0)]);
 assert.equal(deadEnd.redundantReturns,0);
 assert.equal(deadEnd.lines[0].length,5);
 // A short there-and-back on a corridor already traversed elsewhere can be excluded.
-const redundant=run([p(0),p(65),p(30),p(45),p(30),p(0)]);
+const redundant=run([p(0),p(30),p(65),p(70),p(30),p(45),p(30),p(0)]);
 assert.equal(redundant.redundantReturns,1);
-assert.equal(redundant.lines[0].length,5);
+assert.equal(redundant.lines[0].length,7);
 console.log('PASS: endpoint jitter, short connector, genuine dead end, redundant return');
