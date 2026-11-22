@@ -92,3 +92,6 @@ jobs:
 
       - name: Verify graph-constrained connected route shadow
         run: node map-laboratory/tests/connected-route-shadow.test.cjs
+
+      - name: Verify road-first connected route A/B diagnostic
+        run: node map-laboratory/tests/road-first-shadow.test.cjs
