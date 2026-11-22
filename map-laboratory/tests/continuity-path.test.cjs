@@ -1,0 +1,27 @@
+// Synthetic route continuity tests. No user journey locations are stored here.
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
+const start=html.indexOf('function continuityTransition('),end=html.indexOf('function match(j){',start);
+assert.ok(start>0&&end>start,'continuity matcher is present');
+const M=111320,D=Math.PI/180,p=(x,y=0)=>[x/M,y/M];
+const metres=(a,b)=>Math.hypot((a[0]-b[0])*M*Math.cos((a[1]+b[1])*.5*D),(a[1]-b[1])*M);
+const xyz=(a,o)=>[(a[0]-o[0])*M*Math.cos(o[1]*D),(a[1]-o[1])*M];
+const proj=(a,b,p)=>{const v=[b[0]-a[0],b[1]-a[1]],d=v[0]*v[0]+v[1]*v[1];if(d<.001)return 1e9;const t=Math.max(0,Math.min(1,((p[0]-a[0])*v[0]+(p[1]-a[1])*v[1])/d));return Math.hypot(p[0]-a[0]-t*v[0],p[1]-a[1]-t*v[1])};
+const {chooseContinuousSamples,continuityTransition}=new Function('metres','xyz','proj',html.slice(start,end)+';return {chooseContinuousSamples,continuityTransition}')(metres,xyz,proj);
+const network=[];
+for(let i=0;i<8;i++)network.push({p:p(i*6,0),q:p((i+1)*6,0),group:'road',index:i,kind:'residential'});
+for(let i=0;i<8;i++)network.push({p:p(i*6,7),q:p((i+1)*6,7),group:'parallel-path',index:i,kind:'footway'});
+network.push({p:p(48,0),q:p(48,8),group:'entrance',index:0,kind:'footway'});
+const entries=[];
+for(let i=0;i<8;i++)entries.push({candidates:[{id:8+i,score:i===3?0:4},{id:i,score:i===3?1:0.2}].sort((a,b)=>a.score-b.score)});
+const selected=chooseContinuousSamples(entries,network);
+assert.deepEqual(selected.chosen.map(x=>x.id),[0,1,2,3,4,5,6,7],'one isolated footway temptation must not break road continuity');
+assert.ok(selected.switchesHeld>=1,'diagnostics record nearest candidates rejected for continuity');
+assert.ok(continuityTransition(7,16,network)<continuityTransition(1,16,network),'actual connected entrance preferred over a jump across town');
+const turn=chooseContinuousSamples([{candidates:[{id:7,score:0}]},{candidates:[{id:16,score:0}]}],network);
+assert.deepEqual(turn.chosen.map(x=>x.id),[7,16],'real network junction remains available');
+const hard=chooseContinuousSamples([{candidates:[{id:0,score:0}]},{candidates:[{id:8,score:0}]},{candidates:[{id:8,score:0}]}],network);
+assert.deepEqual(hard.chosen.map(x=>x.id),[0,8,8],'strong source evidence is never erased to force a connected path');
+const absent=chooseContinuousSamples([{candidates:[{id:0,score:0}]},{candidates:[]},{candidates:[{id:7,score:0}]}],network);
+assert.deepEqual(absent.chosen.map(x=>x?.id??null),[0,null,7],'no invented network path across unmatched evidence');
+console.log('PASS: continuity selects connected road, allows real junction and hard evidence, preserves gaps');
