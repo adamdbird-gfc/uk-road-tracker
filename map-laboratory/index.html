@@ -211,7 +211,30 @@ for(const line of lines){
    const reverse=[...pts].reverse().map(v=>v.map(n=>n.toFixed(5)).join(',')).join(';');
    if(seen.has(key)||seen.has(reverse))break;
    seen.add(key);
-   for(let k=0;k+1<pts.length;k++)if(metres(pts[k],pts[k+1])>.5)links.push([pts[k],pts[k+1]]);
+   // Link overlays are only for unrepresented *gaps*. Never paint a
+   // parallel length of an already-credited road/path red simply because
+   // this journey supplied a fresh candidate visual connection.
+   const represented=[...road,...paths];
+   const coveredPiece=(a,b)=>{
+    const midpoint=[(a[0]+b[0])/2,(a[1]+b[1])/2],len=metres(a,b);
+    if(len<.5)return true;
+    return represented.some(r=>{
+      const v=xyz(b,a),w=xyz(r.q,r.p),den=Math.hypot(...v)*Math.hypot(...w);
+      if(den<.1)return false;
+      const alignment=Math.abs((v[0]*w[0]+v[1]*w[1])/den);
+      if(alignment<.94)return false;
+      const projection=(p)=>proj([0,0],xyz(r.q,r.p),xyz(p,r.p));
+      return projection(midpoint)<=2.5&&projection(a)<=3.5&&projection(b)<=3.5;
+    });
+   };
+   const visible=[];
+   for(let k=0;k+1<pts.length;k++){
+    const x=pts[k],y=pts[k+1];
+    if(metres(x,y)>.5&&!coveredPiece(x,y))visible.push([x,y]);
+   }
+   // A source transition fully represented by existing physical network
+   // does not constitute a second, newly drawn red line.
+   links.push(...visible);
    break;
   }
  }
