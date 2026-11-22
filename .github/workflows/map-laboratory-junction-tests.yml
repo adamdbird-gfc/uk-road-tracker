@@ -59,3 +59,6 @@ jobs:
 
       - name: Verify canonical physical-road coverage and historical equivalence
         run: node map-laboratory/tests/canonical-physical-coverage.test.cjs
+
+      - name: Verify canonical pedestrian links cannot duplicate road coverage
+        run: node map-laboratory/tests/canonical-walking-links.test.cjs
