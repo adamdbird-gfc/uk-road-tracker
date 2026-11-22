@@ -15,7 +15,7 @@ const refs=[
  {p:p(12,6),q:p(20,6),kind:'residential',group:'parallel-street'},
  {p:p(12),q:p(12,10),kind:'footway',group:'station-entrance'},
  {p:p(32),q:p(40),kind:'residential',group:'unanchored-nib'},
- {p:p(40),q:p(48),kind:'residential',group:'unanchored'};
+ {p:p(40),q:p(48),kind:'residential',group:'unanchored'}
 ];
 const base={ids:new Set([0,2]),sources:new Map([[0,'physical-road-centreline'],[2,'physical-road-centreline']])};
 const original=[...base.ids];
