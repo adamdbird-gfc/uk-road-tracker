@@ -35,21 +35,16 @@ assert(short.weak.size>0,'short route candidates remain diagnostic only');
 assert(page.includes('id="shadowRoads"'),'preview toggle is present');
 assert(page.includes("stroke(proposals,'#00bcd4',3.8)"),'shadow results render independently');
 assert(page.includes("previewOnly:true"),'explicitly read-only');
-// Road-corridor competition: a nearer pub/service access road must not
-// displace a continuous independently supported physical street.
+// Regression: restore the original comparator's candidate set rather than
+// prematurely filtering legitimate public-road and service-road alternatives.
+// All proposals remain diagnostic only; neither is cumulative credit.
 const competing=[];
 for(let i=0;i<8;i++)competing.push({p:p(i*8,6),q:p((i+1)*8,6),group:'public-road',index:i,kind:'secondary'});
 for(let i=0;i<8;i++)competing.push({p:p(i*8,2),q:p((i+1)*8,2),group:'access-drive',index:i,kind:'service'});
 const rival=compare([[p(0),p(32),p(64)]],competing,new Set());
-assert.deepEqual([...rival.additions],[0,1,2,3,4,5,6,7],'pedestrian-first chooses coherent physical street over closer access drive');
-assert.equal(rival.heldAccess.size,8,'nearby access road is held as a competing alternative');
-assert.equal(rival.discardedCompetitors.size,0);
-assert(rival.runs.length>=2,'both supported corridor runs are compared before selection');
-// An isolated service road without a corroborated entered route remains
-// inspectable as an ambiguous access candidate, not credited automatically.
-const alone=compare([[p(0),p(32),p(64)]],competing.slice(8),new Set());
-assert.equal(alone.additions.size,0,'service-only parallel alignment cannot by itself grant road completion');
-assert.equal(alone.heldAccess.size,8);
+assert.equal(rival.additions.size,16,'shadow reports both supported candidate corridors rather than hiding either');
+assert.equal(rival.runs.length,2,'both physical corridors remain inspectable');
+assert.equal(rival.heldAccess.size,0,'experimental access-road suppression has been removed');
 const independentPublic=compare([[p(0,6),p(32,6),p(64,6)]],competing.slice(0,8),new Set());
-assert.equal(independentPublic.additions.size,8,'Clive-like continuous public road remains proposed');
+assert.equal(independentPublic.additions.size,8,'continuous public-road proposals remain available');
 console.log('PASS: pedestrian-first preview finds supported parallel road, preserves distinct paths and old credits');
