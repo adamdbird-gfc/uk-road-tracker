@@ -56,3 +56,6 @@ jobs:
 
       - name: Check physical-road candidates before continuity replay
         run: node map-laboratory/tests/equivalence-aware-continuity.test.cjs
+
+      - name: Verify canonical physical-road coverage and historical equivalence
+        run: node map-laboratory/tests/canonical-physical-coverage.test.cjs
