@@ -13,7 +13,7 @@
 <input id="seek" type="range" min="0" max="0" value="0">
 <div id="buttons"><button id="back">◀ Back</button><button class="primary" id="next">Next ▶</button><button id="play">▶ Play</button><button id="focus">⌖</button></div>
 <div id="legend"><span><i class="chip" style="background:#ff4b55"></i>Current new</span><span><i class="chip" style="background:#151a21"></i>Previously covered</span><span><i class="chip" style="background:#16a34a"></i>Road repeated</span></div>
-<div id="detail">Experimental walked-network matching. Short paths stay eligible; small gaps may bridge adjacent geometry vertices of the same OSM way.</div>
+<div id="detail">Experimental junction confidence: only tiny perpendicular endpoint hooks and previously covered short reversals are excluded from credit. Original lines are unchanged.</div>
 </footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -37,11 +37,44 @@ for(const endpoint of services){const abort=new AbortController(),clock=setTimeo
 throw Error('Road reference unavailable: '+faults.join(' / '));
 }
 async function ensure(j){const b=bbox(j);if(regions.some(x=>contains(x,b)))return;net.textContent='Loading OSM roads…';const w=await fetchWays(b);if(!w.length)throw Error('OSM returned no roads for this journey.');addWays(w);regions.push(b);net.textContent=roads.length.toLocaleString()+' road pieces';}
+// Pilot correction: preserve imported evidence, but don't award road credit to
+// a tiny perpendicular endpoint hook or a short, completely retraced excursion.
+// A retraced excursion is eligible for suppression only if another, separate
+// source leg follows the same corridor; genuine unique out-and-back stays.
+function prepareEvidence(j){
+let endpointHooks=0,redundantReturns=0;
+const lines=j[3].map(raw=>{
+const path=raw.slice();if(path.length<3)return path;
+const hook=(a,b,c)=>{const ab=xyz(b,a),bc=xyz(c,a),u=Math.hypot(...ab),v=Math.hypot(bc[0]-ab[0],bc[1]-ab[1]);if(u<.1||v<.1)return false;return u<=8&&v>=20&&Math.abs((ab[0]*(bc[0]-ab[0])+ab[1]*(bc[1]-ab[1]))/(u*v))<.5};
+if(hook(path[0],path[1],path[2])){path.shift();endpointHooks++}
+if(path.length>=3&&hook(path[path.length-1],path[path.length-2],path[path.length-3])){path.pop();endpointHooks++}
+const kept=[];
+for(let i=0;i<path.length;i++){
+if(i>0&&i+1<path.length){
+const before=path[i-1],tip=path[i],after=path[i+1],out=metres(before,tip);
+if(out>=4&&out<=36&&metres(before,after)<=2){
+const base=xyz(tip,before),length=Math.hypot(...base);
+const supportedElsewhere=path.some((_,k)=>{
+if(k+1>=path.length||Math.abs(k-i)<4)return false;
+const x=xyz(path[k],before),y=xyz(path[k+1],before),dx=y[0]-x[0],dy=y[1]-x[1],den=dx*dx+dy*dy;
+if(den<16)return false;
+const parallel=Math.abs((base[0]*dx+base[1]*dy)/(length*Math.sqrt(den)));
+return parallel>=.92&&proj(x,y,base)<=10;
+});
+if(supportedElsewhere){redundantReturns++;continue}
+}}
+kept.push(path[i]);
+}
+return kept;
+});
+return {lines,endpointHooks,redundantReturns};
+}
+
 function match(j){
 const grid=new Map(),S=.00024,key=(x,y)=>Math.floor(x/S)+','+Math.floor(y/S),groups=new Map();
 roads.forEach((r,i)=>{const k=key((r.p[0]+r.q[0])/2,(r.p[1]+r.q[1])/2);if(!grid.has(k))grid.set(k,[]);grid.get(k).push(i);if(!groups.has(r.group))groups.set(r.group,[]);groups.get(r.group).push(i)});
-const evidence=new Set();let failed=0,tries=0;
-for(const line of j[3])for(let i=0;i+1<line.length;i++){const a=line[i],b=line[i+1],length=metres(a,b);if(length<2||length>700)continue;const n=Math.ceil(length/6),origin=[(a[0]+b[0])/2,(a[1]+b[1])/2],aa=xyz(a,origin),bb=xyz(b,origin),angle=Math.atan2(bb[1]-aa[1],bb[0]-aa[0]);
+const evidence=new Set();let failed=0,tries=0;const prepared=prepareEvidence(j);
+for(const line of prepared.lines)for(let i=0;i+1<line.length;i++){const a=line[i],b=line[i+1],length=metres(a,b);if(length<2||length>700)continue;const n=Math.ceil(length/6),origin=[(a[0]+b[0])/2,(a[1]+b[1])/2],aa=xyz(a,origin),bb=xyz(b,origin),angle=Math.atan2(bb[1]-aa[1],bb[0]-aa[0]);
 for(let h=0;h<=n;h++){tries++;const t=h/n,p=[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t],gx=Math.floor(p[0]/S),gy=Math.floor(p[1]/S);let best=-1,score=1e9;for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++)for(const id of grid.get((gx+dx)+','+(gy+dy))||[]){const r=roads[id],ap=xyz(r.p,origin),bp=xyz(r.q,origin),pp=xyz(p,origin),distance=proj(ap,bp,pp);if(distance>15)continue;const heading=Math.atan2(bp[1]-ap[1],bp[0]-ap[0]),diff=Math.acos(Math.min(1,Math.abs(Math.cos(heading-angle))));if(diff>Math.PI/4)continue;const weight=distance+diff*6;if(weight<score){score=weight;best=id}}
 if(best<0)failed++;else evidence.add(best)}}
 const ids=new Set();let bridged=0,held=0;
@@ -53,7 +86,7 @@ for(let k=1;k<touched.length;k++){const left=roads[touched[k-1]],right=roads[tou
 // Never discard geometrically supported journey evidence just for being short.
 for(const id of along)ids.add(id);
 }
-return {ids,failed,tries,bridged,held}
+return {ids,failed,tries,bridged,held,endpointHooks:prepared.endpointHooks,redundantReturns:prepared.redundantReturns}
 }
 async function advance(n){if(!data||busy)return;n=Math.min(data.journeys.length,Math.max(0,n));clearError();if(mode==='original'||n<=step){step=n;update();return}busy=true;controls();try{for(let i=step;i<n;i++){tell('Matching journey '+(i+1)+' of '+data.journeys.length+'…');await ensure(data.journeys[i]);let m=cache.get(i);if(!m){m=match(data.journeys[i]);cache.set(i,m);for(const id of m.ids){const r=roads[id];if(r.first===Infinity)r.first=i;else if(r.first!==i&&r.second===Infinity)r.second=i}}step=i+1;update();if(i%3===2)await new Promise(r=>setTimeout(r,0))}}catch(e){problem(e.message||String(e));stop()}finally{busy=false;update();if(!error.textContent||error.style.display==='none')tell('Ready · '+step+' / '+data.journeys.length+' journeys matched')}}
 function stroke(lines,color,width){if(!lines.length)return;ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();for(const [a,b] of lines){const p=map.latLngToContainerPoint([a[1],a[0]]),q=map.latLngToContainerPoint([b[1],b[0]]);ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y)}ctx.stroke()}
@@ -66,7 +99,7 @@ stroke(old,'#151a21',3.5);if(mode==='original'&&step){for(const path of data.jou
 }
 function schedule(){if(drawPending)return;drawPending=true;requestAnimationFrame(()=>{drawPending=false;draw()})}
 function controls(){for(const id of ['back','next','seek','play','center','original'])$(id).disabled=!data||busy;$('back').disabled||=step===0;$('next').disabled||=!!data&&step===data.journeys.length}
-function update(){if(!data)return;seek.max=data.journeys.length;seek.value=step;$('count').textContent=step+' / '+data.journeys.length;if(step){const j=data.journeys[step-1];$('title').textContent=j[1];$('meta').textContent=j[0]+' · '+j[2]+' · journey '+step;const m=cache.get(step-1);$('detail').textContent=mode==='center'&&m?m.ids.size+' road/path intervals · '+m.bridged+' same-way gaps joined · '+m.failed+' samples unmatched':'Original journey evidence preserved'}else{$('title').textContent='Starting point — no journeys yet';$('meta').textContent='Press Next to add your first journey'}controls();schedule()}
+function update(){if(!data)return;seek.max=data.journeys.length;seek.value=step;$('count').textContent=step+' / '+data.journeys.length;if(step){const j=data.journeys[step-1];$('title').textContent=j[1];$('meta').textContent=j[0]+' · '+j[2]+' · journey '+step;const m=cache.get(step-1);$('detail').textContent=mode==='center'&&m?m.ids.size+' road/path intervals · '+m.bridged+' same-way gaps joined · '+m.endpointHooks+' endpoint hooks · '+m.redundantReturns+' redundant returns · '+m.failed+' unmatched samples':'Original journey evidence preserved'}else{$('title').textContent='Starting point — no journeys yet';$('meta').textContent='Press Next to add your first journey'}controls();schedule()}
 function focus(){if(!step||!data)return;const b=data.journeys[step-1][4];map.fitBounds([[b[1],b[0]],[b[3],b[2]]],{padding:[25,25],maxZoom:17,animate:false})}
 function stop(){if(timer){clearInterval(timer);timer=null;$('play').textContent='▶ Play'}}
 function openStore(){return new Promise((yes,no)=>{const request=indexedDB.open('roadprints-map-lab',1);request.onupgradeneeded=()=>request.result.createObjectStore('files');request.onsuccess=()=>yes(request.result);request.onerror=()=>no(request.error)})}
