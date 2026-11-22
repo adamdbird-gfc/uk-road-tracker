@@ -25,4 +25,10 @@ assert.equal(partial.promoted.size,0,'too-short footway evidence cannot promote 
 const distant=promote(new Set([16,17,18,19]),r);
 assert.equal(distant.promoted.size,0,'separate frontage remains separate');
 assert.equal(promote(new Set([24,25]),r).promoted.size,0,'perpendicular entrance and steps not converted to road');
-console.log('PASS: supported sidewalk becomes road centreline, separate entrances and frontage remain');
+// A/B testing must recompute *all* first/second attribution, rather than
+// visually hiding lines while retaining credit awarded by the ON model.
+assert.ok(html.includes("cache.clear();for(const road of roads){road.first=Infinity;road.second=Infinity}"),'A/B toggle resets cumulative credit');
+assert.ok(html.includes("promoteRoads?promoteParallelRoadCentrelines(ids,roads)"),'promotion can be disabled at matching stage');
+assert.ok(html.includes("if(target)await advance(target)"),'A/B toggle deterministically replays selected journey');
+assert.ok(html.includes('id="promotion"'),'owner has visible A/B control');
+console.log('PASS: synthetic road/pavement matching and deterministic A/B replay reset');
