@@ -405,6 +405,50 @@ function matchedFootwayRoadEvidence(direct,network,proposed){
  }
  return {footwayBacked,rawOnly,support,matchedFootwayIntervals:footways.length,previewOnly:true};
 }
+// Read-only corridor correspondence from consecutive selected OSM pedestrian
+// reference intervals. Selected sets do not encode travel time/order: contiguous
+// way indices provide structural continuity, NOT proof of traversal sequence.
+function resolvePedestrianRoadCorridors(matched,network,footwayEvidence){
+ const byPair=new Map(),roadClaims=new Map(),accepted=new Set(),ambiguous=new Set();
+ for(const [roadId,proof] of footwayEvidence.support){
+  const foot=network[proof.footwayId],road=network[roadId];
+  if(!foot||!road||!matched.has(proof.footwayId))continue;
+  const key=String(foot.group)+'|'+String(road.group);
+  if(!byPair.has(key))byPair.set(key,{footway:foot.group,road:road.group,roadIds:new Set(),footIds:new Set(),offsets:[],overlap:0});
+  const pair=byPair.get(key);
+  pair.roadIds.add(roadId);pair.footIds.add(proof.footwayId);pair.offsets.push(proof.lateral);pair.overlap+=proof.overlap;
+ }
+ const runs=[];
+ for(const pair of byPair.values()){
+  const ordered=[...pair.roadIds].sort((a,b)=>network[a].index-network[b].index);
+  let section=[];
+  const finish=()=>{
+   if(!section.length)return;
+   const footIds=new Set(section.map(id=>footwayEvidence.support.get(id).footwayId));
+   const footIndices=[...footIds].map(id=>network[id].index).sort((a,b)=>a-b);
+   const continuousFoot=footIndices.every((n,i)=>!i||n===footIndices[i-1]+1);
+   const offsetValues=section.map(id=>footwayEvidence.support.get(id).lateral);
+   const spread=Math.max(...offsetValues)-Math.min(...offsetValues);
+   const length=section.reduce((s,id)=>s+metres(network[id].p,network[id].q),0);
+   const eligible=section.length>=3&&footIds.size>=3&&continuousFoot&&length>=16&&spread<=4;
+   const run={footway:pair.footway,road:pair.road,roadIds:[...section],footIds:[...footIds],length:Number(length.toFixed(1)),offsetSpread:Number(spread.toFixed(2)),eligible,reason:eligible?'continuous-reference-support':!continuousFoot?'discontinuous-footway-reference':spread>4?'unstable-lateral-offset':'insufficient-continuous-support'};
+   runs.push(run);
+   if(eligible)for(const id of section){if(!roadClaims.has(id))roadClaims.set(id,[]);roadClaims.get(id).push(run)}
+  };
+  for(const id of ordered){if(section.length&&network[id].index!==network[section[section.length-1]].index+1){finish();section=[]}section.push(id)}
+  finish();
+ }
+ // No winner is inferred if multiple roads are supported by the same footway
+ // run; this avoids the nearest parallel carriageway and service-road trap.
+ const byFoot=new Map();
+ for(const run of runs.filter(x=>x.eligible)){const key=String(run.footway);if(!byFoot.has(key))byFoot.set(key,[]);byFoot.get(key).push(run)}
+ for(const alternatives of byFoot.values()){
+  if(alternatives.length!==1){for(const run of alternatives)for(const id of run.roadIds)ambiguous.add(id);continue}
+  for(const id of alternatives[0].roadIds)accepted.add(id);
+ }
+ for(const id of ambiguous)accepted.delete(id);
+ return {accepted,ambiguous,runs,held:runs.filter(x=>!x.eligible),previewOnly:true,referenceOrder:'osm-way-index-not-timed-traversal'};
+}
 // Shadow experiment: use the archived pedestrian-matched movement as route
 // evidence, then separately infer corresponding physical road centrelines.
 // It NEVER modifies canonical credit, existing matching, or archived journeys.
@@ -838,13 +882,14 @@ const gapRepair=j[2]==='walking'?repairEvidenceBackedRoadGaps(baseCanonical,prep
 const canonical=gapRepair.canonical;
 const pedestrianRoadPreview=j[2]==='walking'?comparePedestrianRoadCentrelines(prepared.lines,roads,canonical.ids):{additions:new Set(),alreadyCredited:new Set(),weak:new Set(),heldAccess:new Set(),discardedCompetitors:new Set(),candidates:new Map(),runs:[],sourceLegs:0,comparedIntervals:0,previewOnly:true};
 const footwayRoadEvidence=j[2]==='walking'?matchedFootwayRoadEvidence(evidence,roads,pedestrianRoadPreview.additions):{footwayBacked:new Set(),rawOnly:new Set(),support:new Map(),matchedFootwayIntervals:0,previewOnly:true};
+const corridorResolution=j[2]==='walking'?resolvePedestrianRoadCorridors(evidence,roads,footwayRoadEvidence):{accepted:new Set(),ambiguous:new Set(),runs:[],held:[],previewOnly:true};
 const coverageTrace=tracePhysicalCoverageStages(evidence,ids,baseCanonical,canonical,gapRepair,roads);
 const roadPromotions=canonical.roadPromotions,equivalentFootways=canonical.equivalentFootways;
 const canonicalContinuity=auditCanonicalContinuity(canonical,roads);
 const connectivityImprovement=Math.max(0,preRepairContinuity.components-canonicalContinuity.components);
 const canonicalLinks=j[2]==='walking'?canonicalWalkingLinks(prepared.lines,canonical,roads):{links:[],parallelHeld:0};
 const walkingLinks=canonicalLinks.links;
-return {ids:canonical.ids,candidateRefs,pedestrianRoadPreview,footwayRoadEvidence,canonical,coverageTrace,canonicalContinuity,preRepairContinuity,connectivityImprovement,gapRepair,parallelLinksHeld:canonicalLinks.parallelHeld,hits,direct:evidence,unsupportedJunction,unsupportedFootEnds,equivalentFootways,roadPromotions,walkingLinks,failed,tries,bridged,held,turnCreditsHeld,continuitySwitchesHeld,disconnectedTransitions,preselectedRoadCorridors,endpointHooks:prepared.endpointHooks,redundantReturns:prepared.redundantReturns,microReversals:prepared.microReversals}
+return {ids:canonical.ids,candidateRefs,pedestrianRoadPreview,footwayRoadEvidence,corridorResolution,canonical,coverageTrace,canonicalContinuity,preRepairContinuity,connectivityImprovement,gapRepair,parallelLinksHeld:canonicalLinks.parallelHeld,hits,direct:evidence,unsupportedJunction,unsupportedFootEnds,equivalentFootways,roadPromotions,walkingLinks,failed,tries,bridged,held,turnCreditsHeld,continuitySwitchesHeld,disconnectedTransitions,preselectedRoadCorridors,endpointHooks:prepared.endpointHooks,redundantReturns:prepared.redundantReturns,microReversals:prepared.microReversals}
 }
 function resetAttribution(){cache.clear();for(const r of roads){r.first=Infinity;r.second=Infinity}selectedRoad=-1;selectedReport=null;$('inspectPanel').style.display='none'}
 async function jumpTo(n){
