@@ -32,4 +32,10 @@ const alongside=infer([[p(0,0),p(30,0),p(40,0),p(40,10)]],ids,roads);
 assert.ok(alongside.some(([a,b])=>metres(a,p(40,0))<.5&&metres(b,p(40,10))<.5),'retain actual perpendicular entrance');
 assert.ok(alongside.every(([a,b])=>Math.abs(a[0]-b[0])*M<1),'never repaint previously covered along-road segments as a new visual link');
 assert.equal(ids.size,before,'display correction never adds new road credit');
-console.log('PASS: connection retained without redrawing previously credited road corridors');
+// A source-backed visual link may represent a real gap, but must never be
+// painted as new red road credit, or as repeated green physical road credit.
+assert.ok(page.includes("function strokeProvisionalLinks(lines)"),'separate provisional drawing primitive exists');
+assert.ok(page.includes("ctx.setLineDash([5,4])"),'provisional link is visually distinguished');
+assert.ok(page.includes("strokeProvisionalLinks(m.walkingLinks)"),'history uses the dedicated link renderer');
+assert.ok(!page.includes("stroke(m.walkingLinks,k===step-1?'#ff4b55'"),'current journey no longer paints provisional link as new road');
+console.log('PASS: connection retained; provisional links are visually separate from credited roads');
