@@ -37,4 +37,13 @@ const independent=repair({ids:new Set([0,2,4]),sources:new Map(base.sources)},[[
 assert(independent.canonical.ids.has(4),'genuine entrance remains independently credited');
 assert(html.includes('auditCanonicalContinuity(canonical,roads)'),'audits repaired canonical output');
 assert(html.includes('source-verified short road gaps recovered'),'diagnostics distinguish repaired intervals');
+// Wide archive-style input: hundreds of distant legs must not be compared
+// to a nearby missing junction on every candidate inspection.
+const far=Array.from({length:360},(_,i)=>[p(1000+i*110,150),p(1080+i*110,150)]);
+const indexed=repair(base,[[p(0),p(32)],...far],refs);
+assert(indexed.added.has(1),'local source evidence remains discoverable');
+assert(indexed.diagnostics.localLegChecks<15,'spatial index bounds comparisons to relevant source legs');
+assert.equal(indexed.diagnostics.sourceLegs,361);
+assert.equal(indexed.diagnostics.candidates,1,'only doubly anchored road interval becomes a candidate');
+assert(indexed.diagnostics.localLegChecks<indexed.diagnostics.sourceLegs,'no all-leg scan per candidate');
 console.log('PASS: only source-traversed, doubly anchored short road gaps added; footpaths, nibbles and carriageways preserved');
