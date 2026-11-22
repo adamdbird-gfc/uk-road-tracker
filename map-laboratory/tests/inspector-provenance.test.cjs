@@ -1,0 +1,21 @@
+// No personal locations here: confirm diagnostic bookkeeping leaves coverage unchanged.
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const page=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
+const start=page.indexOf('function prepareEvidence(j){'),end=page.indexOf('async function advance(n)',start);
+assert.ok(start>0&&end>start,'matcher functions present');
+const M=111320,D=Math.PI/180;
+const metres=(a,b)=>Math.hypot((a[0]-b[0])*M*Math.cos((a[1]+b[1])*.5*D),(a[1]-b[1])*M);
+const xyz=(a,o)=>[(a[0]-o[0])*M*Math.cos(o[1]*D),(a[1]-o[1])*M];
+const proj=(a,b,p)=>{const v=[b[0]-a[0],b[1]-a[1]],d=v[0]*v[0]+v[1]*v[1];if(d<.001)return 1e9;const t=Math.max(0,Math.min(1,((p[0]-a[0])*v[0]+(p[1]-a[1])*v[1])/d));return Math.hypot(p[0]-a[0]-t*v[0],p[1]-a[1]-t*v[1])};
+const roads=Array.from({length:12},(_,i)=>({p:[i*8/M,0],q:[(i+1)*8/M,0],group:'synthetic-road',index:i,first:Infinity,second:Infinity}));
+const {match}=new Function('roads','metres','xyz','proj','D',page.slice(start,end)+';return {match}')(roads,metres,xyz,proj,D);
+const result=match([null,null,null,[[[0,0],[96/M,0]]]]);
+assert.equal(result.ids.size,12,'all continuous intervals credited');
+assert.equal(result.direct.size,12,'all directly matched');
+assert.equal(result.hits.size,12,'a source match recorded per credited interval');
+assert.equal(result.hits.get(0)[0].sourceSegment,1);
+assert.ok(result.hits.get(0).length<=6,'bounded evidence per interval');
+assert.equal(result.bridged,0);
+assert.ok(page.includes('map.on(\'click\',examineRoad)'),'opt-in local inspector wired to map');
+assert.ok(!page.includes('fetch(\'/api/report'),'no evidence telemetry');
+console.log('PASS: diagnostics retain full continuous coverage and bounded local provenance');
