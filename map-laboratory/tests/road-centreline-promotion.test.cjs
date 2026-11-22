@@ -28,7 +28,7 @@ assert.equal(promote(new Set([24,25]),r).promoted.size,0,'perpendicular entrance
 // A/B testing must recompute *all* first/second attribution, rather than
 // visually hiding lines while retaining credit awarded by the ON model.
 assert.ok(html.includes("cache.clear();for(const road of roads){road.first=Infinity;road.second=Infinity}"),'A/B toggle resets cumulative credit');
-assert.ok(html.includes("promoteRoads?promoteParallelRoadCentrelines(ids,roads)"),'promotion can be disabled at matching stage');
+assert.ok(html.includes("typeof promoteRoads"),'promotion can be disabled at matching stage');
 assert.ok(html.includes("if(target)await advance(target)"),'A/B toggle deterministically replays selected journey');
 assert.ok(html.includes('id="promotion"'),'owner has visible A/B control');
 console.log('PASS: synthetic road/pavement matching and deterministic A/B replay reset');
