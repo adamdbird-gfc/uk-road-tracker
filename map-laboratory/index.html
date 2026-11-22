@@ -13,7 +13,7 @@
 <input id="seek" type="range" min="0" max="0" value="0">
 <div id="buttons"><button id="back">◀ Back</button><button class="primary" id="next">Next ▶</button><button id="play">▶ Play</button><button id="focus">⌖</button></div>
 <div id="legend"><span><i class="chip" style="background:#ff4b55"></i>Current new</span><span><i class="chip" style="background:#151a21"></i>Previously covered</span><span><i class="chip" style="background:#16a34a"></i>Road repeated</span></div>
-<div id="detail">Experimental walked-network matching. Short travelled paths are preserved; gaps are joined only on one mapped way.</div>
+<div id="detail">Experimental walked-network matching. Short paths stay eligible; small gaps may bridge adjacent geometry vertices of the same OSM way.</div>
 </footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -27,7 +27,7 @@ function xyz(a,o){return [(a[0]-o[0])*M*Math.cos(o[1]*D),(a[1]-o[1])*M]}
 function proj(a,b,p){const v=[b[0]-a[0],b[1]-a[1]],d=v[0]*v[0]+v[1]*v[1];if(d<.001)return 1e9;const t=Math.max(0,Math.min(1,((p[0]-a[0])*v[0]+(p[1]-a[1])*v[1])/d));return Math.hypot(p[0]-a[0]-t*v[0],p[1]-a[1]-t*v[1])}
 function bbox(j){const b=j[4],p=.002,c=Math.max(.3,Math.cos((b[1]+b[3])*.5*D));return [b[1]-p,b[0]-p/c,b[3]+p,b[2]+p/c]}
 function contains(a,b){return a[0]<=b[0]&&a[1]<=b[1]&&a[2]>=b[2]&&a[3]>=b[3]}
-function addWays(ways){for(const w of ways){if(!w.geometry)continue;for(let i=0;i<w.geometry.length-1;i++){const a=[w.geometry[i].lon,w.geometry[i].lat],b=[w.geometry[i+1].lon,w.geometry[i+1].lat],len=metres(a,b);if(len<1||len>3000)continue;const count=Math.ceil(len/8);for(let k=0;k<count;k++){const id=w.id+':'+i+':'+k+'/'+count;if(roadIds.has(id))continue;const t=k/count,u=(k+1)/count,p=[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t],q=[a[0]+(b[0]-a[0])*u,a[1]+(b[1]-a[1])*u];roadIds.set(id,roads.length);roads.push({p,q,group:w.id+':'+i,index:k,kind:(w.tags||{}).highway||'road',first:Infinity,second:Infinity})}}}}
+function addWays(ways){for(const w of ways){if(!w.geometry)continue;let offset=0;for(let i=0;i<w.geometry.length-1;i++){const a=[w.geometry[i].lon,w.geometry[i].lat],b=[w.geometry[i+1].lon,w.geometry[i+1].lat],len=metres(a,b);if(len<1||len>3000)continue;const count=Math.ceil(len/8);for(let k=0;k<count;k++){const id=w.id+':'+i+':'+k+'/'+count;if(roadIds.has(id))continue;const t=k/count,u=(k+1)/count,p=[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t],q=[a[0]+(b[0]-a[0])*u,a[1]+(b[1]-a[1])*u];roadIds.set(id,roads.length);roads.push({p,q,group:String(w.id),index:offset+k,kind:(w.tags||{}).highway||'road',first:Infinity,second:Infinity})}offset+=count}}}
 async function fetchWays(b){
 const [s,w,n,e]=b;if(n-s>.12||e-w>.12)throw Error('Journey spans too large an area for this pilot. Use Original lines.');
 const roadTypes='^(motorway|motorway_link|trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link|unclassified|residential|living_street|service|pedestrian|road|footway|path|steps|cycleway|bridleway|track)$';
