@@ -835,9 +835,9 @@ function connectedRouteShadow(probes,network){
   // Only actual shared OSM endpoints, not midline proximity or crossings.
   return [p.p,p.q].some(x=>[q.p,q.q].some(y=>metres(x,y)<=1.5));
  };
- const chosen=Array(probes.length).fill(null),runs=[];let breaks=0,unresolved=0;
+ const runs=[];let breaks=0,unresolved=0;
  let active=null;
- const flush=()=>{const path=active?.path||[];if(path.length>=3){const distinct=[...new Set(path.map(v=>v.id))];runs.push({ids:distinct,start:path[0].at,end:path[path.length-1].at,sourceSegments:[...new Set(path.map(v=>v.sourceSegment))],samples:path.length,previewOnly:true})}active=null};
+ const flush=()=>{const path=active?.path||[];if(path.length>=3&&new Set(path.map(v=>v.id)).size>=3){const distinct=[...new Set(path.map(v=>v.id))];runs.push({ids:distinct,start:path[0].at,end:path[path.length-1].at,sourceSegments:[...new Set(path.map(v=>v.sourceSegment))],samples:path.length,previewOnly:true})}active=null};
  for(let t=0;t<probes.length;t++){
   const items=(probes[t].candidates||[]).filter(c=>admissible(c.id)).slice(0,8);
   if(!items.length){if(active)breaks++;flush();unresolved++;continue}
