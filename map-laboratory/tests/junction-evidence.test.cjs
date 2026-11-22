@@ -30,4 +30,15 @@ assert.equal(deadEnd.lines[0].length,5);
 const redundant=run([p(0),p(30),p(65),p(70),p(30),p(45),p(30),p(0)]);
 assert.equal(redundant.redundantReturns,1);
 assert.equal(redundant.lines[0].length,7);
-console.log('PASS: endpoint jitter, short connector, genuine dead end, redundant return');
+// A small loop near an already-travelled centreline must not leave a
+// residual short branch after its redundant tip has been removed.
+const closedLoop=run([p(0),p(30),p(100),p(60),p(65,4),p(90,4),p(65,4),p(60),p(30)]);
+assert.equal(closedLoop.redundantReturns,1);
+assert.equal(closedLoop.lines[0].length,5);
+assert.deepEqual(closedLoop.lines[0],[p(0),p(30),p(100),p(60),p(30)]);
+// A genuine independent out-and-back, even with the same short approach,
+// stays intact without evidence of a previously used parallel corridor.
+const genuineLoop=run([p(0),p(20),p(60),p(65,4),p(90,4),p(65,4),p(60),p(20)]);
+assert.equal(genuineLoop.redundantReturns,0);
+assert.equal(genuineLoop.lines[0].length,8);
+console.log('PASS: endpoint jitter, short connector, genuine dead end, redundant return, complete redundant loop');
