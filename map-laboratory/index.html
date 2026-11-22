@@ -106,11 +106,7 @@ const evidence=new Set(),hits=new Map();let failed=0,tries=0;const prepared=prep
 for(const line of prepared.lines)for(let i=0;i+1<line.length;i++){const a=line[i],b=line[i+1],length=metres(a,b);if(length<2||length>700)continue;const n=Math.ceil(length/6),origin=[(a[0]+b[0])/2,(a[1]+b[1])/2],aa=xyz(a,origin),bb=xyz(b,origin),angle=Math.atan2(bb[1]-aa[1],bb[0]-aa[0]);
 for(let h=0;h<=n;h++){tries++;const t=h/n,p=[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t],gx=Math.floor(p[0]/S),gy=Math.floor(p[1]/S);let best=-1,score=1e9;for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++)for(const id of grid.get((gx+dx)+','+(gy+dy))||[]){const r=roads[id],ap=xyz(r.p,origin),bp=xyz(r.q,origin),pp=xyz(p,origin),distance=proj(ap,bp,pp);if(distance>15)continue;const heading=Math.atan2(bp[1]-ap[1],bp[0]-ap[0]),diff=Math.acos(Math.min(1,Math.abs(Math.cos(heading-angle))));if(diff>Math.PI/4)continue;const weight=distance+diff*6;if(weight<score){score=weight;best=id}}
 if(best<0)failed++;else {evidence.add(best);let h=hits.get(best);if(!h){h=[];hits.set(best,h)}if(h.length<6)h.push({sourceSegment:i+1,sourcePoint:p.map(v=>Number(v.toFixed(7))),selectionScore:Number(score.toFixed(2))})}}}
-// An isolated reference-way end may be credited when one journey sample
-// is close to several different ways at a junction. Hold the stray road
-// interval only if a distinct, well-supported neighbouring road already
-// explains the same portion of the source trace. Genuine short links and
-// independently supported dead ends remain eligible.
+function excludedJunctionSingletons(roads,groups,evidence,hits){
 const unsupportedJunction=new Set();
 const walkedLink=new Set(['footway','path','steps','cycleway','bridleway','pedestrian']);
 for(const [group,list] of groups){
@@ -136,6 +132,9 @@ for(const [group,list] of groups){
   });
   if(explained)unsupportedJunction.add(id);
 }
+return unsupportedJunction;
+}
+const unsupportedJunction=excludedJunctionSingletons(roads,groups,evidence,hits);
 const ids=new Set();let bridged=0,held=0;
 for(const list of groups.values()){
 const touched=list.filter(id=>evidence.has(id)&&!unsupportedJunction.has(id));if(!touched.length)continue;
