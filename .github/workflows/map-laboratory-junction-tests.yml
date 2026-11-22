@@ -44,3 +44,6 @@ jobs:
         run: node map-laboratory/tests/road-footway-equivalence.test.cjs
       - name: Check evidence-backed walking entrance links
         run: node map-laboratory/tests/entrance-link-evidence.test.cjs
+
+      - name: Check unsupported footway endcap evidence
+        run: node map-laboratory/tests/footway-endcap.test.cjs
