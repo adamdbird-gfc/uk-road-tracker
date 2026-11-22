@@ -430,68 +430,10 @@ function comparePedestrianRoadCentrelines(lines,network,credited){
   }
   flush();
  }
- // Competing corridors are resolved per observed pedestrian source leg.
- // Road function is a tie-break, not a licence to credit nearby high-class roads:
- // both candidates must independently meet distance, bearing and overlap tests.
- const rank={trunk:5,primary:5,secondary:4,tertiary:4,unclassified:3,residential:3,living_street:3,road:2,service:1};
- const runByWay=new Map();
- for(const run of runs)runByWay.set(run.way,run);
- const legOptions=new Map();
- for(const id of supported){
-  const c=candidates.get(id);
-  if(!legOptions.has(c.leg))legOptions.set(c.leg,new Map());
-  const opts=legOptions.get(c.leg),prior=opts.get(c.way)||{way:c.way,length:0,weightedOffset:0,kind:network[id].kind};
-  prior.length+=c.overlap;prior.weightedOffset+=c.overlap*c.offset;
-  opts.set(c.way,prior);
- }
- // A service/access road should not win merely by being nearer to a
- // pavement on a continuous public-road corridor. Without demonstrable
- // non-competing access-road evidence, report rather than propose it.
- const heldAccess=new Set(),discardedCompetitors=new Set(),bestByLeg=new Map();
- for(const [leg,options] of legOptions){
-  const ranked=[...options.values()].map(o=>{
-   const corridor=runByWay.get(o.way);
-   const offset=o.weightedOffset/(o.length||1);
-   const networkRank=rank[o.kind]||1;
-   const lengthScore=Math.min(65,corridor?.length||o.length)/8;
-   return {...o,offset,networkRank,score:offset+Math.max(0,4-networkRank)*1.2-lengthScore};
-  }).sort((a,b)=>a.score-b.score);
-  // Only compare corridors that independently follow this source leg.
-  // Access roads require a distinct path commitment, not mere parallelism.
-  const eligible=ranked.filter(o=>o.kind!=='service');
-  const chosen=eligible[0]||null;
-  if(chosen)bestByLeg.set(leg,chosen.way);
-  else{
-   // A standalone service/access road is still a legitimate possible route,
-   // but parallelism alone cannot establish an *entered* access road.
-   // Keep it in the diagnostic candidates until a pedestrian-route entrance
-   // transition can be corroborated; never credit it in this shadow pilot.
-  }
- }
- const corridorSupport=new Map();
- for(const id of supported){
-  const c=candidates.get(id);
-  const winning=bestByLeg.get(c.leg);
-  if(winning===c.way)corridorSupport.set(c.way,(corridorSupport.get(c.way)||0)+c.overlap);
- }
- const selected=new Set();
- for(const id of supported){
-  const c=candidates.get(id),road=network[id];
-  const winning=bestByLeg.get(c.leg);
-  if(winning!==c.way){
-   if(road.kind==='service')heldAccess.add(id);
-   else discardedCompetitors.add(id);
-   continue;
-  }
-  // Require substantial support across a coherent corridor; this avoids
-  // crediting a one-point junction or isolated road stub.
-  if((corridorSupport.get(c.way)||0)<16){weak.add(id);continue}
-  selected.add(id);
- }
- const additions=new Set([...selected].filter(id=>!credited.has(id)));
- const alreadyCredited=new Set([...selected].filter(id=>credited.has(id)));
- return {additions,alreadyCredited,weak,candidates,runs,heldAccess,discardedCompetitors,
-  sourceLegs:legs.length,comparedIntervals:candidates.size,previewOnly:true};
+ const additions=new Set([...supported].filter(id=>!credited.has(id)));
+ const alreadyCredited=new Set([...supported].filter(id=>credited.has(id)));
+ return {additions,alreadyCredited,weak,candidates,runs,sourceLegs:legs.length,
+  comparedIntervals:candidates.size,heldAccess:new Set(),discardedCompetitors:new Set(),previewOnly:true};
 }
 // Display-only micro-links backed by an accepted on-foot source segment.
 // A mapped road and a distinct, strongly evidenced frontage footway must
