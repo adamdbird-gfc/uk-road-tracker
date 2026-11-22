@@ -1,0 +1,34 @@
+// Canonical visual-link boundary test: no private journey locations.
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
+const start=html.indexOf('function canonicalWalkingLinks('),end=html.indexOf('// A nearby footway interval',start);
+assert(start>0&&end>start,'canonical link gate present');
+const M=111320,D=Math.PI/180,p=(x,y=0)=>[x/M,y/M];
+const xyz=(a,o)=>[(a[0]-o[0])*M*Math.cos(o[1]*D),(a[1]-o[1])*M];
+const proj=(a,b,p)=>{const v=[b[0]-a[0],b[1]-a[1]],d=v[0]*v[0]+v[1]*v[1];if(d<.001)return 1e9;const t=Math.max(0,Math.min(1,((p[0]-a[0])*v[0]+(p[1]-a[1])*v[1])/d));return Math.hypot(p[0]-a[0]-t*v[0],p[1]-a[1]-t*v[1])};
+const refs=[];
+for(let i=0;i<8;i++)refs.push({p:p(i*8),q:p((i+1)*8),kind:'residential',group:'road',index:i,first:Infinity});
+for(let i=0;i<8;i++)refs.push({p:p(i*8,18),q:p((i+1)*8,18),kind:'footway',group:'frontage',index:i,first:Infinity});
+const all=new Set([...Array.from({length:16},(_,i)=>i)]);
+const canonical={ids:all,independentPaths:new Set(Array.from({length:8},(_,i)=>i+8))};
+let output=[[p(12,4),p(20,4)],[p(24,0),p(24,18)]];
+const inspect=new Function('xyz','proj','evidenceBackedWalkingLinks',
+ html.slice(start,end)+';return canonicalWalkingLinks')(xyz,proj,()=>output);
+const before=new Set(canonical.ids);
+const result=inspect([],canonical,refs);
+assert.equal(result.parallelHeld,1,'parallel road-adjacent overlay must not survive');
+assert.equal(result.links.length,1,'distinct pedestrian entrance remains');
+assert.deepEqual(result.links[0],output[1],'perpendicular entrance is preserved without snapping');
+assert.deepEqual([...canonical.ids],[...before],'canonical coverage not altered by display links');
+const none=inspect([], {...canonical,independentPaths:new Set()},refs);
+assert.equal(none.links.length,0,'no independently credited path means no pedestrian link');
+refs.forEach((r,i)=>{if(i<8)r.first=0});
+const repeat=inspect([],canonical,refs);
+assert.equal(repeat.parallelHeld,1,'previously credited physical road also prevents duplicate link');
+output=[[p(12,17),p(20,17)]];
+const distinct=inspect([],canonical,refs);
+assert.equal(distinct.parallelHeld,0,'a frontage path sufficiently far from the road survives');
+assert.equal(distinct.links.length,1);
+assert(html.includes('canonicalWalkingLinks(prepared.lines,canonical,roads)'),'runtime uses canonical authority');
+assert(html.includes('parallelLinksHeld:canonicalLinks.parallelHeld'),'diagnostics expose suppressed overlay count');
+console.log('PASS: no parallel road overlay, genuine entrance and frontage retained, unchanged completion');
