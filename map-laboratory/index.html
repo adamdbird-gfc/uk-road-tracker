@@ -214,11 +214,16 @@ for(const line of lines){
    // Link overlays are only for unrepresented *gaps*. Never paint a
    // parallel length of an already-credited road/path red simply because
    // this journey supplied a fresh candidate visual connection.
-   const represented=[...road,...paths];
    const coveredPiece=(a,b)=>{
     const midpoint=[(a[0]+b[0])/2,(a[1]+b[1])/2],len=metres(a,b);
     if(len<.5)return true;
-    return represented.some(r=>{
+    const cx=Math.floor(midpoint[0]/cell),cy=Math.floor(midpoint[1]/cell);
+    const closeWays=[];
+    for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++){
+      closeWays.push(...(roadGrid.get((cx+dx)+','+(cy+dy))||[]));
+      closeWays.push(...(pathGrid.get((cx+dx)+','+(cy+dy))||[]));
+    }
+    return closeWays.some(r=>{
       const v=xyz(b,a),w=xyz(r.q,r.p),den=Math.hypot(...v)*Math.hypot(...w);
       if(den<.1)return false;
       const alignment=Math.abs((v[0]*w[0]+v[1]*w[1])/den);
