@@ -39,6 +39,11 @@ public class UtilitiesActivity extends Activity {
         add(root, "Settings", "Distance units and display preferences", SettingsActivity.class);
         add(root, "What's new", "See release notes and contact Roadprints", WhatsNewActivity.class);
         add(root, "Privacy and diagnostics", "Choose optional analytics and diagnostic sharing", MeasurementSettingsActivity.class);
+        LinearLayout mapGeometry = menuItem("Export Map geometry",
+                "Inspect the cumulative Map and save visible travelled coordinates privately");
+        mapGeometry.setOnClickListener(v -> startActivity(new Intent(this, MapActivity.class)
+                .putExtra(MapActivity.EXTRA_GEOMETRY_EXPORT_MODE, true)));
+        root.addView(mapGeometry, params());
         LinearLayout debug = menuItem("Debug", "View or copy diagnostic reports");
         debug.setOnClickListener(v -> startActivity(new Intent(this, DebugActivity.class)));
         root.addView(debug, params());

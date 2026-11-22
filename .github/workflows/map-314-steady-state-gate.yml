@@ -1,0 +1,110 @@
+name: Map 314 steady-state upgrade performance gate
+on:
+  push:
+    branches: [feat/cumulative-map-roundabout-fidelity]
+    paths:
+      - .github/workflows/map-314-steady-state-gate.yml
+      - scripts/check_map_314_steady_state.sh
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: map-314-performance-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  upgrade-versus-steady:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: adamdbird-gfc/uk-road-tracker
+      CERT_SHA256: 5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031
+      JAVA_TOOL_OPTIONS: -XX:TieredStopAtLevel=1 -XX:ReservedCodeCacheSize=256m
+    steps:
+      - uses: actions/checkout@v4
+      - name: Retrieve exact released Build 313 as baseline and reference provenance
+        run: |
+          set -euo pipefail
+          gh release download roadprints-0.25.267-313 --pattern Roadprints-0.25.267-313.apk --output "$RUNNER_TEMP/roadprints313.apk"
+          signer=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -n 1)
+          "$signer" verify --print-certs "$RUNNER_TEMP/roadprints313.apk" | grep -F "certificate SHA-256 digest: $CERT_SHA256"
+          assets=android-prototype/app/src/main/assets
+          for asset in historic-counties/boundaries.bin railway/national.json railway/national.sqlite.gzip uk-road-reference-v1.bin; do
+            unzip -p "$RUNNER_TEMP/roadprints313.apk" "assets/$asset" > "$assets/$asset"
+          done
+          cp "$assets/uk-road-reference-v1.bin" "$RUNNER_TEMP/uk-road-reference-v3.bin"
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+      - name: Prepare identical owner-volume synthetic archive fixture
+        run: |
+          python3 scripts/generate_map_recovery_fixture.py --reference "$RUNNER_TEMP/uk-road-reference-v3.bin" --output "$RUNNER_TEMP/scale-fixtures" --assets canonical-a-roads-v5
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+      - name: Build candidate 314 with same app identity and owner signing certificate
+        env:
+          ROADPRINTS_DEBUG_KEYSTORE_B64: ${{ secrets.ROADPRINTS_DEBUG_KEYSTORE_B64 }}
+          ROADPRINTS_DEBUG_STORE_PASSWORD: ${{ secrets.ROADPRINTS_DEBUG_STORE_PASSWORD }}
+          ROADPRINTS_DEBUG_KEY_ALIAS: ${{ secrets.ROADPRINTS_DEBUG_KEY_ALIAS }}
+          ROADPRINTS_DEBUG_KEY_PASSWORD: ${{ secrets.ROADPRINTS_DEBUG_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$ROADPRINTS_DEBUG_KEYSTORE_B64"
+          test -n "$ROADPRINTS_DEBUG_STORE_PASSWORD"
+          test -n "$ROADPRINTS_DEBUG_KEY_ALIAS"
+          test -n "$ROADPRINTS_DEBUG_KEY_PASSWORD"
+          export ROADPRINTS_DEBUG_KEYSTORE="$RUNNER_TEMP/map314-owner.keystore"
+          trap 'rm -f "$ROADPRINTS_DEBUG_KEYSTORE"' EXIT
+          umask 077
+          printf '%s' "$ROADPRINTS_DEBUG_KEYSTORE_B64" | base64 --decode > "$ROADPRINTS_DEBUG_KEYSTORE"
+          unset ROADPRINTS_DEBUG_KEYSTORE_B64
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('android-prototype/app/build.gradle.kts')
+          s=p.read_text()
+          assert s.count('versionCode = 310')==1
+          assert s.count('versionName = "0.25.264"')==1
+          p.write_text(s.replace('versionCode = 310','versionCode = 314')
+                        .replace('versionName = "0.25.264"','versionName = "0.25.268"'))
+          PY
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:assembleDebug
+          cp android-prototype/app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/roadprints314.apk"
+          signer=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -n 1)
+          "$signer" verify --print-certs "$RUNNER_TEMP/roadprints314.apk" | grep -F "certificate SHA-256 digest: $CERT_SHA256"
+          "${signer%/*}/aapt" dump badging "$RUNNER_TEMP/roadprints314.apk" | grep -F "package: name='com.roadprints.capture' versionCode='314' versionName='0.25.268'"
+          python3 - <<'PY'
+          import hashlib,os,zipfile
+          old=os.path.join(os.environ['RUNNER_TEMP'],'roadprints313.apk')
+          new=os.path.join(os.environ['RUNNER_TEMP'],'roadprints314.apk')
+          with zipfile.ZipFile(old) as baseline,zipfile.ZipFile(new) as candidate:
+              for asset in ('historic-counties/boundaries.bin','railway/national.json',
+                            'railway/national.sqlite.gzip','uk-road-reference-v1.bin'):
+                  key='assets/'+asset
+                  assert hashlib.sha256(baseline.read(key)).digest()==hashlib.sha256(candidate.read(key)).digest(),key
+          PY
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Measure Build 313 baseline and 314 upgrade plus two equivalent steady loads
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          heap-size: 256M
+          disable-animations: true
+          script: bash scripts/check_map_314_steady_state.sh
+      - name: Preserve diagnostic performance evidence regardless of outcome
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: map314-warm-versus-steady-evidence
+          path: |
+            ${{ runner.temp }}/map314-*.log
+            ${{ runner.temp }}/map314-*.txt
+            ${{ runner.temp }}/map314-*.json
+            ${{ runner.temp }}/map314-*.sha256
+          if-no-files-found: ignore
+          retention-days: 14
