@@ -13,7 +13,7 @@
 <input id="seek" type="range" min="0" max="0" value="0">
 <div id="buttons"><button id="back">◀ Back</button><button class="primary" id="next">Next ▶</button><button id="play">▶ Play</button><button id="focus">⌖</button></div>
 <div id="legend"><span><i class="chip" style="background:#ff4b55"></i>Current new</span><span><i class="chip" style="background:#151a21"></i>Previously covered</span><span><i class="chip" style="background:#16a34a"></i>Road repeated</span></div>
-<div id="detail">Experimental walked-network matching. Short isolated fragments are held; only gaps on one mapped way are joined.</div>
+<div id="detail">Experimental walked-network matching. Short travelled paths are preserved; gaps are joined only on one mapped way.</div>
 </footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -49,12 +49,13 @@ for(const list of groups.values()){
 const touched=list.filter(id=>evidence.has(id));if(!touched.length)continue;
 const along=new Set(touched);
 for(let k=1;k<touched.length;k++){const left=roads[touched[k-1]],right=roads[touched[k]];if(right.index-left.index>1&&right.index-left.index<=4){for(const id of list)if(roads[id].index>left.index&&roads[id].index<right.index){along.add(id);bridged++}}}
-let run=[];const commit=()=>{if(run.length>=3){for(const id of run)ids.add(id)}else held+=run.length;run=[]};
-for(const id of list){if(along.has(id))run.push(id);else commit()}commit();
+// A short OSM way or real connecting footpath may contain only one interval.
+// Never discard geometrically supported journey evidence just for being short.
+for(const id of along)ids.add(id);
 }
 return {ids,failed,tries,bridged,held}
 }
-async function advance(n){if(!data||busy)return;n=Math.min(data.journeys.length,Math.max(0,n));clearError();if(mode==='original'||n<=step){step=n;update();return}busy=true;controls();try{for(let i=step;i<n;i++){tell('Matching journey '+(i+1)+' of '+data.journeys.length+'…');await ensure(data.journeys[i]);let m=cache.get(i);if(!m){m=match(data.journeys[i]);cache.set(i,m);for(const id of m.ids){const r=roads[id];if(r.first===Infinity)r.first=i;else if(r.first!==i&&r.second===Infinity)r.second=i}}step=i+1;update();if(i%3===2)await new Promise(r=>setTimeout(r,0))}}catch(e){problem(e.message||String(e));stop()}finally{busy=false;update()}}
+async function advance(n){if(!data||busy)return;n=Math.min(data.journeys.length,Math.max(0,n));clearError();if(mode==='original'||n<=step){step=n;update();return}busy=true;controls();try{for(let i=step;i<n;i++){tell('Matching journey '+(i+1)+' of '+data.journeys.length+'…');await ensure(data.journeys[i]);let m=cache.get(i);if(!m){m=match(data.journeys[i]);cache.set(i,m);for(const id of m.ids){const r=roads[id];if(r.first===Infinity)r.first=i;else if(r.first!==i&&r.second===Infinity)r.second=i}}step=i+1;update();if(i%3===2)await new Promise(r=>setTimeout(r,0))}}catch(e){problem(e.message||String(e));stop()}finally{busy=false;update();if(!error.textContent||error.style.display==='none')tell('Ready · '+step+' / '+data.journeys.length+' journeys matched')}}
 function stroke(lines,color,width){if(!lines.length)return;ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();for(const [a,b] of lines){const p=map.latLngToContainerPoint([a[1],a[0]]),q=map.latLngToContainerPoint([b[1],b[0]]);ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y)}ctx.stroke()}
 function draw(){if(!canvas||!data)return;const size=map.getSize(),scale=Math.min(devicePixelRatio||1,2),pos=map.containerPointToLayerPoint([0,0]);canvas.width=Math.round(size.x*scale);canvas.height=Math.round(size.y*scale);canvas.style.width=size.x+'px';canvas.style.height=size.y+'px';L.DomUtil.setPosition(canvas,pos);ctx.setTransform(scale,0,0,scale,0,0);
 const box=map.getBounds(),inside=(a,b)=>Math.max(a[0],b[0])>=box.getWest()&&Math.min(a[0],b[0])<=box.getEast()&&Math.max(a[1],b[1])>=box.getSouth()&&Math.min(a[1],b[1])<=box.getNorth();
@@ -65,7 +66,7 @@ stroke(old,'#151a21',3.5);if(mode==='original'&&step){for(const path of data.jou
 }
 function schedule(){if(drawPending)return;drawPending=true;requestAnimationFrame(()=>{drawPending=false;draw()})}
 function controls(){for(const id of ['back','next','seek','play','center','original'])$(id).disabled=!data||busy;$('back').disabled||=step===0;$('next').disabled||=!!data&&step===data.journeys.length}
-function update(){if(!data)return;seek.max=data.journeys.length;seek.value=step;$('count').textContent=step+' / '+data.journeys.length;if(step){const j=data.journeys[step-1];$('title').textContent=j[1];$('meta').textContent=j[0]+' · '+j[2]+' · journey '+step;const m=cache.get(step-1);$('detail').textContent=mode==='center'&&m?m.ids.size+' road/path intervals · '+m.bridged+' gaps joined · '+m.held+' short pieces held · '+m.failed+' samples unmatched':'Original journey evidence preserved'}else{$('title').textContent='Starting point — no journeys yet';$('meta').textContent='Press Next to add your first journey'}controls();schedule()}
+function update(){if(!data)return;seek.max=data.journeys.length;seek.value=step;$('count').textContent=step+' / '+data.journeys.length;if(step){const j=data.journeys[step-1];$('title').textContent=j[1];$('meta').textContent=j[0]+' · '+j[2]+' · journey '+step;const m=cache.get(step-1);$('detail').textContent=mode==='center'&&m?m.ids.size+' road/path intervals · '+m.bridged+' same-way gaps joined · '+m.failed+' samples unmatched':'Original journey evidence preserved'}else{$('title').textContent='Starting point — no journeys yet';$('meta').textContent='Press Next to add your first journey'}controls();schedule()}
 function focus(){if(!step||!data)return;const b=data.journeys[step-1][4];map.fitBounds([[b[1],b[0]],[b[3],b[2]]],{padding:[25,25],maxZoom:17,animate:false})}
 function stop(){if(timer){clearInterval(timer);timer=null;$('play').textContent='▶ Play'}}
 function openStore(){return new Promise((yes,no)=>{const request=indexedDB.open('roadprints-map-lab',1);request.onupgradeneeded=()=>request.result.createObjectStore('files');request.onsuccess=()=>yes(request.result);request.onerror=()=>no(request.error)})}
