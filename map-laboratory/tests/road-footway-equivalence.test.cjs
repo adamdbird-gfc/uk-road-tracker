@@ -1,0 +1,25 @@
+// Synthetic road equivalence tests. Never use or commit private journey coordinates.
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
+const start=html.indexOf('function roadEquivalentFootways('),end=html.indexOf('function match(j){',start);
+assert.ok(start>0&&end>start,'generic road/footway equivalence helper exists');
+const M=111320,D=Math.PI/180;
+const xyz=(a,o)=>[(a[0]-o[0])*M*Math.cos(o[1]*D),(a[1]-o[1])*M];
+const proj=(a,b,p)=>{const v=[b[0]-a[0],b[1]-a[1]],d=v[0]*v[0]+v[1]*v[1];if(d<.001)return 1e9;const t=Math.max(0,Math.min(1,((p[0]-a[0])*v[0]+(p[1]-a[1])*v[1])/d));return Math.hypot(p[0]-a[0]-t*v[0],p[1]-a[1]-t*v[1])};
+const normalize=new Function('xyz','proj',html.slice(start,end)+';return roadEquivalentFootways')(xyz,proj);
+const p=(x,y=0)=>[x/M,y/M],roads=[];
+for(let i=0;i<10;i++)roads.push({p:p(i*8,0),q:p((i+1)*8,0),kind:'residential',first:0,group:'through'});
+for(let i=0;i<10;i++)roads.push({p:p(i*8,5),q:p((i+1)*8,5),kind:'footway',first:Infinity,group:'along-road'});
+for(let i=0;i<10;i++)roads.push({p:p(i*8,22),q:p((i+1)*8,22),kind:'footway',first:Infinity,group:'frontage'});
+roads.push({p:p(40,5),q:p(40,22),kind:'footway',first:Infinity,group:'connector'});
+roads.push({p:p(40,0),q:p(40,5),kind:'footway',first:Infinity,group:'road-access'});
+const eligible=new Set(Array.from({length:22},(_,i)=>i+10));
+const dropped=normalize(eligible,roads);
+assert.equal([...dropped].filter(i=>i>=10&&i<20).length,10,'only road-adjacent parallel reference is collapsed');
+assert.equal([...dropped].filter(i=>i>=20&&i<30).length,0,'separate frontage remains');
+assert.ok(!dropped.has(30),'genuine perpendicular connector remains');
+assert.ok(!dropped.has(31),'short road-access connector remains');
+assert.equal(eligible.size,22,'evidence input remains unchanged');
+roads.forEach((x,i)=>{if(i<10)x.first=Infinity});
+assert.equal(normalize(eligible,roads).size,0,'do not remove footway if the reference road was never covered');
+console.log('PASS: one-road coverage; frontage and short connecting paths preserved');
