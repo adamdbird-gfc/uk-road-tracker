@@ -38,4 +38,8 @@ assert.equal(r.supported.size,0,'stationary/repeated single interval is not a su
 assert(page.includes('connectedShadows.push(connectedRouteShadow(probes,roads))'),'runtime shadow separately evaluated');
 assert(page.includes('connectedRouteEvidence,canonical,'),'diagnostic does not replace canonical match');
 assert(page.includes('connectedRouteDiagnostic:'),'inspector exposes diagnostic status');
+assert(page.includes('id="connectedShadow" aria-pressed="false"'),'independent connected route button present');
+assert(page.includes('showConnectedShadow=!showConnectedShadow'),'button toggles connected reference evidence');
+assert(page.includes("stroke(lines,'#f45cba',5)"),'visible connected route overlay is separate from existing cyan and mint');
+assert(page.includes('reference intervals (NOT credited)'),'button reports diagnostic rather than coverage');
 console.log('PASS: continuous road, disconnected pub access, station path, genuine turn, gaps and no credit mutation');
