@@ -120,40 +120,37 @@ return overlap<1.5&&Math.min(Math.hypot(B[0]-P[0],B[1]-P[1]),Math.hypot(B[0]-Q[0
 // physical road already credited, without erasing a nearby but distinct
 // frontage path or a perpendicular path joining the road.
 // Only the cumulative coverage is normalised; accepted source is untouched.
+// Collapse road-adjacent pedestrian reference lines onto an already
+// credited physical road, retaining distinct frontage paths and connectors.
 function roadEquivalentFootways(ids,roadNetwork){
 const roadKinds=new Set(['motorway','motorway_link','trunk','trunk_link','primary','primary_link','secondary','secondary_link','tertiary','tertiary_link','unclassified','residential','living_street','service','road']);
 const pedestrianKinds=new Set(['footway','path','cycleway','pedestrian']);
-const coveredRoads=[];
+const cell=.00018,key=(x,y)=>Math.floor(x/cell)+','+Math.floor(y/cell),grid=new Map();
 for(let i=0;i<roadNetwork.length;i++){
  const r=roadNetwork[i];
- if(roadKinds.has(r.kind)&&(r.first!==Infinity||ids.has(i)))coveredRoads.push(r);
+ if(!roadKinds.has(r.kind)||(r.first===Infinity&&!ids.has(i)))continue;
+ const center=[(r.p[0]+r.q[0])/2,(r.p[1]+r.q[1])/2],k=key(...center);
+ if(!grid.has(k))grid.set(k,[]);
+ grid.get(k).push(r);
 }
 const dropped=new Set();
-const metric=(a,b,o)=>Math.hypot(...xyz(a,b));
-const projectPoint=(point,way)=>{
- const origin=way.p,a=[0,0],b=xyz(way.q,origin),p=xyz(point,origin);
- return proj(a,b,p);
-};
+const distanceTo=(point,way)=>proj([0,0],xyz(way.q,way.p),xyz(point,way.p));
 const headingDifference=(a,b)=>{
- const origin=a.p,u=xyz(a.q,origin),v=xyz(b.q,b.p);
- const dot=(u[0]*v[0]+u[1]*v[1])/(Math.hypot(...u)*Math.hypot(...v)||1);
+ const u=xyz(a.q,a.p),v=xyz(b.q,b.p),dot=(u[0]*v[0]+u[1]*v[1])/(Math.hypot(...u)*Math.hypot(...v)||1);
  return Math.acos(Math.max(-1,Math.min(1,Math.abs(dot))));
 };
 for(const id of ids){
- const segment=roadNetwork[id];
- if(!pedestrianKinds.has(segment.kind))continue;
- const center=[(segment.p[0]+segment.q[0])/2,(segment.p[1]+segment.q[1])/2];
- // Nearby and parallel is not enough on its own: the centre and both ends
- // must lie close to an already-coloured physical road corridor.
- // Segments connecting across the corridor have a different orientation.
- const candidate=coveredRoads.some(road=>{
-  if(headingDifference(segment,road)>.35)return false; // 20 degrees
-  if(projectPoint(center,road)>7)return false;
-  // Half-segment endpoint checks permit a junction crossing, but not
-  // an entire second line for the same road to survive.
-  return Math.min(projectPoint(segment.p,road),projectPoint(segment.q,road))<=7;
- });
- if(candidate)dropped.add(id);
+ const s=roadNetwork[id];
+ if(!pedestrianKinds.has(s.kind))continue;
+ const center=[(s.p[0]+s.q[0])/2,(s.p[1]+s.q[1])/2],cx=Math.floor(center[0]/cell),cy=Math.floor(center[1]/cell);
+ let parallel=false;
+ for(let dx=-1;dx<=1&&!parallel;dx++)for(let dy=-1;dy<=1&&!parallel;dy++)for(const r of grid.get((cx+dx)+','+(cy+dy))||[]){
+  // Same road centreline, not a shortcut to a parallel street.
+  if(headingDifference(s,r)>.35||distanceTo(center,r)>7)continue;
+  if(Math.min(distanceTo(s.p,r),distanceTo(s.q,r))>7)continue;
+  parallel=true;break;
+ }
+ if(parallel)dropped.add(id);
 }
 return dropped;
 }
