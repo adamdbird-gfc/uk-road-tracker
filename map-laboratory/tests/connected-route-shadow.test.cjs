@@ -36,7 +36,7 @@ assert(r.unresolved===1,'unmatched gap remains explicit');
 r=resolve([probe(0),probe(0),probe(0)],network);
 assert.equal(r.supported.size,0,'stationary/repeated single interval is not a sustained route');
 assert(page.includes('connectedShadows.push(connectedRouteShadow(probes,roads))'),'runtime shadow separately evaluated');
-assert(page.includes('connectedRouteEvidence,canonical,'),'diagnostic does not replace canonical match');
+assert(page.includes('connectedRouteEvidence,roadFirstRouteEvidence,canonical,'),'diagnostic does not replace canonical match');
 assert(page.includes('connectedRouteDiagnostic:'),'inspector exposes diagnostic status');
 assert(page.includes('id="connectedShadow" aria-pressed="false"'),'independent connected route button present');
 assert(page.includes('showConnectedShadow=!showConnectedShadow'),'button toggles connected reference evidence');
