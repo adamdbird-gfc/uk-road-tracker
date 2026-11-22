@@ -41,4 +41,21 @@ assert.deepEqual(closedLoop.lines[0],[p(0),p(30),p(100),p(60),p(30)]);
 const genuineLoop=run([p(0),p(20),p(60),p(65,4),p(90,4),p(65,4),p(60),p(20)]);
 assert.equal(genuineLoop.redundantReturns,0);
 assert.equal(genuineLoop.lines[0].length,8);
-console.log('PASS: endpoint jitter, short connector, genuine dead end, redundant return, complete redundant loop');
+// A roughly 15 m perpendicular endpoint near a long through-road is an
+// unsupported endpoint hook, unlike a genuine short connecting path.
+const widerEndpoint=run([p(0),p(60),p(120),p(120,15)]);
+assert.equal(widerEndpoint.endpointHooks,1);
+assert.equal(widerEndpoint.lines[0].length,3);
+// A perpendicular one-point A-B-A with long aligned through-legs is held
+// out of coverage without erasing its raw journey trace.
+const micro=run([p(-130),p(-60),p(0),p(0,16),p(0),p(80),p(130)]);
+assert.equal(micro.microReversals,1);
+assert.equal(micro.lines[0].length,5);
+// Legitimate short connector with a turn to a DIFFERENT road is retained.
+const dogleg=run([p(-130),p(-60),p(0),p(0,16),p(65,16)]);
+assert.equal(dogleg.microReversals,0);
+assert.equal(dogleg.lines[0].length,5);
+// 30m out-and-back remains evidence, and is not hidden by 20m threshold.
+const longerVisit=run([p(-130),p(-60),p(0),p(0,30),p(0),p(80),p(130)]);
+assert.equal(longerVisit.microReversals,0);
+console.log('PASS: endpoint hooks, supported connectors, real dead ends, complete redundant loops and isolated tiny reversals');
