@@ -1,0 +1,33 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const page=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
+const start=page.indexOf('function connectedRouteShadow('),end=page.indexOf('function match(j){',start);
+assert(start>0&&end>start);
+const M=111320,p=(x,y=0)=>[x/M,y/M],metres=(a,b)=>Math.hypot((a[0]-b[0])*M,(a[1]-b[1])*M);
+const evaluate=new Function('metres',page.slice(start,end)+';return connectedRouteShadow')(metres);
+function corridor(kind,group,y,n=5){
+ return Array.from({length:n},(_,i)=>({p:p(i*8,y),q:p((i+1)*8,y),kind,group,index:i}));
+}
+const road=corridor('residential','public-road',0),foot=corridor('footway','sidewalk',5);
+const network=[...road,...foot];
+const probes=Array.from({length:5},(_,i)=>({sourceSegment:1,candidates:[{id:i+5,score:1},{id:i,score:1.6}]}));
+const baseline=evaluate(probes,network),preferred=evaluate(probes,network,1.5);
+assert(baseline.supported.has(7),'neutral baseline retains locally closer pedestrian route');
+assert(preferred.supported.has(2),'sustained connected road wins with modest preference');
+assert(!preferred.supported.has(7),'road-first comparison displaces nearby pavement');
+assert(preferred.roadSupportedProbes>=3,'preference activates only when neighbouring road samples are connected');
+assert(!baseline.supported.has(2),'baseline unaffected');
+const onlyFoot=Array.from({length:5},(_,i)=>({sourceSegment:1,candidates:[{id:i+5,score:1}]}));
+assert(evaluate(onlyFoot,network,1.5).supported.has(7),'genuine pedestrian-only route survives');
+const wrongRoad=[...corridor('service','pub-drive',2),...foot];
+const serviceProbes=Array.from({length:5},(_,i)=>({sourceSegment:1,candidates:[{id:i+5,score:1},{id:i,score:1.6}]}));
+assert(evaluate(serviceProbes,wrongRoad,1.5).supported.has(7),'service access never gets a road bonus');
+const fragmented=[...corridor('residential','street',0),...foot];
+fragmented[2]={...fragmented[2],p:p(16,15),q:p(24,15)};
+assert.equal(evaluate(probes,fragmented,1.5).roadSupportedProbes,0,'disconnected road must not trigger bonus');
+const badRoad=Array.from({length:5},(_,i)=>({sourceSegment:1,candidates:[{id:i+5,score:1},{id:i,score:12}]}));
+assert.equal(evaluate(badRoad,network,1.5).roadSupportedProbes,0,'weak GPS road candidates must not trigger bonus');
+assert(page.includes('roadFirstShadows.push(connectedRouteShadow(probes,roads,1.5))'),'runtime evaluates neutral and road-first independently');
+assert(page.includes('roadFirstRouteEvidence,canonical,'),'new evidence separate from credit');
+assert(page.includes('id="roadFirstShadow" aria-pressed="false"'),'independent A/B toggle');
+assert(page.includes('roadFirstShadow?m?.roadFirstRouteEvidence:m?.connectedRouteEvidence'),'overlay reflects selection');
+console.log('PASS: sustained public road preferred; genuine footway, pub service, disconnected road and weak GPS remain protected');
