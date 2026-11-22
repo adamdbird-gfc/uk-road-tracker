@@ -74,3 +74,6 @@ jobs:
 
       - name: Check direct isolated journey jump and highlighted gap candidates
         run: node map-laboratory/tests/direct-journey-navigation.test.cjs
+
+      - name: Check independent pedestrian-first road-centreline shadow comparison
+        run: node map-laboratory/tests/pedestrian-first-road-shadow.test.cjs
