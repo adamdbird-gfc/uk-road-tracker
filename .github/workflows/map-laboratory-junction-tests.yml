@@ -31,6 +31,8 @@ jobs:
         run: node map-laboratory/tests/junction-evidence.test.cjs
       - name: Check local map-credit provenance
         run: node map-laboratory/tests/inspector-provenance.test.cjs
+      - name: Check whole-way inspector first-credit provenance
+        run: node map-laboratory/tests/inspector-way-evidence.test.cjs
 
       - name: Check competing junction credit
         run: node map-laboratory/tests/junction-singleton.test.cjs
