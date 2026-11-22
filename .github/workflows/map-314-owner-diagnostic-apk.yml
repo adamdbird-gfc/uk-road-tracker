@@ -1,0 +1,137 @@
+name: Roadprints Build 314 integrated owner diagnostic APK
+on:
+  push:
+    branches: [feat/cumulative-map-roundabout-fidelity]
+    paths:
+      - .github/workflows/map-314-owner-diagnostic-apk.yml
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: roadprints-314-owner-release
+  cancel-in-progress: false
+jobs:
+  signed-owner-apk:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 55
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: adamdbird-gfc/uk-road-tracker
+      TESTED_SOURCE: 759aff60c42311e00d9d28998685dc7e4884dbc1
+      PERF_RUN: 45010956368
+      FIDELITY_RUN: 44834934769
+      CERT_SHA256: 5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031
+      TAG: roadprints-0.25.268-314
+      APK: Roadprints-0.25.268-314.apk
+      JAVA_TOOL_OPTIONS: -XX:TieredStopAtLevel=1 -XX:ReservedCodeCacheSize=256m
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify exact tested source and successful gates
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$TESTED_SOURCE" "$GITHUB_SHA"
+          git diff --exit-code "$TESTED_SOURCE" "$GITHUB_SHA" -- android-prototype scripts/check_map_314_steady_state.sh scripts/generate_map_recovery_fixture.py .github/workflows/map-314-steady-state-gate.yml .github/workflows/cumulative-map-fidelity.yml
+          for pair in "$PERF_RUN:$TESTED_SOURCE" "$FIDELITY_RUN:c0c574eb7f6723499d90752b33c8dd07f72a8ec4"; do
+            run="${pair%%:*}"; sha="${pair#*:}"
+            gh api "repos/$GH_REPO/actions/runs/$run" --jq '{head_sha,conclusion,status}' > "$RUNNER_TEMP/gate-$run.json"
+            jq -e --arg sha "$sha" '.head_sha==$sha and .conclusion=="success" and .status=="completed"' "$RUNNER_TEMP/gate-$run.json"
+          done
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::error::Build 314 release already exists; refusing overwrite"
+            exit 1
+          fi
+      - name: Restore exact Build 313 reference assets and record signer
+        run: |
+          set -euo pipefail
+          gh release download roadprints-0.25.267-313 --pattern Roadprints-0.25.267-313.apk --output "$RUNNER_TEMP/roadprints313.apk"
+          signer=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -n 1)
+          "$signer" verify --print-certs "$RUNNER_TEMP/roadprints313.apk" | grep -F "certificate SHA-256 digest: $CERT_SHA256"
+          assets=android-prototype/app/src/main/assets
+          for asset in historic-counties/boundaries.bin railway/national.json railway/national.sqlite.gzip uk-road-reference-v1.bin; do
+            unzip -p "$RUNNER_TEMP/roadprints313.apk" "assets/$asset" > "$assets/$asset"
+          done
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+      - name: Rebuild signed exact-source integrated diagnostic APK
+        env:
+          ROADPRINTS_DEBUG_KEYSTORE_B64: ${{ secrets.ROADPRINTS_DEBUG_KEYSTORE_B64 }}
+          ROADPRINTS_DEBUG_STORE_PASSWORD: ${{ secrets.ROADPRINTS_DEBUG_STORE_PASSWORD }}
+          ROADPRINTS_DEBUG_KEY_ALIAS: ${{ secrets.ROADPRINTS_DEBUG_KEY_ALIAS }}
+          ROADPRINTS_DEBUG_KEY_PASSWORD: ${{ secrets.ROADPRINTS_DEBUG_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$ROADPRINTS_DEBUG_KEYSTORE_B64"
+          test -n "$ROADPRINTS_DEBUG_STORE_PASSWORD"
+          test -n "$ROADPRINTS_DEBUG_KEY_ALIAS"
+          test -n "$ROADPRINTS_DEBUG_KEY_PASSWORD"
+          export ROADPRINTS_DEBUG_KEYSTORE="$RUNNER_TEMP/map314-owner.keystore"
+          trap 'rm -f "$ROADPRINTS_DEBUG_KEYSTORE"' EXIT
+          umask 077
+          printf '%s' "$ROADPRINTS_DEBUG_KEYSTORE_B64" | base64 --decode > "$ROADPRINTS_DEBUG_KEYSTORE"
+          unset ROADPRINTS_DEBUG_KEYSTORE_B64
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('android-prototype/app/build.gradle.kts')
+          s=p.read_text()
+          assert s.count('versionCode = 310') == 1
+          assert s.count('versionName = "0.25.264"') == 1
+          p.write_text(s.replace('versionCode = 310','versionCode = 314')
+                        .replace('versionName = "0.25.264"','versionName = "0.25.268"'))
+          PY
+          gradle --no-daemon --stacktrace -p android-prototype -Pandroid.builder.sdkDownload=false :app:assembleDebug
+          cp android-prototype/app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/$APK"
+          signer=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -n 1)
+          "$signer" verify --print-certs "$RUNNER_TEMP/$APK" | grep -F "certificate SHA-256 digest: $CERT_SHA256"
+          "${signer%/*}/aapt" dump badging "$RUNNER_TEMP/$APK" | grep -F "package: name='com.roadprints.capture' versionCode='314' versionName='0.25.268'"
+          python3 - <<'PY'
+          import hashlib,os,zipfile
+          old=os.path.join(os.environ['RUNNER_TEMP'],'roadprints313.apk')
+          new=os.path.join(os.environ['RUNNER_TEMP'],os.environ['APK'])
+          with zipfile.ZipFile(old) as baseline,zipfile.ZipFile(new) as candidate:
+              for asset in ('historic-counties/boundaries.bin','railway/national.json',
+                            'railway/national.sqlite.gzip','uk-road-reference-v1.bin'):
+                  key='assets/'+asset
+                  assert hashlib.sha256(baseline.read(key)).digest()==hashlib.sha256(candidate.read(key)).digest(),key
+          PY
+          sha256sum "$RUNNER_TEMP/$APK" > "$RUNNER_TEMP/$APK.sha256"
+      - name: Publish owner-only signed diagnostic APK as direct GitHub Release
+        run: |
+          set -euo pipefail
+          test "$(gh api "repos/$GH_REPO/git/ref/heads/${GITHUB_REF_NAME}" --jq .object.sha)" = "$GITHUB_SHA"
+          cat > "$RUNNER_TEMP/notes.md" <<EOF
+          Roadprints 0.25.268 (314) — owner diagnostic APK for Pixel 10 / Android 17.
+
+          - Signed with the same established certificate and application ID as Build 313; installs over Build 313 without clearing application data.
+          - Adds Utilities → Export Map geometry. Opens the cumulative Map in a dedicated export mode with a visible Save visible geometry control. The ordinary Map Legend has no hidden gesture.
+          - Exports bounded, private, read-only travelled Map geometry through Android's document picker; no automatic uploads. Save only after Map ready and zoom into the problem street area.
+          - Includes approved-source cumulative-geometry fragment recovery from PR #367; existing road/NCN reference assets preserved byte-for-byte.
+
+          Validation: focused geometry and Utilities CI $FIDELITY_RUN (passed), matched 1,681 synthetic journey Android emulator Build 313→314 performance and data-preservation CI $PERF_RUN (passed). Steady Map readiness 17.926s baseline / 16.622s candidate, first upgrade Map load 19.136s, measured on emulator. Not yet accepted on the owner's Pixel 10; real journey geometry discrepancy remains under investigation.
+
+          Tested Android source: $TESTED_SOURCE
+          Owner release source: $GITHUB_SHA
+          APK SHA-256: $(cut -d' ' -f1 "$RUNNER_TEMP/$APK.sha256")
+          EOF
+          gh release create "$TAG" "$RUNNER_TEMP/$APK" "$RUNNER_TEMP/$APK.sha256" \
+            --target "$GITHUB_SHA" --prerelease --latest=false \
+            --title "Roadprints 0.25.268 (314) — Owner Map diagnostic" \
+            --notes-file "$RUNNER_TEMP/notes.md"
+          asset_url=$(gh api "repos/$GH_REPO/releases/tags/$TAG" --jq '.assets[] | select(.name=="Roadprints-0.25.268-314.apk" and .state=="uploaded") | .browser_download_url')
+          test "$asset_url" = "https://github.com/$GH_REPO/releases/download/$TAG/$APK"
+          curl --fail --silent --show-error --location --retry 3 --max-time 180 "$asset_url" -o "$RUNNER_TEMP/downloaded-owner.apk"
+          cmp "$RUNNER_TEMP/$APK" "$RUNNER_TEMP/downloaded-owner.apk"
+          printf 'Direct owner APK: %s\nSHA-256: %s\n' "$asset_url" "$(cut -d' ' -f1 "$RUNNER_TEMP/$APK.sha256")" >> "$GITHUB_STEP_SUMMARY"
+      - name: Retain packaging receipts (not duplicate APK distribution)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: roadprints-314-release-receipts
+          path: |
+            ${{ runner.temp }}/gate-*.json
+            ${{ runner.temp }}/Roadprints-0.25.268-314.apk.sha256
+          if-no-files-found: ignore
