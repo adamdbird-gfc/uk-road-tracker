@@ -39,3 +39,8 @@ jobs:
 
       - name: Check road-transition boundary evidence
         run: node map-laboratory/tests/transition-boundary.test.cjs
+
+      - name: Check road-adjacent footway equivalence
+        run: node map-laboratory/tests/road-footway-equivalence.test.cjs
+      - name: Check evidence-backed walking entrance links
+        run: node map-laboratory/tests/entrance-link-evidence.test.cjs

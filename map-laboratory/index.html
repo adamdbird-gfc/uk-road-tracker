@@ -13,7 +13,7 @@
 <input id="seek" type="range" min="0" max="0" value="0">
 <div id="buttons"><button id="back">◀ Back</button><button class="primary" id="next">Next ▶</button><button id="play">▶ Play</button><button id="focus">⌖</button></div>
 <div id="legend"><span><i class="chip" style="background:#ff4b55"></i>Current new</span><span><i class="chip" style="background:#151a21"></i>Previously covered</span><span><i class="chip" style="background:#16a34a"></i>Road repeated</span></div>
-<div id="detail">Experimental junction confidence: only tiny perpendicular endpoint hooks and previously covered short reversals are excluded from credit. Original lines are unchanged.</div><div id="inspectPanel"><b>Selected map section</b><pre id="inspectInfo"></pre><button id="copyInspect">Copy selected evidence</button> <button id="closeInspect">Close</button></div>
+<div id="detail">Experimental physical-road equivalence: parallel footway duplicates may be consolidated onto previously travelled road centrelines. Genuine connecting paths remain eligible.</div><div id="inspectPanel"><b>Selected map section</b><pre id="inspectInfo"></pre><button id="copyInspect">Copy selected evidence</button> <button id="closeInspect">Close</button></div>
 </footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -116,6 +116,79 @@ const dot=(point)=>(point[0]*dx+point[1]*dy)/length;
 const before=dot(A),at=dot(B),overlap=Math.max(0,Math.min(length,Math.max(before,at))-Math.max(0,Math.min(before,at)));
 return overlap<1.5&&Math.min(Math.hypot(B[0]-P[0],B[1]-P[1]),Math.hypot(B[0]-Q[0],B[1]-Q[1]))<3;
 }
+// Collapse pedestrian geometry that is merely a second centreline for a
+// physical road already credited, without erasing a nearby but distinct
+// frontage path or a perpendicular path joining the road.
+// Only the cumulative coverage is normalised; accepted source is untouched.
+// Collapse road-adjacent pedestrian reference lines onto an already
+// credited physical road, retaining distinct frontage paths and connectors.
+function roadEquivalentFootways(ids,roadNetwork){
+const roadKinds=new Set(['motorway','motorway_link','trunk','trunk_link','primary','primary_link','secondary','secondary_link','tertiary','tertiary_link','unclassified','residential','living_street','service','road']);
+const pedestrianKinds=new Set(['footway','path','cycleway','pedestrian']);
+const cell=.00018,key=(x,y)=>Math.floor(x/cell)+','+Math.floor(y/cell),grid=new Map();
+for(let i=0;i<roadNetwork.length;i++){
+ const r=roadNetwork[i];
+ if(!roadKinds.has(r.kind)||(r.first===Infinity&&!ids.has(i)))continue;
+ const center=[(r.p[0]+r.q[0])/2,(r.p[1]+r.q[1])/2],k=key(...center);
+ if(!grid.has(k))grid.set(k,[]);
+ grid.get(k).push(r);
+}
+const dropped=new Set();
+const distanceTo=(point,way)=>proj([0,0],xyz(way.q,way.p),xyz(point,way.p));
+const headingDifference=(a,b)=>{
+ const u=xyz(a.q,a.p),v=xyz(b.q,b.p),dot=(u[0]*v[0]+u[1]*v[1])/(Math.hypot(...u)*Math.hypot(...v)||1);
+ return Math.acos(Math.max(-1,Math.min(1,Math.abs(dot))));
+};
+for(const id of ids){
+ const s=roadNetwork[id];
+ if(!pedestrianKinds.has(s.kind))continue;
+ const center=[(s.p[0]+s.q[0])/2,(s.p[1]+s.q[1])/2],cx=Math.floor(center[0]/cell),cy=Math.floor(center[1]/cell);
+ let parallel=false;
+ for(let dx=-1;dx<=1&&!parallel;dx++)for(let dy=-1;dy<=1&&!parallel;dy++)for(const r of grid.get((cx+dx)+','+(cy+dy))||[]){
+  // Same road centreline, not a shortcut to a parallel street.
+  if(headingDifference(s,r)>.35||distanceTo(center,r)>7)continue;
+  if(Math.min(distanceTo(s.p,r),distanceTo(s.q,r))>7)continue;
+  parallel=true;break;
+ }
+ if(parallel)dropped.add(id);
+}
+return dropped;
+}
+// Display-only micro-links backed by an accepted on-foot source segment.
+// A mapped road and a distinct, strongly evidenced frontage footway must
+// each anchor an end; this never awards additional road/path completion.
+function evidenceBackedWalkingLinks(lines,ids,roadNetwork){
+const roadKinds=new Set(['primary','secondary','tertiary','unclassified','residential','living_street','service','road','trunk']);
+const pathKinds=new Set(['footway','path','pedestrian','steps']);
+const roads=[],paths=[],links=[];
+for(let i=0;i<roadNetwork.length;i++){
+ const r=roadNetwork[i];
+ if(roadKinds.has(r.kind)&&(r.first!==Infinity||ids.has(i)))roads.push(r);
+ if(pathKinds.has(r.kind)&&ids.has(i))paths.push(r);
+}
+const close=(point,r)=>proj([0,0],xyz(r.q,r.p),xyz(point,r.p));
+const angle=(p,q,r)=>{
+ const u=xyz(q,p),v=xyz(r.q,r.p),d=(u[0]*v[0]+u[1]*v[1])/(Math.hypot(...u)*Math.hypot(...v)||1);
+ return Math.acos(Math.max(-1,Math.min(1,Math.abs(d))));
+};
+const enough=new Map();
+for(const path of paths)enough.set(path.group,(enough.get(path.group)||0)+1);
+for(const line of lines)for(let i=0;i<line.length-1;i++){
+ const a=line[i],b=line[i+1],len=metres(a,b);
+ if(len<2||len>12)continue;
+ // Crossing a road edge rather than simply retracing its parallel footway.
+ const road=roads.find(r=>(close(a,r)<4.5||close(b,r)<4.5)&&angle(a,b,r)>Math.PI/4);
+ if(!road)continue;
+ const foot=paths.find(r=>enough.get(r.group)>=3&&
+  (close(a,r)<4.5||close(b,r)<4.5)&&r.group!==road.group&&
+  (close(a,r)<4.5&&close(b,road)<4.5||close(b,r)<4.5&&close(a,road)<4.5));
+ if(!foot)continue;
+ // Source itself establishes a short physical traversal, not simply
+ // map proximity. It is deliberately *not* an extra credited road interval.
+ if(!links.some(([x,y])=>metres(x,a)<2&&metres(y,b)<2||metres(x,b)<2&&metres(y,a)<2))links.push([a,b]);
+}
+return links;
+}
 function match(j){
 const grid=new Map(),S=.00024,key=(x,y)=>Math.floor(x/S)+','+Math.floor(y/S),groups=new Map();
 roads.forEach((r,i)=>{const k=key((r.p[0]+r.q[0])/2,(r.p[1]+r.q[1])/2);if(!grid.has(k))grid.set(k,[]);grid.get(k).push(i);if(!groups.has(r.group))groups.set(r.group,[]);groups.get(r.group).push(i)});
@@ -161,7 +234,10 @@ for(let k=1;k<touched.length;k++){const left=roads[touched[k-1]],right=roads[tou
 // Never discard geometrically supported journey evidence just for being short.
 for(const id of along)ids.add(id);
 }
-return {ids,hits,direct:evidence,unsupportedJunction,failed,tries,bridged,held,turnCreditsHeld,endpointHooks:prepared.endpointHooks,redundantReturns:prepared.redundantReturns,microReversals:prepared.microReversals}
+const equivalentFootways=roadEquivalentFootways(ids,roads);
+for(const id of equivalentFootways)ids.delete(id);
+const walkingLinks=j[2]==='walking'?evidenceBackedWalkingLinks(prepared.lines,ids,roads):[];
+return {ids,hits,direct:evidence,unsupportedJunction,equivalentFootways,walkingLinks,failed,tries,bridged,held,turnCreditsHeld,endpointHooks:prepared.endpointHooks,redundantReturns:prepared.redundantReturns,microReversals:prepared.microReversals}
 }
 async function advance(n){if(!data||busy)return;n=Math.min(data.journeys.length,Math.max(0,n));clearError();if(mode==='original'||n<=step){step=n;update();return}busy=true;controls();try{for(let i=step;i<n;i++){tell('Matching journey '+(i+1)+' of '+data.journeys.length+'…');await ensure(data.journeys[i]);let m=cache.get(i);if(!m){m=match(data.journeys[i]);cache.set(i,m);for(const id of m.ids){const r=roads[id];if(r.first===Infinity)r.first=i;else if(r.first!==i&&r.second===Infinity)r.second=i}}step=i+1;update();if(i%3===2)await new Promise(r=>setTimeout(r,0))}}catch(e){problem(e.message||String(e));stop()}finally{busy=false;update();if(!error.textContent||error.style.display==='none')tell('Ready · '+step+' / '+data.journeys.length+' journeys matched')}}
 function stroke(lines,color,width){if(!lines.length)return;ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();for(const [a,b] of lines){const p=map.latLngToContainerPoint([a[1],a[0]]),q=map.latLngToContainerPoint([b[1],b[0]]);ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y)}ctx.stroke()}
@@ -170,7 +246,7 @@ const box=map.getBounds(),inside=(a,b)=>Math.max(a[0],b[0])>=box.getWest()&&Math
 const old=[],fresh=[],repeat=[];
 if(mode==='center'){for(const r of roads){if(r.first>=step||!inside(r.p,r.q))continue;if(r.second<step)repeat.push([r.p,r.q]);else if(r.first===step-1)fresh.push([r.p,r.q]);else old.push([r.p,r.q])}}
 else{for(const s of data.segments){if(s[4]>=step||!inside([s[0],s[1]],[s[2],s[3]]))continue;const line=[[s[0],s[1]],[s[2],s[3]]];if(s[5]>=0&&s[5]<step)repeat.push(line);else old.push(line)}}
-stroke(old,'#151a21',3.5);if(mode==='original'&&step){for(const path of data.journeys[step-1][3])stroke(path.slice(1).map((p,i)=>[path[i],p]).filter(([a,b])=>inside(a,b)),'#ff4b55',4.4)}else stroke(fresh,'#ff4b55',4.4);stroke(repeat,'#16a34a',4.8);if(inspectMode&&mode==='center'&&selectedRoad>=0&&roads[selectedRoad])stroke([[roads[selectedRoad].p,roads[selectedRoad].q]],'#ffe066',9);
+stroke(old,'#151a21',3.5);if(mode==='original'&&step){for(const path of data.journeys[step-1][3])stroke(path.slice(1).map((p,i)=>[path[i],p]).filter(([a,b])=>inside(a,b)),'#ff4b55',4.4)}else stroke(fresh,'#ff4b55',4.4);stroke(repeat,'#16a34a',4.8);if(mode==='center'){for(let k=0;k<step;k++){const m=cache.get(k);if(m?.walkingLinks?.length)stroke(m.walkingLinks,k===step-1?'#ff4b55':'#151a21',3.7)}}if(inspectMode&&mode==='center'&&selectedRoad>=0&&roads[selectedRoad])stroke([[roads[selectedRoad].p,roads[selectedRoad].q]],'#ffe066',9);
 }
 function pointSegmentPixels(point,a,b){const p=map.latLngToContainerPoint([point.lat,point.lng]),v=map.latLngToContainerPoint([a[1],a[0]]),w=map.latLngToContainerPoint([b[1],b[0]]),dx=w.x-v.x,dy=w.y-v.y,t=Math.max(0,Math.min(1,((p.x-v.x)*dx+(p.y-v.y)*dy)/(dx*dx+dy*dy||1)));return Math.hypot(p.x-v.x-t*dx,p.y-v.y-t*dy)}
 function inspectWayEvidence(id,selectedJourney){
@@ -197,7 +273,7 @@ return {
 function examineRoad(evt){if(!inspectMode||!data||!step||mode!=='center')return;let best=-1,distance=25;for(let id=0;id<roads.length;id++){const r=roads[id];if(r.first>=step)continue;const d=pointSegmentPixels(evt.latlng,r.p,r.q);if(d<distance){best=id;distance=d}}if(best<0){$('inspectInfo').textContent='Tap directly on a coloured road or footpath section.';$('inspectPanel').style.display='block';return}selectedRoad=best;const r=roads[best],here=[(r.p[0]+r.q[0])/2,(r.p[1]+r.q[1])/2],m=cache.get(step-1),firstMatch=cache.get(r.first),direct=m?.hits?.get(best)||[],firstHits=firstMatch?.hits?.get(best)||[];const neighbours=roads.map((other,id)=>({other,id,d:metres(here,[(other.p[0]+other.q[0])/2,(other.p[1]+other.q[1])/2])})).filter(x=>x.id!==best&&x.d<=25).sort((a,b)=>a.d-b.d).slice(0,9).map(x=>({osmWay:x.other.group,road:x.other.name||x.other.kind,metresAway:Number(x.d.toFixed(1)),credited:x.other.first<step,creditedFirstJourney:x.other.first===Infinity?null:x.other.first+1}));selectedReport={laboratory:'roadprints-lab-junction-inspector-v2',journeySelected:step,journeyDate:data.journeys[step-1][0],wholeWay:inspectWayEvidence(best,step-1),reference:{osmWay:r.group,kind:r.kind,name:r.name,interval:r.index,start:r.p,end:r.q},credit:{firstJourney:r.first+1,repeatedByJourney:r.second===Infinity?null:r.second+1,source:direct.length?'direct sample':(m?.ids?.has(best)?'bounded same-way bridge':'credited by earlier journey'),currentJourneyDirectSamples:direct,firstJourneyDirectSamples:firstHits},nearbyReferenceWays:neighbours,notice:'Local selected way evidence includes private location points. Only share intentionally.'};$('inspectInfo').textContent='OSM way '+r.group+' · '+(r.name||r.kind)+'\nInterval '+r.index+' · first credited journey '+(r.first+1)+'\nSelected journey: '+(direct.length?direct.length+' direct samples':m?.ids?.has(best)?'coverage bridged from other intervals':'not newly credited')+'\nNearby ways: '+neighbours.map(n=>n.osmWay+' ('+n.road+', '+n.metresAway+'m)').join('; ')+'\nWay-wide evidence: '+selectedReport.wholeWay.firstJourneyDirectIntervals+' directly matched intervals / '+selectedReport.wholeWay.firstJourneyCreditedIntervals+' credited; '+selectedReport.wholeWay.firstJourneyDistinctSourceLegs.length+' unique source legs'+'\nFirst-credit reason: '+selectedReport.wholeWay.firstCreditReason+'\nCopy selected evidence for full bounded report.';$('inspectPanel').style.display='block';schedule()}
 function schedule(){if(drawPending)return;drawPending=true;requestAnimationFrame(()=>{drawPending=false;draw()})}
 function controls(){for(const id of ['back','next','seek','play','center','original'])$(id).disabled=!data||busy;$('back').disabled||=step===0;$('next').disabled||=!!data&&step===data.journeys.length}
-function update(){if(!data)return;seek.max=data.journeys.length;seek.value=step;$('count').textContent=step+' / '+data.journeys.length;if(step){const j=data.journeys[step-1];$('title').textContent=j[1];$('meta').textContent=j[0]+' · '+j[2]+' · journey '+step;const m=cache.get(step-1);$('detail').textContent=mode==='center'&&m?m.ids.size+' road/path intervals · '+m.unsupportedJunction.size+' junction singleton credits held · '+m.turnCreditsHeld+' turn-only samples held · '+m.bridged+' same-way gaps joined · '+m.endpointHooks+' endpoint hooks · '+m.redundantReturns+' redundant returns · '+m.microReversals+' tiny reversals · '+m.failed+' unmatched samples':'Original journey evidence preserved'}else{$('title').textContent='Starting point — no journeys yet';$('meta').textContent='Press Next to add your first journey'}controls();schedule()}
+function update(){if(!data)return;seek.max=data.journeys.length;seek.value=step;$('count').textContent=step+' / '+data.journeys.length;if(step){const j=data.journeys[step-1];$('title').textContent=j[1];$('meta').textContent=j[0]+' · '+j[2]+' · journey '+step;const m=cache.get(step-1);$('detail').textContent=mode==='center'&&m?m.ids.size+' road/path intervals · '+m.equivalentFootways.size+' road-adjacent path duplicates consolidated · '+m.walkingLinks.length+' source-backed micro-links (display only) · '+m.unsupportedJunction.size+' junction singleton credits held · '+m.turnCreditsHeld+' turn-only samples held · '+m.bridged+' same-way gaps joined · '+m.endpointHooks+' endpoint hooks · '+m.redundantReturns+' redundant returns · '+m.microReversals+' tiny reversals · '+m.failed+' unmatched samples':'Original journey evidence preserved'}else{$('title').textContent='Starting point — no journeys yet';$('meta').textContent='Press Next to add your first journey'}controls();schedule()}
 function focus(){if(!step||!data)return;const b=data.journeys[step-1][4];map.fitBounds([[b[1],b[0]],[b[3],b[2]]],{padding:[25,25],maxZoom:17,animate:false})}
 function stop(){if(timer){clearInterval(timer);timer=null;$('play').textContent='▶ Play'}}
 function openStore(){return new Promise((yes,no)=>{const request=indexedDB.open('roadprints-map-lab',1);request.onupgradeneeded=()=>request.result.createObjectStore('files');request.onsuccess=()=>yes(request.result);request.onerror=()=>no(request.error)})}
