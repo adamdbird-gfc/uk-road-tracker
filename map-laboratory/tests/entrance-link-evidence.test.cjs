@@ -25,4 +25,11 @@ assert.ok(multi.length>=1,'source-supported multi-leg connection is rendered');
 assert.ok(metres(multi[0][0],p(40,0))<.5,'red link touches the covered road centreline');
 assert.ok(metres(multi[multi.length-1][1],p(40,10))<.5,'red link touches frontage reference');
 assert.equal(infer([[p(40,0),p(40,22),p(40,35)]],ids,roads).length,0,'unsupported distant excursion is not drawn');
-console.log('PASS: short and multi-leg links snap to credited network, with no invented coverage');
+// An incoming source leg may run along an ALREADY COVERED roadway
+// before turning onto a newly traversed frontage path. The visual
+// connection must not redraw that pre-covered roadway in bright red.
+const alongside=infer([[p(0,0),p(30,0),p(40,0),p(40,10)]],ids,roads);
+assert.ok(alongside.some(([a,b])=>metres(a,p(40,0))<.5&&metres(b,p(40,10))<.5),'retain actual perpendicular entrance');
+assert.ok(alongside.every(([a,b])=>Math.abs(a[0]-b[0])*M<1),'never repaint previously covered along-road segments as a new visual link');
+assert.equal(ids.size,before,'display correction never adds new road credit');
+console.log('PASS: connection retained without redrawing previously credited road corridors');
