@@ -57,7 +57,7 @@ const before=path[i-1],tip=path[i],after=path[i+1],out=metres(before,tip);
 // from experimental cumulative credit only. Never suppress multi-point
 // visits, connecting paths, or longer out-and-back movements.
 if(i>=2&&i+2<path.length&&out>=4&&out<=20&&metres(before,after)<=2){
-const prev=xyz(before,path[i-2]),exc=xyz(tip,before),next=xyz(path[i+2],after);
+const prev=xyz(before,path[i-2]).map(x=>-x),exc=xyz(tip,before),next=xyz(path[i+2],after);
 const lp=Math.hypot(...prev),le=Math.hypot(...exc),ln=Math.hypot(...next);
 const dot=(a,b)=>((a[0]*b[0]+a[1]*b[1])/(Math.hypot(...a)*Math.hypot(...b)));
 if(lp>=30&&ln>=30&&le>=4&&Math.abs(dot(prev,exc))<=.42&&dot(prev,next)>=.82){
