@@ -218,12 +218,25 @@ for(const line of lines){
 }
 return links;
 }
+// A nearby footway interval must actually overlap the along-route segment.
+// Otherwise a sample passing the end of an angled path can paint a false nib.
+// Deliberately conservative: only reject when a long route leg lies entirely
+// beyond the same end of a short footway interval (including a small margin).
+function unsupportedEndpointFootway(a,b,ref){
+if(!new Set(['footway','path','cycleway','pedestrian','steps']).has(ref.kind))return false;
+if(metres(a,b)<18)return false;
+const v=xyz(ref.q,ref.p),start=xyz(a,ref.p),end=xyz(b,ref.p);
+const l=Math.hypot(...v);if(l<1)return false;
+const da=(start[0]*v[0]+start[1]*v[1])/l;
+const db=(end[0]*v[0]+end[1]*v[1])/l;
+return (da>l+3&&db>l+3)||(da< -3&&db< -3);
+}
 function match(j){
 const grid=new Map(),S=.00024,key=(x,y)=>Math.floor(x/S)+','+Math.floor(y/S),groups=new Map();
 roads.forEach((r,i)=>{const k=key((r.p[0]+r.q[0])/2,(r.p[1]+r.q[1])/2);if(!grid.has(k))grid.set(k,[]);grid.get(k).push(i);if(!groups.has(r.group))groups.set(r.group,[]);groups.get(r.group).push(i)});
 const evidence=new Set(),hits=new Map();let failed=0,tries=0,turnCreditsHeld=0;const prepared=prepareEvidence(j);
 for(const line of prepared.lines)for(let i=0;i+1<line.length;i++){const a=line[i],b=line[i+1],length=metres(a,b);if(length<2||length>700)continue;const n=Math.ceil(length/6),origin=[(a[0]+b[0])/2,(a[1]+b[1])/2],aa=xyz(a,origin),bb=xyz(b,origin),angle=Math.atan2(bb[1]-aa[1],bb[0]-aa[0]);
-for(let h=0;h<=n;h++){tries++;const t=h/n,p=[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t],gx=Math.floor(p[0]/S),gy=Math.floor(p[1]/S);let best=-1,score=1e9;for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++)for(const id of grid.get((gx+dx)+','+(gy+dy))||[]){const r=roads[id],ap=xyz(r.p,origin),bp=xyz(r.q,origin),pp=xyz(p,origin),distance=proj(ap,bp,pp);if(distance>15)continue;const heading=Math.atan2(bp[1]-ap[1],bp[0]-ap[0]),diff=Math.acos(Math.min(1,Math.abs(Math.cos(heading-angle))));if(diff>Math.PI/4)continue;const weight=distance+diff*6;if(weight<score){score=weight;best=id}}
+for(let h=0;h<=n;h++){tries++;const t=h/n,p=[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t],gx=Math.floor(p[0]/S),gy=Math.floor(p[1]/S);let best=-1,score=1e9;for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++)for(const id of grid.get((gx+dx)+','+(gy+dy))||[]){const r=roads[id],ap=xyz(r.p,origin),bp=xyz(r.q,origin),pp=xyz(p,origin),distance=proj(ap,bp,pp);if(distance>15||unsupportedEndpointFootway(a,b,r))continue;const heading=Math.atan2(bp[1]-ap[1],bp[0]-ap[0]),diff=Math.acos(Math.min(1,Math.abs(Math.cos(heading-angle))));if(diff>Math.PI/4)continue;const weight=distance+diff*6;if(weight<score){score=weight;best=id}}
 if(best<0)failed++;else if(h===n&&unsupportedTurnInterval(line,i,roads[best])){turnCreditsHeld++}else {evidence.add(best);let h=hits.get(best);if(!h){h=[];hits.set(best,h)}if(h.length<6)h.push({sourceSegment:i+1,sourcePoint:p.map(v=>Number(v.toFixed(7))),selectionScore:Number(score.toFixed(2))})}}}
 function excludedJunctionSingletons(roads,groups,evidence,hits){
 const unsupportedJunction=new Set();
