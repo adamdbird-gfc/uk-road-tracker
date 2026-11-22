@@ -47,3 +47,6 @@ jobs:
 
       - name: Check unsupported footway endcap evidence
         run: node map-laboratory/tests/footway-endcap.test.cjs
+
+      - name: Check walked-road centreline equivalence
+        run: node map-laboratory/tests/road-centreline-promotion.test.cjs
