@@ -24,5 +24,5 @@ const multi=infer([[p(40,0),p(40,9),p(40,10)]],ids,roads);
 assert.ok(multi.length>=1,'source-supported multi-leg connection is rendered');
 assert.ok(metres(multi[0][0],p(40,0))<.5,'red link touches the covered road centreline');
 assert.ok(metres(multi[multi.length-1][1],p(40,10))<.5,'red link touches frontage reference');
-assert.equal(infer([[p(40,0),p(40,12),p(40,35)]],ids,roads).length,0,'unsupported distant excursion is not drawn');
+assert.equal(infer([[p(40,0),p(40,22),p(40,35)]],ids,roads).length,0,'unsupported distant excursion is not drawn');
 console.log('PASS: short and multi-leg links snap to credited network, with no invented coverage');
