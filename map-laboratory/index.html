@@ -462,10 +462,10 @@ function comparePedestrianRoadCentrelines(lines,network,credited){
   const chosen=eligible[0]||null;
   if(chosen)bestByLeg.set(leg,chosen.way);
   else{
-   // No unrelated non-service road exists: keep a high-confidence service
-   // road for review only if it is a substantial, very close alignment.
-   const access=ranked.find(o=>o.kind==='service');
-   if(access&&access.length>=24&&access.offset<=2.5)bestByLeg.set(leg,access.way);
+   // A standalone service/access road is still a legitimate possible route,
+   // but parallelism alone cannot establish an *entered* access road.
+   // Keep it in the diagnostic candidates until a pedestrian-route entrance
+   // transition can be corroborated; never credit it in this shadow pilot.
   }
  }
  const corridorSupport=new Map();
