@@ -50,3 +50,6 @@ jobs:
 
       - name: Check walked-road centreline equivalence
         run: node map-laboratory/tests/road-centreline-promotion.test.cjs
+
+      - name: Check continuous route choice and retained real-path gaps
+        run: node map-laboratory/tests/continuity-path.test.cjs
