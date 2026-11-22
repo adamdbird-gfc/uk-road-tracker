@@ -62,9 +62,9 @@ def parse(name):
                      if 'RoadprintsTiming:' in line
                      and line.split('RoadprintsTiming:',1)[1].lstrip().startswith(tag+' ')), '')
     def val(line,key):
-        m=re.search(r'(?:^|\\s)'+re.escape(key)+r'=(\\d+)',line)
+        m=re.search(r'(?:^|\s)'+re.escape(key)+r'=(\d+)',line)
         return int(m.group(1)) if m else None
-    peak=[int(x) for line in lines for x in re.findall(r'sampled_heap_peak_mib=(\\d+)',line)]
+    peak=[int(x) for line in lines for x in re.findall(r'sampled_heap_peak_mib=(\d+)',line)]
     gc=last('map_gc_checkpoint')
     return {'ready':any('map_outcome=ready' in l for l in lines),
             'map_ready_ms':val(last('map_total'),'ms'),
