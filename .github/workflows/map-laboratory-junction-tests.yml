@@ -1,0 +1,31 @@
+name: Map Laboratory junction evidence tests
+on:
+  pull_request:
+    paths:
+      - 'map-laboratory/**'
+      - '.github/workflows/map-laboratory-junction-tests.yml'
+  push:
+    paths:
+      - 'map-laboratory/**'
+      - '.github/workflows/map-laboratory-junction-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  synthetic-evidence:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Confirm current laboratory script compiles
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const page = fs.readFileSync('map-laboratory/index.html','utf8');
+          const js = page.split('<script>')[1].split('</script>')[0];
+          new Function(js);
+          console.log('Lab JavaScript syntax OK');
+          NODE
+      - name: Check junction and short-path rules
+        run: node map-laboratory/tests/junction-evidence.test.cjs
