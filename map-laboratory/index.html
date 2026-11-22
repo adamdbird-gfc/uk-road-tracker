@@ -61,7 +61,23 @@ if(den<16)return false;
 const parallel=Math.abs((base[0]*dx+base[1]*dy)/(length*Math.sqrt(den)));
 return parallel>=.92&&proj(x,y,base)<=10;
 });
-if(supportedElsewhere){redundantReturns++;continue}
+if(supportedElsewhere){
+redundantReturns++;
+// A compact closed loop may have an approach and retreat within 8 m.
+// Excluding the distant redundant tip alone would leave an artificial
+// 8 m branch on an adjacent way at an intersection. Remove the whole
+// closed excursion only when both legs demonstrably return to the same
+// entry point and the tip was already independently classified redundant.
+if(i>=2&&i+2<path.length
+  &&metres(path[i-2],path[i+2])<=2
+  &&metres(path[i-1],path[i+1])<=2
+  &&metres(path[i-2],path[i-1])<=8
+  &&kept.length>=2){
+  kept.pop(); // short departure from the main corridor
+  i+=2;       // skip return and duplicate anchor
+}
+continue
+}
 }}
 kept.push(path[i]);
 }
