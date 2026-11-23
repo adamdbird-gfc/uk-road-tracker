@@ -44,6 +44,19 @@ assert(r.held.junctionResumed>0,'an actual endpoint-local mismatch was held then
 const stationDeparture=[[p(0,4),p(8,4),p(16,4),p(24,4),p(32,4),p(40,4),p(40,9),p(40,20),p(40,30),p(40,40)]];
 r=match({ids:new Set(),sources:new Map()},bendNetwork,stationDeparture);
 assert(![...r.added].some(id=>id>=7),'long pedestrian departure never extends road coverage');
+// Crowded urban junction: nine locally nearer short side-road references
+// must not eject the established, continuous public road from the sample
+// shortlist. These decoys are not connected to the surrounding main road.
+const crowded=build(12,8);
+for(let i=0;i<12;i++){
+ const y=3.1+i*.07;
+ crowded.push({p:p(24,y),q:p(32,y),kind:'residential',group:'unconnected decoy '+i,index:0});
+}
+r=match({ids:new Set(),sources:new Map()},crowded,[Array.from({length:13},(_,i)=>p(i*8,4))]);
+assert(r.held.continuityCandidatesRetained>0,'connected street is explicitly preserved beyond the local top-nine cutoff');
+assert(r.added.has(2)&&r.added.has(3)&&r.added.has(4)&&r.added.has(5),'continuous reference road survives short-lived closer junction candidates');
+assert(![...r.added].some(id=>id>=12),'unconnected dead-end alternatives not falsely credited');
+assert(r.held.alternativeStatesRetained>=0,'bounded alternative-state telemetry available');
 assert(page.includes('matchPedestrianConstrainedRoadRoute(baselineCanonical,roads,prepared.lines)'),'experimental pipeline uses route-level matching');
 assert(page.includes('const canonical=experimentalCorrection.canonical'),'canonical result is real route output');
 assert(page.includes('id="experimentalCoverage" aria-pressed="false"'),'experiment defaults off');

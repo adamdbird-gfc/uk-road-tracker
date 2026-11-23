@@ -785,7 +785,7 @@ function matchPedestrianConstrainedRoadRoute(baseline,network,sourceLines){
   }
   cached={network,grid,roads};matchPedestrianConstrainedRoadRoute._index=cached;
  }
- const {grid}=cached,added=new Set(),accepted=[],held={noRoad:0,short:0,ambiguous:0,disconnected:0,offRoad:0,junctionHeld:0,junctionResumed:0};
+ const {grid}=cached,added=new Set(),accepted=[],held={noRoad:0,short:0,ambiguous:0,disconnected:0,offRoad:0,junctionHeld:0,junctionResumed:0,continuityCandidatesRetained:0,alternativeStatesRetained:0};
  const adjacent=(a,b)=>{
   if(a===b)return true;
   const x=network[a],y=network[b];
@@ -833,7 +833,21 @@ function matchPedestrianConstrainedRoadRoute(baseline,network,sourceLines){
      choices.push({id,score:dist+(1-cos)*9});
     }
     choices.sort((a,b)=>a.score-b.score);
+    // Do not discard an established, correctly connected road merely
+    // because nine short, closer-but-disconnected references crowd a junction.
+    // Only extend the shortlist with candidates connected to sustained
+    // existing states, still subject to the original distance/heading gates.
     const candidates=choices.slice(0,9);
+    const candidateIds=new Set(candidates.map(c=>c.id));
+    const established=states.filter(state=>state.path.length>=3);
+    for(const choice of choices.slice(9)){
+     if(candidates.length>=18)break;
+     if(candidateIds.has(choice.id))continue;
+     if(established.some(state=>adjacent(state.id,choice.id))){
+      candidates.push(choice);candidateIds.add(choice.id);
+      held.continuityCandidatesRetained++;
+     }
+    }
     if(!candidates.length){
      held.noRoad++;
      const heldStates=[];
@@ -869,10 +883,20 @@ function matchPedestrianConstrainedRoadRoute(baseline,network,sourceLines){
     }
     const retained=[];
     for(const variants of bestById.values()){
-     variants.sort((a,b)=>(a.score+8)/a.path.length-(b.score+8)/b.path.length);
-     retained.push(...variants.slice(0,2));
+     // Keep both the strongest sustained route and a cheaper alternative;
+     // two states ranked only by local mean error can eliminate the only
+     // globally continuous road before the next junction sample arrives.
+     const byLength=[...variants].sort((a,b)=>b.path.length-a.path.length||a.score/a.path.length-b.score/b.path.length);
+     const byEvidence=[...variants].sort((a,b)=>(a.score+8)/a.path.length-(b.score+8)/b.path.length);
+     const selected=[];
+     for(const choice of [byLength[0],byEvidence[0],...byLength.slice(1),...byEvidence.slice(1)]){
+      if(!choice||selected.includes(choice)||selected.length>=4)continue;
+      if(selected.some(s=>s.start===choice.start&&s.path.length===choice.path.length&&s.score<=choice.score))continue;
+      selected.push(choice);
+     }
+     held.alternativeStatesRetained+=Math.max(0,selected.length-2);
+     retained.push(...selected);
     }
-    const kept=new Set(retained);
     for(const state of states){
      if(!retained.some(n=>n.path.length>state.path.length&&n.path[0]?.id===state.path[0]?.id&&n.start===state.start))examinePath(state);
     }
