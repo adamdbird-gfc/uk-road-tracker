@@ -34,7 +34,7 @@ assert.equal(wrong.added.size,0,'no geometric connection means no recoverable ju
 wrong=recover({ids:new Set([0,1,8]),sources:new Map()},road,[[p(0,4),p(8,4),p(16,4),p(24,4),p(32,4),p(40,4),p(48,4)]]);
 assert.equal(wrong.added.size,0,'no destination anchor means no credit');
 assert(html.includes('matchPedestrianConstrainedRoadRoute(baselineCanonical'),'strict A/B gate');
-assert(html.includes('const canonical=roadsideConsolidation.canonical'),'actual canonical renderer consumes correction');
+assert(html.includes('const canonical=networkGlue.canonical'),'actual canonical renderer consumes correction');
 assert(html.includes('crossWayJunctionRecovery:{added:'),'Inspector has attribution');
 assert(html.includes('id="experimentalCoverage" aria-pressed="false"'),'A/B OFF by default');
 console.log('PASS: cross-way anchored recovery, pub/station safety, GPS breaks, disconnected refs, no forced end, baseline intact');
