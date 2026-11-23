@@ -64,6 +64,6 @@ const noShortRoad=shortComplete.map(x=>({...x}));for(let i=0;i<5;i++)noShortRoad
 off=consolidate({...base,ids:new Set([...base.ids,singleId])},noShortRoad);
 assert(!off.suppressed.has(singleId),'short pavement not suppressed beside non-public service-road geometry');
 assert(page.includes('experimentalCorrection.enabled?consolidateExperimentalRoadsidePaths('),'operation gated to experimental mode only');
-assert(page.includes('const canonical=roadsideConsolidation.canonical'),'final canonical output uses reconciled coverage');
+assert(page.includes('const networkGlue=experimentalCorrection.enabled?recoverSourceBackedNetworkConnections(roadsideConsolidation.canonical,roads,prepared.lines)')&&page.includes('const canonical=networkGlue.canonical'),'final canonical output uses reconciled coverage');
 assert(page.includes('roadsideConsolidation:{suppressed:'),'Inspector explains suppression');
 console.log('PASS: redundant pavement removed, roads/station/park kept, absent road, short, ambiguous and service protected');

@@ -21,6 +21,6 @@ assert.equal(r.removedEdges,0,'invalid and nonexistent corrections ignored');
 assert(page.includes('androidMatchedEvidence=null'),'private debug does not survive archive replacement');
 assert(page.includes('showAndroidOverlay&&step'),'parity overlay is optional');
 assert(page.includes("stroke(visible,'#06c9ec',4.6)"),'the saved route has an unmistakable separate overlay');
-assert(page.includes('const canonical=roadsideConsolidation.canonical'),'existing coverage is independently derived');
-assert(page.includes('LAB r425')&&page.includes('>PR #425</a>'),'visible revision agrees with source');
+assert(page.includes('const networkGlue=experimentalCorrection.enabled?recoverSourceBackedNetworkConnections(')&&page.includes('const canonical=networkGlue.canonical'),'existing coverage is independently derived and then optionally joined');
+assert(page.includes('LAB r426')&&page.includes('>PR #426</a>'),'visible revision agrees with source');
 console.log('PASS: Android MapActivity saved-match extraction with corrections and separate non-crediting overlay');
