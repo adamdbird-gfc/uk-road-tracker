@@ -18,6 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Verify source-backed physical-network glue
+        run: node map-laboratory/tests/evidence-backed-network-glue.test.cjs
       - name: Verify off-centreline graph islands and spurs
         run: node map-laboratory/tests/off-centreline-graph-components.test.cjs
       - name: Verify short selected fragments from long pedestrian ways
