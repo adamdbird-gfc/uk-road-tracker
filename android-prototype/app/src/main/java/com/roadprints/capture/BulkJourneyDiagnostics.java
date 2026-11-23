@@ -103,7 +103,6 @@ final class BulkJourneyDiagnostics {
 
     private static JsonWriter writer(ZipOutputStream zip) {
         JsonWriter writer = new JsonWriter(new OutputStreamWriter(zip, StandardCharsets.UTF_8));
-        writer.setSerializeNulls(true);
         return writer;
     }
 
