@@ -21,6 +21,6 @@ A saved matched line supplies the sequence and the joins. Without saved match ge
 ## Owner acceptance
 
 1. Export the full ZIP and compare its journey count with the saved Journeys list. Keep the ZIP in local Downloads.
-2. Open the Lab and load the ZIP. Use **Find** with `2025-12-12 07:03:48` to find the original Journey 6 by start time. Its ordinal can differ in the full archive.
-3. Compare **Route-first** and **Existing interval engine** at Prince of Orange, Community Square, Wrotham Road and Civic Centre. Confirm the route crosses the square, stays connected and has no unsupported terminal nib. Use **Recorded lines** to see what came from Timeline.
+2. Open the Lab and load the ZIP. Use **Find** with the start time or ID of the journey you want to check. Its ordinal can differ in the full archive.
+3. Compare **Route-first** and **Existing interval engine** at the junctions and pedestrian crossing under review. Confirm the route crosses the square, stays connected and has no unsupported terminal nib. Use **Recorded lines** to see what came from Timeline.
 4. Open one saved driving, cycling and railway journey with match evidence if available. Any remaining split should correspond to a recorded or matched discontinuity the engine cannot substantiate.
