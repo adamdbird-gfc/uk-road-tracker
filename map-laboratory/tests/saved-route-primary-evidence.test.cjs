@@ -20,7 +20,7 @@ on.prepared.lines[0].push([8,8]);
 assert.equal(native.segments[0].length,2);
 assert.equal(raw.lines[0].length,3);
 assert(page.includes('experimentalRecovery&&j[2]===\'walking\''),'only experimental walking attribution may switch source');
-assert(page.includes('const originalPrepared=prepareEvidence(j),nativeMatch=androidEvidenceForJourney(j,androidMatchedEvidence)'),'verify identity first');
+assert(page.includes("nativeMatch=typeof androidMatchedEvidence!=='undefined'?androidEvidenceForJourney(j,androidMatchedEvidence):null"),'verify identity first when debug available');
 assert(page.includes('const prepared=coverageEvidence.prepared')||page.includes('prepared=coverageEvidence.prepared'),'normal matcher pipeline consumes selected source');
 assert(page.includes('matchPedestrianConstrainedRoadRoute(baselineCanonical,roads,prepared.lines)'),'route-level matcher uses selected primary evidence');
 assert(page.includes('coverageEvidence,androidRoadCorrespondence'),'provenance returned in diagnostics');
