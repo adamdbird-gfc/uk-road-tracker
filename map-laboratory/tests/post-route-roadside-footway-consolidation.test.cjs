@@ -29,6 +29,14 @@ assert.equal(off.suppressed.size,0,'equidistant competing physical roads remain 
 const nearbyService=network.map(x=>({...x}));for(let i=0;i<5;i++)nearbyService[i].kind='service';
 off=consolidate(base,nearbyService);
 assert.equal(off.suppressed.size,0,'service road alone cannot erase roadside pedestrian evidence');
+const dedicatedCycleway=network.concat(Array.from({length:5},(_,i)=>({p:p(i*8,5),q:p((i+1)*8,5),kind:'cycleway',group:'dedicated route',index:i})));
+const cycleIds=Array.from({length:5},(_,i)=>network.length+i);
+off=consolidate({...base,ids:new Set([...base.ids,...cycleIds])},dedicatedCycleway);
+assert(cycleIds.every(id=>off.canonical.ids.has(id)),'parallel dedicated cycleway is retained as its own infrastructure');
+const parkPath=network.concat(Array.from({length:5},(_,i)=>({p:p(i*8,6),q:p((i+1)*8,6),kind:'path',group:'separate greenway',index:i})));
+const parkIds=Array.from({length:5},(_,i)=>network.length+i);
+off=consolidate({...base,ids:new Set([...base.ids,...parkIds])},parkPath);
+assert(parkIds.every(id=>off.canonical.ids.has(id)),'parallel independent path is retained');
 assert(page.includes('experimentalCorrection.enabled?consolidateExperimentalRoadsidePaths('),'operation gated to experimental mode only');
 assert(page.includes('const canonical=roadsideConsolidation.canonical'),'final canonical output uses reconciled coverage');
 assert(page.includes('roadsideConsolidation:{suppressed:'),'Inspector explains suppression');
