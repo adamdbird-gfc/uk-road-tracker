@@ -18,6 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Verify visual endpoint continuity backed by recorded route
+        run: node map-laboratory/tests/source-backed-endpoint-render.test.cjs
       - name: Verify source-backed physical-network glue
         run: node map-laboratory/tests/evidence-backed-network-glue.test.cjs
       - name: Verify off-centreline graph islands and spurs
