@@ -95,3 +95,6 @@ jobs:
 
       - name: Verify road-first connected route A/B diagnostic
         run: node map-laboratory/tests/road-first-shadow.test.cjs
+
+      - name: Verify independent pedestrian-to-road candidate discovery
+        run: node map-laboratory/tests/independent-road-candidate-audit.test.cjs
