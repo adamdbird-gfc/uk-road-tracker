@@ -8,8 +8,8 @@ const proj=(a,b,p)=>{const v=[b[0]-a[0],b[1]-a[1]],d=v[0]*v[0]+v[1]*v[1],t=Math.
 const clean=new Function('metres','xyz','proj',page.slice(start,end)+';return suppressDanglingPedestrianSpurs')(metres,xyz,proj);
 const road=Array.from({length:8},(_,i)=>({p:p(i*8,0),q:p((i+1)*8,0),kind:'residential',group:'through',index:i}));
 const spur={p:p(24,0),q:p(24,12),kind:'footway',group:'pub spur',index:0};
-const path={p:p(64,0),q:p(70,15),kind:'footway',group:'station entrance',index:0};
-const net=[...road,spur,path];
+const entrance={p:p(64,0),q:p(70,15),kind:'footway',group:'station entrance',index:0};
+const net=[...road,spur,entrance];
 const base={ids:new Set(net.map((_,i)=>i)),sources:new Map(net.map((_,i)=>[i,'original-match'])),independentPaths:new Set([8,9]),suppressedParallelPaths:new Set()};
 const journey=[[p(0,0),p(64,0)]];
 let result=clean(base,net,journey);
