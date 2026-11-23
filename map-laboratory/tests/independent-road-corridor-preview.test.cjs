@@ -35,5 +35,5 @@ assert(html.includes('selectIndependentRoadCorridors(independentRoadCandidates,r
 assert(html.includes('id="independentRoads" aria-pressed="false"'),'dedicated visual control');
 assert(html.includes("stroke(lines,'#60a5fa',5)"),'independent blue overlay drawn separately');
 assert(html.includes('independentRoadPreview:{selected:'),'Inspector reports selected/held provenance');
-assert(html.includes('independentRoadPreview,experimentalCorrection,boundedCorridorRecovery,corridorResolution,'),'canonical and previews remain separate');
+assert(html.includes('independentRoadPreview,experimentalCorrection,boundedCorridorRecovery,crossWayJunctionRecovery,corridorResolution,'),'canonical and previews remain separate');
 console.log('PASS: independent public road, pub access rival, no GPS shortlist, distinct station, short spur, ambiguity, no credit');

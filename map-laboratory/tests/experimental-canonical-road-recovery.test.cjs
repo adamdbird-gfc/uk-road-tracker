@@ -29,7 +29,7 @@ assert.equal(stub.added.size,0,'short unsupported route not forced into coverage
 const parallelWrong=apply(baseline,{runs:[run]},network,[[p(0,6),p(16,6)]]);
 assert.equal(parallelWrong.added.size,0,'partial source segment cannot credit unsupported long run');
 assert(page.includes('experimentalRecovery&&j[2]'),'correction gated to walking');
-assert(page.includes('const canonical=boundedCorridorRecovery.canonical'),'correction and bounded bridge enter canonical coverage pipeline');
+assert(page.includes('const canonical=crossWayJunctionRecovery.canonical'),'correction and bounded bridge enter canonical coverage pipeline');
 assert(page.includes('return {ids:canonical.ids,'),'renderer consumes corrected canonical identifiers');
 assert(page.includes('resetAttribution();step=0;'),'A/B invalidates historical credit');
 assert(page.includes('<details id="advanced">'),'clutter tucked behind advanced disclosure');

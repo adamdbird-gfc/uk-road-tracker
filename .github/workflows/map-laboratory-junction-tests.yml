@@ -107,3 +107,6 @@ jobs:
 
       - name: Verify bounded same-way road corridor recovery
         run: node map-laboratory/tests/bounded-topology-corridor-recovery.test.cjs
+
+      - name: Verify cross-way topology junction recovery and safety
+        run: node map-laboratory/tests/cross-way-junction-recovery.test.cjs
