@@ -13,7 +13,7 @@ assert.equal(r.originalEdges,8);assert.equal(r.remainingEdges,8);
 assert.deepEqual(r.lines,[line(0,1,2,3),line(10,11,12),line(20,21,22),line(30,31)]);
 r=extract(make(source.processing_result.geojson.features,[1,4,7]));
 assert.equal(r.originalEdges,8);assert.equal(r.removedEdges,3);assert.equal(r.remainingEdges,5);
-assert.deepEqual(r.lines,[line(0,1),line(2,3),line(10,11),line(20,21)]);
+assert.deepEqual(r.lines,[line(0,1),line(2,3),line(10,11),line(20,21,22)]);
 r=extract(make([ls(0,1,2,3)],[0,1,2]));
 assert.deepEqual(r.lines,[],'all corrected-away edges must disappear');
 r=extract(make([ls(0,1,2,3)],[99,99,-2,'1']));
