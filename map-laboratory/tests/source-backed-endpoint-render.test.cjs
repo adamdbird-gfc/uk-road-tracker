@@ -72,7 +72,7 @@ assert.equal(result.links.length,0,'long unsupported reference gaps do not quali
 const joined=[network[0],{...network[1],p:p(10,0),q:p(27,1)}];
 result=link(base,joined,[[p(0),p(27,1)]]);
 assert.equal(result.links.length,0,'already touching accepted edges require no rendered bridge');
-assert(page.includes('const visualContinuity=experimentalCorrection.enabled?sourceBackedEndpointRenderLinks('),'OFF remains unchanged');
+assert(page.includes('const endpointVisual=experimentalCorrection.enabled?sourceBackedEndpointRenderLinks(')&&page.includes('const terminalVisual=experimentalCorrection.enabled?resolveTerminalVisualJunctions('),'OFF remains unchanged');
 assert(page.includes('stroke(connectors,\'#ff4b55\',3.2)'),'display-only links are rendered');
 assert(page.includes('LAB r432')&&page.includes('>PR #432</a>'));
 console.log('PASS: source-backed visual road-to-footway joins, no invented coverage, no-source/far/connected guards');
