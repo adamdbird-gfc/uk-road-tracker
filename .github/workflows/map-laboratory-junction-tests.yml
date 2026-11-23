@@ -18,6 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Verify short selected fragments from long pedestrian ways
+        run: node map-laboratory/tests/partial-long-way-roadside-footway.test.cjs
       - name: Verify bounded dangling pedestrian spur suppression
         run: node map-laboratory/tests/dangling-roadside-footway-spur.test.cjs
       - name: Verify saved Android route as experimental primary matching source
