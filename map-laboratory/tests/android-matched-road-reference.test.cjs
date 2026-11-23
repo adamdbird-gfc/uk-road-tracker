@@ -40,7 +40,7 @@ assert.equal(result.added.size,0,'reference ways alone are NOT proof of travelle
 assert.throws(()=>validate({format:'roadprints_journey_diagnostics'}),/complete/);
 assert(page.includes('androidEvidenceForJourney(j,androidMatchedEvidence)'),'current journey must match');
 assert(page.includes('consolidateExperimentalRoadsidePaths(androidRoadCorrespondence.canonical,roads)'),'road evidence enters final experimental coverage before footway normalisation');
-assert(page.includes('const canonical=roadsideConsolidation.canonical'),'actual canonical output used');
+assert(page.includes('const networkGlue=experimentalCorrection.enabled?recoverSourceBackedNetworkConnections(')&&page.includes('const canonical=networkGlue.canonical'),'actual canonical output used');
 assert(page.includes('LAB r426')&&page.includes('>PR #426</a>'),'screenshot identifies current experimental build');
 assert(page.includes("androidMatchedEvidence=null;"),'loading another archive clears private matched evidence');
 assert(page.includes("f.size>5_000_000"),'local debug input bounded');
