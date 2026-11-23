@@ -32,7 +32,33 @@ assert.equal(r.added.size,0,'ambiguous parallel OSM references held');
 const noEndpoint=roads.map(x=>({...x}));noEndpoint[2]={...noEndpoint[2],q:p(17,8)};
 r=glue(base,noEndpoint,[[p(8),p(17,8)]]);
 assert.equal(r.added.size,0,'one-ended pedestrian spur held, never extended');
+// Multiple missing OSM sections, with road/pedestrian endpoints offset
+// slightly from one another, should be bridged only with source evidence.
+const chainNet=[
+ {p:p(0),q:p(8),kind:'residential',group:'west',index:0},
+ {p:p(32),q:p(40),kind:'residential',group:'east',index:0},
+ {p:p(9.2),q:p(16.5),kind:'footway',group:'square-connection',index:0},
+ {p:p(16.5),q:p(24.4),kind:'footway',group:'square-connection',index:1},
+ {p:p(24.4),q:p(30.8),kind:'footway',group:'square-connection',index:2},
+ {p:p(9.2),q:p(9.2,7),kind:'footway',group:'wrong-branch',index:0}
+];
+const chainBase={ids:new Set([0,1]),sources:new Map([[0,'west'],[1,'east']]),independentPaths:new Set(),suppressedParallelPaths:new Set()};
+r=glue(chainBase,chainNet,[[p(0),p(40)]]);
+assert.deepEqual([...r.added].sort((a,b)=>a-b),[2,3,4],'source supported three-link passage joins offset road endpoints');
+assert.equal(r.diagnostics.bridgedPairs,1);
+assert(!r.added.has(5),'one-ended spur never extends a credited corridor');
+assert(chainBase.ids.size===2,'original credited network preserved');
+r=glue(chainBase,chainNet,[[p(0),p(8)]]);
+assert.equal(r.added.size,0,'missing source leg cannot justify three-link glue');
+const twoWays=chainNet.concat([
+ {p:p(9.2),q:p(16.5),kind:'path',group:'competing-square-path',index:0}
+]);
+r=glue(chainBase,twoWays,[[p(0),p(40)]]);
+assert.equal(r.added.size,0,'equally source-supported competing link holds the whole ambiguous chain');
+const noSecondAnchor=chainNet.map(x=>({...x}));noSecondAnchor[4]={...noSecondAnchor[4],q:p(29,10)};
+r=glue(chainBase,noSecondAnchor,[[p(0),p(40)]]);
+assert.equal(r.added.size,0,'do not extend chain towards a nearby destination without a second anchor');
 assert(page.includes('const networkGlue=experimentalCorrection.enabled?recoverSourceBackedNetworkConnections('),'experimental mode only');
 assert(page.includes('const canonical=networkGlue.canonical'),'glue becomes actual canonical coverage');
-assert(page.includes('LAB r426')&&page.includes('>PR #426</a>'),'visible build revision is consistent');
+assert(page.includes('LAB r427')&&page.includes('>PR #427</a>'),'visible build revision is consistent');
 console.log('PASS: source-backed bounded road/path glue, branch rejection, ambiguous alternatives and baseline invariance');
