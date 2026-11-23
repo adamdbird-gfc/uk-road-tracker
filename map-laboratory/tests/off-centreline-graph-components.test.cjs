@@ -49,5 +49,5 @@ assert(squareResult.held.bridgesDistinctRoads>=1,'connected two-road pedestrian 
 assert(squareResult.canonical.ids.has(0)&&squareResult.canonical.ids.has(9),'both credited road corridors unchanged');
 assert(page.includes('const graphFragmentCleanup=experimentalCorrection.enabled?suppressOffCentrelineGraphFragments('),'off mode protected');
 assert(page.includes('const canonical=roadsideConsolidation.canonical'),'final canonical coverage consumes cleanup');
-assert(page.includes('LAB r425')&&page.includes('>PR #425</a>'),'version clearly visible');
+assert(page.includes('LAB r426')&&page.includes('>PR #426</a>'),'version clearly visible');
 console.log('PASS: island/spur classification, centreline invariance, journey endpoints, crossing, cycleway, parks, and opt-in safety');
