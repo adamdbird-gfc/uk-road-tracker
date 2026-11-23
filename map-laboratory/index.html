@@ -1879,10 +1879,13 @@ function sourceBackedEndpointRenderLinks(canonical,roadNetwork,sourceLines){
    nodes.push({id,p,q,group:edge.group});
   }
  }
+ // Sparse source recordings can span long GPS legs; a short visual
+ // junction gap may lie inside one such leg or cross two consecutive legs.
+ // Never cross between separate source polylines or bridge a GPS discontinuity.
  const legs=[];
  for(const line of sourceLines)for(let i=1;i<line.length;i++){
   const a=line[i-1],b=line[i],length=metres(a,b);
-  if(length>=4&&length<=110)legs.push({a,b,length});
+  if(length>=4&&length<=350)legs.push({a,b,length,line,index:i-1});
  }
  const projection=(p,leg)=>{
   const v=xyz(leg.b,leg.a),w=xyz(p,leg.a),d=v[0]*v[0]+v[1]*v[1];
@@ -1922,10 +1925,33 @@ function sourceBackedEndpointRenderLinks(canonical,roadNetwork,sourceLines){
    const score=x.offset+y.offset+Math.abs(travel-gap)*.2;
    if(!best||score<best.score)best={score,leg,x,y};
   }
+  // A junction can fall on opposite sides of a recorded GPS vertex.
+  // Allow two ADJACENT, individually valid GPS legs from the SAME polyline.
+  // This supplies the actual intervening recorded vertex, not a shortcut
+  // across an unrelated road, branch, or unrecorded section.
+  for(const first of legs){
+   const second=legs.find(next=>next.line===first.line&&next.index===first.index+1);
+   if(!second||metres(first.b,second.a)>.5)continue;
+   const x=projection(a.p,first),y=projection(b.p,second);
+   const travel=(1-x.t)*first.length+y.t*second.length;
+   if(x.offset>5||y.offset>5||travel<1||travel>45||travel<gap*.6)continue;
+   if(metres(a.p,first.b)>45||metres(b.p,second.a)>45)continue;
+   const score=x.offset+y.offset+Math.abs(travel-gap)*.2+.15;
+   if(!best||score<best.score)best={score,leg:first,x,y,via:first.b};
+   // The source might traverse the adjacent pair in reverse relative to
+   // the endpoints selected from the unordered canonical network.
+   const rx=projection(b.p,first),ry=projection(a.p,second);
+   const reverseTravel=(1-rx.t)*first.length+ry.t*second.length;
+   if(rx.offset<=5&&ry.offset<=5&&reverseTravel>=gap*.6&&reverseTravel<=45){
+    const reverseScore=rx.offset+ry.offset+Math.abs(reverseTravel-gap)*.2+.15;
+    if(!best||reverseScore<best.score)best={score:reverseScore,leg:first,x:ry,y:rx,via:first.b};
+   }
+  }
   if(!best){held.noSource++;continue}
-  const {leg,x,y}=best;
+  const {x,y,via}=best;
   candidates.push({a,b,gap,score:best.score,
-   parts:[[a.p,x.pt],[x.pt,y.pt],[y.pt,b.p]].filter(([p,q])=>metres(p,q)>.4)});
+   parts:(via?[[a.p,x.pt],[x.pt,via],[via,y.pt],[y.pt,b.p]]:[[a.p,x.pt],[x.pt,y.pt],[y.pt,b.p]])
+    .filter(([p,q])=>metres(p,q)>.4)});
   }
  }
  const ranked=candidates.sort((a,b)=>a.score-b.score),claimed=new Set();
