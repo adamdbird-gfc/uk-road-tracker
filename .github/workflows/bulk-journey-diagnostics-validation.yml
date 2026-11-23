@@ -43,7 +43,15 @@ jobs:
       - name: Test diagnostics, backup and Map behavior
         working-directory: android-prototype
         run: |
-          gradle --no-daemon --stacktrace :app:testAcceptanceUnitTest \
+          # Robolectric reads the uncompressed national reference into the test JVM heap.
+          cat > "$RUNNER_TEMP/map-test-heap.gradle" <<'GRADLE'
+          allprojects {
+              tasks.withType(Test).configureEach {
+                  maxHeapSize = '3g'
+              }
+          }
+          GRADLE
+          gradle --no-daemon --stacktrace -I "$RUNNER_TEMP/map-test-heap.gradle" :app:testAcceptanceUnitTest \
             --tests '*BulkJourneyDiagnosticsTest' \
             --tests '*JourneyDebugExporterTest' \
             --tests '*RoadprintsBackupTest' \
