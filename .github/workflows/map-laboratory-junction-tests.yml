@@ -98,3 +98,6 @@ jobs:
 
       - name: Verify independent pedestrian-to-road candidate discovery
         run: node map-laboratory/tests/independent-road-candidate-audit.test.cjs
+
+      - name: Verify independent physical-road corridor selection and preview
+        run: node map-laboratory/tests/independent-road-corridor-preview.test.cjs
