@@ -7,6 +7,7 @@ assert(header.includes('id="labBuild"'),'revision appears directly in header abo
 assert(header.includes('LAB r417'),'loaded revision is unambiguous');
 assert(header.includes('23 Nov 2026'),'human-readable revision date is visible');
 assert(header.includes('pull/417'),'revision links to the exact change');
+assert(header.includes('>PR #417</a>'),'displayed PR number agrees with linked PR');
 assert(header.includes('Loaded page version'),'label does not claim GitHub Pages deployment freshness');
 assert(header.includes('aria-label="Laboratory code revision loaded in this browser"'),'revision accessible');
 const css=page.split('<style>')[1].split('</style>')[0];
