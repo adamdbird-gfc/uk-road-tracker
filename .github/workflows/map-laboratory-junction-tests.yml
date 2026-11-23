@@ -110,3 +110,6 @@ jobs:
 
       - name: Verify cross-way topology junction recovery and safety
         run: node map-laboratory/tests/cross-way-junction-recovery.test.cjs
+
+      - name: Verify pedestrian-conditioned physical-road route matching
+        run: node map-laboratory/tests/pedestrian-conditioned-road-route.test.cjs
