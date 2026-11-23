@@ -58,7 +58,7 @@ assert(r.added.has(2)&&r.added.has(3)&&r.added.has(4)&&r.added.has(5),'continuou
 assert(![...r.added].some(id=>id>=12),'unconnected dead-end alternatives not falsely credited');
 assert(r.held.alternativeStatesRetained>=0,'bounded alternative-state telemetry available');
 assert(page.includes('matchPedestrianConstrainedRoadRoute(baselineCanonical,roads,prepared.lines)'),'experimental pipeline uses route-level matching');
-assert(page.includes('const canonical=experimentalCorrection.canonical'),'canonical result is real route output');
+assert(page.includes('const canonical=roadsideConsolidation.canonical'),'canonical result is real route output');
 assert(page.includes('id="experimentalCoverage" aria-pressed="false"'),'experiment defaults off');
 assert(!page.includes('experimentalCorrection.enabled?recoverCrossWayRoadJunctions('),'legacy extra recovery chain not executed');
 console.log('PASS: anchored-free roadside alignment, cross-way connectivity, one-way independence, pub/station protection, ambiguity and archive safety');
