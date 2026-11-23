@@ -29,6 +29,10 @@ assert.equal(r.added.size,0,'equal parallel physical-road alternatives must rema
 const isolatedFoot=[{p:p(0,0),q:p(72,0),group:'foot-only',kind:'footway'}];
 r=match(baseline,isolatedFoot,source());
 assert.equal(r.added.size,0,'actual pedestrian-only movement never manufactures roads');
+const separateNetwork=[...build(9,0),...build(9,100).map(x=>({...x,p:p(x.p[0]*M,100),q:p(x.q[0]*M,100)}))];
+const separateSource=[...source(4),...source(104)];
+r=match({ids:new Set(),sources:new Map()},separateNetwork,separateSource);
+assert([...r.added].some(id=>id<9)&&[...r.added].some(id=>id>=9),'separate journeys in one source should not be considered competing same-span road routes');
 assert(page.includes('matchPedestrianConstrainedRoadRoute(baselineCanonical,roads,prepared.lines)'),'experimental pipeline uses route-level matching');
 assert(page.includes('const canonical=experimentalCorrection.canonical'),'canonical result is real route output');
 assert(page.includes('id="experimentalCoverage" aria-pressed="false"'),'experiment defaults off');
