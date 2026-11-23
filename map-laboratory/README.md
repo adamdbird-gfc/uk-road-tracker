@@ -2,7 +2,13 @@
 
 A mobile-first, static GitHub Pages-compatible laboratory for replaying accepted Roadprints journey geometry **without publishing the owner's private location history**.
 
-## Owner workflow
+## Bulk Android diagnostics ZIP
+
+Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, choose the ZIP to browse private, chronologically ordered journeys and switch between **Route-first**, **Existing interval engine**, and **Recorded lines**. References used for ZIP comparison come from the ZIP. Street map tiles start off and can be switched on for the session.
+
+See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
+
+## Legacy archive workflow
 1. Open a deployed `map-laboratory/` page over HTTPS on the Pixel 10.
 2. Download the separate private file `Roadprints-Lab-Private-Journeys.json.gz` provided outside GitHub.
 3. Tap **Choose journey file**, select the compressed JSON once. The browser stores it locally in IndexedDB.
@@ -11,7 +17,7 @@ A mobile-first, static GitHub Pages-compatible laboratory for replaying accepted
 
 ## Privacy
 - **NEVER commit** the Roadprints backup or a compressed journey bundle to this repository, GitHub Pages, release assets, diagnostics or CI logs.
-- The import is local via FileReader/File arrayBuffer; the compressed bytes persist in the user's browser IndexedDB for repeat visits.
+- Legacy import is local via File arrayBuffer; the compressed bytes persist in the user's browser IndexedDB for repeat visits.
 - The page requests *geographic bounding boxes only* from public OpenStreetMap Overpass services; these requests disclose the approximate area being examined, not the archive, times, or journey IDs.
 - OpenStreetMap background tile requests similarly reveal viewed locations. Avoid third-party location lookups if full offline privacy is required.
 - Clearing this site's browser storage removes the remembered imported dataset.
