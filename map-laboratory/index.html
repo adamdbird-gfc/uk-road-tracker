@@ -683,8 +683,17 @@ function recoverCrossWayRoadJunctions(canonical,network,sourceLines){
    else total+=len;
   }
   if(legs.length<2)continue;
+  // Fast geographic prefilter: only OSM references actually bordering the
+  // source line can enter this search. Avoid exhaustive projection checks
+  // against the entire UK archive for every journey.
+  const coords=legs.flatMap(leg=>[leg.a,leg.b]),pad=.00017;
+  const minX=Math.min(...coords.map(p=>p[0]))-pad,maxX=Math.max(...coords.map(p=>p[0]))+pad;
+  const minY=Math.min(...coords.map(p=>p[1]))-pad,maxY=Math.max(...coords.map(p=>p[1]))+pad;
   const evidence=new Map();
   for(const id of allowedIds){
+   const segment=network[id];
+   if(Math.max(segment.p[0],segment.q[0])<minX||Math.min(segment.p[0],segment.q[0])>maxX||
+      Math.max(segment.p[1],segment.q[1])<minY||Math.min(segment.p[1],segment.q[1])>maxY)continue;
    const r=network[id],mid=[(r.p[0]+r.q[0])/2,(r.p[1]+r.q[1])/2],v=xyz(r.q,r.p),vl=Math.hypot(...v);
    if(vl<2||vl>35)continue;
    let worst=0,sumProgress=0,usable=true;
