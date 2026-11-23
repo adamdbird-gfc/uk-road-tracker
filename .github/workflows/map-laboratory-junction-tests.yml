@@ -113,3 +113,6 @@ jobs:
 
       - name: Verify pedestrian-conditioned physical-road route matching
         run: node map-laboratory/tests/pedestrian-conditioned-road-route.test.cjs
+
+      - name: Verify post-route roadside pavement consolidation
+        run: node map-laboratory/tests/post-route-roadside-footway-consolidation.test.cjs
