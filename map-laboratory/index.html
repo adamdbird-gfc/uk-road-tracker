@@ -767,6 +767,125 @@ function recoverCrossWayRoadJunctions(canonical,network,sourceLines){
  for(const id of added)sources.set(id,'experimental-cross-way-road-junction');
  return {canonical:{...canonical,ids,sources},added,routes:accepted,held,experimental:true};
 }
+// Experimental pedestrian-conditioned PHYSICAL-ROAD route alignment.
+// Candidate roads follow the ordered walk, not a car route between endpoints.
+// OSM motor one-way metadata is deliberately not applied to attribution.
+// A gap/footpath ends a road-alignment run; no fabricated connecting edges.
+function matchPedestrianConstrainedRoadRoute(baseline,network,sourceLines){
+ const allowed=new Set(['trunk','primary','secondary','tertiary','unclassified','residential','living_street','road']);
+ const cell=.00018,key=(x,y)=>x+','+y;
+ let cached=matchPedestrianConstrainedRoadRoute._index;
+ if(!cached||cached.network!==network){
+  const grid=new Map(),roads=[];
+  for(let id=0;id<network.length;id++){
+   const r=network[id];if(!allowed.has(r?.kind))continue;
+   roads.push(id);
+   const mid=[(r.p[0]+r.q[0])/2,(r.p[1]+r.q[1])/2],k=key(Math.floor(mid[0]/cell),Math.floor(mid[1]/cell));
+   if(!grid.has(k))grid.set(k,[]);grid.get(k).push(id);
+  }
+  cached={network,grid,roads};matchPedestrianConstrainedRoadRoute._index=cached;
+ }
+ const {grid}=cached,added=new Set(),accepted=[],held={noRoad:0,short:0,ambiguous:0,disconnected:0,offRoad:0};
+ const adjacent=(a,b)=>{
+  if(a===b)return true;
+  const x=network[a],y=network[b];
+  return [x.p,x.q].some(p=>[y.p,y.q].some(q=>metres(p,q)<=1.5));
+ };
+ const tracks=[];
+ function examinePath(state){
+  if(!state||state.path.length<6)return;
+  const ids=[...new Set(state.path.map(p=>p.id))];
+  if(ids.length<3||state.end-state.start<5){held.short++;return}
+  const length=state.distance;
+  if(length<25)return;
+  const avg=state.score/state.path.length;
+  tracks.push({...state,ids,length,averageScore:avg});
+ }
+ for(const line of sourceLines){
+  if(line.length<2)continue;
+  const batches=[];let batch=[];
+  for(let j=0;j+1<line.length;j++){
+   const a=line[j],b=line[j+1],d=metres(a,b);
+   if(d<2)continue;
+   if(d>120){if(batch.length)batches.push(batch);batch=[];continue}
+   const n=Math.ceil(d/5),vec=xyz(b,a),vlen=Math.hypot(...vec);
+   for(let h=0;h<n;h++){
+    const t=h/n,pt=[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];
+    batch.push({pt,vec,vlen});
+   }
+  }
+  if(batch.length)batches.push(batch);
+  for(const samples of batches){
+   let states=[];
+   for(let i=0;i<samples.length;i++){
+    const sample=samples[i],cx=Math.floor(sample.pt[0]/cell),cy=Math.floor(sample.pt[1]/cell),near=new Set();
+    for(let dx=-2;dx<=2;dx++)for(let dy=-2;dy<=2;dy++)for(const id of grid.get(key(cx+dx,cy+dy))||[])near.add(id);
+    const choices=[];
+    for(const id of near){
+     const r=network[id],v=xyz(r.q,r.p),len=Math.hypot(...v);
+     if(len<2)continue;
+     const point=xyz(sample.pt,r.p),dist=proj([0,0],v,point);
+     if(dist>10.5)continue;
+     const cos=Math.abs((v[0]*sample.vec[0]+v[1]*sample.vec[1])/(len*sample.vlen||1));
+     if(cos<.55)continue;
+     choices.push({id,score:dist+(1-cos)*9});
+    }
+    choices.sort((a,b)=>a.score-b.score);
+    const candidates=choices.slice(0,9);
+    if(!candidates.length){held.noRoad++;for(const state of states)examinePath(state);states=[];continue}
+    const next=[];
+    for(const c of candidates){
+     // A fresh roadside corridor may begin anywhere along a walk; no
+     // reliance on previously credited road anchors.
+     next.push({id:c.id,start:i,end:i,score:c.score,path:[{id:c.id,at:i}],distance:0});
+     for(const prev of states){
+      if(!adjacent(prev.id,c.id))continue;
+      next.push({id:c.id,start:prev.start,end:i,
+       score:prev.score+c.score+(prev.id===c.id?0:.55),
+       path:[...prev.path,{id:c.id,at:i}],distance:prev.distance+5});
+     }
+    }
+    const bestById=new Map();
+    for(const n of next){
+     if(!bestById.has(n.id))bestById.set(n.id,[]);
+     bestById.get(n.id).push(n);
+    }
+    const retained=[];
+    for(const variants of bestById.values()){
+     variants.sort((a,b)=>(b.end-b.start)-(a.end-a.start)||a.score/(a.path.length||1)-b.score/(b.path.length||1));
+     retained.push(...variants.slice(0,2));
+    }
+    const kept=new Set(retained);
+    for(const state of states){
+     if(!retained.some(n=>n.path.length>state.path.length&&n.path[0]?.id===state.path[0]?.id&&n.start===state.start))examinePath(state);
+    }
+    states=retained;
+   }
+   for(const state of states)examinePath(state);
+  }
+ }
+ // Compare WHOLE recorded-route windows, not independently closest
+ // road fragments. Reject a near-equal but topologically different street.
+ tracks.sort((a,b)=>b.length-a.length||a.averageScore-b.averageScore);
+ const chosen=[];
+ for(const track of tracks){
+  if(track.averageScore>12)continue;
+  const similar=tracks.filter(other=>other!==track&&
+   Math.abs(other.start-track.start)<=2&&Math.abs(other.end-track.end)<=2&&
+   other.length>=track.length*.9&&
+   other.ids.filter(id=>track.ids.includes(id)).length/Math.max(1,Math.min(other.ids.length,track.ids.length))<.7);
+  if(similar.some(other=>other.averageScore<=track.averageScore+1.3)){held.ambiguous++;continue}
+  // Do not reuse the same source sample window to credit divergent streets.
+  if(chosen.some(other=>Math.max(track.start,other.start)<=Math.min(track.end,other.end)&&
+   other.ids.some(id=>track.ids.includes(id))))continue;
+  chosen.push(track);
+  for(const id of track.ids)if(!baseline.ids.has(id))added.add(id);
+ }
+ const ids=new Set([...baseline.ids,...added]),sources=new Map(baseline.sources);
+ for(const id of added)sources.set(id,'experimental-pedestrian-constrained-road-route');
+ return {canonical:{...baseline,ids,sources},added,runs:chosen.map(x=>({ids:x.ids,span:[x.start,x.end],length:x.length,averageScore:Number(x.averageScore.toFixed(2))})),
+  candidateRuns:tracks.length,held,baselineCount:baseline.ids.size,correctedCount:ids.size,enabled:true,experimental:true};
+}
 // Read-only corridor correspondence from consecutive selected OSM pedestrian
 // reference intervals. Selected sets do not encode travel time/order: contiguous
 // way indices provide structural continuity, NOT proof of traversal sequence.
@@ -1334,10 +1453,10 @@ const pedestrianRoadPreview=j[2]==='walking'?comparePedestrianRoadCentrelines(pr
 const footwayRoadEvidence=j[2]==='walking'?matchedFootwayRoadEvidence(evidence,roads,pedestrianRoadPreview.additions):{footwayBacked:new Set(),rawOnly:new Set(),support:new Map(),matchedFootwayIntervals:0,previewOnly:true};
 const independentRoadCandidates=j[2]==='walking'?auditRoadCorridorCandidates(evidence,roads,candidateRefs):{candidates:new Map(),held:new Map(),assessed:0,selectedFootways:0,outsideGpsShortlist:0,serviceRoadAlternatives:0,previewOnly:true};
 const independentRoadPreview=j[2]==='walking'?selectIndependentRoadCorridors(independentRoadCandidates,roads):{selected:new Set(),runs:[],held:new Map(),alternatives:[],candidateRuns:0,missingFromGps:0,previewOnly:true};
-const experimentalCorrection=typeof experimentalRecovery!=='undefined'&&experimentalRecovery&&j[2]==='walking'?recoverCanonicalRoadCorridors(baselineCanonical,independentRoadPreview,roads,prepared.lines):{canonical:baselineCanonical,added:new Set(),held:{},baselineCount:baselineCanonical.ids.size,correctedCount:baselineCanonical.ids.size,enabled:false,experimental:true};
-const boundedCorridorRecovery=experimentalCorrection.enabled?recoverAnchoredRoadCorridorGaps(experimentalCorrection.canonical,roads,prepared.lines):{canonical:experimentalCorrection.canonical,added:new Set(),runs:[],held:{},experimental:false};
-const crossWayJunctionRecovery=experimentalCorrection.enabled?recoverCrossWayRoadJunctions(boundedCorridorRecovery.canonical,roads,prepared.lines):{canonical:boundedCorridorRecovery.canonical,added:new Set(),routes:[],held:{},experimental:false};
-const canonical=crossWayJunctionRecovery.canonical;
+const experimentalCorrection=typeof experimentalRecovery!=='undefined'&&experimentalRecovery&&j[2]==='walking'?matchPedestrianConstrainedRoadRoute(baselineCanonical,roads,prepared.lines):{canonical:baselineCanonical,added:new Set(),runs:[],held:{},baselineCount:baselineCanonical.ids.size,correctedCount:baselineCanonical.ids.size,enabled:false,experimental:true};
+const boundedCorridorRecovery={canonical:experimentalCorrection.canonical,added:new Set(),runs:[],held:{},experimental:false};
+const crossWayJunctionRecovery={canonical:experimentalCorrection.canonical,added:new Set(),routes:[],held:{},experimental:false};
+const canonical=experimentalCorrection.canonical;
 const corridorResolution=j[2]==='walking'?resolvePedestrianRoadCorridors(evidence,roads,footwayRoadEvidence):{accepted:new Set(),ambiguous:new Set(),runs:[],held:[],previewOnly:true};
 const orderedCorridorSupport=j[2]==='walking'?chronologicalFootwaySupport(selectedFootwaySequences,roads,corridorResolution):{supported:new Set(),held:new Set(),orderedChains:0,previewOnly:true};
 const connectedRouteEvidence={runs:connectedShadows.flatMap(x=>x.runs),supported:new Set(connectedShadows.flatMap(x=>[...x.supported])),breaks:connectedShadows.reduce((n,x)=>n+x.breaks,0),unresolved:connectedShadows.reduce((n,x)=>n+x.unresolved,0),previewOnly:true};
@@ -1399,7 +1518,7 @@ return {
 function examineRoad(evt){if(!inspectMode||!data||!step||mode!=='center')return;let best=-1,distance=25;const candidateMatch=cache.get(step-1);if(gapMode){for(const id of candidateMatch?.candidateRefs||[]){if(candidateMatch.ids.has(id))continue;const r=roads[id];if(!isolated&&r.first<step)continue;const d=pointSegmentPixels(evt.latlng,r.p,r.q);if(d<distance){best=id;distance=d}}}else for(let id=0;id<roads.length;id++){const r=roads[id];const d=pointSegmentPixels(evt.latlng,r.p,r.q);if(d<distance){best=id;distance=d}}if(best<0){$('inspectInfo').textContent=gapMode?'Tap an amber highlighted candidate; no candidate is within 25 pixels.':'Tap a road or path reference, including an uncredited gap.';$('inspectPanel').style.display='block';return}selectedRoad=best;const r=roads[best],here=[(r.p[0]+r.q[0])/2,(r.p[1]+r.q[1])/2],m=cache.get(step-1),firstMatch=cache.get(r.first),direct=m?.hits?.get(best)||[],firstHits=firstMatch?.hits?.get(best)||[];const neighbours=roads.map((other,id)=>({other,id,d:metres(here,[(other.p[0]+other.q[0])/2,(other.p[1]+other.q[1])/2])})).filter(x=>x.id!==best&&x.d<=25).sort((a,b)=>a.d-b.d).slice(0,9).map(x=>({osmWay:x.other.group,road:x.other.name||x.other.kind,metresAway:Number(x.d.toFixed(1)),credited:x.other.first<step,creditedFirstJourney:x.other.first===Infinity?null:x.other.first+1}));selectedReport={laboratory:'roadprints-lab-junction-inspector-v3',viewScope:isolated?'isolated-journey-no-history':'cumulative',journeySelected:step,journeyDate:data.journeys[step-1][0],wholeWay:inspectWayEvidence(best,step-1),reference:{osmWay:r.group,kind:r.kind,name:r.name,interval:r.index,start:r.p,end:r.q},coverageStage:m?.coverageTrace?.stageOf(best)||'not-replayed',crossWayJunctionRecovery:{added:m?.crossWayJunctionRecovery?.added.has(best)||false,recovered:m?.crossWayJunctionRecovery?.added.size||0,held:m?.crossWayJunctionRecovery?.held||{}},boundedCorridorRecovery:{added:m?.boundedCorridorRecovery?.added.has(best)||false,recovered:m?.boundedCorridorRecovery?.added.size||0,held:m?.boundedCorridorRecovery?.held||{},runs:m?.boundedCorridorRecovery?.runs||[]},experimentalCoverage:{enabled:m?.experimentalCorrection?.enabled||false,added:m?.experimentalCorrection?.added.has(best)||false,addedIntervals:m?.experimentalCorrection?.added.size||0,held:m?.experimentalCorrection?.held||{},baselineIntervals:m?.experimentalCorrection?.baselineCount||0,experimentalIntervals:m?.experimentalCorrection?.correctedCount||0},independentRoadPreview:{selected:m?.independentRoadPreview?.selected.has(best)||false,heldReason:m?.independentRoadPreview?.held.get(best)||null,candidateRuns:m?.independentRoadPreview?.candidateRuns||0,missingFromGps:m?.independentRoadPreview?.missingFromGps||0,previewOnly:true},independentRoadCandidateAudit:{candidate:m?.independentRoadCandidates?.candidates.get(best)||null,held:m?.independentRoadCandidates?.held.has(best)||false,assessed:m?.independentRoadCandidates?.assessed||0,outsideGpsShortlist:m?.independentRoadCandidates?.outsideGpsShortlist||0,serviceRoadAlternatives:m?.independentRoadCandidates?.serviceRoadAlternatives||0,previewOnly:true},corridorCorrespondence:{roadFirstDiagnostic:{supported:m?.roadFirstRouteEvidence?.supported.has(best)||false,roadSupportedProbes:m?.roadFirstRouteEvidence?.roadSupportedProbes||0,previewOnly:true},connectedRouteDiagnostic:{supported:m?.connectedRouteEvidence?.supported.has(best)||false,runCount:(m?.connectedRouteEvidence?.runs||[]).filter(run=>run.ids.includes(best)).length,disconnectedBreaks:m?.connectedRouteEvidence?.breaks||0,previewOnly:true},chronologicallySupported:m?.orderedCorridorSupport?.supported.has(best)||false,chronologicallyHeld:m?.orderedCorridorSupport?.held.has(best)||false,orderedChains:m?.orderedCorridorSupport?.orderedChains||0,supported:m?.corridorResolution?.accepted.has(best)||false,ambiguous:m?.corridorResolution?.ambiguous.has(best)||false,runs:(m?.corridorResolution?.runs||[]).filter(run=>run.roadIds.includes(best)).map(run=>({footway:run.footway,road:run.road,intervals:run.roadIds.length,sourceFootwayIntervals:run.footIds.length,lengthMetres:run.length,offsetSpreadMetres:run.offsetSpread,eligible:run.eligible,reason:run.reason})),previewOnly:true},matchedFootwayEvidence:{supportsProposal:m?.footwayRoadEvidence?.footwayBacked.has(best)||false,sourcePathOnly:m?.footwayRoadEvidence?.rawOnly.has(best)||false,matchedFootway:m?.footwayRoadEvidence?.support.get(best)?.footway||null,lateralOffset:m?.footwayRoadEvidence?.support.get(best)?.lateral??null,previewOnly:true},pedestrianRoadPreview:{proposed:m?.pedestrianRoadPreview?.additions.has(best)||false,alreadyCredited:m?.pedestrianRoadPreview?.alreadyCredited.has(best)||false,weakEvidence:m?.pedestrianRoadPreview?.weak.has(best)||false,heldAccess:m?.pedestrianRoadPreview?.heldAccess.has(best)||false,heldAsCompetitor:m?.pedestrianRoadPreview?.discardedCompetitors.has(best)||false,sourceLeg:m?.pedestrianRoadPreview?.candidates.get(best)?.leg??null,offsetMetres:m?.pedestrianRoadPreview?.candidates.has(best)?Number(m.pedestrianRoadPreview.candidates.get(best).offset.toFixed(2)):null,previewOnly:true},credit:{firstJourney:r.first===Infinity?null:r.first+1,repeatedByJourney:r.second===Infinity?null:r.second+1,source:direct.length?'direct sample':(m?.ids?.has(best)?'bounded same-way bridge':r.first<step?'credited by earlier journey':'not credited'),currentJourneyDirectSamples:direct,firstJourneyDirectSamples:firstHits},nearbyReferenceWays:neighbours,notice:'Local selected way evidence includes private location points. Only share intentionally.'};$('inspectInfo').textContent='OSM way '+r.group+' · '+(r.name||r.kind)+'\nInterval '+r.index+' · first credited journey '+(r.first===Infinity?'never':r.first+1)+'\nCoverage stage: '+(m?.coverageTrace?.stageOf(best)||'not-replayed')+'\nPedestrian → road shadow: '+(m?.pedestrianRoadPreview?.additions.has(best)?'proposed road centreline (NOT credited)':m?.pedestrianRoadPreview?.alreadyCredited.has(best)?'same road already credited':m?.pedestrianRoadPreview?.weak.has(best)?'weak parallel evidence (not proposed)':m?.pedestrianRoadPreview?.heldAccess.has(best)?'access-road alternative held (not credited)':m?.pedestrianRoadPreview?.discardedCompetitors.has(best)?'competing corridor not selected':'no supported parallel evidence')+'\nSelected journey: '+(direct.length?direct.length+' direct samples':m?.ids?.has(best)?'coverage bridged from other intervals':'not newly credited')+'\nNearby ways: '+neighbours.map(n=>n.osmWay+' ('+n.road+', '+n.metresAway+'m)').join('; ')+'\nWay-wide evidence: '+selectedReport.wholeWay.firstJourneyDirectIntervals+' directly matched intervals / '+selectedReport.wholeWay.firstJourneyCreditedIntervals+' credited; '+selectedReport.wholeWay.firstJourneyDistinctSourceLegs.length+' unique source legs'+'\nFirst-credit reason: '+selectedReport.wholeWay.firstCreditReason+'\nCopy selected evidence for full bounded report.';$('inspectPanel').style.display='block';schedule()}
 function schedule(){if(drawPending)return;drawPending=true;requestAnimationFrame(()=>{drawPending=false;draw()})}
 function controls(){for(const id of ['back','next','seek','play','center','original','promotion','journeyNumber','gapMode','shadowRoads','connectedShadow','roadFirstShadow','independentRoads','experimentalCoverage','replayAll'])$(id).disabled=!data||busy;$('back').disabled||=step===0;$('next').disabled||=!!data&&step===data.journeys.length}
-function update(){if(!data)return;$('newCoverageLabel').textContent=isolated?'Matched (isolated; not cumulative new)':'Current new';$('journeyNumber').max=data.journeys.length;$('journeyNumber').value=step||'';$('replayAll').hidden=!isolated;$('jumpNotice').textContent=isolated?'Single-journey view: red is matched geometry only, NOT new cumulative coverage. Earlier journeys were not replayed.':'Sequential cumulative replay: black and green reflect earlier journeys.';seek.max=data.journeys.length;seek.value=step;$('count').textContent=step+' / '+data.journeys.length;if(step){const j=data.journeys[step-1];$('title').textContent=j[1];$('meta').textContent=j[0]+' · '+j[2]+' · journey '+step;const m=cache.get(step-1);$('detail').textContent=mode==='center'&&m?m.ids.size+' canonical road/path intervals · '+m.experimentalCorrection.added.size+' experimental road intervals added · '+m.boundedCorridorRecovery.added.size+' anchored corridor intervals · '+m.crossWayJunctionRecovery.added.size+' cross-way junction intervals recovered (baseline '+m.experimentalCorrection.baselineCount+') · '+m.independentRoadPreview.selected.size+' selected physical-road preview intervals (NOT credited) · '+m.independentRoadCandidates.assessed+' independently sourced road candidates ('+m.independentRoadCandidates.outsideGpsShortlist+' absent from GPS candidates; audit only) · '+m.pedestrianRoadPreview.additions.size+' independently inferred road intervals (preview only) · '+m.footwayRoadEvidence.footwayBacked.size+' road proposals backed by selected pedestrian way · '+m.footwayRoadEvidence.rawOnly.size+' supported by archive geometry alone · '+m.footwayRoadEvidence.matchedFootwayIntervals+' directly selected pedestrian intervals · '+m.pedestrianRoadPreview.alreadyCredited.size+' preview intervals already credited · '+m.pedestrianRoadPreview.weak.size+' tentative road intervals excluded from preview · '+m.pedestrianRoadPreview.heldAccess.size+' access-road alternatives held · '+m.pedestrianRoadPreview.discardedCompetitors.size+' competing road alternatives held · '+m.coverageTrace.directNotCredited+' initially selected intervals not separately credited · '+(m.coverageTrace.classified['parallel-pavement-consolidated']||0)+' consolidated selected pavements · '+(m.coverageTrace.classified['confidence-rule-held']||0)+' confidence-held selected intervals · '+m.canonical.independentPaths.size+' independent path intervals · '+m.gapRepair.added.size+' source-verified short road gaps recovered · '+m.connectivityImprovement+' components joined by gap recovery · '+m.gapRepair.diagnostics.localLegChecks+' local source-leg checks · '+m.canonicalContinuity.components+' final network components (diagnostic) · '+m.canonicalContinuity.unconnectedEndpoints+' unjoined section endpoints · '+m.equivalentFootways.size+' roadside duplicates consolidated · '+(promoteRoads?'promotion ON':'promotion OFF')+' · '+m.roadPromotions.promoted.size+' physical road intervals promoted · '+m.walkingLinks.length+' independent-corridor links (display only) · '+m.parallelLinksHeld+' redundant parallel links excluded · '+m.unsupportedJunction.size+' junction singleton credits held · '+m.unsupportedFootEnds.size+' unsupported footway endcaps held · '+m.turnCreditsHeld+' turn-only samples held · '+m.bridged+' same-way gaps joined · '+m.continuitySwitchesHeld+' nearest-point choices revised for continuity · '+m.preselectedRoadCorridors+' road-centreline choices preserved before sequence matching · '+m.disconnectedTransitions+' disconnected reference transitions · '+m.endpointHooks+' endpoint hooks · '+m.redundantReturns+' redundant returns · '+m.microReversals+' tiny reversals · '+m.failed+' unmatched samples':'Original journey evidence preserved'}else{$('title').textContent='Starting point — no journeys yet';$('meta').textContent='Press Next to add your first journey'}controls();schedule()}
+function update(){if(!data)return;$('newCoverageLabel').textContent=isolated?'Matched (isolated; not cumulative new)':'Current new';$('journeyNumber').max=data.journeys.length;$('journeyNumber').value=step||'';$('replayAll').hidden=!isolated;$('jumpNotice').textContent=isolated?'Single-journey view: red is matched geometry only, NOT new cumulative coverage. Earlier journeys were not replayed.':'Sequential cumulative replay: black and green reflect earlier journeys.';seek.max=data.journeys.length;seek.value=step;$('count').textContent=step+' / '+data.journeys.length;if(step){const j=data.journeys[step-1];$('title').textContent=j[1];$('meta').textContent=j[0]+' · '+j[2]+' · journey '+step;const m=cache.get(step-1);$('detail').textContent=mode==='center'&&m?m.ids.size+' canonical road/path intervals · '+m.experimentalCorrection.added.size+' pedestrian-conditioned road intervals added · '+m.experimentalCorrection.runs.length+' aligned road runs (baseline '+m.experimentalCorrection.baselineCount+') · '+m.independentRoadPreview.selected.size+' selected physical-road preview intervals (NOT credited) · '+m.independentRoadCandidates.assessed+' independently sourced road candidates ('+m.independentRoadCandidates.outsideGpsShortlist+' absent from GPS candidates; audit only) · '+m.pedestrianRoadPreview.additions.size+' independently inferred road intervals (preview only) · '+m.footwayRoadEvidence.footwayBacked.size+' road proposals backed by selected pedestrian way · '+m.footwayRoadEvidence.rawOnly.size+' supported by archive geometry alone · '+m.footwayRoadEvidence.matchedFootwayIntervals+' directly selected pedestrian intervals · '+m.pedestrianRoadPreview.alreadyCredited.size+' preview intervals already credited · '+m.pedestrianRoadPreview.weak.size+' tentative road intervals excluded from preview · '+m.pedestrianRoadPreview.heldAccess.size+' access-road alternatives held · '+m.pedestrianRoadPreview.discardedCompetitors.size+' competing road alternatives held · '+m.coverageTrace.directNotCredited+' initially selected intervals not separately credited · '+(m.coverageTrace.classified['parallel-pavement-consolidated']||0)+' consolidated selected pavements · '+(m.coverageTrace.classified['confidence-rule-held']||0)+' confidence-held selected intervals · '+m.canonical.independentPaths.size+' independent path intervals · '+m.gapRepair.added.size+' source-verified short road gaps recovered · '+m.connectivityImprovement+' components joined by gap recovery · '+m.gapRepair.diagnostics.localLegChecks+' local source-leg checks · '+m.canonicalContinuity.components+' final network components (diagnostic) · '+m.canonicalContinuity.unconnectedEndpoints+' unjoined section endpoints · '+m.equivalentFootways.size+' roadside duplicates consolidated · '+(promoteRoads?'promotion ON':'promotion OFF')+' · '+m.roadPromotions.promoted.size+' physical road intervals promoted · '+m.walkingLinks.length+' independent-corridor links (display only) · '+m.parallelLinksHeld+' redundant parallel links excluded · '+m.unsupportedJunction.size+' junction singleton credits held · '+m.unsupportedFootEnds.size+' unsupported footway endcaps held · '+m.turnCreditsHeld+' turn-only samples held · '+m.bridged+' same-way gaps joined · '+m.continuitySwitchesHeld+' nearest-point choices revised for continuity · '+m.preselectedRoadCorridors+' road-centreline choices preserved before sequence matching · '+m.disconnectedTransitions+' disconnected reference transitions · '+m.endpointHooks+' endpoint hooks · '+m.redundantReturns+' redundant returns · '+m.microReversals+' tiny reversals · '+m.failed+' unmatched samples':'Original journey evidence preserved'}else{$('title').textContent='Starting point — no journeys yet';$('meta').textContent='Press Next to add your first journey'}controls();schedule()}
 function focus(){if(!step||!data)return;const b=data.journeys[step-1][4];map.fitBounds([[b[1],b[0]],[b[3],b[2]]],{padding:[25,25],maxZoom:17,animate:false})}
 function stop(){if(timer){clearInterval(timer);timer=null;$('play').textContent='▶ Play'}}
 function openStore(){return new Promise((yes,no)=>{const request=indexedDB.open('roadprints-map-lab',1);request.onupgradeneeded=()=>request.result.createObjectStore('files');request.onsuccess=()=>yes(request.result);request.onerror=()=>no(request.error)})}
@@ -1419,7 +1538,7 @@ async function toggleExperimentalCoverage(){
  update();
  if(target){if(wasIsolated)await jumpTo(target);else await advance(target)}
  const current=cache.get(target-1);
- tell('Coverage '+(experimentalRecovery?'experimental':'baseline')+' · '+(current?.experimentalCorrection?.added.size||0)+' individually supported + '+(current?.boundedCorridorRecovery?.added.size||0)+' anchored corridor + '+(current?.crossWayJunctionRecovery?.added.size||0)+' cross-way junction intervals · original journeys unchanged');
+ tell('Coverage '+(experimentalRecovery?'experimental':'baseline')+' · '+(current?.experimentalCorrection?.added.size||0)+' pedestrian-conditioned road intervals · original journeys unchanged');
 }
 async function toggleRoadPromotion(){
  if(!data||busy)return;
