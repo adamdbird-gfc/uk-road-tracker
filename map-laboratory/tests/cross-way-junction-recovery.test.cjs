@@ -28,7 +28,7 @@ wrong=recover(baseline,road,[[p(18,-12),p(18,12)]]);
 assert.equal(wrong.added.size,0,'pedestrian crossing cannot credit junction');
 wrong=recover(baseline,road,[[p(0,4),p(16,4)],[p(32,4),p(48,4)]]);
 assert.equal(wrong.added.size,0,'GPS gap cannot be bridged by combining separate lines');
-const broken=road.map(x=>({...x}));broken[2]={...broken[2],p:p(17,0)};
+const broken=road.map(x=>({...x}));broken[2]={...broken[2],p:p(20,0)};
 wrong=recover(baseline,broken,[[p(0,4),p(8,4),p(16,4),p(24,4),p(32,4),p(40,4),p(48,4)]]);
 assert.equal(wrong.added.size,0,'no geometric connection means no recoverable junction');
 wrong=recover({ids:new Set([0,1,8]),sources:new Map()},road,[[p(0,4),p(8,4),p(16,4),p(24,4),p(32,4),p(40,4),p(48,4)]]);
