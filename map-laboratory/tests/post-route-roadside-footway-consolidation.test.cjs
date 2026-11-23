@@ -13,6 +13,7 @@ network.push({p:p(40,5),q:p(48,13),kind:'footway',group:'station entrance',index
 network.push({p:p(0,21),q:p(40,21),kind:'path',group:'park path',index:0});
 const base={ids:new Set(network.map((_,i)=>i)),sources:new Map(network.map((_,i)=>[i,i<5?'experimental-road':'independent-path'])),independentPaths:new Set([5,6,7,8,9,10,11]),suppressedParallelPaths:new Set()};
 const r=consolidate(base,network);
+console.log('Consolidation debug:',r.reason,[...r.ambiguous],r.suppressed.size);
 assert.deepEqual([...r.suppressed],[5,6,7,8,9],'continuous parallel pavement consolidated');
 assert([0,1,2,3,4,10,11].every(id=>r.canonical.ids.has(id)),'road, station and independent park path retained');
 assert(r.canonical.sources.get(5)===undefined,'suppressed path no longer credited');
