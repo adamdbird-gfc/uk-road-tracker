@@ -444,12 +444,24 @@ function auditRoadCorridorCandidates(direct,network,gpsCandidateRefs){
   }
   if(near.length)byFootway.set(fid,near.sort((a,b)=>a.offset-b.offset));
  }
+ // Sustained correspondence belongs to a continuous ROAD WAY, not to one
+ // arbitrarily sliced 8 m interval. Inspect all members before holding one.
+ const byGroup=new Map();
+ for(const [id,proof] of byRoad){
+  const group=network[id].group;
+  if(!byGroup.has(group))byGroup.set(group,{footIds:new Set(),overlap:0,ids:[]});
+  const g=byGroup.get(group);g.ids.push(id);
+  for(const item of proof){g.footIds.add(item.footwayId);g.overlap+=item.overlap}
+ }
  const candidates=new Map(),held=new Map();
  for(const [id,proof] of byRoad){
   const distinctFootways=new Set(proof.map(x=>x.footwayId));
   const overlap=proof.reduce((n,x)=>n+x.overlap,0);
   const kind=network[id].kind;
-  const reason=distinctFootways.size<2||overlap<8?'insufficient-sustained-reference':'candidate-not-yet-route-validated';
+  const groupEvidence=byGroup.get(network[id].group);
+  const groupIndices=groupEvidence.ids.map(n=>network[n].index).sort((a,b)=>a-b);
+  const longest=groupIndices.reduce((a,n,i)=>Math.max(a,i?groupIndices[i-1]+1===n?(a+1):1:1),0);
+  const reason=groupEvidence.footIds.size<3||groupEvidence.overlap<16||longest<3?'insufficient-sustained-reference':'candidate-not-yet-route-validated';
   const item={roadId:id,osmWay:network[id].group,kind,footwayIds:[...distinctFootways],
    supportingFootways:distinctFootways.size,overlapMetres:Number(overlap.toFixed(1)),
    bestOffsetMetres:Math.min(...proof.map(x=>x.offset)),
