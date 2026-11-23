@@ -104,3 +104,6 @@ jobs:
 
       - name: Verify gated canonical recovery and Lab UI simplification
         run: node map-laboratory/tests/experimental-canonical-road-recovery.test.cjs
+
+      - name: Verify bounded same-way road corridor recovery
+        run: node map-laboratory/tests/bounded-topology-corridor-recovery.test.cjs
