@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const page=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
-const begin=page.indexOf('function validateAndroidMatchedExport('),end=page.indexOf('// Read-only corridor correspondence',begin);
+const begin=page.indexOf('function savedAndroidMatchedSegments('),end=page.indexOf('// Read-only corridor correspondence',begin);
 assert(begin>=0&&end>begin);
 const M=111320,p=(x,y=0)=>[x/M,y/M],metres=(a,b)=>Math.hypot((a[0]-b[0])*M,(a[1]-b[1])*M);
 const xyz=(a,o)=>[(a[0]-o[0])*M,(a[1]-o[1])*M];
