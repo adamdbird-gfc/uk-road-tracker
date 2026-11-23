@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   archive-regression:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
@@ -22,7 +22,11 @@ jobs:
         with:
           gradle-version: '8.10.2'
       - name: Install Android compiler SDK
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+        run: |
+          set -euo pipefail
+          sdkmanager_path="${ANDROID_HOME:?Android SDK is required}/cmdline-tools/latest/bin/sdkmanager"
+          if [[ ! -x "$sdkmanager_path" ]]; then sdkmanager_path="$(command -v sdkmanager)"; fi
+          "$sdkmanager_path" --install "platforms;android-35" "build-tools;35.0.0"
       - name: Test diagnostics, backup and Map behavior
         working-directory: android-prototype
         run: |
