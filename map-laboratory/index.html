@@ -4,7 +4,7 @@
 <style>
 :root{color-scheme:dark;--navy:#0c1c4c;--muted:#c0cbea;--mint:#45b9a6}*{box-sizing:border-box}body{margin:0;background:var(--navy);color:#fff;font:14px system-ui,Arial,sans-serif}header{padding:12px 14px 9px}#labBuild{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:5px;font-size:11px;font-weight:650;color:#b8f3e5;line-height:1.4}#labBuild a{color:#b8f3e5;text-decoration:underline;text-underline-offset:2px}#labBuild .buildDot{color:#b9c9e8}#labBuild strong{color:#fff}h1{font-size:19px;margin:0 0 3px}h1 span{color:#54dac0}small,.muted{color:var(--muted)}#status{padding:7px 12px;background:#172b61;min-height:30px;font-size:12px}#map{height:calc(100dvh - 330px);min-height:200px;background:#e1ebec}.leaflet-container{background:#e1ebec}.leaflet-control-attribution{font-size:9px!important}footer{padding:10px 13px 14px;background:var(--navy)}.row{display:flex;gap:8px;align-items:center}.between{justify-content:space-between}button,label.import{border:1px solid #6784c0;background:#28467d;color:white;border-radius:11px;font:inherit;padding:11px 12px;cursor:pointer}button.primary,label.import{background:#36af9f;color:#001e39;border-color:#36af9f;font-weight:700}button:disabled{opacity:.45}input[type=range]{width:100%;accent-color:#54d9bc;margin:13px 0}#buttons{display:grid;grid-template-columns:1fr 1fr 1fr 44px;gap:8px}#buttons button{padding:13px 4px;font-weight:700}#mode{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0;align-items:center}#mode button,#advancedMode button{padding:9px;font-size:12px}#advanced{margin:6px 0 10px;border:1px solid #375491;border-radius:9px;padding:8px 10px}#advanced summary{cursor:pointer;color:#c0cbea;font-size:12px}#advancedMode{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}#experimentalCoverage[aria-pressed="true"]{background:#36af9f;color:#001e39;border-color:#36af9f;font-weight:700}.advancedLegend{display:none}body:has(#advanced[open]) .advancedLegend{display:inline}#mode .muted{margin-left:auto;font-size:11px}#title{font-weight:700}#count{background:#203d78;border-radius:16px;padding:5px 10px;white-space:nowrap}#meta{margin:4px 0;color:var(--muted);font-size:12px}#legend{display:flex;gap:10px;margin-top:10px;font-size:11px;flex-wrap:wrap}.chip{display:inline-block;width:19px;height:6px;border-radius:6px;margin-right:4px;vertical-align:middle}#setup{padding:14px;border:1px solid #375491;border-radius:12px;margin:10px 0}#setup p{margin:6px 0 10px;color:var(--muted)}input[type=file]{display:none}#error{display:none;padding:10px;background:#59333a;color:#fff;border-radius:8px;margin:6px 0}#detail{font-size:11px;color:#c8d8fc;min-height:14px}#inspectPanel{display:none;margin-top:8px;border:1px solid #496eae;border-radius:9px;padding:10px;background:#1b356a}#inspectPanel pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;line-height:1.35;max-height:150px;overflow:auto}#inspectPanel button{padding:8px 12px;font-size:12px}#inspect.active{background:#ebbd53;color:#15233c}#shadowRoads[aria-pressed="true"]{background:#00bcd4;color:#08263b;border-color:#00bcd4;font-weight:700}#gapMode[aria-pressed="true"]{background:#efb84c;color:#15233c;border-color:#efb84c;font-weight:700}#connectedShadow[aria-pressed="true"]{background:#f45cba;color:#231129;border-color:#f45cba;font-weight:700}#roadFirstShadow[aria-pressed="true"]{background:#f0cf64;color:#19264e;border-color:#f0cf64;font-weight:700}#independentRoads[aria-pressed="true"]{background:#60a5fa;color:#061731;border-color:#60a5fa;font-weight:700}
 </style></head>
-<body><header><h1>Roadprints <span>Map Laboratory</span></h1><small>Hosted experiment · original journeys stay on your device</small><div id="labBuild" aria-label="Laboratory code revision loaded in this browser"><strong>LAB r423</strong><span class="buildDot">·</span><span>23 Nov 2026</span><span class="buildDot">·</span><a href="https://github.com/adamdbird-gfc/uk-road-tracker/pull/423" target="_blank" rel="noopener noreferrer">PR #423</a><span class="buildDot">·</span><span>Loaded page version</span></div></header>
+<body><header><h1>Roadprints <span>Map Laboratory</span></h1><small>Hosted experiment · original journeys stay on your device</small><div id="labBuild" aria-label="Laboratory code revision loaded in this browser"><strong>LAB r424</strong><span class="buildDot">·</span><span>23 Nov 2026</span><span class="buildDot">·</span><a href="https://github.com/adamdbird-gfc/uk-road-tracker/pull/424" target="_blank" rel="noopener noreferrer">PR #424</a><span class="buildDot">·</span><span>Loaded page version</span></div></header>
 <div id="status">Import your private journey file to begin.</div><div id="map"></div>
 <footer><div id="setup"><b>Load your private journeys</b><p>Select the <b>Roadprints-Lab-Private-Journeys.json.gz</b> file. It stays in this browser and is remembered here; it is not uploaded to GitHub or Overpass.</p><label class="import" for="file">Choose journey file</label><input id="file" type="file" accept=".gz,.json,application/gzip,application/json"></div>
 <div id="error" role="alert"></div><div class="row between"><div id="title">Ready for import</div><span id="count">0 / 0</span></div>
@@ -1153,6 +1153,129 @@ function suppressRoadsidePartialFootwayFragments(canonical,network,sourceLines){
   suppressedParallelPaths:new Set([...(canonical.suppressedParallelPaths||new Set()),...suppressed])},
   suppressed,held,reason:'partially-credited-micro-footway-near-existing-road'};
 }
+// Generic topology/centreline quality gate. Work from the FINAL credited
+// journey graph, not from the full OSM way or arbitrary way-id/interval counts.
+// Inspect pedestrian-only connected components and single-ended branches.
+// Only tiny non-centreline components sufficiently near a credited through-road
+// are removable, and only when they are not a distinct source journey endpoint
+// or a pedestrian connection between two different credited corridors.
+// Original geometry, network references and Android records stay untouched.
+function suppressOffCentrelineGraphFragments(canonical,network,sourceLines){
+ const roadKinds=new Set(['trunk','primary','secondary','tertiary','unclassified','residential','living_street','road']);
+ const pedKinds=new Set(['footway','path','steps','pedestrian','cycleway','bridleway']);
+ const credited=[...canonical.ids].filter(i=>network[i]);
+ const roadIds=credited.filter(i=>roadKinds.has(network[i].kind));
+ const pedIds=credited.filter(i=>pedKinds.has(network[i].kind));
+ const suppressed=new Set(),held={long:0,offCorridor:0,realConnection:0,endpoint:0,noThroughRoad:0,roadCentreline:0,otherKind:0};
+ if(!roadIds.length||!pedIds.length)return {canonical,suppressed,held,reason:'no-road-pedestrian-overlap'};
+ const endpointBuckets=new Map(),cell=.000025,xy=p=>[Math.floor(p[0]/cell),Math.floor(p[1]/cell)],bucketKey=(x,y)=>x+','+y;
+ const put=(p,id)=>{const [x,y]=xy(p),k=bucketKey(x,y);if(!endpointBuckets.has(k))endpointBuckets.set(k,[]);endpointBuckets.get(k).push({p,id})};
+ for(const id of credited){put(network[id].p,id);put(network[id].q,id)}
+ const touches=(p,limit=2.5)=>{
+  const [x,y]=xy(p),found=new Set();
+  for(let dx=-2;dx<=2;dx++)for(let dy=-2;dy<=2;dy++)
+   for(const hit of endpointBuckets.get(bucketKey(x+dx,y+dy))||[])
+    if(metres(p,hit.p)<=limit)found.add(hit.id);
+  return found;
+ };
+ // Only pedestrian-to-pedestrian connectivity for component discovery:
+ // attaching to a through-road doesn't make a stray short footway part of
+ // the primary route.
+ const unseen=new Set(pedIds),components=[];
+ while(unseen.size){
+  const seed=unseen.values().next().value,queue=[seed],ids=[];
+  unseen.delete(seed);
+  while(queue.length){
+   const id=queue.pop();ids.push(id);
+   const r=network[id];
+   for(const p of [r.p,r.q])for(const other of touches(p)){
+    if(unseen.has(other)){unseen.delete(other);queue.push(other)}
+   }
+  }
+  components.push(ids);
+ }
+ const sourceEndpoints=(sourceLines||[]).flatMap(line=>line?.length>=2?[line[0],line[line.length-1]]:[]);
+ const roadDistance=(p,id)=>proj([0,0],xyz(network[id].q,network[id].p),xyz(p,network[id].p));
+ for(const comp of components){
+  const length=comp.reduce((v,id)=>v+metres(network[id].p,network[id].q),0);
+  // Long independent paths and compact but strongly supported crossings
+  // are not treated as cosmetic fragments.
+  if(length>30){held.long++;continue}
+  const pts=comp.flatMap(id=>[network[id].p,network[id].q]);
+  if(pts.some(p=>sourceEndpoints.some(end=>metres(p,end)<25))){held.endpoint++;continue}
+  const nearRoads=new Set();
+  let maxNear=0,minNear=Infinity;
+  for(const p of pts){
+   let best=Infinity,bestId=-1;
+   for(const id of roadIds){
+    const d=roadDistance(p,id);
+    if(d<best){best=d;bestId=id}
+   }
+   maxNear=Math.max(maxNear,best);minNear=Math.min(minNear,best);
+   if(best<=16&&bestId>=0)nearRoads.add(bestId);
+  }
+  if(maxNear>16||!nearRoads.size){held.offCorridor++;continue}
+  // A pedestrian crossing may be a tiny self-contained component with
+  // endpoints on opposite sides of a road. Crossing geometry is genuine
+  // infrastructure and must NEVER be discarded as an off-centreline island.
+  const traversesRoad=comp.some(id=>{
+   const foot=network[id];
+   return roadIds.some(rid=>{
+    const road=network[rid],axis=xyz(road.q,road.p),vl=Math.hypot(...axis);
+    if(vl<3)return false;
+    const a=xyz(foot.p,road.p),b=xyz(foot.q,road.p);
+    const da=(axis[0]*a[1]-axis[1]*a[0])/vl,db=(axis[0]*b[1]-axis[1]*b[0])/vl;
+    if(da*db>=0||Math.min(Math.abs(da),Math.abs(db))<2.5)return false;
+    const alongA=(axis[0]*a[0]+axis[1]*a[1])/vl,alongB=(axis[0]*b[0]+axis[1]*b[1])/vl;
+    const cross=(alongA*Math.abs(db)+alongB*Math.abs(da))/(Math.abs(da)+Math.abs(db));
+    return cross>=-2.5&&cross<=vl+2.5;
+   });
+  });
+  if(traversesRoad){held.realConnection++;continue}
+  // Fragments that lie precisely on the physical-road centreline may
+  // contribute to road continuity; this layer is NOT a road-gap fixer.
+  if(maxNear<=2){held.roadCentreline++;continue}
+  const compSet=new Set(comp),roadAttachments=new Set(),otherPedAttachments=new Set();
+  for(const id of comp){
+   const r=network[id];
+   for(const p of [r.p,r.q])for(const other of touches(p)){
+    if(compSet.has(other))continue;
+    if(roadKinds.has(network[other]?.kind))roadAttachments.add(network[other].group);
+    else if(pedKinds.has(network[other]?.kind))otherPedAttachments.add(other);
+   }
+  }
+  // Two separate road connections or another supported pedestrian branch
+  // define useful independent infrastructure; never suppress them.
+  if(roadAttachments.size>=2||otherPedAttachments.size){held.realConnection++;continue}
+  // A local road must genuinely continue: ≥2 credited intervals close to
+  // this component (not a tiny spur of a separate road).
+  const nearRoadGroups=new Map();
+  for(const id of roadIds){
+   if(!pts.some(p=>roadDistance(p,id)<=16))continue;
+   const group=network[id].group;
+   nearRoadGroups.set(group,(nearRoadGroups.get(group)||0)+1);
+  }
+  if(![...nearRoadGroups.values()].some(n=>n>=2)){held.noThroughRoad++;continue}
+  // If the credited path has two distinct external endpoints on the
+  // road network, preserve it as a genuine crossing/connecting route.
+  const connectedRoadEnds=pts.filter(p=>[...touches(p)].some(id=>roadKinds.has(network[id]?.kind)));
+  if(connectedRoadEnds.length>=2){
+   const furthest=Math.max(...connectedRoadEnds.map(a=>Math.max(...connectedRoadEnds.map(b=>metres(a,b)))));
+   if(furthest>6){held.realConnection++;continue}
+  }
+  for(const id of comp){
+   if(network[id].kind==='footway'||network[id].kind==='path')suppressed.add(id);
+   else held.otherKind++;
+  }
+ }
+ if(!suppressed.size)return {canonical,suppressed,held,reason:'no-off-centreline-small-graph-components'};
+ const ids=new Set([...canonical.ids].filter(id=>!suppressed.has(id))),sources=new Map(canonical.sources);
+ for(const id of suppressed)sources.delete(id);
+ const independentPaths=new Set([...(canonical.independentPaths||new Set())].filter(id=>!suppressed.has(id)));
+ return {canonical:{...canonical,ids,sources,independentPaths,
+  suppressedParallelPaths:new Set([...(canonical.suppressedParallelPaths||new Set()),...suppressed])},
+  suppressed,held,reason:'off-centreline-island-or-dangling-pedestrian-component'};
+}
 // Optional local single-journey Android match evidence. Unlike a sparse
 // Timeline import, the stored network reconstruction has detailed geometry
 // plus classified reference ways. Never upload or persist this file.
@@ -1852,7 +1975,8 @@ const androidRoadCorrespondence=creditAndroidMatchedRoadReferences(experimentalC
 const parallelConsolidation=experimentalCorrection.enabled?consolidateExperimentalRoadsidePaths(androidRoadCorrespondence.canonical,roads):{canonical:experimentalCorrection.canonical,suppressed:new Set(),ambiguous:new Set(),reason:'baseline-unmodified'};
 const danglingSpurs=experimentalCorrection.enabled?suppressDanglingPedestrianSpurs(parallelConsolidation.canonical,roads,prepared.lines):{canonical:parallelConsolidation.canonical,suppressed:new Set(),held:{},reason:'baseline-unmodified'};
 const partialFootwayFragments=experimentalCorrection.enabled?suppressRoadsidePartialFootwayFragments(danglingSpurs.canonical,roads,prepared.lines):{canonical:danglingSpurs.canonical,suppressed:new Set(),held:{},reason:'baseline-unmodified'};
-const roadsideConsolidation={...parallelConsolidation,canonical:partialFootwayFragments.canonical,suppressed:new Set([...parallelConsolidation.suppressed,...danglingSpurs.suppressed,...partialFootwayFragments.suppressed]),danglingSpurs,partialFootwayFragments};
+const graphFragmentCleanup=experimentalCorrection.enabled?suppressOffCentrelineGraphFragments(partialFootwayFragments.canonical,roads,prepared.lines):{canonical:partialFootwayFragments.canonical,suppressed:new Set(),held:{},reason:'baseline-unmodified'};
+const roadsideConsolidation={...parallelConsolidation,canonical:graphFragmentCleanup.canonical,suppressed:new Set([...parallelConsolidation.suppressed,...danglingSpurs.suppressed,...partialFootwayFragments.suppressed,...graphFragmentCleanup.suppressed]),danglingSpurs,partialFootwayFragments,graphFragmentCleanup};
 const canonical=roadsideConsolidation.canonical;
 const corridorResolution=j[2]==='walking'?resolvePedestrianRoadCorridors(evidence,roads,footwayRoadEvidence):{accepted:new Set(),ambiguous:new Set(),runs:[],held:[],previewOnly:true};
 const orderedCorridorSupport=j[2]==='walking'?chronologicalFootwaySupport(selectedFootwaySequences,roads,corridorResolution):{supported:new Set(),held:new Set(),orderedChains:0,previewOnly:true};
@@ -1946,7 +2070,7 @@ async function toggleExperimentalCoverage(){
  update();
  if(target){if(wasIsolated)await jumpTo(target);else await advance(target)}
  const current=cache.get(target-1);
- tell('Coverage '+(experimentalRecovery?'experimental':'baseline')+' · '+(current?.experimentalCorrection?.added.size||0)+' pedestrian-conditioned road intervals · '+(current?.androidRoadCorrespondence?.added.size||0)+' Android-matched road intervals · '+(current?.roadsideConsolidation?.suppressed.size||0)+' redundant pedestrian intervals consolidated (including '+(current?.roadsideConsolidation?.danglingSpurs?.suppressed.size||0)+' dangling spur and '+(current?.roadsideConsolidation?.partialFootwayFragments?.suppressed.size||0)+' partial footway intervals) · matching source '+(current?.coverageEvidence?.source||'laboratory-archive')+' · original journeys unchanged');
+ tell('Coverage '+(experimentalRecovery?'experimental':'baseline')+' · '+(current?.experimentalCorrection?.added.size||0)+' pedestrian-conditioned road intervals · '+(current?.androidRoadCorrespondence?.added.size||0)+' Android-matched road intervals · '+(current?.roadsideConsolidation?.suppressed.size||0)+' redundant pedestrian intervals consolidated (including '+(current?.roadsideConsolidation?.danglingSpurs?.suppressed.size||0)+' dangling spur and '+(current?.roadsideConsolidation?.partialFootwayFragments?.suppressed.size||0)+' partial footway and '+(current?.roadsideConsolidation?.graphFragmentCleanup?.suppressed.size||0)+' off-centreline graph intervals) · matching source '+(current?.coverageEvidence?.source||'laboratory-archive')+' · original journeys unchanged');
 }
 async function toggleRoadPromotion(){
  if(!data||busy)return;
