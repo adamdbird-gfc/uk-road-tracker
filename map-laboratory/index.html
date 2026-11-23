@@ -1922,7 +1922,7 @@ function sourceBackedEndpointRenderLinks(canonical,roadNetwork,sourceLines){
    // Reject a route that merely grazes two nearby parallel ways without
    // travelling between the two endpoints.
    if(travel<gap*.6)continue;
-   const score=x.offset+y.offset+Math.abs(travel-gap)*.2;
+   const score=x.offset+y.offset+Math.abs(travel-gap)*.2+gap*.3;
    if(!best||score<best.score)best={score,leg,x,y};
   }
   // A junction can fall on opposite sides of a recorded GPS vertex.
@@ -1936,14 +1936,14 @@ function sourceBackedEndpointRenderLinks(canonical,roadNetwork,sourceLines){
    const travel=(1-x.t)*first.length+y.t*second.length;
    if(x.offset>5||y.offset>5||travel<1||travel>45||travel<gap*.6)continue;
    if(metres(a.p,first.b)>45||metres(b.p,second.a)>45)continue;
-   const score=x.offset+y.offset+Math.abs(travel-gap)*.2+.15;
+   const score=x.offset+y.offset+Math.abs(travel-gap)*.2+gap*.3+.15;
    if(!best||score<best.score)best={score,leg:first,x,y,via:first.b};
    // The source might traverse the adjacent pair in reverse relative to
    // the endpoints selected from the unordered canonical network.
    const rx=projection(b.p,first),ry=projection(a.p,second);
    const reverseTravel=(1-rx.t)*first.length+ry.t*second.length;
    if(rx.offset<=5&&ry.offset<=5&&reverseTravel>=gap*.6&&reverseTravel<=45){
-    const reverseScore=rx.offset+ry.offset+Math.abs(reverseTravel-gap)*.2+.15;
+    const reverseScore=rx.offset+ry.offset+Math.abs(reverseTravel-gap)*.2+gap*.3+.15;
     if(!best||reverseScore<best.score)best={score:reverseScore,leg:first,x:ry,y:rx,via:first.b};
    }
   }
