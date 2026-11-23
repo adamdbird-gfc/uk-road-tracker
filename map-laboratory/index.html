@@ -791,7 +791,7 @@ function matchPedestrianConstrainedRoadRoute(baseline,network,sourceLines){
   const x=network[a],y=network[b];
   return [x.p,x.q].some(p=>[y.p,y.q].some(q=>metres(p,q)<=1.5));
  };
- const tracks=[];
+ const tracks=[];let batchNumber=0;
  function examinePath(state){
   if(!state||state.path.length<6)return;
   const ids=[...new Set(state.path.map(p=>p.id))];
@@ -816,6 +816,7 @@ function matchPedestrianConstrainedRoadRoute(baseline,network,sourceLines){
   }
   if(batch.length)batches.push(batch);
   for(const samples of batches){
+   const corridorBatch=batchNumber++;
    let states=[];
    for(let i=0;i<samples.length;i++){
     const sample=samples[i],cx=Math.floor(sample.pt[0]/cell),cy=Math.floor(sample.pt[1]/cell),near=new Set();
@@ -837,10 +838,10 @@ function matchPedestrianConstrainedRoadRoute(baseline,network,sourceLines){
     for(const c of candidates){
      // A fresh roadside corridor may begin anywhere along a walk; no
      // reliance on previously credited road anchors.
-     next.push({id:c.id,start:i,end:i,score:c.score,path:[{id:c.id,at:i}],distance:0});
+     next.push({id:c.id,batch:corridorBatch,start:i,end:i,score:c.score,path:[{id:c.id,at:i}],distance:0});
      for(const prev of states){
       if(!adjacent(prev.id,c.id))continue;
-      next.push({id:c.id,start:prev.start,end:i,
+      next.push({id:c.id,batch:corridorBatch,start:prev.start,end:i,
        score:prev.score+c.score+(prev.id===c.id?0:.55),
        path:[...prev.path,{id:c.id,at:i}],distance:prev.distance+5});
      }
@@ -852,7 +853,7 @@ function matchPedestrianConstrainedRoadRoute(baseline,network,sourceLines){
     }
     const retained=[];
     for(const variants of bestById.values()){
-     variants.sort((a,b)=>(b.end-b.start)-(a.end-a.start)||a.score/(a.path.length||1)-b.score/(b.path.length||1));
+     variants.sort((a,b)=>(a.score+8)/a.path.length-(b.score+8)/b.path.length);
      retained.push(...variants.slice(0,2));
     }
     const kept=new Set(retained);
@@ -870,13 +871,13 @@ function matchPedestrianConstrainedRoadRoute(baseline,network,sourceLines){
  const chosen=[];
  for(const track of tracks){
   if(track.averageScore>12)continue;
-  const similar=tracks.filter(other=>other!==track&&
+  const similar=tracks.filter(other=>other!==track&&other.batch===track.batch&&
    Math.abs(other.start-track.start)<=2&&Math.abs(other.end-track.end)<=2&&
    other.length>=track.length*.9&&
    other.ids.filter(id=>track.ids.includes(id)).length/Math.max(1,Math.min(other.ids.length,track.ids.length))<.7);
   if(similar.some(other=>other.averageScore<=track.averageScore+1.3)){held.ambiguous++;continue}
   // Do not reuse the same source sample window to credit divergent streets.
-  if(chosen.some(other=>Math.max(track.start,other.start)<=Math.min(track.end,other.end)&&
+  if(chosen.some(other=>other.batch===track.batch&&Math.max(track.start,other.start)<=Math.min(track.end,other.end)&&
    other.ids.some(id=>track.ids.includes(id))))continue;
   chosen.push(track);
   for(const id of track.ids)if(!baseline.ids.has(id))added.add(id);
