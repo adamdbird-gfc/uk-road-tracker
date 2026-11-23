@@ -4,7 +4,7 @@
 <style>
 :root{color-scheme:dark;--navy:#0c1c4c;--muted:#c0cbea;--mint:#45b9a6}*{box-sizing:border-box}body{margin:0;background:var(--navy);color:#fff;font:14px system-ui,Arial,sans-serif}header{padding:12px 14px 9px}#labBuild{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:5px;font-size:11px;font-weight:650;color:#b8f3e5;line-height:1.4}#labBuild a{color:#b8f3e5;text-decoration:underline;text-underline-offset:2px}#labBuild .buildDot{color:#b9c9e8}#labBuild strong{color:#fff}h1{font-size:19px;margin:0 0 3px}h1 span{color:#54dac0}small,.muted{color:var(--muted)}#status{padding:7px 12px;background:#172b61;min-height:30px;font-size:12px}#map{height:calc(100dvh - 330px);min-height:200px;background:#e1ebec}.leaflet-container{background:#e1ebec}.leaflet-control-attribution{font-size:9px!important}footer{padding:10px 13px 14px;background:var(--navy)}.row{display:flex;gap:8px;align-items:center}.between{justify-content:space-between}button,label.import{border:1px solid #6784c0;background:#28467d;color:white;border-radius:11px;font:inherit;padding:11px 12px;cursor:pointer}button.primary,label.import{background:#36af9f;color:#001e39;border-color:#36af9f;font-weight:700}button:disabled{opacity:.45}input[type=range]{width:100%;accent-color:#54d9bc;margin:13px 0}#buttons{display:grid;grid-template-columns:1fr 1fr 1fr 44px;gap:8px}#buttons button{padding:13px 4px;font-weight:700}#mode{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0;align-items:center}#mode button,#advancedMode button{padding:9px;font-size:12px}#advanced{margin:6px 0 10px;border:1px solid #375491;border-radius:9px;padding:8px 10px}#advanced summary{cursor:pointer;color:#c0cbea;font-size:12px}#advancedMode{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}#experimentalCoverage[aria-pressed="true"]{background:#36af9f;color:#001e39;border-color:#36af9f;font-weight:700}.advancedLegend{display:none}body:has(#advanced[open]) .advancedLegend{display:inline}#mode .muted{margin-left:auto;font-size:11px}#title{font-weight:700}#count{background:#203d78;border-radius:16px;padding:5px 10px;white-space:nowrap}#meta{margin:4px 0;color:var(--muted);font-size:12px}#legend{display:flex;gap:10px;margin-top:10px;font-size:11px;flex-wrap:wrap}.chip{display:inline-block;width:19px;height:6px;border-radius:6px;margin-right:4px;vertical-align:middle}#setup{padding:14px;border:1px solid #375491;border-radius:12px;margin:10px 0}#setup p{margin:6px 0 10px;color:var(--muted)}input[type=file]{display:none}#error{display:none;padding:10px;background:#59333a;color:#fff;border-radius:8px;margin:6px 0}#detail{font-size:11px;color:#c8d8fc;min-height:14px}#inspectPanel{display:none;margin-top:8px;border:1px solid #496eae;border-radius:9px;padding:10px;background:#1b356a}#inspectPanel pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;line-height:1.35;max-height:150px;overflow:auto}#inspectPanel button{padding:8px 12px;font-size:12px}#inspect.active{background:#ebbd53;color:#15233c}#shadowRoads[aria-pressed="true"]{background:#00bcd4;color:#08263b;border-color:#00bcd4;font-weight:700}#gapMode[aria-pressed="true"]{background:#efb84c;color:#15233c;border-color:#efb84c;font-weight:700}#connectedShadow[aria-pressed="true"]{background:#f45cba;color:#231129;border-color:#f45cba;font-weight:700}#roadFirstShadow[aria-pressed="true"]{background:#f0cf64;color:#19264e;border-color:#f0cf64;font-weight:700}#independentRoads[aria-pressed="true"]{background:#60a5fa;color:#061731;border-color:#60a5fa;font-weight:700}
 </style></head>
-<body><header><h1>Roadprints <span>Map Laboratory</span></h1><small>Hosted experiment · original journeys stay on your device</small><div id="labBuild" aria-label="Laboratory code revision loaded in this browser"><strong>LAB r431</strong><span class="buildDot">·</span><span>23 Nov 2026</span><span class="buildDot">·</span><a href="https://github.com/adamdbird-gfc/uk-road-tracker/pull/431" target="_blank" rel="noopener noreferrer">PR #431</a><span class="buildDot">·</span><span>Loaded page version</span></div></header>
+<body><header><h1>Roadprints <span>Map Laboratory</span></h1><small>Hosted experiment · original journeys stay on your device</small><div id="labBuild" aria-label="Laboratory code revision loaded in this browser"><strong>LAB r432</strong><span class="buildDot">·</span><span>23 Nov 2026</span><span class="buildDot">·</span><a href="https://github.com/adamdbird-gfc/uk-road-tracker/pull/432" target="_blank" rel="noopener noreferrer">PR #432</a><span class="buildDot">·</span><span>Loaded page version</span></div></header>
 <div id="status">Import your private journey file to begin.</div><div id="map"></div>
 <footer><div id="setup"><b>Load your private journeys</b><p>Select the <b>Roadprints-Lab-Private-Journeys.json.gz</b> file. It stays in this browser and is remembered here; it is not uploaded to GitHub or Overpass.</p><label class="import" for="file">Choose journey file</label><input id="file" type="file" accept=".gz,.json,application/gzip,application/json"></div>
 <div id="error" role="alert"></div><div class="row between"><div id="title">Ready for import</div><span id="count">0 / 0</span></div>
@@ -1976,6 +1976,83 @@ function sourceBackedEndpointRenderLinks(canonical,roadNetwork,sourceLines){
  }
  return {links,held,reason:links.length?'source-backed-visual-continuity-only':'no-unambiguous-source-backed-endpoint-gap'};
 }
+// Generic display-only network junction resolver. A supported pedestrian
+// endpoint may meet the INTERIOR of a terminal road interval. Keep both
+// definitive approaches intact, join at the road projection and omit only
+// the untraversed terminal tail. No canonical or source data is mutated.
+// Ambiguous connections, supported tails and true journey ends are retained.
+function resolveTerminalVisualJunctions(canonical,network,sourceLines){
+ const links=[],trimmed=new Map(),held={unsupported:0,ambiguous:0,creditedTail:0};
+ if(!sourceLines?.length)return {links,trimmed,held};
+ const roadKinds=new Set(['trunk','primary','secondary','tertiary','unclassified','residential','living_street','road']);
+ const footKinds=new Set(['footway','path','pedestrian','steps']);
+ const ids=[...canonical.ids].filter(id=>network[id]),roadIds=ids.filter(id=>roadKinds.has(network[id].kind)),footIds=ids.filter(id=>footKinds.has(network[id].kind));
+ const degree=p=>ids.reduce((n,id)=>n+(metres(network[id].p,p)<=1.6?1:0)+(metres(network[id].q,p)<=1.6?1:0),0);
+ const project=(p,a,b)=>{
+  const v=xyz(b,a),w=xyz(p,a),d=v[0]*v[0]+v[1]*v[1];
+  if(d<1)return null;
+  const t=Math.max(0,Math.min(1,(v[0]*w[0]+v[1]*w[1])/d));
+  return {t,p:[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t],distance:proj([0,0],v,w)};
+ };
+ const sourceSupport=(a,b,kind)=>{
+  const v=xyz(b,a),length=Math.hypot(...v);
+  if(length<2)return [];
+  const midpoint=[(a[0]+b[0])/2,(a[1]+b[1])/2],results=[];
+  for(let li=0;li<sourceLines.length;li++){
+   const line=sourceLines[li];
+   for(let i=1;i<line.length;i++){
+    const p=line[i-1],q=line[i],w=xyz(q,p),wl=Math.hypot(...w);
+    if(wl<2||wl>350)continue;
+    if(Math.abs((v[0]*w[0]+v[1]*w[1])/(length*wl))<(kind==='foot'?.55:.7))continue;
+    if(proj([0,0],w,xyz(midpoint,p))>(kind==='foot'?6:5))continue;
+    // Also require real longitudinal overlap: nearby parallel ways alone
+    // must not authorize a route on the opposite branch.
+    const along=x=>{const z=xyz(x,p);return (z[0]*w[0]+z[1]*w[1])/wl};
+    const u=along(a),v2=along(b);
+    if(Math.max(0,Math.min(wl,Math.max(u,v2))-Math.max(0,Math.min(u,v2)))<Math.min(2,length*.35))continue;
+    results.push({line:li,index:i});
+   }
+  }
+  return results;
+ };
+ const proposals=[];
+ for(const footId of footIds){
+  const foot=network[footId];
+  for(const [end,inside] of [[foot.p,foot.q],[foot.q,foot.p]]){
+   if(degree(end)!==1)continue;
+   for(const roadId of roadIds){
+    const road=network[roadId],length=metres(road.p,road.q);
+    if(length<8||length>50)continue;
+    const join=project(end,road.p,road.q);
+    if(!join||join.t<=.12||join.t>=.88||join.distance<1.6||join.distance>16)continue;
+    const footProof=sourceSupport(end,inside,'foot');
+    if(!footProof.length)continue;
+    for(const [keep,tip,trimEnd] of [[road.p,road.q,'q'],[road.q,road.p,'p']]){
+     if(degree(tip)!==1||metres(tip,join.p)<3||metres(tip,join.p)>22)continue;
+     const roadProof=sourceSupport(keep,join.p,'road');
+     if(!roadProof.some(a=>footProof.some(b=>a.line===b.line&&Math.abs(a.index-b.index)<=5)))continue;
+     if(sourceSupport(join.p,tip,'road').length){held.creditedTail++;continue}
+     // Connection must be locally supported by the same original polyline.
+     const transition=sourceSupport(join.p,end,'foot');
+     if(!transition.some(a=>footProof.some(b=>a.line===b.line&&Math.abs(a.index-b.index)<=5))){held.unsupported++;continue}
+     proposals.push({roadId,footId,join:join.p,end,keep,tip,trimEnd,score:join.distance+metres(tip,join.p)*.05});
+    }
+   }
+  }
+ }
+ proposals.sort((a,b)=>a.score-b.score);
+ const usedRoads=new Set(),usedFeet=new Set();
+ for(const candidate of proposals){
+  if(usedRoads.has(candidate.roadId)||usedFeet.has(candidate.footId))continue;
+  const competing=proposals.some(other=>other!==candidate&&
+   (other.roadId===candidate.roadId||other.footId===candidate.footId)&&other.score<=candidate.score+1);
+  if(competing){held.ambiguous++;continue}
+  usedRoads.add(candidate.roadId);usedFeet.add(candidate.footId);
+  trimmed.set(candidate.roadId,[candidate.keep,candidate.join]);
+  links.push([candidate.join,candidate.end]);
+ }
+ return {links,trimmed,held};
+}
 // A nearby footway interval must actually overlap the along-route segment.
 // Otherwise a sample passing the end of an angled path can paint a false nib.
 // Deliberately conservative: only reject when a long route leg lies entirely
@@ -2294,7 +2371,9 @@ const canonicalContinuity=auditCanonicalContinuity(canonical,roads);
 const connectivityImprovement=Math.max(0,preRepairContinuity.components-canonicalContinuity.components);
 const canonicalLinks=j[2]==='walking'?canonicalWalkingLinks(prepared.lines,canonical,roads):{links:[],parallelHeld:0};
 const walkingLinks=canonicalLinks.links;
-const visualContinuity=experimentalCorrection.enabled?sourceBackedEndpointRenderLinks(canonical,roads,prepared.lines):{links:[],held:{},reason:'baseline-unmodified'};
+const endpointVisual=experimentalCorrection.enabled?sourceBackedEndpointRenderLinks(canonical,roads,prepared.lines):{links:[],held:{},reason:'baseline-unmodified'};
+const terminalVisual=experimentalCorrection.enabled?resolveTerminalVisualJunctions(canonical,roads,prepared.lines):{links:[],trimmed:new Map(),held:{}};
+const visualContinuity={...endpointVisual,links:[...endpointVisual.links,...terminalVisual.links],trimmed:terminalVisual.trimmed,terminalHeld:terminalVisual.held};
 return {ids:canonical.ids,candidateRefs,pedestrianRoadPreview,footwayRoadEvidence,independentRoadCandidates,independentRoadPreview,experimentalCorrection,boundedCorridorRecovery,crossWayJunctionRecovery,coverageEvidence,androidRoadCorrespondence,roadsideConsolidation,networkGlue,corridorResolution,orderedCorridorSupport,connectedRouteEvidence,roadFirstRouteEvidence,canonical,coverageTrace,canonicalContinuity,preRepairContinuity,connectivityImprovement,gapRepair,parallelLinksHeld:canonicalLinks.parallelHeld,visualContinuity,hits,direct:evidence,unsupportedJunction,unsupportedFootEnds,equivalentFootways,roadPromotions,walkingLinks,failed,tries,bridged,held,turnCreditsHeld,continuitySwitchesHeld,disconnectedTransitions,preselectedRoadCorridors,endpointHooks:prepared.endpointHooks,redundantReturns:prepared.redundantReturns,microReversals:prepared.microReversals}
 }
 function resetAttribution(){cache.clear();for(const r of roads){r.first=Infinity;r.second=Infinity}selectedRoad=-1;selectedReport=null;$('inspectPanel').style.display='none'}
@@ -2316,7 +2395,7 @@ function strokeProvisionalLinks(lines){
 function draw(){if(!canvas||!data)return;const size=map.getSize(),scale=Math.min(devicePixelRatio||1,2),pos=map.containerPointToLayerPoint([0,0]);canvas.width=Math.round(size.x*scale);canvas.height=Math.round(size.y*scale);canvas.style.width=size.x+'px';canvas.style.height=size.y+'px';L.DomUtil.setPosition(canvas,pos);ctx.setTransform(scale,0,0,scale,0,0);
 const box=map.getBounds(),inside=(a,b)=>Math.max(a[0],b[0])>=box.getWest()&&Math.min(a[0],b[0])<=box.getEast()&&Math.max(a[1],b[1])>=box.getSouth()&&Math.min(a[1],b[1])<=box.getNorth();
 const old=[],fresh=[],repeat=[];
-if(mode==='center'){if(isolated){for(const id of cache.get(step-1)?.ids||[]){const r=roads[id];if(inside(r.p,r.q))fresh.push([r.p,r.q])}}else for(const r of roads){if(r.first>=step||!inside(r.p,r.q))continue;if(r.second<step)repeat.push([r.p,r.q]);else if(r.first===step-1)fresh.push([r.p,r.q]);else old.push([r.p,r.q])}}
+if(mode==='center'){if(isolated){const m=cache.get(step-1);for(const id of m?.ids||[]){const r=roads[id],line=m.visualContinuity?.trimmed?.get(id)||[r.p,r.q];if(inside(line[0],line[1]))fresh.push(line)}}else for(const r of roads){if(r.first>=step||!inside(r.p,r.q))continue;if(r.second<step)repeat.push([r.p,r.q]);else if(r.first===step-1)fresh.push([r.p,r.q]);else old.push([r.p,r.q])}}
 else if(!isolated){for(const s of data.segments){if(s[4]>=step||!inside([s[0],s[1]],[s[2],s[3]]))continue;const line=[[s[0],s[1]],[s[2],s[3]]];if(s[5]>=0&&s[5]<step)repeat.push(line);else old.push(line)}}
 stroke(old,'#151a21',3.5);if(mode==='original'&&step){for(const path of data.journeys[step-1][3])stroke(path.slice(1).map((p,i)=>[path[i],p]).filter(([a,b])=>inside(a,b)),'#ff4b55',4.4)}else stroke(fresh,'#ff4b55',4.4);stroke(repeat,'#16a34a',4.8);
  if(mode==='center'){
