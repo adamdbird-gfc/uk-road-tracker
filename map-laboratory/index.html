@@ -1611,7 +1611,7 @@ function match(j){
 const grid=new Map(),S=.00024,key=(x,y)=>Math.floor(x/S)+','+Math.floor(y/S),groups=new Map();
 roads.forEach((r,i)=>{const k=key((r.p[0]+r.q[0])/2,(r.p[1]+r.q[1])/2);if(!grid.has(k))grid.set(k,[]);grid.get(k).push(i);if(!groups.has(r.group))groups.set(r.group,[]);groups.get(r.group).push(i)});
 const evidence=new Set(),hits=new Map(),candidateRefs=new Set();let failed=0,tries=0,turnCreditsHeld=0,continuitySwitchesHeld=0,disconnectedTransitions=0,preselectedRoadCorridors=0;
-const originalPrepared=prepareEvidence(j),nativeMatch=typeof androidMatchedEvidence!=='undefined'?androidEvidenceForJourney(j,androidMatchedEvidence):null,coverageEvidence=selectCoverageEvidence(originalPrepared,nativeMatch,experimentalRecovery&&j[2]==='walking'),prepared=coverageEvidence.prepared,selectedFootwaySequences=[],connectedShadows=[],roadFirstShadows=[];
+const originalPrepared=prepareEvidence(j),nativeMatch=typeof androidMatchedEvidence!=='undefined'?androidEvidenceForJourney(j,androidMatchedEvidence):null,coverageEvidence=selectCoverageEvidence(originalPrepared,nativeMatch,typeof experimentalRecovery!=='undefined'&&experimentalRecovery&&j[2]==='walking'),prepared=coverageEvidence.prepared,selectedFootwaySequences=[],connectedShadows=[],roadFirstShadows=[];
 for(const line of prepared.lines){
  const probes=[];
  for(let i=0;i+1<line.length;i++){
