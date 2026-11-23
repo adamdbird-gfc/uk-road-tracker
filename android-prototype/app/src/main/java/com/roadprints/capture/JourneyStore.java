@@ -52,6 +52,36 @@ public final class JourneyStore {
         return new FileInputStream(new File(context.getFilesDir(), PREFIX + journeyId + SUFFIX));
     }
 
+    record DiagnosticSource(String id, File file, String legacyJson) {
+        java.io.Reader open() throws IOException {
+            if (file == null) return new java.io.StringReader(legacyJson);
+            synchronized (JourneyStore.class) {
+                return new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8);
+            }
+        }
+    }
+
+    /** Snapshot the list without running migration, repair, pruning or matching. */
+    static synchronized List<DiagnosticSource> diagnosticSources(Context context) throws IOException {
+        File[] files = context.getFilesDir().listFiles((directory, name) ->
+                name.startsWith(PREFIX) && name.endsWith(SUFFIX));
+        if (files == null) throw new IOException("Could not list the saved journey archive.");
+        Map<String, DiagnosticSource> sources = new java.util.TreeMap<>();
+        for (File file : files) {
+            String id = archiveId(file);
+            sources.put(id, new DiagnosticSource(id, file, null));
+        }
+        SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        if (!preferences.getBoolean(MIGRATED, false)) {
+            for (Map.Entry<String, ?> entry : preferences.getAll().entrySet()) {
+                if (!entry.getKey().startsWith("journey:") || !(entry.getValue() instanceof String)) continue;
+                String id = entry.getKey().substring("journey:".length());
+                sources.putIfAbsent(id, new DiagnosticSource(id, null, (String) entry.getValue()));
+            }
+        }
+        return new ArrayList<>(sources.values());
+    }
+
     static JSONObject recordedGeometry(Context context,String id) throws Exception {
         try(FileInputStream snapshot=openDiagnosticSnapshot(context,id);
                 JsonReader reader=new JsonReader(new InputStreamReader(snapshot,StandardCharsets.UTF_8))) {
