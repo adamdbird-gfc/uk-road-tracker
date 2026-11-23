@@ -37,6 +37,32 @@ const parkPath=network.concat(Array.from({length:5},(_,i)=>({p:p(i*8,6),q:p((i+1
 const parkIds=Array.from({length:5},(_,i)=>network.length+i);
 off=consolidate({...base,ids:new Set([...base.ids,...parkIds])},parkPath);
 assert(parkIds.every(id=>off.canonical.ids.has(id)),'parallel independent path is retained');
+// A complete, separately mapped *short pavement way* should not survive
+// merely because the old rule required 3 intervals and 18 metres.
+const shortComplete=network.concat([{p:p(8,5),q:p(20,5),kind:'footway',group:'single roadside pavement',index:0}]);
+const singleId=network.length;
+off=consolidate({...base,ids:new Set([...base.ids,singleId])},shortComplete);
+assert(off.suppressed.has(singleId),'a complete, strongly aligned 12m pavement fragment is redundant when matching road already credited');
+assert(!off.canonical.ids.has(singleId),'suppressed fragment disappears from canonical coverage');
+assert(!off.canonical.independentPaths.has(singleId),'no orphan independent-path attribution remains');
+const twoComplete=network.concat([
+ {p:p(8,5),q:p(16,5),kind:'footway',group:'two-piece pavement',index:0},
+ {p:p(16,5),q:p(24,5),kind:'footway',group:'two-piece pavement',index:1}
+]);
+off=consolidate({...base,ids:new Set([...base.ids,network.length,network.length+1])},twoComplete);
+assert(off.suppressed.has(network.length)&&off.suppressed.has(network.length+1),'complete 16m parallel pavement run is reconciled');
+const unfinished=twoComplete.concat([{p:p(24,5),q:p(40,5),kind:'footway',group:'two-piece pavement',index:2}]);
+off=consolidate({...base,ids:new Set([...base.ids,network.length,network.length+1])},unfinished);
+assert(!off.suppressed.has(network.length)&&!off.suppressed.has(network.length+1),'do not erase partial coverage of a longer independent OSM footway');
+const badOffset=network.concat([{p:p(8,9),q:p(20,9),kind:'footway',group:'too-far pavement',index:0}]);
+off=consolidate({...base,ids:new Set([...base.ids,network.length])},badOffset);
+assert(!off.suppressed.has(network.length),'short way demands strong lateral correspondence');
+const diagonal=network.concat([{p:p(8,5),q:p(20,16),kind:'footway',group:'station crossing',index:0}]);
+off=consolidate({...base,ids:new Set([...base.ids,network.length])},diagonal);
+assert(!off.suppressed.has(network.length),'station crossing cannot be interpreted as parallel road');
+const noShortRoad=shortComplete.map(x=>({...x}));for(let i=0;i<5;i++)noShortRoad[i].kind='service';
+off=consolidate({...base,ids:new Set([...base.ids,singleId])},noShortRoad);
+assert(!off.suppressed.has(singleId),'short pavement not suppressed beside non-public service-road geometry');
 assert(page.includes('experimentalCorrection.enabled?consolidateExperimentalRoadsidePaths('),'operation gated to experimental mode only');
 assert(page.includes('const canonical=roadsideConsolidation.canonical'),'final canonical output uses reconciled coverage');
 assert(page.includes('roadsideConsolidation:{suppressed:'),'Inspector explains suppression');
