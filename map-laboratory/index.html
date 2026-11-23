@@ -941,7 +941,7 @@ function consolidateExperimentalRoadsidePaths(canonical,network){
  if(!roads.length||!footways.length)return kept('no-eligible-overlap');
  const cell=.00016,key=(x,y)=>x+','+y,grid=new Map();
  for(const rid of roads){
-  const road=network[rid],mid=[(road.p[0]+road.q[0])/2,(road.p[1]+road.q[1])/2],k=key(...mid);
+  const road=network[rid],mid=[(road.p[0]+road.q[0])/2,(road.p[1]+road.q[1])/2],k=key(Math.floor(mid[0]/cell),Math.floor(mid[1]/cell));
   if(!grid.has(k))grid.set(k,[]);grid.get(k).push(rid);
  }
  for(const fid of footways){
