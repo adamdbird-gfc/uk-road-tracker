@@ -785,13 +785,14 @@ function matchPedestrianConstrainedRoadRoute(baseline,network,sourceLines){
   }
   cached={network,grid,roads};matchPedestrianConstrainedRoadRoute._index=cached;
  }
- const {grid}=cached,added=new Set(),accepted=[],held={noRoad:0,short:0,ambiguous:0,disconnected:0,offRoad:0};
+ const {grid}=cached,added=new Set(),accepted=[],held={noRoad:0,short:0,ambiguous:0,disconnected:0,offRoad:0,junctionHeld:0,junctionResumed:0};
  const adjacent=(a,b)=>{
   if(a===b)return true;
   const x=network[a],y=network[b];
   return [x.p,x.q].some(p=>[y.p,y.q].some(q=>metres(p,q)<=1.5));
  };
  const tracks=[];let batchNumber=0;
+ const nearEnd=(id,pt)=>network[id]&&Math.min(metres(pt,network[id].p),metres(pt,network[id].q))<=9;
  function examinePath(state){
   if(!state||state.path.length<6)return;
   const ids=[...new Set(state.path.map(p=>p.id))];
@@ -833,7 +834,20 @@ function matchPedestrianConstrainedRoadRoute(baseline,network,sourceLines){
     }
     choices.sort((a,b)=>a.score-b.score);
     const candidates=choices.slice(0,9);
-    if(!candidates.length){held.noRoad++;for(const state of states)examinePath(state);states=[];continue}
+    if(!candidates.length){
+     held.noRoad++;
+     const heldStates=[];
+     for(const state of states){
+      // Short mismatches at a mapped junction endpoint can arise from
+      // corner GPS samples. Never create/credit a reference here.
+      // Sustained departures (e.g. station paths) terminate as before.
+      if((state.junctionMisses||0)<2&&nearEnd(state.id,sample.pt)){
+       heldStates.push({...state,junctionMisses:(state.junctionMisses||0)+1,score:state.score+3});
+       held.junctionHeld++;
+      }else examinePath(state);
+     }
+     states=heldStates;continue;
+    }
     const next=[];
     for(const c of candidates){
      // A fresh roadside corridor may begin anywhere along a walk; no
@@ -841,9 +855,11 @@ function matchPedestrianConstrainedRoadRoute(baseline,network,sourceLines){
      next.push({id:c.id,batch:corridorBatch,start:i,end:i,score:c.score,path:[{id:c.id,at:i}],distance:0});
      for(const prev of states){
       if(!adjacent(prev.id,c.id))continue;
+      if(prev.junctionMisses&&!nearEnd(prev.id,sample.pt)&&!nearEnd(c.id,sample.pt))continue;
       next.push({id:c.id,batch:corridorBatch,start:prev.start,end:i,
        score:prev.score+c.score+(prev.id===c.id?0:.55),
-       path:[...prev.path,{id:c.id,at:i}],distance:prev.distance+5});
+       path:[...prev.path,{id:c.id,at:i}],distance:prev.distance+5+(prev.junctionMisses||0)*5});
+      if(prev.junctionMisses)held.junctionResumed++;
      }
     }
     const bestById=new Map();
