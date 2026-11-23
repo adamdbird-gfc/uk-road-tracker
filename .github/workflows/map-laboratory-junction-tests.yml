@@ -101,3 +101,6 @@ jobs:
 
       - name: Verify independent physical-road corridor selection and preview
         run: node map-laboratory/tests/independent-road-corridor-preview.test.cjs
+
+      - name: Verify gated canonical recovery and Lab UI simplification
+        run: node map-laboratory/tests/experimental-canonical-road-recovery.test.cjs

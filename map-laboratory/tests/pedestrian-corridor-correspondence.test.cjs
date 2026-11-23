@@ -33,5 +33,5 @@ t=make();t.support.clear();
 a=resolve(t.matched,t.network,{support:t.support});
 assert.equal(a.accepted.size,0,'raw GPS-only proposals cannot qualify');
 assert(page.includes('resolvePedestrianRoadCorridors(evidence,roads,footwayRoadEvidence)'),'actual selected pedestrian refs feed resolver');
-assert(page.includes('footwayRoadEvidence,independentRoadCandidates,independentRoadPreview,corridorResolution,orderedCorridorSupport,connectedRouteEvidence,roadFirstRouteEvidence,canonical'),'diagnostics returned without replacing canonical');
+assert(page.includes('footwayRoadEvidence,independentRoadCandidates,independentRoadPreview,experimentalCorrection,corridorResolution,orderedCorridorSupport,connectedRouteEvidence,roadFirstRouteEvidence,canonical'),'diagnostics returned without replacing canonical');
 console.log('PASS: corridor continuity, competing access, gaps, offset instability, raw-only and immutability');
