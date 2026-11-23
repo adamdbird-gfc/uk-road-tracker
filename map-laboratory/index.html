@@ -1396,7 +1396,7 @@ function recoverSourceBackedNetworkConnections(canonical,network,sourceLines){
   candidates.push({id,p:r.p,q:r.q,length});
  }
  diagnostics.eligibleEdges=candidates.length;
- const index=buildIndex(candidates);
+ const index=buildIndex(candidates),candidateById=new Map(candidates.map(c=>[c.id,c]));
  const starts=[];
  for(const c of candidates){
   for(const [from,to] of [[c.p,c.q],[c.q,c.p]]){
@@ -1412,7 +1412,7 @@ function recoverSourceBackedNetworkConnections(canonical,network,sourceLines){
  const chains=new Map();
  for(const start of starts){
   if(searched>=MAX_STATES){held.searchBound++;break}
-  const first=candidates.find(c=>c.id===start.id);
+  const first=candidateById.get(start.id);
   if(!first)continue;
   const stack=[{anchor:start.anchor,end:start.to,ids:[start.id],length:first.length,used:new Set([start.id])}];
   while(stack.length&&searched<MAX_STATES){
@@ -1429,7 +1429,7 @@ function recoverSourceBackedNetworkConnections(canonical,network,sourceLines){
    if(otherRoots.size||state.ids.length>=MAX_EDGES)continue;
    for(const id of nearby(index,state.end,2.5)){
     if(state.used.has(id))continue;
-    const c=candidates.find(x=>x.id===id);if(!c||state.length+c.length>MAX_METRES)continue;
+    const c=candidateById.get(id);if(!c||state.length+c.length>MAX_METRES)continue;
     const next=metres(state.end,c.p)<=2.5?c.q:c.p;
     const used=new Set(state.used);used.add(id);
     stack.push({anchor:state.anchor,end:next,ids:[...state.ids,id],length:state.length+c.length,used});
