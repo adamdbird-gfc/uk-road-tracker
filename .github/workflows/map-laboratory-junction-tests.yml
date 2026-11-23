@@ -18,6 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Verify saved Android route as experimental primary matching source
+        run: node map-laboratory/tests/saved-route-primary-evidence.test.cjs
       - name: Verify native Android saved-route and corrections parity
         run: node map-laboratory/tests/android-saved-route-parity.test.cjs
       - name: Verify locally supplied Android network-route evidence
