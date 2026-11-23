@@ -1,0 +1,66 @@
+name: Bulk journey diagnostics Android validation
+
+on:
+  push:
+    branches: [feat/android-bulk-journey-diagnostics]
+    paths:
+      - 'android-prototype/**'
+      - '.github/workflows/bulk-journey-diagnostics-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  archive-regression:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+      - name: Install Android compiler SDK
+        run: |
+          set -euo pipefail
+          sdkmanager_path="${ANDROID_HOME:?Android SDK is required}/cmdline-tools/latest/bin/sdkmanager"
+          if [[ ! -x "$sdkmanager_path" ]]; then sdkmanager_path="$(command -v sdkmanager)"; fi
+          "$sdkmanager_path" --install "platforms;android-35" "build-tools;35.0.0"
+      - name: Restore the released Map reference for recovery tests
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: adamdbird-gfc/uk-road-tracker
+        run: |
+          set -euo pipefail
+          gh release download roadprints-0.25.268-314 --pattern Roadprints-0.25.268-314.apk --output "$RUNNER_TEMP/baseline.apk"
+          echo "e91f83346adfe0f37e78c4cdc4af7f9e8b0d9886467446dbbe965e153612e4a0  $RUNNER_TEMP/baseline.apk" | sha256sum -c -
+          unzip -p "$RUNNER_TEMP/baseline.apk" assets/uk-road-reference-v1.bin > android-prototype/app/src/main/assets/uk-road-reference-v1.bin
+          rm "$RUNNER_TEMP/baseline.apk"
+      - name: Test diagnostics, backup and Map behavior
+        working-directory: android-prototype
+        run: |
+          # Robolectric reads the uncompressed national reference into the test JVM heap.
+          cat > "$RUNNER_TEMP/map-test-heap.gradle" <<'GRADLE'
+          allprojects {
+              tasks.withType(Test).configureEach {
+                  maxHeapSize = '3g'
+              }
+          }
+          GRADLE
+          gradle --no-daemon --stacktrace -I "$RUNNER_TEMP/map-test-heap.gradle" :app:testAcceptanceUnitTest \
+            --tests '*BulkJourneyDiagnosticsTest' \
+            --tests '*JourneyDebugExporterTest' \
+            --tests '*RoadprintsBackupTest' \
+            --tests '*MapGeometryEvidenceExportTest' \
+            --tests '*MapRecoveryEngineeringTest' \
+            --tests '*CumulativePreparedOverviewSnapshotTest'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bulk-journey-diagnostics-test-results
+          path: android-prototype/app/build/test-results/testAcceptanceUnitTest
+          retention-days: 7

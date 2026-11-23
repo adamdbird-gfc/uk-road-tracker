@@ -1,0 +1,138 @@
+name: Roadprints Build 315 integrated diagnostics APK
+
+on:
+  push:
+    branches: [feat/android-bulk-journey-diagnostics]
+    paths:
+      - .github/workflows/bulk-journey-diagnostics-owner-apk.yml
+
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: roadprints-315-owner-release
+  cancel-in-progress: false
+
+jobs:
+  owner-apk:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 48
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: adamdbird-gfc/uk-road-tracker
+      TESTED_SOURCE: 9af74bf2abaab40dd5b18870c02b721b9218dcc8
+      VALIDATION_RUN: 45288827335
+      CERT_SHA256: 5b7cdba0abd0cb41d570cdc348e3ca9bb8e2312cb7adf568bb536ce8577cc031
+      TAG: roadprints-0.25.269-315
+      APK: Roadprints-0.25.269-315.apk
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require successful Android regression on the same source
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$TESTED_SOURCE" "$GITHUB_SHA"
+          git diff --exit-code "$TESTED_SOURCE" "$GITHUB_SHA" -- android-prototype
+          gh api "repos/$GH_REPO/actions/runs/$VALIDATION_RUN" \
+            --jq '{head_sha,conclusion,status}' | \
+            jq -e --arg sha "$TESTED_SOURCE" '.head_sha==$sha and .conclusion=="success" and .status=="completed"'
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::error::Version 315 already exists"
+            exit 1
+          fi
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+      - name: Load the verified Build 314 reference assets
+        run: |
+          set -euo pipefail
+          sdkmanager_path="${ANDROID_HOME:?Android SDK is required}/cmdline-tools/latest/bin/sdkmanager"
+          if [[ ! -x "$sdkmanager_path" ]]; then sdkmanager_path="$(command -v sdkmanager)"; fi
+          "$sdkmanager_path" --install "platforms;android-35" "build-tools;35.0.0"
+          gh release download roadprints-0.25.268-314 --pattern Roadprints-0.25.268-314.apk --output "$RUNNER_TEMP/installed-314.apk"
+          echo "e91f83346adfe0f37e78c4cdc4af7f9e8b0d9886467446dbbe965e153612e4a0  $RUNNER_TEMP/installed-314.apk" | sha256sum -c -
+          signer="$ANDROID_HOME/build-tools/35.0.0/apksigner"
+          "$signer" verify --print-certs "$RUNNER_TEMP/installed-314.apk" | grep -F "certificate SHA-256 digest: $CERT_SHA256"
+          export REFERENCE_ASSETS='historic-counties/boundaries.bin railway/national.json railway/national.sqlite.gzip uk-road-reference-v1.bin'
+          echo "REFERENCE_ASSETS=$REFERENCE_ASSETS" >> "$GITHUB_ENV"
+          python3 - <<'PY'
+          import os, pathlib, shutil, zipfile
+          with zipfile.ZipFile(pathlib.Path(os.environ['RUNNER_TEMP']) / 'installed-314.apk') as source:
+              for asset in os.environ['REFERENCE_ASSETS'].split():
+                  path = pathlib.Path('android-prototype/app/src/main/assets') / asset
+                  path.parent.mkdir(parents=True, exist_ok=True)
+                  with source.open('assets/' + asset) as inp, path.open('wb') as out:
+                      shutil.copyfileobj(inp, out)
+          PY
+      - name: Build and verify same-signer integrated APK
+        env:
+          ROADPRINTS_DEBUG_KEYSTORE_B64: ${{ secrets.ROADPRINTS_DEBUG_KEYSTORE_B64 }}
+          ROADPRINTS_DEBUG_STORE_PASSWORD: ${{ secrets.ROADPRINTS_DEBUG_STORE_PASSWORD }}
+          ROADPRINTS_DEBUG_KEY_ALIAS: ${{ secrets.ROADPRINTS_DEBUG_KEY_ALIAS }}
+          ROADPRINTS_DEBUG_KEY_PASSWORD: ${{ secrets.ROADPRINTS_DEBUG_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$ROADPRINTS_DEBUG_KEYSTORE_B64"
+          test -n "$ROADPRINTS_DEBUG_STORE_PASSWORD"
+          test -n "$ROADPRINTS_DEBUG_KEY_ALIAS"
+          test -n "$ROADPRINTS_DEBUG_KEY_PASSWORD"
+          export ROADPRINTS_DEBUG_KEYSTORE="$RUNNER_TEMP/roadprints-315.keystore"
+          trap 'rm -f "$ROADPRINTS_DEBUG_KEYSTORE"' EXIT
+          umask 077
+          printf '%s' "$ROADPRINTS_DEBUG_KEYSTORE_B64" | base64 --decode > "$ROADPRINTS_DEBUG_KEYSTORE"
+          unset ROADPRINTS_DEBUG_KEYSTORE_B64
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('android-prototype/app/build.gradle.kts')
+          s = p.read_text()
+          assert s.count('versionCode = 310') == s.count('versionName = "0.25.264"') == 1
+          p.write_text(s.replace('versionCode = 310', 'versionCode = 315')
+                        .replace('versionName = "0.25.264"', 'versionName = "0.25.269"'))
+          PY
+          gradle --no-daemon -p android-prototype -Pandroid.builder.sdkDownload=false :app:assembleDebug
+          cp android-prototype/app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/$APK"
+          signer="$ANDROID_HOME/build-tools/35.0.0/apksigner"
+          "$signer" verify --print-certs "$RUNNER_TEMP/$APK" | grep -F "certificate SHA-256 digest: $CERT_SHA256"
+          "${signer%/*}/aapt" dump badging "$RUNNER_TEMP/$APK" | grep -F "package: name='com.roadprints.capture' versionCode='315' versionName='0.25.269'"
+          python3 - <<'PY'
+          import hashlib, os, pathlib, zipfile
+          def digest(stream):
+              total = hashlib.sha256()
+              while chunk := stream.read(1024 * 1024):
+                  total.update(chunk)
+              return total.digest()
+          temp = pathlib.Path(os.environ['RUNNER_TEMP'])
+          with zipfile.ZipFile(temp / 'installed-314.apk') as old, zipfile.ZipFile(temp / os.environ['APK']) as new:
+              for asset in os.environ['REFERENCE_ASSETS'].split():
+                  with old.open('assets/' + asset) as a, new.open('assets/' + asset) as b:
+                      assert digest(a) == digest(b), asset
+          PY
+          (cd "$RUNNER_TEMP" && sha256sum "$APK" > "$APK.sha256")
+      - name: Publish the direct owner APK
+        run: |
+          set -euo pipefail
+          test "$(gh api "repos/$GH_REPO/git/ref/heads/$GITHUB_REF_NAME" --jq .object.sha)" = "$GITHUB_SHA"
+          cat > "$RUNNER_TEMP/315-release.md" <<NOTES
+          Integrated Roadprints Android build 315. Installs over Build 314 (and 313) with the established package and certificate.
+
+          Open Utilities → Export all journey diagnostics. Choose a local folder in Android’s file picker. The ZIP has private location history and should stay on your device.
+
+          The export reads the saved archive, including stored route and matching evidence. The normal Map, backup and single-journey export remain available.
+
+          - Tested source: $TESTED_SOURCE
+          - Android regression: https://github.com/$GH_REPO/actions/runs/$VALIDATION_RUN
+          - Release source: $GITHUB_SHA
+          - SHA-256: $(cut -d' ' -f1 "$RUNNER_TEMP/$APK.sha256")
+          - Full archive acceptance on the owner’s Pixel 10 is pending.
+          NOTES
+          gh release create "$TAG" "$RUNNER_TEMP/$APK" "$RUNNER_TEMP/$APK.sha256" \
+            --target "$GITHUB_SHA" --prerelease --latest=false \
+            --title "Roadprints 0.25.269 (315) — Bulk journey diagnostics" --notes-file "$RUNNER_TEMP/315-release.md"
+          url=$(gh api "repos/$GH_REPO/releases/tags/$TAG" --jq ".assets[] | select(.name==\"$APK\" and .state==\"uploaded\") | .browser_download_url")
+          test "$url" = "https://github.com/$GH_REPO/releases/download/$TAG/$APK"
+          printf 'Direct owner APK: %s\n' "$url" >> "$GITHUB_STEP_SUMMARY"
