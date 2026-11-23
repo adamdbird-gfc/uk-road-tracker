@@ -3,6 +3,9 @@ name: Bulk journey diagnostics Android validation
 on:
   push:
     branches: [feat/android-bulk-journey-diagnostics]
+    paths:
+      - 'android-prototype/**'
+      - '.github/workflows/bulk-journey-diagnostics-validation.yml'
   workflow_dispatch:
 
 permissions:
@@ -27,6 +30,16 @@ jobs:
           sdkmanager_path="${ANDROID_HOME:?Android SDK is required}/cmdline-tools/latest/bin/sdkmanager"
           if [[ ! -x "$sdkmanager_path" ]]; then sdkmanager_path="$(command -v sdkmanager)"; fi
           "$sdkmanager_path" --install "platforms;android-35" "build-tools;35.0.0"
+      - name: Restore the released Map reference for recovery tests
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: adamdbird-gfc/uk-road-tracker
+        run: |
+          set -euo pipefail
+          gh release download roadprints-0.25.268-314 --pattern Roadprints-0.25.268-314.apk --output "$RUNNER_TEMP/baseline.apk"
+          echo "e91f83346adfe0f37e78c4cdc4af7f9e8b0d9886467446dbbe965e153612e4a0  $RUNNER_TEMP/baseline.apk" | sha256sum -c -
+          unzip -p "$RUNNER_TEMP/baseline.apk" assets/uk-road-reference-v1.bin > android-prototype/app/src/main/assets/uk-road-reference-v1.bin
+          rm "$RUNNER_TEMP/baseline.apk"
       - name: Test diagnostics, backup and Map behavior
         working-directory: android-prototype
         run: |
