@@ -37,7 +37,7 @@ const far=[...Array.from({length:15},(_,i)=>({p:p(i*8,0),q:p((i+1)*8,0),group:'l
 wrong=recover({ids:new Set([0,14]),sources:new Map()},far,[[p(0,5),p(120,5)]]);
 assert.equal(wrong.added.size,0,'unbounded stretches never bridged');
 assert(page.includes('matchPedestrianConstrainedRoadRoute(baselineCanonical'),'experimental switch is a hard gate');
-assert(page.includes('const canonical=experimentalCorrection.canonical'),'recovered result enters actual canonical pipeline');
+assert(page.includes('const canonical=roadsideConsolidation.canonical'),'recovered result enters actual canonical pipeline');
 assert(page.includes('boundedCorridorRecovery:{added:'),'Inspector distinguishes anchored credits');
 assert(page.includes('id="experimentalCoverage" aria-pressed="false"'),'default remains baseline');
 console.log('PASS: same-way corridor, source continuity, separate station path, service, disconnected and unanchored holds');
