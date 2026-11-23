@@ -1021,7 +1021,7 @@ function validateAndroidMatchedExport(raw){
  const refs=p.road_geojson.features.filter(f=>f.geometry?.type==='LineString'&&Array.isArray(f.geometry.coordinates)).map(f=>({kind:f.properties?.reference_kind||'',name:f.properties?.name||'',coords:f.geometry.coordinates.filter(pt=>Array.isArray(pt)&&pt.length>=2&&Number.isFinite(pt[0])&&Number.isFinite(pt[1]))})).filter(r=>r.coords.length>1);
  if(!lines.some(line=>line.length>=8)||!refs.length)throw Error('This export does not contain a detailed matched walking route and classified references');
  const start=String(j.started_at||'').replace(' ','T').slice(0,19);
- if(!/^\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d$/.test(start))throw Error('Matched journey start time unavailable');
+ if(!/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d$/.test(start))throw Error('Matched journey start time unavailable');
  return {start,mode:'walking',lines,refs,pointCount:lines.reduce((n,l)=>n+l.length,0),source:'Android matched network geometry (not new GPS fixes)'};
 }
 function androidEvidenceForJourney(j,matched){
