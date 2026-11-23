@@ -932,7 +932,7 @@ function matchPedestrianConstrainedRoadRoute(baseline,network,sourceLines){
 // footway intervals with unambiguous overlap against ACTUALLY credited,
 // non-service road centrelines after experimental route selection.
 function consolidateExperimentalRoadsidePaths(canonical,network){
- const footKinds=new Set(['footway','path','cycleway','pedestrian']);
+ const footKinds=new Set(['footway']); // Do not erase mapped cycleways, pedestrian streets or independent paths.
  const roadKinds=new Set(['trunk','primary','secondary','tertiary','unclassified','residential','living_street','road']);
  const roads=[...canonical.ids].filter(id=>roadKinds.has(network[id]?.kind));
  const footways=[...canonical.ids].filter(id=>footKinds.has(network[id]?.kind));
