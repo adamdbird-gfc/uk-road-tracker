@@ -17,6 +17,15 @@ result=link(base,network,[[p(0),p(10)]]);
 assert.equal(result.links.length,0,'no source route, no visual interpolation');
 result=link(base,network,[[p(0),p(50,50)]]);
 assert.equal(result.links.length,0,'nearby OSM endpoints alone cannot invent a link');
+// Sparse recording with a bend: neither single GPS leg supports both
+// network endpoints, but two consecutive source legs trace the connection.
+const bent=[{p:p(0,0),q:p(10,0),group:'street',kind:'residential'},
+ {p:p(18,10),q:p(27,10),group:'square',kind:'footway'}];
+result=link(base,bent,[[p(0,0),p(10,0),p(10,10),p(18,10),p(27,10)]]);
+assert(result.links.length>=2,'consecutive source legs should preserve a bent junction connection');
+assert.equal(base.ids.size,2,'multi-leg visual continuity must never credit additional roads');
+result=link(base,bent,[[p(0,0),p(10,0)],[p(10,10),p(18,10),p(27,10)]]);
+assert.equal(result.links.length,0,'must not join across separate source polylines');
 const far=[network[0],{...network[1],p:p(55,0),q:p(64,0)}];
 result=link(base,far,[[p(0),p(64)]]);
 assert.equal(result.links.length,0,'long unsupported reference gaps do not qualify');
@@ -25,5 +34,5 @@ result=link(base,joined,[[p(0),p(27,1)]]);
 assert.equal(result.links.length,0,'already touching accepted edges require no rendered bridge');
 assert(page.includes('const visualContinuity=experimentalCorrection.enabled?sourceBackedEndpointRenderLinks('),'OFF remains unchanged');
 assert(page.includes('stroke(connectors,\'#ff4b55\',3.2)'),'display-only links are rendered');
-assert(page.includes('LAB r428')&&page.includes('>PR #428</a>'));
+assert(page.includes('LAB r429')&&page.includes('>PR #429</a>'));
 console.log('PASS: source-backed visual road-to-footway joins, no invented coverage, no-source/far/connected guards');
