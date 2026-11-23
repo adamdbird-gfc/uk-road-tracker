@@ -32,7 +32,22 @@ assert.equal(result.suppressed.size,0,'crossing with split road junction endpoin
 const far=[...road,{p:p(45,28),q:p(52,29),kind:'footway',group:'separate path',index:0}];
 result=fn({...base,ids:new Set(far.map((_,i)=>i))},far,[[p(0,0),p(96,0)]]);
 assert.equal(result.suppressed.size,0,'distant off-road paths retained');
+// A short, off-centreline pedestrian passage across a square genuinely
+// connects two different credited public-road corridors. Their OSM endpoints
+// are offset by 6m, so exact-node attachment is not available.
+const west=Array.from({length:5},(_,i)=>({p:p(i*8,0),q:p((i+1)*8,0),kind:'residential',group:'western-road',index:i}));
+const east=Array.from({length:5},(_,i)=>({p:p(56+i*8,0),q:p(64+i*8,0),kind:'residential',group:'eastern-road',index:i}));
+const square=[{p:p(40,6),q:p(48,7),kind:'footway',group:'square-passage',index:0},{p:p(48,7),q:p(56,6),kind:'footway',group:'square-passage',index:1}];
+const nib={p:p(24,7),q:p(24,15),kind:'footway',group:'miscredited-roadside-nib',index:0};
+const squareNetwork=[...west,...east,...square,nib];
+const squareIds=new Set(squareNetwork.map((_,i)=>i));
+const squareBase={ids:squareIds,sources:new Map([...squareIds].map(id=>[id,'journey'])),independentPaths:new Set([10,11,12])};
+const squareResult=fn(squareBase,squareNetwork,[[p(0,0),p(96,0)]]);
+assert(!squareResult.suppressed.has(10)&&!squareResult.suppressed.has(11),'pedestrian square connector between distinct road centrelines retained');
+assert(squareResult.suppressed.has(12),'small unsupported branch beside road still suppressed');
+assert(squareResult.held.bridgesDistinctRoads>=1,'connected two-road pedestrian passage classified explicitly');
+assert(squareResult.canonical.ids.has(0)&&squareResult.canonical.ids.has(9),'both credited road corridors unchanged');
 assert(page.includes('const graphFragmentCleanup=experimentalCorrection.enabled?suppressOffCentrelineGraphFragments('),'off mode protected');
 assert(page.includes('const canonical=roadsideConsolidation.canonical'),'final canonical coverage consumes cleanup');
-assert(page.includes('LAB r424')&&page.includes('>PR #424</a>'),'version clearly visible');
+assert(page.includes('LAB r425')&&page.includes('>PR #425</a>'),'version clearly visible');
 console.log('PASS: island/spur classification, centreline invariance, journey endpoints, crossing, cycleway, parks, and opt-in safety');
