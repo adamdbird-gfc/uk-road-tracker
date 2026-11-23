@@ -1215,6 +1215,23 @@ function suppressOffCentrelineGraphFragments(canonical,network,sourceLines){
    if(best<=16&&bestId>=0)nearRoads.add(bestId);
   }
   if(maxNear>16||!nearRoads.size){held.offCorridor++;continue}
+  // A pedestrian crossing may be a tiny self-contained component with
+  // endpoints on opposite sides of a road. Crossing geometry is genuine
+  // infrastructure and must NEVER be discarded as an off-centreline island.
+  const traversesRoad=comp.some(id=>{
+   const foot=network[id];
+   return roadIds.some(rid=>{
+    const road=network[rid],axis=xyz(road.q,road.p),vl=Math.hypot(...axis);
+    if(vl<3)return false;
+    const a=xyz(foot.p,road.p),b=xyz(foot.q,road.p);
+    const da=(axis[0]*a[1]-axis[1]*a[0])/vl,db=(axis[0]*b[1]-axis[1]*b[0])/vl;
+    if(da*db>=0||Math.min(Math.abs(da),Math.abs(db))<2.5)return false;
+    const alongA=(axis[0]*a[0]+axis[1]*a[1])/vl,alongB=(axis[0]*b[0]+axis[1]*b[1])/vl;
+    const cross=(alongA*Math.abs(db)+alongB*Math.abs(da))/(Math.abs(da)+Math.abs(db));
+    return cross>=-2.5&&cross<=vl+2.5;
+   });
+  });
+  if(traversesRoad){held.realConnection++;continue}
   // Fragments that lie precisely on the physical-road centreline may
   // contribute to road continuity; this layer is NOT a road-gap fixer.
   if(maxNear<=2){held.roadCentreline++;continue}
