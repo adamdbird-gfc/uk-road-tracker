@@ -5,6 +5,31 @@ assert(a>0&&b>a);
 const M=111320,p=(x,y=0)=>[x/M,y/M],metres=(a,b)=>Math.hypot((a[0]-b[0])*M,(a[1]-b[1])*M),xyz=(a,o)=>[(a[0]-o[0])*M,(a[1]-o[1])*M];
 const proj=(a,b,p)=>{const v=[b[0]-a[0],b[1]-a[1]],d=v[0]*v[0]+v[1]*v[1],t=Math.max(0,Math.min(1,((p[0]-a[0])*v[0]+(p[1]-a[1])*v[1])/d));return Math.hypot(p[0]-a[0]-t*v[0],p[1]-a[1]-t*v[1])};
 const link=new Function('metres','xyz','proj',page.slice(a,b)+';return sourceBackedEndpointRenderLinks')(metres,xyz,proj);
+const start=page.indexOf('function resolveTerminalVisualJunctions('),stop=page.indexOf('// A nearby footway interval must actually overlap',start);
+assert(start>0&&stop>start);
+const resolve=new Function('metres','xyz','proj',page.slice(start,stop)+';return resolveTerminalVisualJunctions')(metres,xyz,proj);
+// All cases are topology- and source-based, with no location-specific names.
+const terminalNetwork=[
+ {p:p(0,0),q:p(20,0),group:'road',kind:'residential'},
+ {p:p(10,8),q:p(10,20),group:'crossing',kind:'footway'}];
+const terminalCanonical={ids:new Set([0,1])};
+const terminalSource=[[p(0,0),p(10,0),p(10,8),p(10,20)]];
+let terminal=resolve(terminalCanonical,terminalNetwork,terminalSource);
+assert.equal(terminal.trimmed.size,1,'source-backed junction removes unsupported terminal tail from display');
+assert.deepEqual(terminal.trimmed.get(0),[p(0,0),p(10,0)],'definitive road approach stays on original centreline');
+assert.deepEqual(terminal.links,[[p(10,0),p(10,8)]],'pedestrian endpoint joins road at projected intersection');
+assert.deepEqual([...terminalCanonical.ids],[0,1],'visual trim cannot mutate permanent coverage');
+assert.deepEqual(terminalNetwork[0].q,p(20,0),'original reference geometry is not modified');
+// Real evidence along the terminal road tail overrides any proposed trim.
+terminal=resolve(terminalCanonical,terminalNetwork,[[p(0,0),p(10,0),p(20,0),p(10,0),p(10,8),p(10,20)]]);
+assert.equal(terminal.trimmed.size,0,'genuinely traversed terminal tail is preserved');
+terminal=resolve(terminalCanonical,terminalNetwork,[[p(0,0),p(10,0)]]);
+assert.equal(terminal.links.length,0,'nearby geometry alone cannot establish pedestrian transition');
+const joinedRoad=[terminalNetwork[0],terminalNetwork[1],
+ {p:p(20,0),q:p(30,0),group:'road',kind:'residential'}];
+terminal=resolve({ids:new Set([0,1,2])},joinedRoad,terminalSource);
+assert.equal(terminal.trimmed.size,0,'a through-road cannot be mistaken for a dangling terminal nib');
+assert(page.includes('m.visualContinuity?.trimmed?.get(id)'),'isolated renderer actually uses terminal trim');
 const network=[{p:p(0),q:p(10),group:'road',kind:'residential'},
  {p:p(18,1),q:p(27,1),group:'square',kind:'footway'},
  {p:p(10),q:p(10,8),group:'spur',kind:'footway'}];
@@ -49,5 +74,5 @@ result=link(base,joined,[[p(0),p(27,1)]]);
 assert.equal(result.links.length,0,'already touching accepted edges require no rendered bridge');
 assert(page.includes('const visualContinuity=experimentalCorrection.enabled?sourceBackedEndpointRenderLinks('),'OFF remains unchanged');
 assert(page.includes('stroke(connectors,\'#ff4b55\',3.2)'),'display-only links are rendered');
-assert(page.includes('LAB r431')&&page.includes('>PR #431</a>'));
+assert(page.includes('LAB r432')&&page.includes('>PR #432</a>'));
 console.log('PASS: source-backed visual road-to-footway joins, no invented coverage, no-source/far/connected guards');
