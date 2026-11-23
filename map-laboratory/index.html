@@ -4,7 +4,7 @@
 <style>
 :root{color-scheme:dark;--navy:#0c1c4c;--muted:#c0cbea;--mint:#45b9a6}*{box-sizing:border-box}body{margin:0;background:var(--navy);color:#fff;font:14px system-ui,Arial,sans-serif}header{padding:12px 14px 9px}#labBuild{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:5px;font-size:11px;font-weight:650;color:#b8f3e5;line-height:1.4}#labBuild a{color:#b8f3e5;text-decoration:underline;text-underline-offset:2px}#labBuild .buildDot{color:#b9c9e8}#labBuild strong{color:#fff}h1{font-size:19px;margin:0 0 3px}h1 span{color:#54dac0}small,.muted{color:var(--muted)}#status{padding:7px 12px;background:#172b61;min-height:30px;font-size:12px}#map{height:calc(100dvh - 330px);min-height:200px;background:#e1ebec}.leaflet-container{background:#e1ebec}.leaflet-control-attribution{font-size:9px!important}footer{padding:10px 13px 14px;background:var(--navy)}.row{display:flex;gap:8px;align-items:center}.between{justify-content:space-between}button,label.import{border:1px solid #6784c0;background:#28467d;color:white;border-radius:11px;font:inherit;padding:11px 12px;cursor:pointer}button.primary,label.import{background:#36af9f;color:#001e39;border-color:#36af9f;font-weight:700}button:disabled{opacity:.45}input[type=range]{width:100%;accent-color:#54d9bc;margin:13px 0}#buttons{display:grid;grid-template-columns:1fr 1fr 1fr 44px;gap:8px}#buttons button{padding:13px 4px;font-weight:700}#mode{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0;align-items:center}#mode button,#advancedMode button{padding:9px;font-size:12px}#advanced{margin:6px 0 10px;border:1px solid #375491;border-radius:9px;padding:8px 10px}#advanced summary{cursor:pointer;color:#c0cbea;font-size:12px}#advancedMode{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}#experimentalCoverage[aria-pressed="true"]{background:#36af9f;color:#001e39;border-color:#36af9f;font-weight:700}.advancedLegend{display:none}body:has(#advanced[open]) .advancedLegend{display:inline}#mode .muted{margin-left:auto;font-size:11px}#title{font-weight:700}#count{background:#203d78;border-radius:16px;padding:5px 10px;white-space:nowrap}#meta{margin:4px 0;color:var(--muted);font-size:12px}#legend{display:flex;gap:10px;margin-top:10px;font-size:11px;flex-wrap:wrap}.chip{display:inline-block;width:19px;height:6px;border-radius:6px;margin-right:4px;vertical-align:middle}#setup{padding:14px;border:1px solid #375491;border-radius:12px;margin:10px 0}#setup p{margin:6px 0 10px;color:var(--muted)}input[type=file]{display:none}#error{display:none;padding:10px;background:#59333a;color:#fff;border-radius:8px;margin:6px 0}#detail{font-size:11px;color:#c8d8fc;min-height:14px}#inspectPanel{display:none;margin-top:8px;border:1px solid #496eae;border-radius:9px;padding:10px;background:#1b356a}#inspectPanel pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;line-height:1.35;max-height:150px;overflow:auto}#inspectPanel button{padding:8px 12px;font-size:12px}#inspect.active{background:#ebbd53;color:#15233c}#shadowRoads[aria-pressed="true"]{background:#00bcd4;color:#08263b;border-color:#00bcd4;font-weight:700}#gapMode[aria-pressed="true"]{background:#efb84c;color:#15233c;border-color:#efb84c;font-weight:700}#connectedShadow[aria-pressed="true"]{background:#f45cba;color:#231129;border-color:#f45cba;font-weight:700}#roadFirstShadow[aria-pressed="true"]{background:#f0cf64;color:#19264e;border-color:#f0cf64;font-weight:700}#independentRoads[aria-pressed="true"]{background:#60a5fa;color:#061731;border-color:#60a5fa;font-weight:700}
 </style></head>
-<body><header><h1>Roadprints <span>Map Laboratory</span></h1><small>Hosted experiment · original journeys stay on your device</small><div id="labBuild" aria-label="Laboratory code revision loaded in this browser"><strong>LAB r416</strong><span class="buildDot">·</span><span>23 Nov 2026</span><span class="buildDot">·</span><a href="https://github.com/adamdbird-gfc/uk-road-tracker/pull/416" target="_blank" rel="noopener noreferrer">PR #416</a><span class="buildDot">·</span><span>Loaded page version</span></div></header>
+<body><header><h1>Roadprints <span>Map Laboratory</span></h1><small>Hosted experiment · original journeys stay on your device</small><div id="labBuild" aria-label="Laboratory code revision loaded in this browser"><strong>LAB r417</strong><span class="buildDot">·</span><span>23 Nov 2026</span><span class="buildDot">·</span><a href="https://github.com/adamdbird-gfc/uk-road-tracker/pull/417" target="_blank" rel="noopener noreferrer">PR #416</a><span class="buildDot">·</span><span>Loaded page version</span></div></header>
 <div id="status">Import your private journey file to begin.</div><div id="map"></div>
 <footer><div id="setup"><b>Load your private journeys</b><p>Select the <b>Roadprints-Lab-Private-Journeys.json.gz</b> file. It stays in this browser and is remembered here; it is not uploaded to GitHub or Overpass.</p><label class="import" for="file">Choose journey file</label><input id="file" type="file" accept=".gz,.json,application/gzip,application/json"></div>
 <div id="error" role="alert"></div><div class="row between"><div id="title">Ready for import</div><span id="count">0 / 0</span></div>
@@ -937,6 +937,14 @@ function consolidateExperimentalRoadsidePaths(canonical,network){
  const roads=[...canonical.ids].filter(id=>roadKinds.has(network[id]?.kind));
  const footways=[...canonical.ids].filter(id=>footKinds.has(network[id]?.kind));
  const byWay=new Map(),reconciled=new Set(),ambiguous=new Set();
+ // Count the full OSM footway way, not merely those intervals selected by
+ // this journey. A small fragment of a larger independent path must NOT
+ // suddenly disappear because only part of that path was credited.
+ const fullFootway=new Map();
+ for(const item of network)if(item?.kind==='footway'){
+  const group=item.group,entry=fullFootway.get(group)||{count:0,length:0};
+  entry.count++;entry.length+=metres(item.p,item.q);fullFootway.set(group,entry);
+ }
  const kept=(reason)=>({canonical,suppressed:new Set(),ambiguous,reason});
  if(!roads.length||!footways.length)return kept('no-eligible-overlap');
  const cell=.00016,key=(x,y)=>x+','+y,grid=new Map();
@@ -957,7 +965,7 @@ function consolidateExperimentalRoadsidePaths(canonical,network){
    const relativeA=xyz(p.p,road.p),relativeB=xyz(p.q,road.p),along=z=>(z[0]*rv[0]+z[1]*rv[1])/rl;
    const overlap=Math.max(0,Math.min(rl,Math.max(along(relativeA),along(relativeB)))-Math.max(0,Math.min(along(relativeA),along(relativeB))));
    if(overlap<3)continue;
-   const offset=proj([0,0],rv,xyz(mid,road.p));
+   const lateral=xyz(mid,road.p),offset=Math.abs(rv[0]*lateral[1]-rv[1]*lateral[0])/rl;
    if(offset>7)continue;
    const entry=byRoad.get(road.group)||{overlap:0,offset:0,count:0,ids:new Set()};
    entry.overlap+=overlap;entry.offset+=offset;entry.count++;entry.ids.add(rid);
@@ -968,15 +976,23 @@ function consolidateExperimentalRoadsidePaths(canonical,network){
   if(!best||best.overlap<len*.8)continue;
   if(rival&&rival.overlap>=best.overlap*.8&&rival.offset<=best.offset+2){ambiguous.add(fid);continue}
   if(!byWay.has(p.group))byWay.set(p.group,[]);
-  byWay.get(p.group).push({fid,index:p.index,length:len,way:best.way,roadIds:best.ids});
+  byWay.get(p.group).push({fid,index:p.index,length:len,way:best.way,roadIds:best.ids,
+   overlapFraction:best.overlap/len,offset:best.offset});
  }
  for(const segments of byWay.values()){
   segments.sort((a,b)=>a.index-b.index);
   let run=[];
   const flush=()=>{
-   if(run.length>=3&&run.reduce((v,x)=>v+x.length,0)>=18){
-    for(const x of run)reconciled.add(x.fid);
-   }
+   const length=run.reduce((v,x)=>v+x.length,0);
+   const existingLongRule=run.length>=3&&length>=18;
+   // Short pavement-side references can be redundant too, but require
+   // stronger geometric agreement and the ENTIRE mapped footway way to
+   // be this short: we must not truncate a long independent path.
+   const full=run.length?fullFootway.get(network[run[0].fid].group):null;
+   const completeShortWay=!!full&&run.length>=1&&run.length<=2&&
+    full.count===run.length&&full.length<=22&&length>=5&&length<=22&&
+    run.every(x=>x.overlapFraction>=.92&&x.offset<=5);
+   if(existingLongRule||completeShortWay)for(const x of run)reconciled.add(x.fid);
    run=[];
   };
   for(const seg of segments){
@@ -992,7 +1008,7 @@ function consolidateExperimentalRoadsidePaths(canonical,network){
  const independentPaths=new Set([...(canonical.independentPaths||new Set())].filter(id=>!reconciled.has(id)));
  return {canonical:{...canonical,ids,sources,independentPaths,
   suppressedParallelPaths:new Set([...(canonical.suppressedParallelPaths||new Set()),...reconciled])},
-  suppressed:reconciled,ambiguous,reason:'sustained-credit-equivalent-roadside-footway'};
+  suppressed:reconciled,ambiguous,reason:'credited-road-equivalent-roadside-footway'};
 }
 // Read-only corridor correspondence from consecutive selected OSM pedestrian
 // reference intervals. Selected sets do not encode travel time/order: contiguous
@@ -1647,7 +1663,7 @@ async function toggleExperimentalCoverage(){
  update();
  if(target){if(wasIsolated)await jumpTo(target);else await advance(target)}
  const current=cache.get(target-1);
- tell('Coverage '+(experimentalRecovery?'experimental':'baseline')+' · '+(current?.experimentalCorrection?.added.size||0)+' pedestrian-conditioned road intervals · original journeys unchanged');
+ tell('Coverage '+(experimentalRecovery?'experimental':'baseline')+' · '+(current?.experimentalCorrection?.added.size||0)+' pedestrian-conditioned road intervals · '+(current?.roadsideConsolidation?.suppressed.size||0)+' parallel pavement intervals consolidated · original journeys unchanged');
 }
 async function toggleRoadPromotion(){
  if(!data||busy)return;
