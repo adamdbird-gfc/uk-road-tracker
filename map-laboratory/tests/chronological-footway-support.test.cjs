@@ -20,5 +20,5 @@ const cloned=[...resolution.runs[0].roadIds];
 assert.deepEqual(resolution.runs[0].roadIds,cloned,'diagnostics do not mutate reference IDs');
 assert(page.includes('selectedFootwaySequences.push(selectedFootwaySequence)'),'records actual matching sequence');
 assert(page.includes('chronologicalFootwaySupport(selectedFootwaySequences,roads,corridorResolution)'),'runtime consumes time-ordered reference selection');
-assert(page.includes('independentRoadCandidates,independentRoadPreview,experimentalCorrection,corridorResolution,orderedCorridorSupport,connectedRouteEvidence,roadFirstRouteEvidence,canonical'),'diagnostics only in match response');
+assert(page.includes('independentRoadCandidates,independentRoadPreview,experimentalCorrection,boundedCorridorRecovery,corridorResolution,orderedCorridorSupport,connectedRouteEvidence,roadFirstRouteEvidence,canonical'),'diagnostics only in match response');
 console.log('PASS: source probe order, gaps, discontinuity, ambiguity and non-crediting diagnostics');
