@@ -985,7 +985,7 @@ function consolidateExperimentalRoadsidePaths(canonical,network){
   }
   flush();
  }
- if(!reconciled.size)return kept('insufficient-sustained-correspondence');
+ if(!reconciled.size)return kept('insufficient-sustained-correspondence groups='+JSON.stringify([...byWay].map(([k,v])=>[k,v.map(x=>[x.index,x.length,x.way])])));
  const ids=new Set([...canonical.ids].filter(id=>!reconciled.has(id)));
  const sources=new Map(canonical.sources);
  for(const id of reconciled)sources.delete(id);
