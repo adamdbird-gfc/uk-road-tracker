@@ -4,7 +4,7 @@
 <style>
 :root{color-scheme:dark;--navy:#0c1c4c;--muted:#c0cbea;--mint:#45b9a6}*{box-sizing:border-box}body{margin:0;background:var(--navy);color:#fff;font:14px system-ui,Arial,sans-serif}header{padding:12px 14px 9px}#labBuild{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:5px;font-size:11px;font-weight:650;color:#b8f3e5;line-height:1.4}#labBuild a{color:#b8f3e5;text-decoration:underline;text-underline-offset:2px}#labBuild .buildDot{color:#b9c9e8}#labBuild strong{color:#fff}h1{font-size:19px;margin:0 0 3px}h1 span{color:#54dac0}small,.muted{color:var(--muted)}#status{padding:7px 12px;background:#172b61;min-height:30px;font-size:12px}#map{height:calc(100dvh - 330px);min-height:200px;background:#e1ebec}.leaflet-container{background:#e1ebec}.leaflet-control-attribution{font-size:9px!important}footer{padding:10px 13px 14px;background:var(--navy)}.row{display:flex;gap:8px;align-items:center}.between{justify-content:space-between}button,label.import{border:1px solid #6784c0;background:#28467d;color:white;border-radius:11px;font:inherit;padding:11px 12px;cursor:pointer}button.primary,label.import{background:#36af9f;color:#001e39;border-color:#36af9f;font-weight:700}button:disabled{opacity:.45}input[type=range]{width:100%;accent-color:#54d9bc;margin:13px 0}#buttons{display:grid;grid-template-columns:1fr 1fr 1fr 44px;gap:8px}#buttons button{padding:13px 4px;font-weight:700}#mode{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0;align-items:center}#mode button,#advancedMode button{padding:9px;font-size:12px}#advanced{margin:6px 0 10px;border:1px solid #375491;border-radius:9px;padding:8px 10px}#advanced summary{cursor:pointer;color:#c0cbea;font-size:12px}#advancedMode{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}#experimentalCoverage[aria-pressed="true"]{background:#36af9f;color:#001e39;border-color:#36af9f;font-weight:700}.advancedLegend{display:none}body:has(#advanced[open]) .advancedLegend{display:inline}#mode .muted{margin-left:auto;font-size:11px}#title{font-weight:700}#count{background:#203d78;border-radius:16px;padding:5px 10px;white-space:nowrap}#meta{margin:4px 0;color:var(--muted);font-size:12px}#legend{display:flex;gap:10px;margin-top:10px;font-size:11px;flex-wrap:wrap}.chip{display:inline-block;width:19px;height:6px;border-radius:6px;margin-right:4px;vertical-align:middle}#setup{padding:14px;border:1px solid #375491;border-radius:12px;margin:10px 0}#setup p{margin:6px 0 10px;color:var(--muted)}input[type=file]{display:none}#error{display:none;padding:10px;background:#59333a;color:#fff;border-radius:8px;margin:6px 0}#detail{font-size:11px;color:#c8d8fc;min-height:14px}#inspectPanel{display:none;margin-top:8px;border:1px solid #496eae;border-radius:9px;padding:10px;background:#1b356a}#inspectPanel pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;line-height:1.35;max-height:150px;overflow:auto}#inspectPanel button{padding:8px 12px;font-size:12px}#inspect.active{background:#ebbd53;color:#15233c}#shadowRoads[aria-pressed="true"]{background:#00bcd4;color:#08263b;border-color:#00bcd4;font-weight:700}#gapMode[aria-pressed="true"]{background:#efb84c;color:#15233c;border-color:#efb84c;font-weight:700}#connectedShadow[aria-pressed="true"]{background:#f45cba;color:#231129;border-color:#f45cba;font-weight:700}#roadFirstShadow[aria-pressed="true"]{background:#f0cf64;color:#19264e;border-color:#f0cf64;font-weight:700}#independentRoads[aria-pressed="true"]{background:#60a5fa;color:#061731;border-color:#60a5fa;font-weight:700}
 </style></head>
-<body><header><h1>Roadprints <span>Map Laboratory</span></h1><small>Hosted experiment · original journeys stay on your device</small><div id="labBuild" aria-label="Laboratory code revision loaded in this browser"><strong>LAB r426</strong><span class="buildDot">·</span><span>23 Nov 2026</span><span class="buildDot">·</span><a href="https://github.com/adamdbird-gfc/uk-road-tracker/pull/426" target="_blank" rel="noopener noreferrer">PR #426</a><span class="buildDot">·</span><span>Loaded page version</span></div></header>
+<body><header><h1>Roadprints <span>Map Laboratory</span></h1><small>Hosted experiment · original journeys stay on your device</small><div id="labBuild" aria-label="Laboratory code revision loaded in this browser"><strong>LAB r427</strong><span class="buildDot">·</span><span>23 Nov 2026</span><span class="buildDot">·</span><a href="https://github.com/adamdbird-gfc/uk-road-tracker/pull/427" target="_blank" rel="noopener noreferrer">PR #427</a><span class="buildDot">·</span><span>Loaded page version</span></div></header>
 <div id="status">Import your private journey file to begin.</div><div id="map"></div>
 <footer><div id="setup"><b>Load your private journeys</b><p>Select the <b>Roadprints-Lab-Private-Journeys.json.gz</b> file. It stays in this browser and is remembered here; it is not uploaded to GitHub or Overpass.</p><label class="import" for="file">Choose journey file</label><input id="file" type="file" accept=".gz,.json,application/gzip,application/json"></div>
 <div id="error" role="alert"></div><div class="row between"><div id="title">Ready for import</div><span id="count">0 / 0</span></div>
@@ -1309,86 +1309,146 @@ function suppressOffCentrelineGraphFragments(canonical,network,sourceLines){
 // accepted physical network and an actual source leg must traverse the gap.
 // Unlike cosmetic straight-line glue, these add only sourced OSM intervals
 // and never extend an isolated branch or conjecture a station approach.
+// Recover short, connected chains of *existing* OSM edges between two
+// already credited journey components. Never fabricate geometry or bridge
+// independent segments just because their endpoints are close. Source-leg
+// support is required on EVERY missing interval, and competing chains are held.
 function recoverSourceBackedNetworkConnections(canonical,network,sourceLines){
  const kinds=new Set(['trunk','primary','secondary','tertiary','unclassified','residential','living_street','road','footway','path','pedestrian','steps']);
  const existing=[...canonical.ids].filter(id=>network[id]&&kinds.has(network[id].kind));
- const added=new Set(),held={notBetween:0,notSupported:0,tooLong:0,alreadyConnected:0,ambiguous:0};
- if(existing.length<2)return {canonical,added,held,reason:'insufficient-credited-network'};
+ const added=new Set(),held={notBetween:0,notSupported:0,tooLong:0,alreadyConnected:0,ambiguous:0,deadEnd:0,searchBound:0};
+ const diagnostics={sourceLegs:0,eligibleEdges:0,candidateChains:0,bridgedPairs:0};
+ if(existing.length<2)return {canonical,added,held,diagnostics,reason:'insufficient-credited-network'};
+ const cell=.00007,key=(x,y)=>x+','+y;
+ const hash=p=>{const x=Math.floor(p[0]/cell),y=Math.floor(p[1]/cell);return [x,y]};
+ const buildIndex=items=>{
+  const index=new Map();
+  for(const item of items)for(const point of [item.p,item.q]){
+   const [x,y]=hash(point),k=key(x,y);
+   if(!index.has(k))index.set(k,[]);
+   index.get(k).push({id:item.id,p:point});
+  }
+  return index;
+ };
+ const nearby=(index,p,radius)=>{
+  const [x,y]=hash(p),out=new Set();
+  for(let dx=-2;dx<=2;dx++)for(let dy=-2;dy<=2;dy++)
+   for(const hit of index.get(key(x+dx,y+dy))||[])
+    if(metres(p,hit.p)<=radius)out.add(hit.id);
+  return [...out];
+ };
+ const creditedIndex=buildIndex(existing.map(id=>({...network[id],id})));
+ const parent=new Map(existing.map(id=>[id,id]));
+ const root=id=>{let x=id;while(parent.get(x)!==x)x=parent.get(x);while(parent.get(id)!==id){const n=parent.get(id);parent.set(id,x);id=n}return x};
+ const join=(a,b)=>{const x=root(a),y=root(b);if(x!==y)parent.set(y,x)};
+ for(const id of existing)for(const p of [network[id].p,network[id].q])
+  for(const other of nearby(creditedIndex,p,2.5))join(id,other);
  const legs=[];
  for(const line of sourceLines||[])for(let i=1;i<line.length;i++){
   const a=line[i-1],b=line[i],length=metres(a,b);
-  if(length>=3&&length<=90)legs.push({a,b,length});
+  if(length>=3&&length<=105)legs.push({a,b,length});
  }
- const supported=r=>{
-  const len=metres(r.p,r.q),mid=[(r.p[0]+r.q[0])/2,(r.p[1]+r.q[1])/2],v=xyz(r.q,r.p),vl=Math.hypot(...v);
-  for(const leg of legs){
-   const w=xyz(leg.b,leg.a),wl=Math.hypot(...w);
-   if(wl<3)continue;
-   const parallel=Math.abs((v[0]*w[0]+v[1]*w[1])/(vl*wl));
-   if(parallel<.75)continue;
-   const start=proj([0,0],w,xyz(r.p,leg.a)),finish=proj([0,0],w,xyz(r.q,leg.a));
-   if(start>6||finish>6)continue;
-   const A=xyz(r.p,leg.a),B=xyz(r.q,leg.a),along=P=>(P[0]*w[0]+P[1]*w[1])/wl;
-   if(Math.min(along(A),along(B))< -4||Math.max(along(A),along(B))>wl+4)continue;
+ diagnostics.sourceLegs=legs.length;
+ // Search local source evidence, not the whole road catalogue against every
+ // source leg. Include both endpoints of each recorded leg for long sparse
+ // Google Timeline samples.
+ const sourceGrid=new Map(),sourceCell=.00022;
+ const skey=(x,y)=>x+','+y;
+ for(let i=0;i<legs.length;i++){
+  const l=legs[i],pad=.00013;
+  const x0=Math.floor((Math.min(l.a[0],l.b[0])-pad)/sourceCell),x1=Math.floor((Math.max(l.a[0],l.b[0])+pad)/sourceCell);
+  const y0=Math.floor((Math.min(l.a[1],l.b[1])-pad)/sourceCell),y1=Math.floor((Math.max(l.a[1],l.b[1])+pad)/sourceCell);
+  if((x1-x0+1)*(y1-y0+1)>150)continue;
+  for(let x=x0;x<=x1;x++)for(let y=y0;y<=y1;y++){
+   const k=skey(x,y);if(!sourceGrid.has(k))sourceGrid.set(k,[]);
+   sourceGrid.get(k).push(i);
+  }
+ }
+ const evidence=r=>{
+  const mid=[(r.p[0]+r.q[0])/2,(r.p[1]+r.q[1])/2],cx=Math.floor(mid[0]/sourceCell),cy=Math.floor(mid[1]/sourceCell);
+  const options=new Set();
+  for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++)
+   for(const i of sourceGrid.get(skey(cx+dx,cy+dy))||[])options.add(i);
+  const v=xyz(r.q,r.p),vl=Math.hypot(...v);
+  for(const index of options){
+   const l=legs[index],w=xyz(l.b,l.a),wl=Math.hypot(...w);
+   if(vl<1||wl<3)continue;
+   const cosine=Math.abs((v[0]*w[0]+v[1]*w[1])/(vl*wl));
+   if(cosine<.78)continue;
+   const a=xyz(r.p,l.a),b=xyz(r.q,l.a);
+   if(proj([0,0],w,a)>7||proj([0,0],w,b)>7)continue;
+   const along=p=>(p[0]*w[0]+p[1]*w[1])/wl;
+   if(Math.min(along(a),along(b)) < -5||Math.max(along(a),along(b))>wl+5)continue;
    return true;
   }
   return false;
  };
- // Only compute source-leg evidence for candidate edges whose endpoints are
- // already bounded near the credited network.
- const cell=.00005,key=(x,y)=>x+','+y,buckets=new Map();
- const put=(p,id)=>{
-  const x=Math.floor(p[0]/cell),y=Math.floor(p[1]/cell),k=key(x,y);
-  if(!buckets.has(k))buckets.set(k,[]);
-  buckets.get(k).push({id,p});
- };
- for(const id of existing)for(const p of [network[id].p,network[id].q])put(p,id);
- const touches=p=>{
-  const x=Math.floor(p[0]/cell),y=Math.floor(p[1]/cell),found=new Set();
-  for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++)
-   for(const ref of buckets.get(key(x+dx,y+dy))||[])
-    if(metres(p,ref.p)<=2.5)found.add(ref.id);
-  return [...found];
- };
- // Union existing credited edges sharing endpoints: a candidate must
- // connect different components. A dead-end spur cannot pass this test.
- const parent=new Map(existing.map(id=>[id,id]));
- const root=id=>{let x=id;while(parent.get(x)!==x)x=parent.get(x);while(parent.get(id)!==id){const next=parent.get(id);parent.set(id,x);id=next}return x};
- const join=(a,b)=>{a=root(a);b=root(b);if(a!==b)parent.set(b,a)};
- for(const id of existing)for(const p of [network[id].p,network[id].q])
-  for(const other of touches(p))join(id,other);
- const pool=[];
+ // Only missing reference intervals with actual source support enter the
+ // search graph. Long footpaths, station excursions and speculative spurs
+ // are never used as "glue" merely because they happen to be nearby.
+ const candidates=[];
  for(let id=0;id<network.length;id++){
-  const r=network[id];if(canonical.ids.has(id)||!r||!kinds.has(r.kind))continue;
-  const len=metres(r.p,r.q);
-  if(len<2||len>18){held.tooLong++;continue}
-  const left=touches(r.p),right=touches(r.q);
-  if(!left.length||!right.length){held.notBetween++;continue}
-  if(!left.some(a=>right.some(b=>root(a)!==root(b)))){held.alreadyConnected++;continue}
-  if(!supported(r)){held.notSupported++;continue}
-  pool.push({id,left,right});
+  if(canonical.ids.has(id))continue;
+  const r=network[id];if(!r||!kinds.has(r.kind))continue;
+  const length=metres(r.p,r.q);
+  if(length<1.5||length>20){held.tooLong++;continue}
+  if(!evidence(r)){held.notSupported++;continue}
+  candidates.push({id,p:r.p,q:r.q,length});
  }
- // A short uncredited interval must be an unambiguous bridge, not one of
- // several competing parallel alternatives connecting the same components.
- const chosen=new Map();
- for(const candidate of pool){
-  const pair=[root(candidate.left[0]),root(candidate.right[0])].sort((a,b)=>a-b).join(':');
-  if(!chosen.has(pair))chosen.set(pair,[]);
-  chosen.get(pair).push(candidate.id);
+ diagnostics.eligibleEdges=candidates.length;
+ const index=buildIndex(candidates),candidateById=new Map(candidates.map(c=>[c.id,c]));
+ const starts=[];
+ for(const c of candidates){
+  for(const [from,to] of [[c.p,c.q],[c.q,c.p]]){
+   const anchors=nearby(creditedIndex,from,4).map(root);
+   for(const anchor of new Set(anchors))starts.push({anchor,id:c.id,to,from});
+  }
  }
- for(const candidates of chosen.values()){
-  if(candidates.length!==1){held.ambiguous+=candidates.length;continue}
-  added.add(candidates[0]);
+ // Bound the connected search to 6 source-supported OSM intervals and
+ // 60 metres. A crossing with two or more plausible alternative paths is
+ // held until stronger evidence is available.
+ const MAX_EDGES=6,MAX_METRES=60,MAX_STATES=30000;
+ let searched=0;
+ const chains=new Map();
+ for(const start of starts){
+  if(searched>=MAX_STATES){held.searchBound++;break}
+  const first=candidateById.get(start.id);
+  if(!first)continue;
+  const stack=[{anchor:start.anchor,end:start.to,ids:[start.id],length:first.length,used:new Set([start.id])}];
+  while(stack.length&&searched<MAX_STATES){
+   const state=stack.pop();searched++;
+   const otherRoots=new Set(nearby(creditedIndex,state.end,4).map(root));
+   otherRoots.delete(state.anchor);
+   for(const other of otherRoots){
+    const pair=[state.anchor,other].sort((a,b)=>a-b).join(':');
+    const signature=[...state.ids].sort((a,b)=>a-b).join(',');
+    if(!chains.has(pair))chains.set(pair,new Map());
+    chains.get(pair).set(signature,[...state.ids]);
+    diagnostics.candidateChains++;
+   }
+   if(otherRoots.size||state.ids.length>=MAX_EDGES)continue;
+   for(const id of nearby(index,state.end,2.5)){
+    if(state.used.has(id))continue;
+    const c=candidateById.get(id);if(!c||state.length+c.length>MAX_METRES)continue;
+    const next=metres(state.end,c.p)<=2.5?c.q:c.p;
+    const used=new Set(state.used);used.add(id);
+    stack.push({anchor:state.anchor,end:next,ids:[...state.ids,id],length:state.length+c.length,used});
+   }
+  }
  }
- if(!added.size)return {canonical,added,held,reason:'no-unambiguous-source-backed-bridge'};
+ for(const alternatives of chains.values()){
+  if(alternatives.size!==1){held.ambiguous+=alternatives.size;continue}
+  for(const id of alternatives.values().next().value)added.add(id);
+  diagnostics.bridgedPairs++;
+ }
+ if(!added.size)return {canonical,added,held,diagnostics,reason:'no-unambiguous-multi-edge-source-backed-bridge'};
  const ids=new Set([...canonical.ids,...added]),sources=new Map(canonical.sources);
  const independentPaths=new Set(canonical.independentPaths||[]);
  for(const id of added){
-  const kind=network[id].kind;
-  sources.set(id,'source-backed-network-connection');
-  if(['footway','path','pedestrian','steps'].includes(kind))independentPaths.add(id);
+  sources.set(id,'source-backed-network-chain');
+  if(['footway','path','pedestrian','steps'].includes(network[id].kind))independentPaths.add(id);
  }
- return {canonical:{...canonical,ids,sources,independentPaths},added,held,reason:'existing-osm-edge-between-source-supported-components'};
+ return {canonical:{...canonical,ids,sources,independentPaths},added,held,diagnostics,reason:'unambiguous-existing-osm-chain'};
 }
 // Optional local single-journey Android match evidence. Unlike a sparse
 // Timeline import, the stored network reconstruction has detailed geometry
