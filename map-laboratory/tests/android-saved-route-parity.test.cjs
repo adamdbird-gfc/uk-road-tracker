@@ -22,5 +22,5 @@ assert(page.includes('androidMatchedEvidence=null'),'private debug does not surv
 assert(page.includes('showAndroidOverlay&&step'),'parity overlay is optional');
 assert(page.includes("stroke(visible,'#06c9ec',4.6)"),'the saved route has an unmistakable separate overlay');
 assert(page.includes('const canonical=roadsideConsolidation.canonical'),'existing coverage is independently derived');
-assert(page.includes('LAB r425')&&page.includes('>PR #425</a>'),'visible revision agrees with source');
+assert(page.includes('LAB r426')&&page.includes('>PR #426</a>'),'visible revision agrees with source');
 console.log('PASS: Android MapActivity saved-match extraction with corrections and separate non-crediting overlay');
