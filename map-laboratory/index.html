@@ -460,7 +460,7 @@ function auditRoadCorridorCandidates(direct,network,gpsCandidateRefs){
   const kind=network[id].kind;
   const groupEvidence=byGroup.get(network[id].group);
   const groupIndices=groupEvidence.ids.map(n=>network[n].index).sort((a,b)=>a-b);
-  const longest=groupIndices.reduce((a,n,i)=>Math.max(a,i?groupIndices[i-1]+1===n?(a+1):1:1),0);
+  let longest=0,streak=0;for(let k=0;k<groupIndices.length;k++){streak=k&&groupIndices[k]===groupIndices[k-1]+1?streak+1:1;longest=Math.max(longest,streak)}
   const reason=groupEvidence.footIds.size<3||groupEvidence.overlap<16||longest<3?'insufficient-sustained-reference':'candidate-not-yet-route-validated';
   const item={roadId:id,osmWay:network[id].group,kind,footwayIds:[...distinctFootways],
    supportingFootways:distinctFootways.size,overlapMetres:Number(overlap.toFixed(1)),
