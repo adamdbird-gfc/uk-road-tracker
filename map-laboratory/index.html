@@ -965,7 +965,7 @@ function consolidateExperimentalRoadsidePaths(canonical,network){
    const relativeA=xyz(p.p,road.p),relativeB=xyz(p.q,road.p),along=z=>(z[0]*rv[0]+z[1]*rv[1])/rl;
    const overlap=Math.max(0,Math.min(rl,Math.max(along(relativeA),along(relativeB)))-Math.max(0,Math.min(along(relativeA),along(relativeB))));
    if(overlap<3)continue;
-   const offset=proj([0,0],rv,xyz(mid,road.p));
+   const lateral=xyz(mid,road.p),offset=Math.abs(rv[0]*lateral[1]-rv[1]*lateral[0])/rl;
    if(offset>7)continue;
    const entry=byRoad.get(road.group)||{overlap:0,offset:0,count:0,ids:new Set()};
    entry.overlap+=overlap;entry.offset+=offset;entry.count++;entry.ids.add(rid);
