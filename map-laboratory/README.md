@@ -8,6 +8,24 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Railway bridge and station access transitions (LAB r456)
+
+The Journey 7 device review accepted Prince of Orange and identified two
+remaining transitions. A mapped pavement crossing a bridge can now be
+aligned along the road on that same bridge when the journey brackets a
+unique, connected road trace. Tagged pedestrian crossings and different
+bridge or tunnel levels retain their own geometry. The railway bridge
+section of Stone Street now follows the centreline into Clive Road.
+
+A confirmed parallel corridor can continue across a short cluster of dense
+pavement vertices to its mapped access turn. The Clive Road transition
+retains the exact saved station path and steps after leaving the road.
+
+Relative to r455, the original ZIP replay added 29.4 m near the Stone Street
+centreline and 9.1 m near the Clive Road centreline, measured within 0.5 m
+of the pinned OSM geometry. The Prince of Orange join and Community Square
+were preserved in that replay.
+
 ## Pinned public network and corridor recovery (LAB r455)
 
 The normal cumulative ZIP replay reads versioned OpenStreetMap road and

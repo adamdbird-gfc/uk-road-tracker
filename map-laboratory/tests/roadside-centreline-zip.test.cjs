@@ -89,11 +89,11 @@ test('without road reference geometry, no substitution is invented',()=>{
  const line=[p(0,4),p(20,4),p(40,4)];
  assert.deepEqual(Roadside.align({parts:[line],refs:[]}).parts,[line]);
 });
-test('LAB r455 one-map frontend loads alignment before route-led attribution',()=>{
+test('LAB r456 one-map frontend loads alignment before route-led attribution',()=>{
  const fs=require('node:fs'),path=require('node:path');
  const page=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
  assert(page.indexOf('roadside-centreline.js')<page.indexOf('route-led-coverage.js'));
- assert(page.includes('LAB r455')&&page.includes('>PR #455</a>'));
+ assert(page.includes('LAB r456')&&page.includes('>PR #456</a>'));
  assert(page.includes("mode=zip?'routeLed':'center'"));
  assert(page.includes('id="zipCompare"'));
 });
@@ -109,5 +109,33 @@ test('a promoted interior run follows actual road vertices in both directions ac
   assert.deepEqual(parts[0].at(-1),line.at(-1));
   for(const vertex of [p(31,1),p(50),p(65,1)])
    assert(parts[0].some(position=>position[0]===vertex[0]&&position[1]===vertex[1]));
+ }
+});
+
+test('junction may consolidate a pavement on the same bridge but protects other grades and crossings',()=>{
+ const refs=[
+  {id:1,kind:'residential',name:'Road',nodes:[1,2],coords:[p(0),p(10)]},
+  {id:2,kind:'residential',name:'Road',nodes:[2,3],coords:[p(10),p(55)],bridge:'yes',layer:'1'},
+  {id:3,kind:'residential',name:'Road',nodes:[3,4],coords:[p(55),p(75)]},
+ ];
+ const pavement=[p(17,4),p(25,4),p(35,4),p(45,4),p(55)];
+ const part=[p(0),p(10),...pavement,p(65),p(74)];
+ const bridge={kind:'footway',coords:pavement,bridge:'yes',layer:'1'};
+ const align=foot=>Roadside.align({parts:[part],refs:[...refs,foot]});
+ const result=align(bridge);
+ assert(result.promoted.some(run=>run.kind==='junction'));
+ assert(result.parts[0].every(point=>point[1]===0));
+ for(const foot of [{...bridge,layer:'2'},{...bridge,footway:'crossing'}])
+  assert.deepEqual(align(foot).parts,[part]);
+});
+
+test('dense pavement vertices extend an accepted run to the mapped access transition in either direction',()=>{
+ const main={kind:'residential',coords:[p(0),p(100)]};
+ const access=[p(66.5,5),p(71,12),p(72,14)];
+ const part=[p(0,5),p(20,5),p(40,5),p(65,5),p(65.5,5),p(66,5),...access];
+ for(const line of [part,[...part].reverse()]){
+  const output=Roadside.align({parts:[line],refs:[main]}).parts[0];
+  assert(output.some(point=>Math.abs(point[0]-p(66.5)[0])<1e-10&&point[1]===0));
+  for(const point of access)assert(output.some(vertex=>vertex[0]===point[0]&&vertex[1]===point[1]));
  }
 });
