@@ -242,9 +242,9 @@ const RoadsideCentreline=(()=>{
   for(let i=1;i<coords.length;i++)lengths.push(lengths.at(-1)+metres(coords[i-1],coords[i]));
   return {coords,lengths};
  }
- function junctionTrace(source,starts,ends,protectedPaths){
+ function junctionTrace(source,starts,ends,protectedPaths,corridor){
   const guide=measured(source),length=guide.lengths.at(-1);
-  const options=[],limit=Math.min(65,length*1.22),tolerance=9;
+  const options=[],limit=Math.min(corridor?85:65,length*1.22),tolerance=corridor?14:9;
   let visits=0;
   function accept(pathPoints,edges,travel){
    if(travel<length*.72||travel>limit)return;
@@ -276,7 +276,7 @@ const RoadsideCentreline=(()=>{
       return;
      }
      for(const edge of node.edges){
-      if(edge===start.edge||edge===end.edge)continue;
+      if(edge===start.edge||edge===end.edge||corridor&&!corridor(edge))continue;
       const next=edge.a===node?edge.b:edge.a;
       const nextLength=travel+metres(node.p,next.p);
       if(seen.has(next)||nextLength>limit||!fits(node.p,next.p))continue;
@@ -340,6 +340,45 @@ const RoadsideCentreline=(()=>{
   }
   output.push(line.at(-1));
   return {line:output,joins};
+ }
+ // Recover continuity where a pavement promotion left a short zig-zag
+ // through the nearby branch of a divided road. The two mapped branches
+ // must rejoin, and the selected branch must support the ordered trace.
+ function joinDividedRoads(line,seams,edges,refs,recorded){
+  const joins=[];
+  for(const {at,name} of seams.toReversed()){
+   if(!name||at<1||at+3>=line.length)continue;
+   const named=edges.filter(edge=>edge.name===name);
+   const starts=roadAnchors(line[at-1],line[at],named,true);
+   if(!starts.length||roadAnchors(line[at],line[at+1],named,true).length)continue;
+   const corridor=edge=>edge.name===name&&starts.every(start=>start.edge.structure===edge.structure);
+   let length=0;
+   for(let j=at+1;j<line.length-1;j++){
+    length+=metres(line[j-1],line[j]);
+    if(length>85)break;
+    if(length<20)continue;
+    const ends=roadAnchors(line[j],line[j+1],named,false).filter(end=>corridor(end.edge)&&
+     metres(end.p,end.node.p)<.25&&end.node.edges.filter(corridor).length>=3);
+    if(!ends.length)continue;
+    const span=line.slice(at,j+1),guide=measured(span);
+    const structural=refs.filter(ref=>ref.indoor==='yes'||structure(ref));
+    const joined=junctionTrace(span,starts,ends,protectedWalks(structural),corridor);
+    if(!joined)continue;
+    const path=measured(joined.coords),saved=length-path.lengths.at(-1);
+    if(saved<8||saved<length*.12)continue;
+    // A displaced segment must include a parallel stretch of another
+    // mapped branch, rather than an independent pedestrian shortcut.
+    if(!span.slice(1,-1).some((point,k)=>snap(point,path).offset>5&&
+     onMappedRoad(point,span[k+2],named)))continue;
+    const relevant=recorded.filter(point=>snap(point,guide).offset<6);
+    const displaced=relevant.filter(point=>snap(point,path).offset-snap(point,guide).offset>4);
+    if(displaced.length>1||relevant.some(point=>snap(point,path).offset>10))continue;
+    line.splice(at,j-at+1,...joined.coords);
+    joins.push({road:name,metres:Number(length.toFixed(1)),segments:j-at,kind:'divided-road'});
+    break;
+   }
+  }
+  return joins;
  }
  // Dense mapped pavement vertices can end a valid run prematurely. Extend
  // only a confirmed run, over a few metres of tightly parallel geometry.
@@ -491,7 +530,7 @@ const RoadsideCentreline=(()=>{
      offset:Number(run.offset.toFixed(1)),segments:end.at-start.at,
      road:way.name});
    }
-   const output=[];
+   const output=[],seams=[];
    chosen.sort((a,b)=>a.start-b.start);
    const last=chosen.at(-1);
    const access=last&&route.onFoot&&!route.corrected&&original===route.parts.at(-1)?
@@ -499,6 +538,7 @@ const RoadsideCentreline=(()=>{
    let at=0;
    for(const run of chosen){
     output.push(...line.slice(at,run.start),...run.geometry);
+    if(run!==last||!access)seams.push({at:output.length-(run.exitAnchor?2:1),name:roads[run.w].name});
     at=run.end+1;
    }
    if(access){
@@ -508,6 +548,10 @@ const RoadsideCentreline=(()=>{
     const {geometry,...receipt}=access;
     promoted.push(receipt);
    }else output.push(...line.slice(at));
+   if(route.onFoot&&!route.corrected&&seams.length){
+    const raw=(route.recorded||[]).flat().filter(valid);
+    promoted.push(...joinDividedRoads(output,seams,graph,refs,raw));
+   }
    const joined=joinJunctions(output,graph,protectedPaths);
    parts.push(joined.line);
    promoted.push(...joined.joins);

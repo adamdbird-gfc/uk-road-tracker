@@ -8,6 +8,20 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Divided-road continuity (LAB r459)
+
+After a pavement alignment, a short transfer to a parallel branch may
+create artificial cross-road jogs. The display can continue along its
+mapped road branch when both branches rejoin at a real network node, the
+replacement stays close to the saved sequence in both directions and the
+saved fixes support the same corridor. Clearly corroborated side changes,
+different road names and grades, indoor links, and manual corrections are
+preserved.
+
+Journey 9 now follows the southern Strand carriageway to the mapped merge
+before Temple Bar. The regression test checks that actual road geometry
+and preserves the surrounding accepted line.
+
 ## Rail-free replay and short junction returns (LAB r458)
 
 The Lab skips rail entries while building the cumulative road and path replay.

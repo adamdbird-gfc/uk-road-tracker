@@ -89,11 +89,11 @@ test('without road reference geometry, no substitution is invented',()=>{
  const line=[p(0,4),p(20,4),p(40,4)];
  assert.deepEqual(Roadside.align({parts:[line],refs:[]}).parts,[line]);
 });
-test('LAB r458 one-map frontend loads alignment before route-led attribution',()=>{
+test('LAB r459 one-map frontend loads alignment before route-led attribution',()=>{
  const fs=require('node:fs'),path=require('node:path');
  const page=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
  assert(page.indexOf('roadside-centreline.js')<page.indexOf('route-led-coverage.js'));
- assert(page.includes('LAB r458')&&page.includes('>PR #458</a>'));
+ assert(page.includes('LAB r459')&&page.includes('>PR #459</a>'));
  assert(page.includes("mode=zip?'routeLed':'center'"));
  assert(page.includes('id="zipCompare"'));
 });
@@ -169,4 +169,21 @@ test('a source already on one carriageway stays there when another carriageway r
  const aligned=Roadside.align({parts:[line],refs:[own,other]});
  assert.deepEqual(aligned.parts,[line]);
  assert.deepEqual(aligned.promoted,[]);
+});
+
+test('a short divided-road handoff uses the supported through branch to its mapped merge',()=>{
+ const road=(nodes,coords)=>({kind:'primary',name:'Road',nodes,coords});
+ const approach=road([1,2,3,4,5],[p(0),p(30),p(50),p(65),p(100)]);
+ const branch=road([3,6,7,5],[p(50),p(59,12),p(85,12),p(100)]);
+ const departure=road([5,8,9],[p(100),p(110),p(125)]);
+ const ramp=[p(61,12),p(63,12),p(73,12),p(85,12)];
+ const line=[p(0,5),p(12,5),p(27,5),p(60,5),...ramp,p(100),p(110),p(125)];
+ const route={parts:[line],onFoot:true,refs:[approach,branch,departure]};
+ const normalized=Roadside.align(route);
+ assert(normalized.promoted.some(run=>run.kind==='divided-road'));
+ assert(normalized.parts[0].every(v=>v[1]===0),'the display follows connected road geometry');
+ const recorded=[[p(0,5),p(65,12),p(79,12),p(125)]];
+ assert(!Roadside.align({...route,recorded}).promoted.some(run=>run.kind==='divided-road'));
+ assert(!Roadside.align({...route,corrected:true}).promoted.some(run=>run.kind==='divided-road'));
+ assert(!Roadside.align({...route,refs:[approach,departure]}).promoted.some(run=>run.kind==='divided-road'));
 });

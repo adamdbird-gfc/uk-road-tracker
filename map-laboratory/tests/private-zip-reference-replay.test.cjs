@@ -113,6 +113,11 @@ test('owner ZIP Journey 9 stays on its established carriageway and loses three s
  assert(containsLine(result.parts,route.parts[0].slice(5,22)),'Strand carriageway is retained');
  assert(containsLine(result.parts,route.parts[0].slice(32,55)),'through pedestrian branch is preserved');
  assert(containsLine(result.parts,route.parts[0].slice(78,89)),'Temple Bar geometry is retained');
+ assert(result.centrelinePromotions.some(run=>run.kind==='divided-road'&&run.road==='Strand'&&run.metres>=60));
+ const through=pinned.refs.find(ref=>ref.id===1456278171).coords.toReversed();
+ assert(containsLine(result.parts,through),'follow the pinned southern carriageway to the mapped merge');
+ assert(!containsLine(result.parts,route.parts[0].slice(71,75)),'do not switch to the parallel branch before the merge');
+
  assert(!containsLine(result.parts,route.parts[0].slice(139,145)),'Fleet Street reversal does not survive');
  assert.deepEqual(result.held.filter(item=>item.reason==='short-junction-return').map(item=>item.metres),[8.4,10.2,12.4]);
  assert.equal(JSON.stringify(journey),original);
