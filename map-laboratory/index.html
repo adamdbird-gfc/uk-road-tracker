@@ -2605,6 +2605,7 @@ async function showZipJourney(n) {
    // queried public road references. Do not cross-pollinate history.
    if(zipIndependentByJourney.has(index))
     route.independentRoadReferences=zipIndependentByJourney.get(index);
+   route.diagnosticsRequested=index===selectedIndex;
    zipRouteCache.set(index,route.parts);
    const attribution=CanonicalCoverage.accumulate(zipCoverageLedger,route);
    zipCoverageCache.set(index,{novel:attribution.novel,repeat:attribution.repeat,held:attribution.held,protectedTransferIntervals:attribution.protectedTransferIntervals,protectedPedestrianCorridorIntervals:attribution.protectedPedestrianCorridorIntervals});
@@ -2616,8 +2617,17 @@ async function showZipJourney(n) {
    if(index%12===11)await new Promise(resolve=>setTimeout(resolve,0));
   }
   if((step!==n&&!loadedSelection)||!diagnosticRoute){
-   const record=await diagnosticsZip.read(n-1);
+   const record=preloadedSelected||await diagnosticsZip.read(n-1);
    diagnosticRoute=RouteFirst.reconstruct(record.journey);
+  }
+  // If the selected journey was previously processed only as historical
+  // cumulative context, compute its detailed diagnosis on demand.
+  const chosen=zipRouteLedCache.get(selectedIndex);
+  if(chosen&&!chosen.roadEvidence){
+   const record=preloadedSelected||await diagnosticsZip.read(selectedIndex);
+   const source=RouteFirst.reconstruct(record.journey);
+   source.independentRoadReferences=zipIndependentByJourney.get(selectedIndex)||[];
+   chosen.roadEvidence=RouteLedCoverage.evidence(source);
   }
   const oldStep=step;step=n;isolated=false;
   currentCoverageAudit=null;$('coverageAuditSummary').textContent='';$('downloadCoverageAudit').disabled=true;
