@@ -63,7 +63,7 @@ test('independent lookup sends only bounded geographic rectangle, never journey 
  let called=false;
  const result=await Network.lookup(route,async(url,options)=>{
   called=true;
-  assert(url.startsWith('https://overpass-api.de/api/interpreter?data='));
+  assert(url.startsWith('https://overpass.private.coffee/api/interpreter?data='));
   assert(url.includes('data=')&&decodeURIComponent(url).includes('out geom;'));
   assert(decodeURIComponent(url).includes('(_link)?'), 'Overpass query uses compatible grouping');
   assert(!decodeURIComponent(url).includes('(?:_link)'), 'Overpass query cannot contain noncapturing regex');
@@ -72,6 +72,24 @@ test('independent lookup sends only bounded geographic rectangle, never journey 
   return {ok:true,json:async()=>({elements:[publicWay(1,[p(0),p(140)])]})};
  });
  assert(called&&result.length===1);
+});
+test('primary public road service failure uses one bounded alternative without leaking journey evidence',async()=>{
+ const route={parts:[[p(0,12),p(35,12),p(70,12),p(105,12),p(140,12),p(175,12)]],refs:[]};
+ const called=[];
+ const roads=await Network.lookup(route,async url=>{
+  called.push(url);
+  if(url.includes('private.coffee'))return {ok:false,status:503};
+  return {ok:true,json:async()=>({elements:[publicWay(1,[p(0),p(175)])]})};
+ });
+ assert.equal(called.length,2);
+ assert(called[0].includes('private.coffee')&&called[1].includes('overpass-api.de'));
+ assert.equal(roads.length,1);
+ assert(called.every(url=>!url.includes('journey_id')&&!url.includes('tracepoints')));
+});
+test('both independent road endpoints unavailable returns specific network failure',async()=>{
+ const route={parts:[[p(0,12),p(35,12),p(70,12),p(105,12),p(140,12),p(175,12)]],refs:[]};
+ await assert.rejects(Network.lookup(route,async url=>({ok:false,status:url.includes('private.coffee')?503:406})),err=>
+  err.message.includes('503')&&err.message.includes('406'));
 });
 test('no local journey reference gap means no public query required',()=>{
  const line=[p(0,5),p(40,5),p(80,5),p(120,5),p(160,5)];
