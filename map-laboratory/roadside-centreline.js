@@ -58,10 +58,28 @@ const RoadsideCentreline=(()=>{
   if(alignment<.94)return null;
   return {x,y,length,sign:Math.sign(along),offset:(x.offset+y.offset)/2};
  }
+ // Sparse imported routes often encode a long road-parallel passage as
+ // ONE matched leg. Confirm its *interior* independently against the
+ // reference, not merely two endpoints near a distant or curving road.
+ function supportedLongLeg(a,b,way){
+  const length=metres(a,b);
+  if(length<32||length>120)return false;
+  const first=snap(a,way),last=snap(b,way);
+  if(first.offset>8||last.offset>8)return false;
+  const sign=Math.sign(last.along-first.along);
+  if(!sign||Math.abs(last.along-first.along)<length*.85)return false;
+  let previous=first;
+  for(const t of [.25,.5,.75,1]){
+   const current=t===1?last:snap(interpolate(a,b,t),way);
+   if(current.offset>8||sign*(current.along-previous.along)<length*.12)return false;
+   previous=current;
+  }
+  return true;
+ }
  function align(route){
   const roads=network(route?.refs),parts=[],promoted=[];
   for(const original of route?.parts||[]){
-   if(!Array.isArray(original)||original.length<3||!roads.length){
+   if(!Array.isArray(original)||original.length<2||!roads.length){
     parts.push(original);continue;
    }
    const line=original.slice(),ranges=[];
@@ -71,7 +89,9 @@ const RoadsideCentreline=(()=>{
      p[1]<way.minY-.00012||p[1]>way.maxY+.00012))continue;
     let start=-1,last=null,length=0,offset=0,legs=0;
     const flush=()=>{
-     if(start>=0&&legs>=2&&length>=32&&length/legs>=2){
+     const independentlySupported=legs===1&&start>=0&&
+      supportedLongLeg(line[start],line[start+1],way);
+     if(start>=0&&(legs>=2||independentlySupported)&&length>=32&&length/legs>=2){
       const end=start+legs,averageOffset=offset/legs;
       // Do not change geometry already on the road centreline.
       if(averageOffset>=1.6)ranges.push({start,end,length,offset:averageOffset,w});

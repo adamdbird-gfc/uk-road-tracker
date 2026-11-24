@@ -8,6 +8,12 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Sparse long-leg road centreline evidence (LAB r450)
+
+Journey 7 owner screenshots at LAB r449 still showed pedestrian-offset geometry along Clive Road and the Prince of Orange approach, while Community Square remained acceptable. The first r449 implementation unnecessarily demanded at least **two original source legs** to qualify a sustained roadside corridor. Sparse imported journey matches may contain a single long straight segment along one road. LAB r450 permits a single 32–120m matched leg to qualify when the original endpoints **and independent 25%, 50%, and 75% interior samples** follow one matching road reference within the same 8m tolerance with sustained monotone longitudinal progress. This avoids accepting a straight source line merely because it touches both ends of a curving road reference.
+
+The source route and matched evidence remain unchanged. The genuine Haynes Road pedestrian shortcut and Community Square are not targets; short links, perpendicular crossings, divergent curves and competing equally likely road references remain excluded. The change only affects experimental cumulative road attribution, not the Android archive. CI includes additional sparse-leg, competing-reference, short path and curved-road regressions. Whether the real Journey 7 network references support promotion still requires owner visual acceptance.
+
 ## Sustained pedestrian-to-physical-road centreline alignment (LAB r449)
 
 The owner identified two instances of the same issue on the December 12 Journey 7 map: roadside pedestrian geometry rather than the physical road centreline. Community Square is accepted and **must not be altered**.
