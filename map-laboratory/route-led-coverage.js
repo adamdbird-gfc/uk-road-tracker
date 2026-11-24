@@ -131,7 +131,8 @@ const RouteLedCoverage=(()=>{
  }
  function cleanup(route){
   const roads=segments(route?.refs,road),feet=segments(route?.refs,foot);
-  const aligned=CentrelinePromotion.align(route);
+  const aligned=CentrelinePromotion.align(route.sharedRoadReferences?.length?
+   {...route,refs:SharedRoadCatalogue.merge(route.refs,route.sharedRoadReferences)}:route);
   const parts=[],held=[];
   for(const input of aligned.parts||[]){
    if(!Array.isArray(input)||input.length<2){parts.push(input);continue;}
