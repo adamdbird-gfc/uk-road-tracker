@@ -58,6 +58,60 @@ const RouteLedCoverage=(()=>{
   }
   return length?backed/length:0;
  }
+ // A sparse saved match can overshoot its final recorded position and
+ // turn onto another road. Preserve the approach to the junction, but do
+ // not credit an unsupported short *terminal* side-road continuation.
+ // This is not a general route-end truncation: it requires a GPS-backed
+ // position on the approach, a sharp turn, and distinct network road refs.
+ function trimUnsupportedTerminalTurn(line,route,held){
+  const raw=(route.recorded||[]).flat().filter(valid),refs=route.refs||[];
+  if(!raw.length||line.length<5)return;
+  const destination=raw.at(-1);
+  if(distance(destination,line.at(-1))<12)return;
+  const suffix=[0];for(let i=line.length-2;i>=0;i--)
+   suffix[i]=suffix[i+1]+distance(line[i],line[i+1]);
+  const roadWays=refs.filter(r=>road.test(r.kind)&&Array.isArray(r.coords)&&r.coords.length>1);
+  if(roadWays.length<2)return;
+  const nearWay=(a,b)=>{
+   const mid=point(a,b,.5),options=[];
+   for(let i=0;i<roadWays.length;i++)for(let j=1;j<roadWays[i].coords.length;j++){
+    const u=roadWays[i].coords[j-1],v=roadWays[i].coords[j];
+    if(!valid(u)||!valid(v)||cosine(a,b,u,v)<.8)continue;
+    const offset=projection(mid,u,v).offset;
+    if(offset<2.5)options.push({id:i,offset});
+   }
+   return options.sort((a,b)=>a.offset-b.offset)[0]||null;
+  };
+  for(let corner=line.length-2;corner>=2;corner--){
+   const tail=suffix[corner];
+   if(tail<6||tail>24)continue;
+   const before=line[corner-1],junction=line[corner],after=line[corner+1];
+   const approach=distance(before,junction);
+   if(approach<3)continue;
+   // Direction changes at the terminal junction, not along a legitimately
+   // continuous road or through-route.
+   const va=[(junction[0]-before[0])*M*Math.cos(junction[1]*D),(junction[1]-before[1])*M];
+   const vb=[(after[0]-junction[0])*M*Math.cos(junction[1]*D),(after[1]-junction[1])*M];
+   const dot=(va[0]*vb[0]+va[1]*vb[1])/(Math.hypot(...va)*Math.hypot(...vb)||1);
+   if(dot>.45||dot<-.8)continue;
+   if(distance(destination,junction)>20)continue;
+   const main=nearWay(before,junction),side=nearWay(junction,line.at(-1));
+   if(!main||!side||main.id===side.id)continue;
+   // A final GPS observation beyond this turn is independent evidence of
+   // the side road. A last fix within 4m of the approach, not the side
+   // road, only corroborates travel as far as the junction.
+   let fixOnApproach=false;
+   for(let i=Math.max(1,corner-8);i<=corner;i++){
+    if(projection(destination,line[i-1],line[i]).offset<=3.5&&
+       suffix[i]<=40){fixOnApproach=true;break}
+   }
+   if(!fixOnApproach)continue;
+   if(raw.some(p=>distance(p,line.at(-1))<8))continue;
+   held.push({reason:'unverified-terminal-road-turn',metres:Number(tail.toFixed(1))});
+   line.splice(corner+1);
+   break;
+  }
+ }
  function cleanup(route){
   const roads=segments(route?.refs,road),feet=segments(route?.refs,foot);
   const parts=[],held=[];
@@ -111,6 +165,7 @@ const RouteLedCoverage=(()=>{
      }
     }
    }
+   if(roads.length)trimUnsupportedTerminalTurn(line,route,held);
    parts.push(line);
   }
   return {parts,held};
