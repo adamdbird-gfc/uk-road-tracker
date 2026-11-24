@@ -8,6 +8,14 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Sustained pedestrian-to-physical-road centreline alignment (LAB r449)
+
+The owner identified two instances of the same issue on the December 12 Journey 7 map: roadside pedestrian geometry rather than the physical road centreline. Community Square is accepted and **must not be altered**.
+
+The route-led cumulative model now aligns consecutive, sustained, directionally parallel source-matched walking segments to a matching physical-road reference centreline. The independent promotion rule requires at least two consecutive supported legs covering 32m, mean lateral displacement at least 1.6m, road proximity within 8m, longitudinal progress above 72% of source distance and consistent direction. Tied competing roads are withheld rather than arbitrarily selected. Actual perpendicular crossings, distinct footpaths, independent square shortcuts, endpoint evidence and earlier accepted route geometry remain in the original saved match.
+
+This is an incremental, general-purpose attribution experiment, **not** a city or street-name rule. Existing Roadprints history is unchanged. Regression tests protect real road-to-footway-to-road shortcuts, square crossings, ambiguous road alternatives and absence of network evidence. Device acceptance must confirm both roadside sections on Journey 7 before claiming success. The ZIP stays local.
+
 ## Evidence-bounded termini on sparsely recorded journeys (LAB r448)
 
 This corrects the r447 assumption that an unsupported terminal side-road turn should leave coverage ending at the preceding junction. A junction is not independent evidence of the traveller's stopping point. When the r447 safeguards identify an unsupported terminal turn, the route-led accumulator instead locates the final recorded GPS position on the already matched road approach (within 3.5m, and no more than 40m before the saved-match endpoint), projects the terminal position onto that physical road geometry, and withholds **all** later unmatched approach and side-road segments. The traveller may have finished partway along the road. Without a reliable last fix on the approach, no new endpoint is invented and the original match is left unchanged for further diagnosis.

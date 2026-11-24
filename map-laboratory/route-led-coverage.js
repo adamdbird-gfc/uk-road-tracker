@@ -2,6 +2,7 @@
  * Accepted, manually corrected, RouteFirst reconstructed geometry is primary.
  * No extra network match, inferred gap, connector or branch is manufactured.
  */
+const CentrelinePromotion=typeof module!=='undefined'?require('./roadside-centreline.js'):RoadsideCentreline;
 const RouteLedCoverage=(()=>{
  const M=111320,D=Math.PI/180,STEP=8;
  const valid=p=>Array.isArray(p)&&p.length===2&&p.every(Number.isFinite)&&Math.abs(p[0])<=180&&Math.abs(p[1])<=90;
@@ -130,8 +131,9 @@ const RouteLedCoverage=(()=>{
  }
  function cleanup(route){
   const roads=segments(route?.refs,road),feet=segments(route?.refs,foot);
+  const aligned=CentrelinePromotion.align(route);
   const parts=[],held=[];
-  for(const input of route?.parts||[]){
+  for(const input of aligned.parts||[]){
    if(!Array.isArray(input)||input.length<2){parts.push(input);continue;}
    const line=input.slice();
    if(roads.length&&line.length>=5){
@@ -184,7 +186,7 @@ const RouteLedCoverage=(()=>{
    if(roads.length)trimUnsupportedTerminalTurn(line,route,held);
    parts.push(line);
   }
-  return {parts,held};
+  return {parts,held,centrelinePromotions:aligned.promoted};
  }
  function intervals(route){
   const result=[],seen=new Set();
@@ -211,7 +213,7 @@ const RouteLedCoverage=(()=>{
    if(next.has(part.id))repeat.push(part);
    else{novel.push(part);next.add(part.id)}
   }
-  return {novel,repeat,next,held:prepared.held,sourceSegments:(route?.parts||[]).reduce((sum,line)=>sum+Math.max(0,(line?.length||0)-1),0)};
+  return {novel,repeat,next,held:prepared.held,centrelinePromotions:prepared.centrelinePromotions,sourceSegments:(route?.parts||[]).reduce((sum,line)=>sum+Math.max(0,(line?.length||0)-1),0)};
  }
  return {intervals,accumulate,cleanup,key};
 })();
