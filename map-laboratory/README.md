@@ -8,6 +8,10 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## One-map mobile Lab controls (LAB r445)
+
+The hosted ZIP Laboratory now opens on the existing **Route-led cumulative** model, labelled **Cumulative map**, rather than displaying five equally weighted engineering buttons. The legacy, recorded, Route-first, and canonical comparison views remain available under the collapsed **Compare other views** disclosure for investigative use. This is a UI choice and does not claim route-led source segment IDs are fully canonical physical-network coverage. The private diagnostic ZIP, history, PR-visible build revision, and Android data remain unchanged. Real-world nib removal and consistent network-section identity remain outstanding.
+
 ## ZIP selected-journey state consistency (LAB r444)
 
 The cumulative ZIP replay status now updates after the same selected journey state used by the map, title, counter and controls has committed. The request target and currently selected journey must not be shown as one inconsistent state. A chronological Back/Next/jump test asserts that the status reflects the committed selection, including revisiting earlier cached journeys.
