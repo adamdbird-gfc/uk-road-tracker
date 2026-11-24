@@ -47,7 +47,7 @@ test('evidence summary is present in visible current journey status without a ne
  assert(html.includes('LAB r454')&&html.includes('>PR #454</a>'));
  assert(html.includes('metres aligned to road centrelines'));
  assert(html.includes('roadEvidence:routed.roadEvidence'));
- assert(html.includes('centreline '+"shifted+'m'"));
+ assert(html.includes("diagnosticRoute.source+' · centreline '+shifted+'m'"));
  assert(html.includes('road reference ways screened'));
  assert(html.includes('Public road reference FAILED: '));
  assert(!html.includes('SharedRoadCatalogue')&&!html.includes('sharedRoadReferences'));
