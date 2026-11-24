@@ -134,6 +134,36 @@ const CanonicalCoverage = (() => {
   }
   return protectedIds;
  }
+ // Reuse the legacy Lab's footway-endcap principle (PR #386):
+ // protect a coherent sequence of directly source-backed pedestrian intervals
+ // before testing isolated terminal nibbles. A single endpoint touch is NOT
+ // sufficient to establish traversed path coverage.
+ function supportedPedestrianCorridors(accepted){
+  const protectedIds=new Set(),seen=new Set();
+  const paths=accepted.map((c,i)=>({c,i})).filter(x=>x.c.type==='path'&&
+   x.c.offset<=2);
+  const linked=(u,v)=>[u.a,u.b].some(p=>[v.a,v.b].some(q=>distance(p,q)<1.8));
+  for(const entry of paths){
+   if(seen.has(entry.i))continue;
+   const group=[],queue=[entry];seen.add(entry.i);
+   while(queue.length){
+    const current=queue.pop();group.push(current);
+    for(const other of paths){
+     if(!seen.has(other.i)&&linked(current.c,other.c)){
+      seen.add(other.i);queue.push(other);
+     }
+    }
+   }
+   // A continuous multi-interval footway, each interval already supported
+   // over nearly its entire length by the saved matched route, is not the
+   // short isolated single-point endcap filtered by Sunday's existing code.
+   // Do not promote one/two-interval stubs or parallels rejected earlier.
+   const length=group.reduce((sum,x)=>sum+distance(x.c.a,x.c.b),0);
+   if(group.length>=3&&length>=16)
+    for(const item of group)protectedIds.add(item.i);
+  }
+  return protectedIds;
+ }
  // Small terminal tails are unsafe to credit if the recorded journey
  // neither starts/ends there nor explicitly turns back there. This rejects
  // speculative source-matched nibs without altering the saved route.
@@ -227,8 +257,10 @@ const CanonicalCoverage = (() => {
    accepted.push(c);
   }
   const transfers=supportedPedestrianTransfers(accepted);
-  const safe=pruneTerminalTails(accepted,route,held,transfers);
-  return {accepted:safe,held,protectedTransferIntervals:transfers.size,sourceSegments:routeSegments.length,referenceSlices:slices.length};
+  const corridors=supportedPedestrianCorridors(accepted);
+  const protectedIds=new Set([...transfers,...corridors]);
+  const safe=pruneTerminalTails(accepted,route,held,protectedIds);
+  return {accepted:safe,held,protectedTransferIntervals:transfers.size,protectedPedestrianCorridorIntervals:corridors.size,sourceSegments:routeSegments.length,referenceSlices:slices.length};
  }
  // On-demand evidence audit: no rematching, no network downloads, no
  // mutation, and no retained historic per-interval diagnostic cache.
@@ -265,6 +297,7 @@ const CanonicalCoverage = (() => {
    sourceRouteParts:route.parts?.length||0,sourceSegments:segments.length,
    referenceSlices:references.length,
    protectedTransferIntervals:classified.protectedTransferIntervals,
+   protectedPedestrianCorridorIntervals:classified.protectedPedestrianCorridorIntervals,
    outcomes:counts,intervals
   };
  }
