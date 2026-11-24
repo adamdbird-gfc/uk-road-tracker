@@ -28,7 +28,7 @@ const RoadsideCentreline=(()=>{
    if(lengths.at(-1)<30)continue;
    const minX=Math.min(...coords.map(p=>p[0])),maxX=Math.max(...coords.map(p=>p[0]));
    const minY=Math.min(...coords.map(p=>p[1])),maxY=Math.max(...coords.map(p=>p[1]));
-   ways.push({coords,lengths,minX,maxX,minY,maxY});
+   ways.push({coords,lengths,minX,maxX,minY,maxY,name:ref.name||''});
   }
   return ways;
  }
@@ -80,6 +80,56 @@ const RoadsideCentreline=(()=>{
    previous=current;
   }
   return true;
+ }
+ // Auditable screening of the *actual* journey against the actual
+ // reference lines. These are per-source-leg decisions, not independent
+ // proof of travel and not a substitute for the run-level selection.
+ function evidence(route){
+  const ways=network(route?.refs),reasons=new Map(),nearby=new Map();
+  let validLegs=0,sourceMetres=0;
+  const add=(key,len)=>reasons.set(key,(reasons.get(key)||0)+len);
+  for(const line of route?.parts||[])for(let i=1;i<line.length;i++){
+   const a=line[i-1],b=line[i],length=valid(a)&&valid(b)?metres(a,b):0;
+   if(length<1||length>120)continue;
+   validLegs++;sourceMetres+=length;
+   if(!ways.length){add('no physical road references',length);continue;}
+   let best=null;
+   for(let w=0;w<ways.length;w++){
+    const way=ways[w],x=snap(a,way),y=snap(b,way);
+    if(!x||!y)continue;
+    const offset=Math.max(x.offset,y.offset),progress=Math.abs(y.along-x.along)/length,
+     r0=way.coords[x.edge-1],r1=way.coords[x.edge],
+     heading=Math.abs(direction(a,b,r0,r1));
+    // Score viable proximity first, without declaring them accepted.
+    const score=offset+Math.max(0,.97-heading)*70+Math.max(0,.90-progress)*20;
+    if(!best||score<best.score)best={wayIndex:w,offset,progress,heading,score};
+   }
+   if(!best){add('no physical road references',length);continue;}
+   const key=best.wayIndex;
+   const stat=nearby.get(key)||{metres:0,maxOffset:0,heading:0,progress:0};
+   stat.metres+=length;stat.maxOffset=Math.max(stat.maxOffset,best.offset);
+   stat.heading+=best.heading*length;stat.progress+=best.progress*length;
+   nearby.set(key,stat);
+   if(best.offset>15)add('physical road farther than 15 m',length);
+   else if(best.heading<(best.offset>8?.97:.94))add('direction not parallel',length);
+   else if(best.progress<(best.offset>8?.90:.72))add('insufficient forward road overlap',length);
+   else if(best.offset<1.6)add('already near physical centreline',length);
+   else add('segment passes individual eligibility checks',length);
+  }
+  const roadBreakdown=[...nearby].map(([index,stat])=>({
+   name:ways[index].name||'Unnamed road',
+   sampledMetres:Math.round(stat.metres),
+   maxOffsetMetres:Number(stat.maxOffset.toFixed(1)),
+   meanHeading:Number((stat.heading/stat.metres).toFixed(2)),
+   meanProgress:Number((stat.progress/stat.metres).toFixed(2)),
+   index
+  }));
+  return {
+   references:ways.length,sourceLegs:validLegs,sourceMetres:Math.round(sourceMetres),
+   reasons:[...reasons].map(([reason,metres])=>({reason,metres:Math.round(metres)}))
+     .sort((a,b)=>b.metres-a.metres),
+   roads:roadBreakdown.sort((a,b)=>b.sampledMetres-a.sampledMetres).slice(0,6)
+  };
  }
  function align(route){
   const roads=network(route?.refs),parts=[],promoted=[];
@@ -138,6 +188,6 @@ const RoadsideCentreline=(()=>{
   }
   return {parts,promoted};
  }
- return {align};
+ return {align,evidence};
 })();
 if(typeof module!=='undefined')module.exports=RoadsideCentreline;
