@@ -39,6 +39,8 @@ jobs:
         run: node map-laboratory/tests/android-saved-route-parity.test.cjs
       - name: Verify locally supplied Android network-route evidence
         run: node map-laboratory/tests/android-matched-road-reference.test.cjs
+      - name: Verify cumulative ZIP replay and chronological navigation
+        run: node map-laboratory/tests/progressive-zip-replay.test.cjs
       - name: Verify screenshot-visible Laboratory revision
         run: node map-laboratory/tests/visible-lab-revision.test.cjs
       - name: Confirm current laboratory script compiles
