@@ -53,3 +53,15 @@ test('recorded match and source references are never mutated',()=>{
  Coverage.accumulate(new Set(),input);
  assert.equal(JSON.stringify(input),before);
 });
+
+test('unsupported short terminal detour is held instead of credited',()=>{
+ const refs=[ref('residential',[p(0),p(20),p(40)]),ref('footway',[p(20),p(20,11)])];
+ const c=Coverage.accumulate(new Set(),route([[p(0),p(20),p(20,11),p(40)]],refs));
+ assert(!c.novel.some(x=>x.type==='path'&&x.b[1]>0),'unverified terminal spur receives no new coverage');
+ assert(c.held.some(x=>x.reason==='unsupported-short-terminal-branch'),'removed candidate remains inspectable');
+});
+test('genuine journey ending at a short footpath terminal remains eligible',()=>{
+ const refs=[ref('residential',[p(0),p(20),p(40)]),ref('footway',[p(20),p(20,11)])];
+ const c=Coverage.accumulate(new Set(),route([[p(0),p(20),p(20,11)]],refs));
+ assert(c.novel.some(x=>x.type==='path'),'recorded actual destination remains supported');
+});
