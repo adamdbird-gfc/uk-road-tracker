@@ -58,7 +58,7 @@ test('only physical highways from independent network qualify: exclude pubs, ser
  assert.equal(roads.length,1,'no private service road or footway promoted; same physical line deduplicated');
 });
 test('independent lookup sends only bounded geographic rectangle, never journey points or ZIP',async()=>{
- const route={parts:[[p(0,12),p(35,12),p(70,12),p(105,12),p(140,12)]],refs:[]};
+ const route={parts:[[p(0,12),p(35,12),p(70,12),p(105,12),p(140,12),p(175,12)]],refs:[]};
  assert(Network.needsNetwork(route));
  let called=false;
  const result=await Network.lookup(route,async(url,options)=>{
