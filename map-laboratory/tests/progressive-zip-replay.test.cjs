@@ -5,8 +5,8 @@ const end=page.indexOf('\nfunction updateZip(){',start);
 assert(start>=0&&end>start,'ZIP progressive navigation must exist');
 assert(page.includes('drawParts(0,Math.max(0,step-1),i=>zipRouteCache.get(i)'),
  'previously played ZIP routes must be rendered cumulatively');
-assert(page.includes('if(diagnosticsZip){')&&page.includes('Red: current journey'),
- 'ZIP replay must be visually distinct from canonical coverage');
+assert(page.includes('if(diagnosticsZip){')&&page.includes("if(mode==='canonical')")&&page.includes('Route-first displays raw matched history'),
+ 'ZIP source replay stays distinct from provisional canonical coverage');
 assert(page.includes("zipRouteCache.clear();mode=zip?'route':'center'"),
  'changing input resets previously replayed route history');
 assert(page.includes('LAB r438')&&page.includes('>PR #438</a>'));
