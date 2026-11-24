@@ -125,3 +125,20 @@ test('parallel roadside pavement is not promoted as a separate transfer',()=>{
  assert(!c.novel.some(x=>x.type==='path'));
  assert.equal(c.protectedTransferIntervals,0);
 });
+
+test('Sunday endcap rule: a four-interval directly matched pedestrian corridor cannot be pruned as a nib',()=>{
+ const footway=[p(30),p(34,4),p(38,0),p(42,-4),p(46,0)];
+ const refs=[ref('residential',[p(0),p(30)]),ref('footway',footway),
+  ref('residential',[p(46),p(76)])];
+ const coords=[p(0),p(15),p(30),...footway.slice(1),p(61),p(76)];
+ const c=Coverage.accumulate(new Set(),route([coords],refs));
+ assert(c.protectedPedestrianCorridorIntervals>=4,'source-supported footway run is protected before pruning');
+ assert.equal(c.novel.filter(x=>x.type==='path').length,4,'all four source-backed path intervals survive');
+ assert.equal(c.held.filter(x=>x.type==='path'&&x.reason==='unsupported-short-terminal-branch').length,0);
+});
+test('short isolated source-matched pedestrian nib remains filtered, not rescued as a corridor',()=>{
+ const refs=[ref('residential',[p(0),p(20),p(40)]),ref('footway',[p(20),p(20,11)])];
+ const c=Coverage.accumulate(new Set(),route([[p(0),p(20),p(20,11),p(40)]],refs));
+ assert.equal(c.protectedPedestrianCorridorIntervals,0);
+ assert(c.held.some(x=>x.type==='path'&&x.reason==='unsupported-short-terminal-branch'));
+});
