@@ -230,6 +230,44 @@ const CanonicalCoverage = (() => {
   const safe=pruneTerminalTails(accepted,route,held,transfers);
   return {accepted:safe,held,protectedTransferIntervals:transfers.size,sourceSegments:routeSegments.length,referenceSlices:slices.length};
  }
+ // On-demand evidence audit: no rematching, no network downloads, no
+ // mutation, and no retained historic per-interval diagnostic cache.
+ // The report intentionally includes coordinates: treat as private data.
+ function audit(route){
+  const references=sliceRefs(route.refs);
+  const segments=flattened(route.parts);
+  const classified=classify(route);
+  const accepted=new Set(classified.accepted.map(x=>x.id));
+  const withheld=new Map(classified.held.map(x=>[x.id,x.reason]));
+  const counts={},intervals=[];
+  const add=(reason)=>{counts[reason]=(counts[reason]||0)+1};
+  for(const c of references){
+   const proof=support(c.a,c.b,segments);
+   let outcome,reason;
+   if(accepted.has(c.id)){outcome='eligible';reason='source-backed-reference';}
+   else if(withheld.has(c.id)){outcome='held';reason=withheld.get(c.id);}
+   else {outcome='uncredited';reason='insufficient-source-overlap';}
+   add(reason);
+   intervals.push({id:c.id,type:c.type,kind:c.kind,
+    from:c.a,to:c.b,outcome,reason,
+    overlapMetres:proof?Number(proof.coverage.toFixed(2)):null,
+    offsetMetres:proof?Number(proof.offset.toFixed(2)):null});
+  }
+  if(!references.length)add('no-usable-network-references');
+  const sourcePathCount=(route.refs||[]).filter(r=>path.test(r.kind)).length;
+  const sourceRoadCount=(route.refs||[]).filter(r=>road.test(r.kind)).length;
+  if(!sourcePathCount)add('no-pedestrian-references');
+  if(!sourceRoadCount)add('no-road-references');
+  return {
+   schema:'roadprints-lab-canonical-audit-v1',
+   caveat:'Local exploratory network attribution, NOT proof of actual traversal',
+   references:{total:route.refs?.length||0,roads:sourceRoadCount,paths:sourcePathCount},
+   sourceRouteParts:route.parts?.length||0,sourceSegments:segments.length,
+   referenceSlices:references.length,
+   protectedTransferIntervals:classified.protectedTransferIntervals,
+   outcomes:counts,intervals
+  };
+ }
  function accumulate(history,route){
   const previous=history||new Set(),result=classify(route),novel=[],repeat=[];
   for(const c of result.accepted)(previous.has(c.id)?repeat:novel).push(c);
@@ -238,6 +276,6 @@ const CanonicalCoverage = (() => {
   for(const c of novel)next.add(c.id);
   return {...result,novel,repeat,next};
  }
- return {sliceRefs,classify,accumulate,key};
+ return {sliceRefs,classify,accumulate,audit,key};
 })();
 if(typeof module!=='undefined')module.exports=CanonicalCoverage;
