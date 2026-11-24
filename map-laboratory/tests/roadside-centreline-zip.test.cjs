@@ -89,11 +89,11 @@ test('without road reference geometry, no substitution is invented',()=>{
  const line=[p(0,4),p(20,4),p(40,4)];
  assert.deepEqual(Roadside.align({parts:[line],refs:[]}).parts,[line]);
 });
-test('LAB r461 one-map frontend loads alignment before route-led attribution',()=>{
+test('LAB r462 one-map frontend loads alignment before route-led attribution',()=>{
  const fs=require('node:fs'),path=require('node:path');
  const page=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
  assert(page.indexOf('roadside-centreline.js')<page.indexOf('route-led-coverage.js'));
- assert(page.includes('LAB r461')&&page.includes('>PR #461</a>'));
+ assert(page.includes('LAB r462')&&page.includes('>PR #462</a>'));
  assert(page.includes("mode=zip?'routeLed':'center'"));
  assert(page.includes('id="zipCompare"'));
 });
@@ -186,4 +186,20 @@ test('a short divided-road handoff uses the supported through branch to its mapp
  assert(!Roadside.align({...route,recorded}).promoted.some(run=>run.kind==='divided-road'));
  assert(!Roadside.align({...route,corrected:true}).promoted.some(run=>run.kind==='divided-road'));
  assert(!Roadside.align({...route,refs:[approach,departure]}).promoted.some(run=>run.kind==='divided-road'));
+});
+
+test('station transfer uses a connected street approach up to the preserved entrance spur',()=>{
+ const refs=[
+  {kind:'tertiary',name:'Street',coords:[p(-20),p(0),p(20)],nodes:[1,2,3]},
+  {kind:'tertiary',name:'Hill',coords:[p(20),p(36),p(56),p(68)],nodes:[3,4,5,6]},
+ ];
+ const line=[p(-18),p(0),p(0,12),p(18,12),p(34,12),p(48,10),p(56,10),p(56,4),p(56,1)];
+ const route={parts:[line],refs,onFoot:true,railTransitions:[{point:p(56,1)}]};
+ const result=Roadside.align(route);
+ assert(result.promoted.some(run=>run.kind==='station-approach'));
+ assert.deepEqual(result.parts[0].slice(-4),[p(56),p(56,10),p(56,4),p(56,1)]);
+ const observed=Roadside.align({...route,recorded:[[p(34,12)]]});
+ assert(!observed.promoted.some(run=>run.kind==='station-approach'));
+ const withoutMarker=Roadside.align({...route,railTransitions:[]});
+ assert(!withoutMarker.promoted.some(run=>run.kind==='station-approach'));
 });

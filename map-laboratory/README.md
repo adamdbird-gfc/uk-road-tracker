@@ -8,6 +8,18 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Station approaches on the road centreline (LAB r462)
+
+A supported station transfer can follow the mapped road from an already
+aligned section of this walk to the point where its saved route turns into
+the entrance. The candidate must be connected, close to the saved walk
+and compatible with its recorded fixes. The entrance remains a short spur.
+The original walk is still visible in the comparison modes.
+
+Journey 11 now follows the same mapped road through Ludgate Circus as the
+earlier walk. Overlap is calculated after alignment by the normal replay
+ledger and does not use other journeys to choose the route.
+
 ## Rail changeovers at mapped stations (LAB r461)
 
 The road and path replay uses the adjacent archive entry's rail mode and
