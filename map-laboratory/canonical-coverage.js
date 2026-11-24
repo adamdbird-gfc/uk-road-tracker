@@ -64,7 +64,6 @@ const CanonicalCoverage = (() => {
    if(d>10)continue;
    // A source segment must overlap the reference slice longitudinally;
    // nearby parallel but unrelated roads cannot create a new credit.
-   const rp=project(p,a,b),rq=project(q,a,b);
    const v=xy(b,a),len=Math.hypot(...v);
    const along=x=>{const w=xy(x,a);return(w[0]*v[0]+w[1]*v[1])/len};
    const pAlong=along(p),qAlong=along(q);
@@ -93,7 +92,9 @@ const CanonicalCoverage = (() => {
    }
    const alternatives=candidates.filter(other=>other!==c&&other.type===c.type&&
     direction(c.a,c.b,other.a,other.b)>.9&&
-    project(interpolate(c.a,c.b,.5),other.a,other.b).distance<5&&
+    project(interpolate(c.a,c.b,.5),other.a,other.b).distance<4&&
+    project(interpolate(other.a,other.b,.5),c.a,c.b).distance<4&&
+    Math.abs(c.offset-other.offset)<1&&
     other.id!==c.id&&Math.abs(other.score-c.score)<1);
    if(alternatives.length){held.push({...c,reason:'ambiguous-parallel-network'});continue;}
    accepted.push(c);
