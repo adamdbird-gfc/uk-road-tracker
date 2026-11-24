@@ -98,3 +98,30 @@ test('a genuine separate walking corridor and a 90 degree turn still earn covera
  assert(c.novel.some(x=>x.type==='path'));
  assert(c.novel.some(x=>x.type==='road'));
 });
+
+test('road-to-independent-footway-to-road shortcut is retained, not treated as a terminal nib',()=>{
+ const refs=[
+  ref('residential',[p(0),p(24)]),
+  ref('footway',[p(24),p(30,6),p(42,6)]),
+  ref('residential',[p(42,6),p(72,6)])
+ ];
+ const matched=[p(0),p(12),p(24),p(27,3),p(30,6),p(36,6),p(42,6),p(57,6),p(72,6)];
+ const c=Coverage.accumulate(new Set(),route([matched],refs));
+ const paths=c.novel.filter(x=>x.type==='path');
+ assert(paths.length>=3,'pathway transfers between supported road approaches');
+ assert(c.protectedTransferIntervals>=paths.length,'footway transfer is protected before terminal cleanup');
+ assert(!c.held.some(x=>x.reason==='unsupported-short-terminal-branch'&&x.type==='path'),
+  'supported transfer must not be discarded as a spur');
+});
+test('a short path dangling from only one road is not treated as a through-shortcut',()=>{
+ const refs=[ref('residential',[p(0),p(20),p(40)]),ref('footway',[p(20),p(20,10)])];
+ const c=Coverage.accumulate(new Set(),route([[p(0),p(20),p(20,10),p(40)]],refs));
+ assert.equal(c.protectedTransferIntervals,0);
+ assert(c.held.some(x=>x.reason==='unsupported-short-terminal-branch'));
+});
+test('parallel roadside pavement is not promoted as a separate transfer',()=>{
+ const refs=[ref('residential',[p(0),p(40)]),ref('footway',[p(0,3),p(40,3)])];
+ const c=Coverage.accumulate(new Set(),route([[p(0,1.5),p(40,1.5)]],refs));
+ assert(!c.novel.some(x=>x.type==='path'));
+ assert.equal(c.protectedTransferIntervals,0);
+});
