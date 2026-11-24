@@ -82,7 +82,7 @@ test('a long route is bounded and never triggers a massive public map query',()=
  const line=[p(0),p(6000)];
  assert.equal(Network.bounds({parts:[line]}),null);
 });
-test('LAB r453 has no cross-journey reference dependency and exposes moved metres',()=>{
+test('LAB r454 has no cross-journey reference dependency and exposes moved metres',()=>{
  const fs=require('node:fs'),path=require('node:path');
  const page=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
  const route=fs.readFileSync(path.join(__dirname,'..','route-led-coverage.js'),'utf8');
@@ -91,5 +91,5 @@ test('LAB r453 has no cross-journey reference dependency and exposes moved metre
  assert(page.includes('metres aligned to road centrelines'));
  assert(!page.includes('SharedRoadCatalogue')&&!route.includes('SharedRoadReferenceSource'));
  assert(!page.includes('zipRoadCatalogue')&&!route.includes('sharedRoadReferences'));
- assert(page.includes('LAB r453')&&page.includes('>PR #453</a>'));
+ assert(page.includes('LAB r454')&&page.includes('>PR #454</a>'));
 });
