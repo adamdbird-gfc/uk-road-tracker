@@ -242,9 +242,10 @@ const RoadsideCentreline=(()=>{
   for(let i=1;i<coords.length;i++)lengths.push(lengths.at(-1)+metres(coords[i-1],coords[i]));
   return {coords,lengths};
  }
- function junctionTrace(source,starts,ends,protectedPaths,corridor){
+ function junctionTrace(source,starts,ends,protectedPaths,corridor,bounds={}){
   const guide=measured(source),length=guide.lengths.at(-1);
-  const options=[],limit=Math.min(corridor?85:65,length*1.22),tolerance=corridor?14:9;
+  const options=[],limit=Math.min(bounds.max??(corridor?85:65),length*1.22);
+  const tolerance=bounds.tolerance??(corridor?14:9);
   let visits=0;
   function accept(pathPoints,edges,travel){
    if(travel<length*.72||travel>limit)return;
@@ -439,6 +440,46 @@ const RoadsideCentreline=(()=>{
   }
   return joins;
  }
+ // Keep a station forecourt as a short spur from the road already
+ // established by this walk. Use only the connected public road graph.
+ function stationApproach(line,edges,protectedPaths,raw){
+  if(line.length<6)return null;
+  let tail=0;
+  for(let turn=line.length-2;turn>=3;turn--){
+   const pivot=line[turn],previous=line[turn-1],entrance=line.at(-1);
+   tail+=metres(pivot,line[turn+1]);
+   if(tail>22)break;
+   if(tail<4||metres(previous,pivot)<4||Math.abs(direction(previous,pivot,pivot,entrance))>.35)continue;
+   const forward=interpolate(previous,pivot,2);
+   const nearby=roadAnchors(pivot,forward,edges,false,13).filter(a=>a.edge.name);
+   if(!nearby.length)continue;
+   const nearest=Math.min(...nearby.map(a=>metres(a.p,pivot)));
+   if(nearest<2||nearest+tail>28)continue;
+   const ends=nearby.filter(a=>metres(a.p,pivot)<=nearest+.15).sort((a,b)=>
+    direction(pivot,a.p,pivot,entrance)-direction(pivot,b.p,pivot,entrance));
+   let walked=0;
+   for(let i=turn-1;i>=1;i--){
+    walked+=metres(line[i],line[i+1]);
+    if(walked>125)break;
+    if(walked<22)continue;
+    const starts=roadAnchors(line[i-1],line[i],edges,true);
+    if(!starts.length||starts.some(a=>!a.edge.name))continue;
+    const span=line.slice(i,turn+1),guide=measured(span);
+    const grade=starts[0].edge.structure,names=new Set([...starts,...ends].map(a=>a.edge.name));
+    const allowed=edge=>names.has(edge.name)&&edge.structure===grade;
+    if(!starts.every(anchor=>allowed(anchor.edge))||!ends.every(anchor=>allowed(anchor.edge)))continue;
+    const joined=junctionTrace(span,starts,ends,protectedPaths.filter(walk=>walk.structural),allowed,
+     {max:125,tolerance:15});
+    if(!joined)continue;
+    const path=measured(joined.coords);
+    if(raw.some(fix=>snap(fix,guide).offset<=3&&snap(fix,path).offset>7))continue;
+    return {line:line.slice(0,i).concat(joined.coords,line.slice(turn)),
+     promotion:{road:[...new Set(joined.labels)].join(' / '),metres:Number(walked.toFixed(1)),
+      segments:turn-i,kind:'station-approach'}};
+   }
+  }
+  return null;
+ }
  // Dense mapped pavement vertices can end a valid run prematurely. Extend
  // only a confirmed run, over a few metres of tightly parallel geometry.
  function extendBoundary(line,way,run,sign,protectedLegs,ranges,side){
@@ -613,7 +654,16 @@ const RoadsideCentreline=(()=>{
    }
    if(route.onFoot&&!route.corrected)promoted.push(...alignTurnarounds(output,graph,protectedPaths,raw));
    const joined=joinJunctions(output,graph,protectedPaths,raw,route.onFoot&&!route.corrected);
-   parts.push(joined.line);
+   let displayed=joined.line;
+   for(const mark of route.railTransitions||[]){
+    const reverse=metres(displayed[0],mark.point)<.75;
+    if(!reverse&&metres(displayed.at(-1),mark.point)>=.75)continue;
+    const approach=stationApproach(reverse?displayed.toReversed():displayed,graph,protectedPaths,raw);
+    if(!approach)continue;
+    displayed=reverse?approach.line.toReversed():approach.line;
+    promoted.push(approach.promotion);
+   }
+   parts.push(displayed);
    promoted.push(...joined.joins);
   }
   return {parts,promoted};

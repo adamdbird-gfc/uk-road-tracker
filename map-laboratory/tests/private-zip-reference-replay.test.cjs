@@ -164,4 +164,16 @@ test('City Thameslink street replay reaches the mapped entrance without drawing 
  assert(guarded.surfaceParts[0].length<route.parts[0].length);
  const output=RouteLed.cleanup({...guarded,parts:guarded.surfaceParts});
  assert.deepEqual(output.parts[0].at(-1),door);
+ const circus=pinned.refs.find(ref=>ref.id===317900060).coords.toReversed();
+ assert(containsLine(output.parts,circus),'follow the public road through Ludgate Circus');
+ assert(output.centrelinePromotions.some(run=>run.kind==='station-approach'));
+ const tail=guarded.surfaceParts[0].slice(-5);
+ assert(containsLine(output.parts,tail),'retain the mapped approach into the station');
+ const {journey:earlier}=await zip.read(9);
+ const previous=RouteFirst.reconstruct(earlier),local=await Network.create(request).lookup(previous);
+ const first=RouteLed.accumulate(new Set(),{...previous,independentRoadReferences:local.refs});
+ const next=RouteLed.accumulate(first.next,{...guarded,parts:guarded.surfaceParts});
+ assert(next.repeat.some(leg=>leg.a[0]===circus[0][0]&&leg.a[1]===circus[0][1]),
+  'the shared road interval overlays previous coverage');
+
 });
