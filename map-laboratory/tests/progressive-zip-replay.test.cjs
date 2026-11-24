@@ -7,9 +7,9 @@ assert(page.includes('drawParts(0,Math.max(0,step-1),i=>zipRouteCache.get(i)'),
  'previously played ZIP routes must be rendered cumulatively');
 assert(page.includes('if(diagnosticsZip){')&&page.includes("if(mode==='canonical')")&&page.includes('Route-first displays raw matched history'),
  'ZIP source replay stays distinct from provisional canonical coverage');
-assert(page.includes("zipRouteCache.clear();zipCoverageCache.clear();zipCoverageLedger.clear();mode=zip?'canonical':'center'"),
+assert(page.includes("zipRouteCache.clear();zipCoverageCache.clear();zipCoverageLedger.clear();mode=zip?'route':'center'"),
  'changing input resets previously replayed route history');
-assert(page.includes('LAB r438')&&page.includes('>PR #438</a>'));
+assert(page.includes('LAB r439')&&page.includes('>PR #439</a>'));
 const seen=[];
 const zip={read:async index=>{seen.push(index);return {journey:{index}};}};
 const reconstruct=journey=>({

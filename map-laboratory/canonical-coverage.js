@@ -81,6 +81,63 @@ const CanonicalCoverage = (() => {
   const x=along(c),y=along(d);
   return Math.max(0,Math.min(len,Math.max(x,y))-Math.max(0,Math.min(x,y)));
  }
+ // Small terminal tails are unsafe to credit if the recorded journey
+ // neither starts/ends there nor explicitly turns back there. This rejects
+ // speculative source-matched nibs without altering the saved route.
+ function pruneTerminalTails(accepted,route,held){
+  const node=p=>p.map(v=>Math.round(v*1e5)).join(',');
+  const neighbours=new Map();
+  accepted.forEach((c,i)=>{
+   for(const p of [c.a,c.b]){
+    const k=node(p),list=neighbours.get(k)||[];
+    list.push(i);neighbours.set(k,list);
+   }
+  });
+  const ends=(route.parts||[]).flatMap(line=>line?.length?[line[0],line.at(-1)]:[]);
+  const verifiedTurn=tip=>(route.parts||[]).some(line=>{
+   for(let i=1;i<line.length-1;i++){
+    if(distance(tip,line[i])>4)continue;
+    const before=line[i-1],after=line[i+1];
+    if(distance(before,tip)>3&&distance(after,tip)>3&&distance(before,after)<7)return true;
+   }
+   return false;
+  });
+  const excluded=new Set();
+  for(let i=0;i<accepted.length;i++){
+   if(excluded.has(i))continue;
+   const edge=accepted[i];
+   for(const tip of [edge.a,edge.b]){
+    if((neighbours.get(node(tip))||[]).length!==1)continue;
+    const traversed=new Set(),chain=[];
+    let current=i,vertex=node(tip),length=0;
+    while(current!==undefined&&!traversed.has(current)){
+     traversed.add(current);chain.push(current);
+     const e=accepted[current];
+     length+=distance(e.a,e.b);
+     if(length>24)break;
+     const nextKey=node(e.a)===vertex?node(e.b):node(e.a);
+     const connected=(neighbours.get(nextKey)||[]).filter(x=>x!==current);
+     if(connected.length!==1)break;
+     vertex=nextKey;current=connected[0];
+    }
+    if(length>24||!chain.length||chain.some(id=>excluded.has(id)))continue;
+    if(ends.some(end=>distance(end,tip)<5)||verifiedTurn(tip))continue;
+    // Do not remove an isolated whole journey or a terminal run that ends
+    // simply because the graph has incomplete reference coverage. It must
+    // connect to a separate accepted branch at the opposite end.
+    const far=(node(accepted[chain.at(-1)].a)===vertex)?
+     accepted[chain.at(-1)].b:accepted[chain.at(-1)].a;
+    const farDegree=(neighbours.get(node(far))||[]).length;
+    if(farDegree<3)continue;
+    for(const id of chain)excluded.add(id);
+   }
+  }
+  return accepted.filter((c,i)=>{
+   if(!excluded.has(i))return true;
+   held.push({...c,reason:'unsupported-short-terminal-branch'});
+   return false;
+  });
+ }
  function classify(route){
   const slices=sliceRefs(route.refs),routeSegments=flattened(route.parts),candidates=[];
   for(const ref of slices){
@@ -108,7 +165,8 @@ const CanonicalCoverage = (() => {
    if(alternatives.length){held.push({...c,reason:'ambiguous-parallel-network'});continue;}
    accepted.push(c);
   }
-  return {accepted,held,sourceSegments:routeSegments.length,referenceSlices:slices.length};
+  const safe=pruneTerminalTails(accepted,route,held);
+  return {accepted:safe,held,sourceSegments:routeSegments.length,referenceSlices:slices.length};
  }
  function accumulate(history,route){
   const previous=history||new Set(),result=classify(route),novel=[],repeat=[];
