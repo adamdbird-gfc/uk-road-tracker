@@ -41,6 +41,8 @@ jobs:
         run: node map-laboratory/tests/android-matched-road-reference.test.cjs
       - name: Verify map-first basemap default
         run: node map-laboratory/tests/basemap-default.test.cjs
+      - name: Verify canonical reference interval attribution safeguards
+        run: node --test map-laboratory/tests/canonical-coverage.test.cjs
       - name: Verify cumulative ZIP replay and chronological navigation
         run: node map-laboratory/tests/progressive-zip-replay.test.cjs
       - name: Verify screenshot-visible Laboratory revision
