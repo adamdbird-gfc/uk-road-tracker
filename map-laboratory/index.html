@@ -2513,16 +2513,17 @@ async function showZipJourney(n) {
  try{
   // Forward travel accumulates every intervening journey in ZIP chronology.
   // Only route coordinates are retained for history, not raw ZIP records.
+  let loadedSelection=false;
   for(let index=0;index<n;index++){
    if(zipRouteCache.has(index))continue;
    tell('Building cumulative routes · '+(index+1)+' / '+n+'…');
    const record=await diagnosticsZip.read(index);
    const route=RouteFirst.reconstruct(record.journey);
    zipRouteCache.set(index,route.parts);
-   if(index===n-1)diagnosticRoute=route;
+   if(index===n-1){diagnosticRoute=route;loadedSelection=true;}
    if(index%12===11)await new Promise(resolve=>setTimeout(resolve,0));
   }
-  if(step!==n||!diagnosticRoute){
+  if((step!==n&&!loadedSelection)||!diagnosticRoute){
    const record=await diagnosticsZip.read(n-1);
    diagnosticRoute=RouteFirst.reconstruct(record.journey);
   }
