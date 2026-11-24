@@ -8,6 +8,16 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Route-led roadside nib consolidation (LAB r446)
+
+The private Journey 2 replay showed two distinct anomalies in the saved match: a very short leading hook from a minor road onto a continuous major-road centreline, and a closed out-and-back excursion that follows a footway approximately parallel to the already used road before returning to its starting point. No private coordinates are committed.
+
+The experimental route-led accumulator now performs **source-backed, non-mutating cleanup** before producing provisional cumulative segments:
+- A closed out-and-back is consolidated only when it rejoins the same road position and most of its geometry demonstrably shadows an existing road centreline. Genuine independent pedestrian shortcuts between different roads are unaffected.
+- A short leading road hook is withheld only if it is uncorroborated by nearby recorded position evidence, turns sharply onto a long supported road route, and is not supported by a separate pedestrian reference. Confirmed journey starts remain eligible.
+
+The complete original Route-first saved match remains accessible under **Compare other views**. These are provisional display/ledger decisions, not edits to Android history. If reference geometry or position evidence is missing, the rules leave source geometry unchanged instead of inventing coverage. Synthetic cases protect real shortcuts, pedestrian out-and-backs away from roads, recorded starts, and absent references. Real seven-journey owner acceptance remains mandatory.
+
 ## One-map mobile Lab controls (LAB r445)
 
 The hosted ZIP Laboratory now opens on the existing **Route-led cumulative** model, labelled **Cumulative map**, rather than displaying five equally weighted engineering buttons. The legacy, recorded, Route-first, and canonical comparison views remain available under the collapsed **Compare other views** disclosure for investigative use. This is a UI choice and does not claim route-led source segment IDs are fully canonical physical-network coverage. The private diagnostic ZIP, history, PR-visible build revision, and Android data remain unchanged. Real-world nib removal and consistent network-section identity remain outstanding.
