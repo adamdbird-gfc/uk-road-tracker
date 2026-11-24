@@ -3,6 +3,7 @@
  * No extra network match, inferred gap, connector or branch is manufactured.
  */
 const CentrelinePromotion=typeof module!=='undefined'?require('./roadside-centreline.js'):RoadsideCentreline;
+const SharedRoadReferenceSource=typeof module!=='undefined'?require('./shared-road-catalogue.js'):SharedRoadCatalogue;
 const RouteLedCoverage=(()=>{
  const M=111320,D=Math.PI/180,STEP=8;
  const valid=p=>Array.isArray(p)&&p.length===2&&p.every(Number.isFinite)&&Math.abs(p[0])<=180&&Math.abs(p[1])<=90;
@@ -131,7 +132,8 @@ const RouteLedCoverage=(()=>{
  }
  function cleanup(route){
   const roads=segments(route?.refs,road),feet=segments(route?.refs,foot);
-  const aligned=CentrelinePromotion.align(route);
+  const aligned=CentrelinePromotion.align(route.sharedRoadReferences?.length?
+   {...route,refs:SharedRoadReferenceSource.merge(route.refs,route.sharedRoadReferences)}:route);
   const parts=[],held=[];
   for(const input of aligned.parts||[]){
    if(!Array.isArray(input)||input.length<2){parts.push(input);continue;}

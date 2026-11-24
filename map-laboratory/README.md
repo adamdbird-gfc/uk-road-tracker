@@ -8,6 +8,16 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Shared physical road evidence from the local ZIP (LAB r451)
+
+The owner’s r450 Journey 7 screenshots showed that simply accepting longer roadside legs had not moved Clive Road or the Prince of Orange section onto physical road centrelines. Audit of the **actual private 1,714-journey ZIP** found that Journey 7 exports 24 local network ways, including 13 footways but **no Clive Road centreline reference**. Other journeys in the same ZIP contain multiple physical Clive Road references, as well as road references around the Prince of Orange. This is an evidence-availability defect, not a problem solved by another matching threshold.
+
+LAB r451 introduces a **locally derived, ZIP-wide physical-road reference catalogue**. When a walking/running journey has a substantial (150m+) section without a usable road reference, the Lab scans the owner’s existing ZIP once, with visible progress, collecting only physical-road geometry from exported matcher results. It deduplicates road geometry regardless of direction or road-class label, discards full journey records after each read, and selects only references spatially near the current route. Once available, the Lab rebuilds the provisional cumulative ledger from the beginning of the chronological replay so already-credited sections remain internally consistent. Source-matched geometry, recorded GPS and original ZIP files remain untouched; nothing is uploaded or rematched.
+
+The additional references may only be used for existing **directional, proximity-backed centreline alignment**, not as proof that the owner travelled another road or to invent pedestrian connectors. True pedestrian shortcuts, Community Square and matched endpoints continue to rely on their original evidence. The catalogue is an in-memory operation that can add visible import time for a large ZIP; no new controls or persisted data were introduced.
+
+**Important:** This supplies missing road evidence but does not prove the Prince of Orange correction is complete. Some Journey 7 Windmill Street references already coincide with the saved route, so a remaining offset may instead reflect the quality or identity of that road reference. Real Journey 7 visual acceptance is required. No Android production coverage is changed.
+
 ## Sparse long-leg road centreline evidence (LAB r450)
 
 Journey 7 owner screenshots at LAB r449 still showed pedestrian-offset geometry along Clive Road and the Prince of Orange approach, while Community Square remained acceptable. The first r449 implementation unnecessarily demanded at least **two original source legs** to qualify a sustained roadside corridor. Sparse imported journey matches may contain a single long straight segment along one road. LAB r450 permits a single 32–120m matched leg to qualify when the original endpoints **and independent 25%, 50%, and 75% interior samples** follow one matching road reference within the same 8m tolerance with sustained monotone longitudinal progress. This avoids accepting a straight source line merely because it touches both ends of a curving road reference.
