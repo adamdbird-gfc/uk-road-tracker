@@ -9,7 +9,7 @@ assert(page.includes('if(diagnosticsZip){')&&page.includes("if(mode==='canonical
  'ZIP source replay stays distinct from provisional canonical coverage');
 assert(page.includes("zipRouteCache.clear();zipCoverageCache.clear();zipCoverageLedger.clear();zipRouteLedCache.clear();zipRouteLedLedger.clear();currentCoverageAudit=null;$('coverageAuditSummary').textContent='';$('downloadCoverageAudit').disabled=true;mode=zip?'routeLed':'center'"),
  'changing input resets previously replayed route history');
-assert(page.includes('LAB r460')&&page.includes('>PR #460</a>'));
+assert(page.includes('LAB r461')&&page.includes('>PR #461</a>'));
 const seen=[];
 const zip={read:async index=>{seen.push(index);return {journey:{index}};}};
 const reconstruct=journey=>({
@@ -26,6 +26,7 @@ const harness=new Function('zip','reconstruct',`
  let zipCoverageCache=new Map(),zipCoverageLedger=new Set(),zipRouteLedCache=new Map(),zipRouteLedLedger=new Set(),currentCoverageAudit=null;
  const referenceLookups=[];
  const RouteLedCoverage={accumulate:(set,route)=>({novel:[route.independentRoadReferences[0]],repeat:[],held:[],roadEvidence:null,next:new Set(set)}),evidence:()=>({references:0,reasons:[{reason:'no physical road references',metres:40}],roads:[]})};
+ const zipRailTransition=async route=>route;
  const zipReferenceNetwork={lookup:async route=>{
   const index=route.parts[0][0][0];referenceLookups.push(index);
   return {refs:[index],status:'Pinned network fixture'};

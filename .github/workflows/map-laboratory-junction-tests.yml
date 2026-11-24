@@ -24,7 +24,7 @@ jobs:
         with:
           node-version: '22'
       - name: Verify bulk diagnostics import and route-first evidence
-        run: node --test map-laboratory/tests/bulk-diagnostics.test.cjs map-laboratory/tests/route-first.test.cjs
+        run: node --test map-laboratory/tests/bulk-diagnostics.test.cjs map-laboratory/tests/route-first.test.cjs map-laboratory/tests/rail-transition.test.cjs
       - name: Verify visual endpoint continuity backed by recorded route
         run: node map-laboratory/tests/source-backed-endpoint-render.test.cjs
       - name: Verify source-backed physical-network glue

@@ -34,8 +34,10 @@ def main():
     parser.add_argument("output", type=Path, help="New version directory")
     parser.add_argument("--region", nargs=7, action="append", required=True,
                         metavar=("PBF", "SOURCE_URL", "SHA256", "WEST", "SOUTH", "EAST", "NORTH"))
+    parser.add_argument("--entrances-only", action="store_true",
+                        help="Build station entrance metadata for the named existing tile directory")
     args = parser.parse_args()
-    tiles, sources = defaultdict(dict), []
+    tiles, sources, entrances = defaultdict(dict), [], {}
     for filename, url, expected, west, south, east, north in args.region:
         with open(filename, "rb") as stream:
             checksum = hashlib.file_digest(stream, "sha256").hexdigest()
@@ -46,6 +48,19 @@ def main():
         with reader:
             timestamp = reader.header().get("osmosis_replication_timestamp")
         sources.append({"url": url, "sha256": checksum, "timestamp": timestamp})
+        if args.entrances_only:
+            points = osmium.FileProcessor(filename).with_filter(osmium.filter.EntityFilter(osmium.osm.NODE))
+            for node in points:
+                if node.tags.get("railway") not in {"train_station_entrance", "subway_entrance"}:
+                    continue
+                if node.tags.get("access") in {"private", "no"} or node.tags.get("entrance") == "emergency":
+                    continue
+                coords = [node.lon, node.lat]
+                if any(cell in wanted for cell in cells(coords, coords)):
+                    entrances[node.id] = {"id": node.id, "point": coords}
+                    if node.tags.get("entrance") == "exit":
+                        entrances[node.id]["exitOnly"] = True
+            continue
         for way in osmium.FileProcessor(filename).with_locations().with_filter(osmium.filter.EntityFilter(osmium.osm.WAY)):
             kind = way.tags.get("highway", "")
             if not ROAD.fullmatch(kind) and kind not in PATH:
@@ -65,6 +80,14 @@ def main():
                        "nodes": [node.ref for node in way.nodes], **tags}
             for cell in hits:
                 tiles[cell][way.id] = feature
+    if args.entrances_only:
+        index = json.loads((args.output / "index.json").read_text())
+        if sources != index["sources"]:
+            parser.error("station entrance inputs must match the pinned road index")
+        write_json(args.output / "station-entrances.json", {
+            "schema": 1, "entrances": [entrances[key] for key in sorted(entrances)],
+        })
+        return
     args.output.mkdir(parents=True, exist_ok=False)
     keys = []
     for (x, y), ways in sorted(tiles.items()):
