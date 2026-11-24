@@ -5,7 +5,7 @@ const header=page.match(/<body><header>([\s\S]*?)<\/header>/)?.[1];
 assert(header,'header exists');
 assert(header.includes('id="labBuild"'),'revision appears directly in header above map');
 assert(header.includes('LAB r436'),'loaded revision is unambiguous');
-assert(header.includes('23 Nov 2026'),'human-readable revision date is visible');
+assert(header.includes('24 Nov 2026'),'human-readable revision date is visible');
 assert(header.includes('pull/436'),'revision links to the exact change');
 assert(header.includes('>PR #436</a>'),'displayed PR number agrees with linked PR');
 assert(header.includes('Loaded page version'),'label does not claim GitHub Pages deployment freshness');
