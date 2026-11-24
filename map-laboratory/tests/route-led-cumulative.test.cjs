@@ -81,6 +81,39 @@ test('missing reference geometry cannot justify trimming saved route',()=>{
  assert.equal(RouteLed.cleanup(route).held.length,0);
 });
 
+
+test('sparse destination GPS fixes main-road approach, not unsupported side-road end nib',()=>{
+ const line=[p(0),p(20),p(45),p(67),p(80),p(80,2),p(80,7),p(80,14)];
+ const route={parts:[line],recorded:[[p(0),p(30),p(50),p(67)]],
+  refs:[{kind:'tertiary',coords:[p(0),p(80)]},
+   {kind:'residential',coords:[p(80),p(80,14)]}]};
+ const original=JSON.stringify(route),result=RouteLed.cleanup(route);
+ assert(result.held.some(x=>x.reason==='unverified-terminal-road-turn'));
+ assert.deepEqual(result.parts[0].at(-1),p(80),'full main road approach survives to physical junction');
+ assert.equal(result.parts[0].length,5,'only unsupported road-turn tail removed');
+ assert.equal(JSON.stringify(route),original,'original matched history never altered');
+});
+test('destination fix on side road prevents terminal trim',()=>{
+ const line=[p(0),p(20),p(45),p(67),p(80),p(80,2),p(80,7),p(80,14)];
+ const route={parts:[line],recorded:[[p(0),p(67),p(80,14)]],
+  refs:[{kind:'tertiary',coords:[p(0),p(80)]},
+   {kind:'residential',coords:[p(80),p(80,14)]}]};
+ assert.equal(RouteLed.cleanup(route).held.length,0);
+});
+test('continuous straight road ending beyond GPS fix is not blindly truncated',()=>{
+ const line=[p(0),p(20),p(45),p(67),p(80),p(95)];
+ const route={parts:[line],recorded:[[p(0),p(67)]],
+  refs:[{kind:'tertiary',coords:[p(0),p(100)]}]};
+ assert.deepEqual(RouteLed.cleanup(route).parts,[line]);
+});
+test('real path turn to a separate pedestrian route is not cut as an end nib',()=>{
+ const line=[p(0),p(20),p(45),p(67),p(80),p(80,5),p(80,10),p(80,14)];
+ const route={parts:[line],recorded:[[p(0),p(67)]],
+  refs:[{kind:'tertiary',coords:[p(0),p(80)]},
+   {kind:'footway',coords:[p(80),p(80,14)]}]};
+ assert.deepEqual(RouteLed.cleanup(route).parts,[line]);
+});
+
 test('ZIP UI keeps canonical and route-led models isolated',()=>{
  const fs=require('node:fs'),path=require('node:path');
  const page=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
@@ -88,6 +121,6 @@ test('ZIP UI keeps canonical and route-led models isolated',()=>{
  assert(page.includes('RouteLedCoverage.accumulate(zipRouteLedLedger,route)'));
  assert(page.includes("mode==='routeLed'?zipRouteLedCache.get(n):zipCoverageCache.get(n)"));
  assert(page.includes("zipRouteLedCache.clear();zipRouteLedLedger.clear()"));
- assert(page.includes('LAB r446')&&page.includes('>PR #446</a>'));
+ assert(page.includes('LAB r447')&&page.includes('>PR #447</a>'));
  assert(page.includes('id="zipCompare"')&&page.includes('id="zipModeControls" hidden')&&page.includes("mode=zip?'routeLed':'center'"));
 });
