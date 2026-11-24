@@ -23,6 +23,38 @@ test('second separate pedestrian-to-road segment is promoted without naming any 
  assert.equal(result.promoted.length,2);
  assert(result.parts.flat().every(x=>Math.abs(x[1])<1e-10));
 });
+test('single long road-parallel matched leg receives centreline despite sparse vertices',()=>{
+ const route={parts:[[p(0,5),p(78,5)]],refs:[road([p(0),p(78)])]};
+ const result=Roadside.align(route);
+ assert.equal(result.promoted.length,1,'one long leg is not rejected solely because it has one source edge');
+ assert.deepEqual(result.parts[0],[p(0),p(78)],'same physical road geometry');
+ assert.deepEqual(route.parts,[[p(0,5),p(78,5)]],'raw source untouched');
+});
+test('single long leg cannot cut across a curving physical road just because endpoints touch',()=>{
+ const line=[p(0,5),p(75,5)];
+ const refs=[road([p(0),p(22,15),p(48,15),p(75)])];
+ const result=Roadside.align({parts:[line],refs});
+ assert.equal(result.promoted.length,0,'interior dissimilarity vetoes shortcut to curving road');
+ assert.deepEqual(result.parts,[line]);
+});
+test('single brief parallel path must not be promoted',()=>{
+ const line=[p(0,5),p(18,5)];
+ const result=Roadside.align({parts:[line],refs:[road([p(0),p(60)])]});
+ assert.equal(result.promoted.length,0);
+ assert.deepEqual(result.parts,[line]);
+});
+test('single long diagonal pedestrian shortcut crossing a road does not become that road',()=>{
+ const line=[p(0,0),p(75,18)];
+ const result=Roadside.align({parts:[line],refs:[road([p(0),p(75)])]});
+ assert.equal(result.promoted.length,0);
+ assert.deepEqual(result.parts,[line]);
+});
+test('two parallel physical road references leave a one-leg journey ambiguous',()=>{
+ const line=[p(0,4),p(75,4)];
+ const result=Roadside.align({parts:[line],refs:[road([p(0),p(75)]),road([p(0,8),p(75,8)])]});
+ assert.equal(result.promoted.length,0);
+ assert.deepEqual(result.parts,[line]);
+});
 test('independent shortcut between roads remains off-centreline and continuous',()=>{
  const line=[p(0),p(18),p(24,5),p(30,9),p(36,5),p(42),p(60)];
  const refs=[road([p(0),p(18)]),{kind:'footway',coords:[p(18),p(24,5),p(30,9),p(36,5),p(42)]},road([p(42),p(60)])];
@@ -57,11 +89,11 @@ test('without road reference geometry, no substitution is invented',()=>{
  const line=[p(0,4),p(20,4),p(40,4)];
  assert.deepEqual(Roadside.align({parts:[line],refs:[]}).parts,[line]);
 });
-test('LAB r449 one-map frontend loads alignment before route-led attribution',()=>{
+test('LAB r450 one-map frontend loads alignment before route-led attribution',()=>{
  const fs=require('node:fs'),path=require('node:path');
  const page=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
  assert(page.indexOf('roadside-centreline.js')<page.indexOf('route-led-coverage.js'));
- assert(page.includes('LAB r449')&&page.includes('>PR #449</a>'));
+ assert(page.includes('LAB r450')&&page.includes('>PR #450</a>'));
  assert(page.includes("mode=zip?'routeLed':'center'"));
  assert(page.includes('id="zipCompare"'));
 });
