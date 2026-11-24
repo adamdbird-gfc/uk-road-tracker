@@ -203,17 +203,17 @@ const RoadsideCentreline=(()=>{
   }
   return edges;
  }
- function roadAnchors(from,to,edges,atStart){
+ function roadAnchors(from,to,edges,atStart,tolerance=1.25){
   if(metres(from,to)<.5)return [];
   const p=atStart?to:from;
   const options=[];
   for(const edge of edges){
    const {a,b}=edge,at=projected(p,a.p,b.p);
-   if(at.offset>1.25||Math.abs(direction(from,to,a.p,b.p))<.85)continue;
+   if(at.offset>tolerance||Math.abs(direction(from,to,a.p,b.p))<.85)continue;
    const other=projected(atStart?from:to,a.p,b.p);
    // Accept an approaching/departing trace close to the road before its
    // vertex, even when it spans more than one OSM edge.
-   if(other.offset>3&&other.t>0&&other.t<1)continue;
+   if(other.offset>Math.max(3,tolerance)&&other.t>0&&other.t<1)continue;
    const sign=Math.sign(direction(from,to,a.p,b.p));
    const node=sign===(atStart?1:-1)?b:a;
    options.push({edge,node,p:at.position,sign});
@@ -252,7 +252,12 @@ const RoadsideCentreline=(()=>{
    if(coords.length<2||!orderedSupport(coords,guide,tolerance)||
       !orderedSupport(source,measured(coords),tolerance))return;
    if(protectedPaths.some(({path,grade})=>{
-    const used=source.slice(1,-1).filter(p=>snap(p,path).offset<=1.25);
+    const used=[];
+    for(let i=1;i<source.length;i++){
+     const a=source[i-1],b=source[i],middle=interpolate(a,b,.5),hit=snap(middle,path);
+     if(metres(a,b)>1&&hit.offset<=1.25&&Math.abs(direction(a,b,path.coords[hit.edge-1],path.coords[hit.edge]))>.85)
+      used.push(middle);
+    }
     if(!used.length)return false;
     // A pavement on the same mapped bridge may follow the road centreline.
     // Check the actual clipped spans selected by the graph, at the same grade.
@@ -304,10 +309,10 @@ const RoadsideCentreline=(()=>{
     const dedicated=ref.footway==='crossing'||/^(steps|corridor|cycleway|bridleway)$/.test(ref.kind)||
      ref.indoor==='yes';
     const grade=structure(ref);
-    return dedicated||grade?[{path:measured(ref.coords),grade:dedicated?'':grade}]:[];
+    return dedicated||grade?[{path:measured(ref.coords),grade:dedicated?'':grade,structural:!!grade||ref.indoor==='yes'||ref.kind==='steps'}]:[];
    });
  }
- function joinJunctions(line,edges,protectedPaths){
+ function joinJunctions(line,edges,protectedPaths,raw,allowPavementJoin){
   if(!edges.length||line.length<4)return {line,joins:[]};
   const output=[line[0]],joins=[];
   const anchors=new Map();
@@ -329,7 +334,21 @@ const RoadsideCentreline=(()=>{
     if(!ends.length){offRoad=true;continue;}
     if(length<8||!offRoad)break;
     const span=line.slice(i,j+1);
-    const joined=junctionTrace(span,starts,ends,protectedPaths);
+    let joined=junctionTrace(span,starts,ends,protectedPaths);
+    if(!joined&&allowPavementJoin){
+     const entry=starts[0].edge,exit=ends[0].edge;
+     const same=edge=>[entry.name,exit.name].includes(edge.name)&&edge.structure===entry.structure;
+     const corner=Math.abs(direction(line[i-1],line[i],line[j],line[j+1]))<.55;
+     // An unobserved pavement offset can follow the connected junction
+     // when the road continues or makes the same distinct turn.
+     if(!entry.name||!exit.name||entry.name!==exit.name&&!corner||length>45||
+        !starts.every(anchor=>same(anchor.edge))||!ends.every(anchor=>same(anchor.edge)))break;
+     const candidate=junctionTrace(span,starts,ends,protectedPaths.filter(w=>w.structural),same);
+     if(!candidate)break;
+     const path=measured(candidate.coords),guide=measured(span);
+     if(!closeToWay(span,path,8)||raw.some(p=>snap(p,guide).offset<=3&&snap(p,path).offset>6))break;
+     joined=candidate;
+    }
     if(!joined)break;
     output.splice(output.length-1,1,...joined.coords);
     joins.push({road:[...new Set(joined.labels.filter(Boolean))].join(' / '),
@@ -340,6 +359,46 @@ const RoadsideCentreline=(()=>{
   }
   output.push(line.at(-1));
   return {line:output,joins};
+ }
+ // Preserve a corroborated out-and-back, but lay both directions on
+ // the same connected road turn when the saved match follows a pavement.
+ function alignTurnarounds(line,edges,protectedPaths,raw){
+  if(!raw.length||!edges.length)return [];
+  const joins=[];
+  for(let tip=3;tip<line.length-3;tip++){
+   if(metres(line[tip-1],line[tip+1])>.3||metres(line[tip-1],line[tip])<3||
+      !raw.some(fix=>metres(line[tip],fix)<=6))continue;
+   const bearing=interpolate(line[tip-1],line[tip],2);
+   const ends=roadAnchors(line[tip],bearing,edges,false,4.5);
+   if(!ends.length)continue;
+   let length=0;
+   for(let k=1;k<=12&&tip-k>0&&tip+k<line.length-1;k++){
+    const i=tip-k,j=tip+k;
+    if(metres(line[i],line[j])>.5)break;
+    length+=metres(line[i],line[i+1]);
+    if(length>45)break;
+    if(length<14)continue;
+    const starts=roadAnchors(line[i-1],line[i],edges,true);
+    if(!starts.length)continue;
+    const span=line.slice(i,tip+1),entry=starts[0].edge,exit=ends[0].edge;
+    const allowed=edge=>[entry.name,exit.name].includes(edge.name)&&edge.structure===entry.structure;
+    if(!entry.name||!exit.name||entry.name===exit.name||
+       !starts.every(anchor=>allowed(anchor.edge))||!ends.every(anchor=>allowed(anchor.edge)))continue;
+    const joined=junctionTrace(span,starts,ends,protectedPaths.filter(walk=>walk.structural),allowed);
+    if(!joined||joined.coords.length<3||!closeToWay(joined.coords,measured(span),11)||
+       !closeToWay(span,measured(joined.coords),11))continue;
+    const end=joined.coords.at(-1),source=measured(span),path=measured(joined.coords);
+    if(!raw.some(fix=>metres(line[tip],fix)<=6&&metres(end,fix)<=7)||
+       raw.some(fix=>snap(fix,source).offset<=3&&snap(fix,path).offset>9))continue;
+    const geometry=joined.coords.concat(joined.coords.slice(0,-1).reverse());
+    line.splice(i,j-i+1,...geometry);
+    joins.push({road:[...new Set(joined.labels.filter(Boolean))].join(' / '),
+     metres:Number((2*length).toFixed(1)),segments:2*k,kind:'road-turnaround'});
+    tip=i+geometry.length-1;
+    break;
+   }
+  }
+  return joins;
  }
  // Recover continuity where a pavement promotion left a short zig-zag
  // through the nearby branch of a divided road. The two mapped branches
@@ -548,11 +607,12 @@ const RoadsideCentreline=(()=>{
     const {geometry,...receipt}=access;
     promoted.push(receipt);
    }else output.push(...line.slice(at));
+   const raw=route.onFoot&&!route.corrected?(route.recorded||[]).flat().filter(valid):[];
    if(route.onFoot&&!route.corrected&&seams.length){
-    const raw=(route.recorded||[]).flat().filter(valid);
     promoted.push(...joinDividedRoads(output,seams,graph,refs,raw));
    }
-   const joined=joinJunctions(output,graph,protectedPaths);
+   if(route.onFoot&&!route.corrected)promoted.push(...alignTurnarounds(output,graph,protectedPaths,raw));
+   const joined=joinJunctions(output,graph,protectedPaths,raw,route.onFoot&&!route.corrected);
    parts.push(joined.line);
    promoted.push(...joined.joins);
   }

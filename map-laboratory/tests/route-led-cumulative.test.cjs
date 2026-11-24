@@ -141,7 +141,7 @@ test('ZIP UI keeps canonical and route-led models isolated',()=>{
  assert(page.includes('RouteLedCoverage.accumulate(zipRouteLedLedger,route)'));
  assert(page.includes("mode==='routeLed'?zipRouteLedCache.get(n):zipCoverageCache.get(n)"));
  assert(page.includes("zipRouteLedCache.clear();zipRouteLedLedger.clear()"));
- assert(page.includes('LAB r459')&&page.includes('>PR #459</a>'));
+ assert(page.includes('LAB r460')&&page.includes('>PR #460</a>'));
  assert(page.includes('id="zipCompare"')&&page.includes('id="zipModeControls" hidden')&&page.includes("mode=zip?'routeLed':'center'"));
 });
 
@@ -171,4 +171,16 @@ test('short junction reversal is withheld unless supported by a fix or saved map
  const crossing={kind:'footway',footway:'crossing',coords:[p(20),p(20,8)]};
  assert.deepEqual(RouteLed.cleanup({...base,refs:[road,crossing]}).parts,[line]);
  assert.deepEqual(RouteLed.cleanup({...base,corrected:true}).parts,[line]);
+});
+
+test('a weak final path nib at a previously travelled road junction is withheld',()=>{
+ const road={kind:'tertiary',coords:[p(0),p(100)]};
+ const path={kind:'cycleway',coords:[p(35),p(35,-30)]};
+ const parts=[[p(0),p(35),p(75),p(60),p(35),p(35,-7)]];
+ const route={onFoot:true,source:'saved match',parts,refs:[road,path],recorded:[[p(0),p(75),p(30,-7)]]};
+ assert.deepEqual(RouteLed.cleanup(route).parts[0].at(-1),p(35));
+ assert.deepEqual(RouteLed.cleanup({...route,recorded:[[p(0),p(75),p(35,-7)]]}).parts,parts);
+ assert.deepEqual(RouteLed.cleanup({...route,corrected:true}).parts,parts);
+ const noRevisit=[[p(80),p(60),p(50),p(35),p(35,-7)]];
+ assert.deepEqual(RouteLed.cleanup({...route,parts:noRevisit}).parts,noRevisit);
 });

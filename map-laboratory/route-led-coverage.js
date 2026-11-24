@@ -198,6 +198,29 @@ const RouteLedCoverage=(()=>{
    }
   }
  }
+ // A sparse final fix near a previously traversed junction can leave
+ // a short spur on an adjacent path. Withhold only an uncorroborated
+ // turn and retain the already supported road junction.
+ function trimShortPathNib(line,route,refs,held){
+  if(line.length<5)return;
+  const fix=route.recorded?.at(-1)?.at(-1);
+  if(!valid(fix))return;
+  const roads=segments(refs,road),paths=segments(refs,/^(footway|path|cycleway)$/);
+  let length=0;
+  for(let i=line.length-2;i>=2;i--){
+   const a=line[i],b=line[i+1],before=line[i-1];
+   length+=distance(a,b);
+   if(length>9)break;
+   if(length<3||distance(a,fix)>10||cosine(before,a,a,b)>.65||
+      nearest(a,roads)>1.25||nearest(line.at(-1),roads)<2.5)continue;
+   const tail=line.slice(i+1).map((point,k)=>[line[i+k],point]);
+   if(nearest(fix,tail)<=3||nearest(point(a,b,.5),paths)>1.25)continue;
+   if(!line.slice(0,i-2).some(p=>distance(p,a)<1.25))continue;
+   held.push({reason:'unverified-junction-endcap',metres:Number(length.toFixed(1))});
+   line.splice(i+1);
+   break;
+  }
+ }
  function cleanup(route){
   const roads=segments(route?.refs,road),feet=segments(route?.refs,foot);
   // Static road geometry comes only from this journey's own references
@@ -211,8 +234,11 @@ const RouteLedCoverage=(()=>{
   for(const input of aligned.parts||[]){
    if(!Array.isArray(input)||input.length<2){parts.push(input);continue;}
    const line=input.slice();
-   if(route.onFoot&&!route.corrected&&route.source==='saved match')
-    suppressMicroReturns(line,route,withPhysicalRoads.refs||[],held);
+   if(route.onFoot&&!route.corrected&&route.source==='saved match'){
+    const refs=withPhysicalRoads.refs||[];
+    suppressMicroReturns(line,route,refs,held);
+    if(input===aligned.parts.at(-1))trimShortPathNib(line,route,refs,held);
+   }
    if(roads.length&&line.length>=5){
     // Suppress a short returning roadside excursion ONLY when:
     //  - it rejoins the same road location (not a through-shortcut);
