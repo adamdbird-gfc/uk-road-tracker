@@ -59,8 +59,8 @@ const RouteLedCoverage=(()=>{
   return length?backed/length:0;
  }
  // A sparse saved match can overshoot its final recorded position and
- // turn onto another road. Preserve the approach to the junction, but do
- // not credit an unsupported short *terminal* side-road continuation.
+ // turn onto another road. Preserve the directly corroborated approach
+ // up to the last observed position, not an invented junction endpoint.
  // This is not a general route-end truncation: it requires a GPS-backed
  // position on the approach, a sharp turn, and distinct network road refs.
  function trimUnsupportedTerminalTurn(line,route,held){
@@ -100,15 +100,31 @@ const RouteLedCoverage=(()=>{
    // A final GPS observation beyond this turn is independent evidence of
    // the side road. A last fix within 4m of the approach, not the side
    // road, only corroborates travel as far as the junction.
-   let fixOnApproach=false;
+   let lastFix=null;
    for(let i=Math.max(1,corner-8);i<=corner;i++){
-    if(projection(destination,line[i-1],line[i]).offset<=3.5&&
-       suffix[i]<=40){fixOnApproach=true;break}
+    // Only a backed location on the *approach* can establish the end.
+    // Never snap a point onto the side road or extrapolate to the junction.
+    if(suffix[i]>40)continue;
+    const evidence=projection(destination,line[i-1],line[i]);
+    if(evidence.offset>3.5)continue;
+    const snapped=point(line[i-1],line[i],evidence.t);
+    const remainder=suffix[i]+distance(snapped,line[i]);
+    if(remainder>40)continue;
+    if(!lastFix||evidence.offset<lastFix.offset)
+     lastFix={index:i,position:snapped,offset:evidence.offset,remainder};
    }
-   if(!fixOnApproach)continue;
+   if(!lastFix)continue;
    if(raw.some(p=>distance(p,line.at(-1))<8))continue;
-   held.push({reason:'unverified-terminal-road-turn',metres:Number(tail.toFixed(1))});
-   line.splice(corner+1);
+   // Retain only corroborated journey geometry. The GPS endpoint may lie
+   // partway along the road; never extend it just to make a tidy junction.
+   const previous=line[lastFix.index-1];
+   const kept=line.slice(0,lastFix.index);
+   if(distance(previous,lastFix.position)>.5)kept.push(lastFix.position);
+   if(kept.length<2)continue;
+   const withheld=lastFix.remainder;
+   held.push({reason:'unverified-terminal-road-turn',metres:Number(withheld.toFixed(1)),
+    evidence:'last-recorded-position-on-approach'});
+   line.splice(0,line.length,...kept);
    break;
   }
  }
