@@ -98,10 +98,46 @@ const CanonicalCoverage = (() => {
   const x=along(c),y=along(d);
   return Math.max(0,Math.min(len,Math.max(x,y))-Math.max(0,Math.min(x,y)));
  }
+ // Keep independently matched footpaths that form a supported transfer between
+ // two road approaches. This uses only the current journey and reference
+ // geometry, not previous journeys, street names or geographic exceptions.
+ function supportedPedestrianTransfers(accepted){
+  const pathIndices=accepted.map((x,i)=>x.type==='path'?i:-1).filter(i=>i>=0);
+  const roads=accepted.filter(x=>x.type==='road');
+  const protectedIds=new Set(),seen=new Set();
+  if(!pathIndices.length||roads.length<2)return protectedIds;
+  const touching=(a,b)=>distance(a,b)<=1.8;
+  const nearRoad=point=>roads.some(r=>project(point,r.a,r.b).distance<=5);
+  for(const first of pathIndices){
+   if(seen.has(first))continue;
+   const group=[],queue=[first];seen.add(first);
+   while(queue.length){
+    const id=queue.pop(),current=accepted[id];group.push(id);
+    for(const other of pathIndices){
+     if(seen.has(other))continue;
+     const candidate=accepted[other];
+     if([current.a,current.b].some(p=>[candidate.a,candidate.b].some(q=>touching(p,q)))){
+      seen.add(other);queue.push(other);
+     }
+    }
+   }
+   const tips=[];
+   for(const id of group)for(const point of [accepted[id].a,accepted[id].b]){
+    const degree=group.reduce((n,j)=>n+
+     Number(touching(point,accepted[j].a))+Number(touching(point,accepted[j].b)),0);
+    if(degree===1)tips.push(point);
+   }
+   if(tips.length!==2||!tips.every(nearRoad)||distance(tips[0],tips[1])<8)continue;
+   // We have a geometrically independent road → path → road corridor.
+   // Each component interval has already passed source overlap checks.
+   for(const id of group)protectedIds.add(id);
+  }
+  return protectedIds;
+ }
  // Small terminal tails are unsafe to credit if the recorded journey
  // neither starts/ends there nor explicitly turns back there. This rejects
  // speculative source-matched nibs without altering the saved route.
- function pruneTerminalTails(accepted,route,held){
+ function pruneTerminalTails(accepted,route,held,protectedIds=new Set()){
   const node=p=>p.map(v=>Math.round(v*1e5)).join(',');
   const neighbours=new Map();
   accepted.forEach((c,i)=>{
@@ -121,7 +157,7 @@ const CanonicalCoverage = (() => {
   });
   const excluded=new Set();
   for(let i=0;i<accepted.length;i++){
-   if(excluded.has(i))continue;
+   if(excluded.has(i)||protectedIds.has(i))continue;
    const edge=accepted[i];
    for(const tip of [edge.a,edge.b]){
     if((neighbours.get(node(tip))||[]).length!==1)continue;
@@ -140,7 +176,7 @@ const CanonicalCoverage = (() => {
      if(connected.length!==1)break;
      current=connected[0];
     }
-    if(length>24||!chain.length||chain.some(id=>excluded.has(id)))continue;
+    if(length>24||!chain.length||chain.some(id=>excluded.has(id)||protectedIds.has(id)))continue;
     if(ends.some(end=>distance(end,tip)<5)||verifiedTurn(tip))continue;
     // Do not remove an isolated whole journey or a terminal run that ends
     // simply because the graph has incomplete reference coverage. It must
@@ -186,8 +222,9 @@ const CanonicalCoverage = (() => {
    if(alternatives.length){held.push({...c,reason:'ambiguous-parallel-network'});continue;}
    accepted.push(c);
   }
-  const safe=pruneTerminalTails(accepted,route,held);
-  return {accepted:safe,held,sourceSegments:routeSegments.length,referenceSlices:slices.length};
+  const transfers=supportedPedestrianTransfers(accepted);
+  const safe=pruneTerminalTails(accepted,route,held,transfers);
+  return {accepted:safe,held,protectedTransferIntervals:transfers.size,sourceSegments:routeSegments.length,referenceSlices:slices.length};
  }
  function accumulate(history,route){
   const previous=history||new Set(),result=classify(route),novel=[],repeat=[];
