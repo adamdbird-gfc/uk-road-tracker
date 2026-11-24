@@ -208,7 +208,11 @@ const CanonicalCoverage = (() => {
    if(c.type==='path'){
     const parallel=candidates.some(r=>r.type==='road'&&
      direction(c.a,c.b,r.a,r.b)>.9&&
-     Math.min(project(c.a,r.a,r.b).distance,project(c.b,r.a,r.b).distance)<9);
+     // A terminal touch is a valid pedestrian-to-road transfer, not
+     // redundant roadside coverage. Both endpoints and most of the
+     // longitudinal path must overlap the physical road corridor.
+     project(c.a,r.a,r.b).distance<9&&project(c.b,r.a,r.b).distance<9&&
+     longitudinalOverlap(c.a,c.b,r.a,r.b)>distance(c.a,c.b)*.65);
     if(parallel){held.push({...c,reason:'parallel-roadside-path'});continue;}
    }
    const alternatives=candidates.filter(other=>other!==c&&other.type===c.type&&
