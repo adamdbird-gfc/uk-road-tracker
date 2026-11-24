@@ -8,7 +8,11 @@ const SharedRoadCatalogue=(()=>{
  const road=/^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|road)(?:_link)?$/;
  const valid=p=>Array.isArray(p)&&p.length===2&&p.every(Number.isFinite)&&Math.abs(p[0])<=180&&Math.abs(p[1])<=90;
  const metres=(a,b)=>Math.hypot((a[0]-b[0])*M*Math.cos((a[1]+b[1])*D/2),(a[1]-b[1])*M);
- const identity=ref=>ref.kind+':'+ref.coords.map(p=>p.map(v=>v.toFixed(6)).join(',')).join(';');
+ const identity=ref=>{
+  const path=ref.coords.map(p=>p.map(v=>v.toFixed(6)).join(','));
+  const forward=path.join(';'),reverse=path.slice().reverse().join(';');
+  return (road.test(ref.kind)?'physical-road':ref.kind)+':'+(forward<reverse?forward:reverse);
+ };
  function lines(geo){
   if(geo?.type==='LineString')return [geo.coordinates];
   if(geo?.type==='MultiLineString')return geo.coordinates;
