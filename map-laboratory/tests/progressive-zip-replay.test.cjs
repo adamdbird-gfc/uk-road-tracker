@@ -7,7 +7,7 @@ assert(page.includes('drawParts(0,Math.max(0,step-1),i=>zipRouteCache.get(i)'),
  'previously played ZIP routes must be rendered cumulatively');
 assert(page.includes('if(diagnosticsZip){')&&page.includes("if(mode==='canonical')")&&page.includes('Route-first displays raw matched history'),
  'ZIP source replay stays distinct from provisional canonical coverage');
-assert(page.includes("zipRouteCache.clear();mode=zip?'route':'center'"),
+assert(page.includes("zipRouteCache.clear();zipCoverageCache.clear();zipCoverageLedger.clear();mode=zip?'canonical':'center'"),
  'changing input resets previously replayed route history');
 assert(page.includes('LAB r438')&&page.includes('>PR #438</a>'));
 const seen=[];
