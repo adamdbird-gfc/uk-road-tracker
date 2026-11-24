@@ -65,3 +65,36 @@ test('genuine journey ending at a short footpath terminal remains eligible',()=>
  const c=Coverage.accumulate(new Set(),route([[p(0),p(20),p(20,11)]],refs));
  assert(c.novel.some(x=>x.type==='path'),'recorded actual destination remains supported');
 });
+
+test('dense short matched legs jointly support an uninterrupted road centreline',()=>{
+ const coords=Array.from({length:21},(_,i)=>p(i*2));
+ const c=Coverage.accumulate(new Set(),route([coords],[ref('residential',[p(0),p(40)])]));
+ assert(c.novel.length>=5,'every 8m reference interval is supported by adjacent 2m source legs');
+ const ends=c.novel.flatMap(x=>[x.a[0],x.b[0]]).sort((a,b)=>a-b);
+ assert(Math.abs(ends[0]-p(0)[0])<1e-10&&Math.abs(ends.at(-1)-p(40)[0])<1e-10,
+  'the full road corridor remains covered from end to end');
+});
+test('a large missing source-leg gap must not be filled by the interval union',()=>{
+ const c=Coverage.accumulate(new Set(),route(
+  [[p(0),p(2)],[p(14),p(16)]],
+  [ref('residential',[p(0),p(16)])]));
+ assert.equal(c.novel.length,0,'disconnected fragments cannot earn the middle 8m network span');
+});
+test('a short road nib at a three-way junction is withheld, even if a saved match passes nearby',()=>{
+ const refs=[ref('residential',[p(0),p(20),p(40)]),
+             ref('footway',[p(20),p(20,12)])];
+ const c=Coverage.accumulate(new Set(),route(
+  [[p(0),p(20),p(20,12),p(40)]],refs));
+ assert(c.held.some(x=>x.reason==='unsupported-short-terminal-branch'),
+  'hold a terminal branch not independently established by original evidence');
+ assert(!c.novel.some(x=>x.type==='path'),'do not award the nib');
+});
+test('a genuine separate walking corridor and a 90 degree turn still earn coverage',()=>{
+ const refs=[ref('residential',[p(0),p(30)]),
+             ref('footway',[p(30),p(30,28)]),
+             ref('residential',[p(30,28),p(60,28)])];
+ const coords=[p(0),p(10),p(20),p(30),p(30,10),p(30,20),p(30,28),p(45,28),p(60,28)];
+ const c=Coverage.accumulate(new Set(),route([coords],refs));
+ assert(c.novel.some(x=>x.type==='path'));
+ assert(c.novel.some(x=>x.type==='road'));
+});

@@ -54,26 +54,43 @@ const CanonicalCoverage = (() => {
   return segments;
  }
  function support(a,b,segments){
-  const mid=interpolate(a,b,.5),length=distance(a,b);
-  let best=null;
+  // Match an entire reference slice against the union of ordered source-leg
+  // overlaps. The old implementation required one source leg to cover 65%
+  // of each 8m interval, falsely dropping intervals when the matched route
+  // had several shorter consecutive edges. No new route is constructed.
+  const length=distance(a,b),axis=xy(b,a),unit=[axis[0]/length,axis[1]/length];
+  const spans=[];
+  const along=point=>{const w=xy(point,a);return w[0]*unit[0]+w[1]*unit[1]};
   for(const [p,q] of segments){
-   // Reject route segments that only come close at a perpendicular crossing.
    if(direction(a,b,p,q)<.78)continue;
-   const pa=project(a,p,q),pb=project(b,p,q),pm=project(mid,p,q);
-   const d=Math.max(pa.distance,pb.distance,pm.distance);
-   if(d>10)continue;
-   // A source segment must overlap the reference slice longitudinally;
-   // nearby parallel but unrelated roads cannot create a new credit.
-   const v=xy(b,a),len=Math.hypot(...v);
-   const along=x=>{const w=xy(x,a);return(w[0]*v[0]+w[1]*v[1])/len};
    const pAlong=along(p),qAlong=along(q);
-   const overlap=Math.max(0,Math.min(length,Math.max(pAlong,qAlong))-Math.max(0,Math.min(pAlong,qAlong)));
-   if(overlap<Math.min(2.5,length*.65))continue;
-   const score=d+(1-direction(a,b,p,q))*9;
-   if(!best||score<best.score)best={score,offset:d};
+   const start=Math.max(0,Math.min(pAlong,qAlong));
+   const end=Math.min(length,Math.max(pAlong,qAlong));
+   if(end-start<.35)continue;
+   // Measure the overlapping portion, not the remote midpoint of a long
+   // source leg that may extend far beyond this small reference slice.
+   const mid=interpolate(a,b,(start+end)/(2*length));
+   const lateral=project(mid,p,q).distance;
+   if(lateral>10)continue;
+   spans.push({start,end,offset:lateral});
   }
-  return best;
+  if(!spans.length)return null;
+  spans.sort((x,y)=>x.start-y.start||x.end-y.end);
+  let coverage=0,first=null,last=0,score=Infinity;
+  for(const span of spans){
+   if(first===null){first=span.start;last=span.end;score=span.offset;continue;}
+   if(span.start>last+1.25){
+    coverage+=last-first;first=span.start;last=span.end;
+   }else last=Math.max(last,span.end);
+   score=Math.min(score,span.offset);
+  }
+  if(first!==null)coverage+=last-first;
+  // Require almost the whole reference slice to be supported: adjacent
+  // fragments may combine, but a single nearby crossing cannot.
+  if(coverage<length*.78)return null;
+  return {score,offset:score,coverage};
  }
+
  function longitudinalOverlap(a,b,c,d){
   const axis=xy(b,a),len=Math.hypot(...axis);
   if(len<1)return 0;
@@ -117,17 +134,21 @@ const CanonicalCoverage = (() => {
      if(length>24)break;
      const nextKey=node(e.a)===vertex?node(e.b):node(e.a);
      const connected=(neighbours.get(nextKey)||[]).filter(x=>x!==current);
+     // Record the vertex we actually reached even when its degree is
+     // not two. Otherwise the junction check sees the preceding point.
+     vertex=nextKey;
      if(connected.length!==1)break;
-     vertex=nextKey;current=connected[0];
+     current=connected[0];
     }
     if(length>24||!chain.length||chain.some(id=>excluded.has(id)))continue;
     if(ends.some(end=>distance(end,tip)<5)||verifiedTurn(tip))continue;
     // Do not remove an isolated whole journey or a terminal run that ends
     // simply because the graph has incomplete reference coverage. It must
     // connect to a separate accepted branch at the opposite end.
-    const far=(node(accepted[chain.at(-1)].a)===vertex)?
-     accepted[chain.at(-1)].b:accepted[chain.at(-1)].a;
-    const farDegree=(neighbours.get(node(far))||[]).length;
+    // 'vertex' is already the endpoint reached by walking the branch.
+    // Previously this looked up the OTHER end of the last edge, which made
+    // the junction degree test check the dangling segment instead.
+    const farDegree=(neighbours.get(vertex)||[]).length;
     if(farDegree<3)continue;
     for(const id of chain)excluded.add(id);
    }

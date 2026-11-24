@@ -9,7 +9,7 @@ assert(page.includes('if(diagnosticsZip){')&&page.includes("if(mode==='canonical
  'ZIP source replay stays distinct from provisional canonical coverage');
 assert(page.includes("zipRouteCache.clear();zipCoverageCache.clear();zipCoverageLedger.clear();mode=zip?'route':'center'"),
  'changing input resets previously replayed route history');
-assert(page.includes('LAB r439')&&page.includes('>PR #439</a>'));
+assert(page.includes('LAB r440')&&page.includes('>PR #440</a>'));
 const seen=[];
 const zip={read:async index=>{seen.push(index);return {journey:{index}};}};
 const reconstruct=journey=>({

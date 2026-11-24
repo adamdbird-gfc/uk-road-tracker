@@ -60,5 +60,5 @@ r=glue(chainBase,noSecondAnchor,[[p(0),p(40)]]);
 assert.equal(r.added.size,0,'do not extend chain towards a nearby destination without a second anchor');
 assert(page.includes('const networkGlue=experimentalCorrection.enabled?recoverSourceBackedNetworkConnections('),'experimental mode only');
 assert(page.includes('const canonical=networkGlue.canonical'),'glue becomes actual canonical coverage');
-assert(page.includes('LAB r439')&&page.includes('>PR #439</a>'),'visible build revision is consistent');
+assert(page.includes('LAB r440')&&page.includes('>PR #440</a>'),'visible build revision is consistent');
 console.log('PASS: source-backed bounded road/path glue, branch rejection, ambiguous alternatives and baseline invariance');
