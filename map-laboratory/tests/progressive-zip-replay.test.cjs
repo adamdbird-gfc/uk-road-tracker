@@ -5,11 +5,11 @@ const end=page.indexOf('\nfunction updateZip(){',start);
 assert(start>=0&&end>start,'ZIP progressive navigation must exist');
 assert(page.includes('drawParts(0,Math.max(0,step-1),i=>zipRouteCache.get(i)'),
  'previously played ZIP routes must be rendered cumulatively');
-assert(page.includes('if(diagnosticsZip){')&&page.includes("if(mode==='canonical')")&&page.includes('Route-first displays raw matched history'),
+assert(page.includes('if(diagnosticsZip){')&&page.includes("if(mode==='canonical'||mode==='routeLed')")&&page.includes('Route-first displays raw matched history'),
  'ZIP source replay stays distinct from provisional canonical coverage');
-assert(page.includes("zipRouteCache.clear();zipCoverageCache.clear();zipCoverageLedger.clear();currentCoverageAudit=null;$('coverageAuditSummary').textContent='';$('downloadCoverageAudit').disabled=true;mode=zip?'route':'center'"),
+assert(page.includes("zipRouteCache.clear();zipCoverageCache.clear();zipCoverageLedger.clear();zipRouteLedCache.clear();zipRouteLedLedger.clear();currentCoverageAudit=null;$('coverageAuditSummary').textContent='';$('downloadCoverageAudit').disabled=true;mode=zip?'route':'center'"),
  'changing input resets previously replayed route history');
-assert(page.includes('LAB r443')&&page.includes('>PR #443</a>'));
+assert(page.includes('LAB r444')&&page.includes('>PR #444</a>'));
 const seen=[];
 const zip={read:async index=>{seen.push(index);return {journey:{index}};}};
 const reconstruct=journey=>({
@@ -38,10 +38,12 @@ const harness=new Function('zip','reconstruct',`
  assert.deepEqual(harness.state().cache,[0,1,2],'earlier route geometry retained');
  await harness.showZipJourney(2);
  assert.equal(harness.state().step,2,'Back changes the displayed cumulative state');
+ assert(harness.state().messages.at(-1).includes('Cumulative ZIP replay · 2 / 4 journeys'), 'status must use committed selected journey, not old processing target');
  assert.equal(harness.state().cache.length,3,'Back does not discard later cached geometry');
  assert.deepEqual(seen,[0,1,2,1],'previous journey detailed evidence can reload without full replay');
  assert.equal(harness.state().rawRows.filter(Boolean).length,1,'raw recorded lines retained only for selected journey');
  await harness.showZipJourney(4);
  assert.deepEqual(seen,[0,1,2,1,3],'Next reuses previously built geometry and processes only new journeys');
+ assert(harness.state().messages.at(-1).includes('Cumulative ZIP replay · 4 / 4 journeys'), 'later jump status stays in sync with selected journey');
  console.log('PASS: progressive ZIP Next/Back/direct jump and chronological geometry accumulation');
 })().catch(error=>{console.error(error);process.exitCode=1});
