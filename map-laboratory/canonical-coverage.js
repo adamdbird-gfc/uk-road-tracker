@@ -63,14 +63,15 @@ const CanonicalCoverage = (() => {
   const along=point=>{const w=xy(point,a);return w[0]*unit[0]+w[1]*unit[1]};
   for(const [p,q] of segments){
    if(direction(a,b,p,q)<.78)continue;
-   const pm=interpolate(p,q,.5);
-   const lateral=Math.max(project(pm,a,b).distance,
-     Math.min(project(p,a,b).distance,project(q,a,b).distance));
-   if(lateral>10)continue;
    const pAlong=along(p),qAlong=along(q);
    const start=Math.max(0,Math.min(pAlong,qAlong));
    const end=Math.min(length,Math.max(pAlong,qAlong));
    if(end-start<.35)continue;
+   // Measure the overlapping portion, not the remote midpoint of a long
+   // source leg that may extend far beyond this small reference slice.
+   const mid=interpolate(a,b,(start+end)/(2*length));
+   const lateral=project(mid,p,q).distance;
+   if(lateral>10)continue;
    spans.push({start,end,offset:lateral});
   }
   if(!spans.length)return null;
