@@ -24,7 +24,7 @@ const harness=new Function('zip','reconstruct',`
  const RouteFirst={reconstruct};
  const CanonicalCoverage={accumulate:(set)=>({novel:[],repeat:[],held:[],next:new Set(set)})};
  let zipCoverageCache=new Map(),zipCoverageLedger=new Set(),zipRouteLedCache=new Map(),zipRouteLedLedger=new Set(),zipIndependentByJourney=new Map(),zipNetworkStatusByJourney=new Map(),currentCoverageAudit=null;
- const RouteLedCoverage={accumulate:set=>({novel:[],repeat:[],held:[],next:new Set(set)})};
+ const RouteLedCoverage={accumulate:set=>({novel:[],repeat:[],held:[],roadEvidence:null,next:new Set(set)}),evidence:()=>({references:0,reasons:[{reason:'no physical road references',metres:40}],roads:[]})};
  const IndependentRoadNetwork={needsNetwork:()=>false,lookup:async()=>{throw Error('public network lookup not needed for fully referenced sample')}};
  const controlsById={};const $=id=>(controlsById[id]??={textContent:'',disabled:false});
  const tell=s=>messages.push(s),clearError=()=>{},controls=()=>{},focus=()=>{},update=()=>{},stop=()=>{};
