@@ -8,6 +8,20 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Short junction transitions and weak endcaps (LAB r460)
+
+The Lab can replace a short pavement offset with a connected road
+transition when the saved trace supports the same through route or corner.
+An accurately observed side movement or independently mapped grade retains
+its geometry. A GPS-backed, mirrored out-and-back can use the mapped road
+turn in both directions. A short terminal path spur at an already travelled
+junction is withheld when the last fix does not corroborate travel on it.
+
+The private Journey 10 replay (position 9 with rail hidden) follows the
+Salisbury Court and Fleet Street junctions and the Old Bailey turn. It
+retains the recorded out-and-back on Old Bailey and finishes at Fleet
+Street, omitting a 7.3 m final cycleway spur.
+
 ## Divided-road continuity (LAB r459)
 
 After a pavement alignment, a short transfer to a parallel branch may

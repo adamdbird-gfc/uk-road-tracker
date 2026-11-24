@@ -122,3 +122,27 @@ test('owner ZIP Journey 9 stays on its established carriageway and loses three s
  assert.deepEqual(result.held.filter(item=>item.reason==='short-junction-return').map(item=>item.metres),[8.4,10.2,12.4]);
  assert.equal(JSON.stringify(journey),original);
 });
+
+test('owner ZIP Journey 10 cleans ordinary corners and keeps the supported Old Bailey return',{skip:!archive},async()=>{
+ const zip=await Bulk.open(new Blob([fs.readFileSync(archive)]));
+ const {journey}=await zip.read(9);
+ const before=JSON.stringify(journey);
+ const route=RouteFirst.reconstruct(journey);
+ const pinned=await Network.create(request).lookup(route);
+ const result=RouteLed.cleanup({...route,independentRoadReferences:pinned.refs});
+ const [[...line]]=result.parts;
+ const node=(way,id)=>{
+  const ref=pinned.refs.find(r=>r.id===way);
+  return ref.coords[ref.nodes.indexOf(id)];
+ };
+ const labels=result.centrelinePromotions.map(r=>[r.road,r.kind]);
+ assert(labels.some(([road,kind])=>road==='Salisbury Court / Fleet Street'&&kind==='junction'));
+ assert(labels.some(([road,kind])=>road==='Fleet Street'&&kind==='junction'));
+ assert(labels.some(([road,kind])=>road==='Ludgate Hill / Old Bailey'&&kind==='road-turnaround'));
+ const oldBailey=node(39276071,107685);
+ assert.equal(line.filter(p=>p[0]===oldBailey[0]&&p[1]===oldBailey[1]).length,2);
+ assert.deepEqual(line.at(-1),node(30881920,3972566716),'finish at the mapped Fleet Street junction');
+ assert(result.held.some(r=>r.reason==='unverified-junction-endcap'&&r.metres===7.3));
+ assert.equal(result.parts.length,1);
+ assert.equal(JSON.stringify(journey),before);
+});

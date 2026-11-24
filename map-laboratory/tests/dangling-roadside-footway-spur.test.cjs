@@ -35,5 +35,5 @@ result=clean(base,crossing,journey);
 assert(!result.suppressed.has(8),'crossing not treated as dead-end spur');
 assert(page.includes('const danglingSpurs=experimentalCorrection.enabled?suppressDanglingPedestrianSpurs('),'only experimental coverage changes');
 assert(page.includes('const networkGlue=experimentalCorrection.enabled?recoverSourceBackedNetworkConnections(roadsideConsolidation.canonical,roads,prepared.lines)')&&page.includes('const canonical=networkGlue.canonical'),'output actually consumed');
-assert(page.includes('LAB r459')&&page.includes('>PR #459</a>'));
+assert(page.includes('LAB r460')&&page.includes('>PR #460</a>'));
 console.log('PASS: short dangling branch suppressed; road, station entrance, connected path, crossing, original evidence and baseline protected');
