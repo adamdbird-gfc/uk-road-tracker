@@ -93,7 +93,7 @@ const SharedRoadCatalogue=(()=>{
   // Only pay the full-ZIP scan cost where a substantial road-length source
   // corridor currently lacks a usable physical-road reference. Independent
   // footpaths remain untouched unless *actual* nearby roads are discovered.
-  return total>=180&&unsupported>=90;
+  return total>=180&&unsupported>=150;
  }
  return {collect,fromZip,bounds,nearby,merge,needsSupplement};
 })();
