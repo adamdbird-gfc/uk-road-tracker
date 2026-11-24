@@ -74,6 +74,13 @@ const CanonicalCoverage = (() => {
   }
   return best;
  }
+ function longitudinalOverlap(a,b,c,d){
+  const axis=xy(b,a),len=Math.hypot(...axis);
+  if(len<1)return 0;
+  const along=point=>{const v=xy(point,a);return (v[0]*axis[0]+v[1]*axis[1])/len};
+  const x=along(c),y=along(d);
+  return Math.max(0,Math.min(len,Math.max(x,y))-Math.max(0,Math.min(x,y)));
+ }
  function classify(route){
   const slices=sliceRefs(route.refs),routeSegments=flattened(route.parts),candidates=[];
   for(const ref of slices){
@@ -94,6 +101,8 @@ const CanonicalCoverage = (() => {
     direction(c.a,c.b,other.a,other.b)>.9&&
     project(interpolate(c.a,c.b,.5),other.a,other.b).distance<4&&
     project(interpolate(other.a,other.b,.5),c.a,c.b).distance<4&&
+    longitudinalOverlap(c.a,c.b,other.a,other.b)>distance(c.a,c.b)*.6&&
+    longitudinalOverlap(other.a,other.b,c.a,c.b)>distance(other.a,other.b)*.6&&
     Math.abs(c.offset-other.offset)<1&&
     other.id!==c.id&&Math.abs(other.score-c.score)<1);
    if(alternatives.length){held.push({...c,reason:'ambiguous-parallel-network'});continue;}
