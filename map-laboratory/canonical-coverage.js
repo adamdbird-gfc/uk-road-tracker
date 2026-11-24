@@ -134,8 +134,11 @@ const CanonicalCoverage = (() => {
      if(length>24)break;
      const nextKey=node(e.a)===vertex?node(e.b):node(e.a);
      const connected=(neighbours.get(nextKey)||[]).filter(x=>x!==current);
+     // Record the vertex we actually reached even when its degree is
+     // not two. Otherwise the junction check sees the preceding point.
+     vertex=nextKey;
      if(connected.length!==1)break;
-     vertex=nextKey;current=connected[0];
+     current=connected[0];
     }
     if(length>24||!chain.length||chain.some(id=>excluded.has(id)))continue;
     if(ends.some(end=>distance(end,tip)<5)||verifiedTurn(tip))continue;
