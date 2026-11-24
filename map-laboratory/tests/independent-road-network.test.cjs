@@ -3,18 +3,17 @@ const Network=require('../independent-road-network.js');
 const Roadside=require('../roadside-centreline.js');
 const RouteLed=require('../route-led-coverage.js');
 const p=(x,y=0)=>[x/111320,y/111320];
-const publicWay=(id,coords,highway='residential')=>({
- type:'way',id,tags:{highway,name:'Independent road'},
- geometry:coords.map(([lon,lat])=>({lon,lat}))
-});
+const fs=require('node:fs'),path=require('node:path');
+const root=path.join(__dirname,'..');
+const tileFile=url=>fs.readFileSync(path.join(root,url));
 test('two independent long footway-side corridors are actually moved onto physical centrelines',()=>{
  const lines=[
   [p(0,11),p(35,11),p(70,11),p(105,11),p(140,11)],
   [p(200,12),p(235,12),p(270,12),p(305,12),p(340,12)]];
- const external=Network.parse({elements:[
-  publicWay(1,[p(0),p(140)],'unclassified'),
-  publicWay(2,[p(200),p(340)],'tertiary')
- ]});
+ const external=[
+  {kind:'unclassified',coords:[p(0),p(140)]},
+  {kind:'tertiary',coords:[p(200),p(340)]}
+ ];
  const route={parts:lines,refs:[{kind:'footway',coords:lines[0]},{kind:'footway',coords:lines[1]}]};
  const before=RouteLed.accumulate(new Set(),route);
  assert(before.novel.some(s=>Math.abs(s.a[1])>0),'source is visibly offset before correction');
@@ -49,65 +48,50 @@ test('Community Square path geometry remains unchanged',()=>{
   independentRoadReferences:[{kind:'primary',coords:[p(0),p(55)]}]};
  assert.deepEqual(RouteLed.cleanup(route).parts,[path]);
 });
-test('only physical highways from independent network qualify: exclude pubs, service, path',()=>{
- const roads=Network.parse({elements:[
-  publicWay(1,[p(0),p(100)],'service'),publicWay(2,[p(0,4),p(100,4)],'footway'),
-  publicWay(3,[p(0,11),p(100,11)],'primary'),publicWay(4,[p(0,11),p(100,11)],'residential'),
-  {type:'node',lat:0,lon:0,tags:{highway:'tertiary'}}
- ]});
- assert.equal(roads.length,1,'no private service road or footway promoted; same physical line deduplicated');
-});
-test('independent lookup sends only bounded geographic rectangle, never journey points or ZIP',async()=>{
- const route={parts:[[p(0,12),p(35,12),p(70,12),p(105,12),p(140,12),p(175,12)]],refs:[]};
- assert(Network.needsNetwork(route));
- let called=false;
- const result=await Network.lookup(route,async(url,options)=>{
-  called=true;
-  assert(url.startsWith('https://overpass.private.coffee/api/interpreter?data='));
-  assert(url.includes('data=')&&decodeURIComponent(url).includes('out geom;'));
-  assert(decodeURIComponent(url).includes('(_link)?'), 'Overpass query uses compatible grouping');
-  assert(!decodeURIComponent(url).includes('(?:_link)'), 'Overpass query cannot contain noncapturing regex');
-  assert(!url.includes('journey_id')&&!url.includes('tracepoints'));
-  assert(options.signal,'network call is bounded by a timeout');
-  return {ok:true,json:async()=>({elements:[publicWay(1,[p(0),p(140)])]})};
+test('pinned real OSM network is geographically selected and reused across lookups',async()=>{
+ const calls=[];
+ const provider=Network.create(async(url,options)=>{
+  calls.push(url);
+  assert(options.signal);
+  assert.match(url,/^\.\/reference-network\/v1\/(index\.json|-?\d+_-?\d+\.json\.gz)$/);
+  return new Response(tileFile(url));
  });
- assert(called&&result.length===1);
+ const route={parts:[[[0.36685,51.44165],[0.3675,51.44154]]]};
+ const [one,two]=await Promise.all([provider.lookup(route),provider.lookup(route)]);
+ assert.deepEqual(one,two);
+ assert(one.refs.some(ref=>ref.name==='Clive Road'&&Network.isRoad(ref.kind)&&ref.nodes.length===ref.coords.length));
+ assert(one.refs.some(ref=>ref.kind==='footway'));
+ assert.equal(calls.filter(url=>url.endsWith('index.json')).length,1);
+ assert.equal(calls.length,new Set(calls).size);
+ const outside=await provider.lookup({parts:[[[1,52],[1.001,52]]]});
+ assert.match(outside.status,/Outside pinned network/);
+ assert.deepEqual(outside.refs,[]);
 });
-test('primary public road service failure uses one bounded alternative without leaking journey evidence',async()=>{
- const route={parts:[[p(0,12),p(35,12),p(70,12),p(105,12),p(140,12),p(175,12)]],refs:[]};
- const called=[];
- const roads=await Network.lookup(route,async url=>{
-  called.push(url);
-  if(url.includes('private.coffee'))return {ok:false,status:503};
-  return {ok:true,json:async()=>({elements:[publicWay(1,[p(0),p(175)])]})};
+test('a failed or corrupt tile yields stable own-reference fallback even after a repeat lookup',async()=>{
+ const calls=[];
+ const provider=Network.create(async url=>{
+  calls.push(url);
+  return new Response(url.endsWith('index.json')?tileFile(url):'broken');
  });
- assert.equal(called.length,2);
- assert(called[0].includes('private.coffee')&&called[1].includes('overpass-api.de'));
- assert.equal(roads.length,1);
- assert(called.every(url=>!url.includes('journey_id')&&!url.includes('tracepoints')));
+ const route={parts:[[[0.36685,51.44165],[0.3675,51.44154]]]};
+ const first=await provider.lookup(route);
+ assert.match(first.status,/tile unavailable/);
+ assert.deepEqual(first.refs,[]);
+ assert.deepEqual(await provider.lookup(route),first);
+ assert.equal(calls.length,new Set(calls).size);
+ const noIndex=await Network.create(async()=>new Response('',{status:503})).lookup(route);
+ assert.match(noIndex.status,/index unavailable/);
+ assert.deepEqual(noIndex.refs,[]);
 });
-test('both independent road endpoints unavailable returns specific network failure',async()=>{
- const route={parts:[[p(0,12),p(35,12),p(70,12),p(105,12),p(140,12),p(175,12)]],refs:[]};
- await assert.rejects(Network.lookup(route,async url=>({ok:false,status:url.includes('private.coffee')?503:406})),err=>
-  err.message.includes('503')&&err.message.includes('406'));
+test('merge retains explicit OSM tags and removes reverse duplicates of the same geometry',()=>{
+ const external={kind:'footway',footway:'crossing',coords:[p(0),p(5)]};
+ assert.deepEqual(Network.merge([{kind:'footway',coords:[p(5),p(0)]}],[external]),[external]);
+ assert(!Network.isRoad('service'));
 });
-test('no local journey reference gap means no public query required',()=>{
- const line=[p(0,5),p(40,5),p(80,5),p(120,5),p(160,5)];
- const route={parts:[line],refs:[{kind:'residential',coords:[p(0),p(160)]}]};
- assert.equal(Network.needsNetwork(route),false);
-});
-test('a long route is bounded and never triggers a massive public map query',()=>{
- const line=[p(0),p(6000)];
- assert.equal(Network.bounds({parts:[line]}),null);
-});
-test('LAB r454 has no cross-journey reference dependency and exposes moved metres',()=>{
- const fs=require('node:fs'),path=require('node:path');
- const page=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
- const route=fs.readFileSync(path.join(__dirname,'..','route-led-coverage.js'),'utf8');
+test('ZIP source uses the same public reference loader for historical and selected journeys',()=>{
+ const page=fs.readFileSync(path.join(root,'index.html'),'utf8');
  assert(page.includes('independent-road-network.js'));
- assert(page.includes('IndependentRoadNetwork.lookup(source)'));
+ assert(page.includes('const route=await loadZipRoute(index)'));
  assert(page.includes('metres aligned to road centrelines'));
- assert(!page.includes('SharedRoadCatalogue')&&!route.includes('SharedRoadReferenceSource'));
- assert(!page.includes('zipRoadCatalogue')&&!route.includes('sharedRoadReferences'));
- assert(page.includes('LAB r454')&&page.includes('>PR #454</a>'));
+ assert(!page.includes('SharedRoadCatalogue')&&!page.includes('zipIndependentByJourney'));
 });

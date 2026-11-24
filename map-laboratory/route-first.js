@@ -196,7 +196,7 @@ const RouteFirst = (() => {
     const cycle = ['bicycle', 'cycling', 'cycle'].includes(mode);
     const drive = ['driving', 'car', 'bus', 'motorcycling', 'truck'].includes(mode);
     const allowed = kind => roads.test(kind) || ((foot || cycle) && paths.test(kind));
-    if (!legCount) return {parts: recorded, recorded, refs, source: recorded.length ? 'recorded' : 'unavailable', projected: 0, joins: 0};
+    if (!legCount) return {parts: recorded, recorded, refs, onFoot: foot, corrected, source: recorded.length ? 'recorded' : 'unavailable', projected: 0, joins: 0};
     const output = [];
     let projected = 0, joins = 0;
     for (const part of parts) {
@@ -210,7 +210,7 @@ const RouteFirst = (() => {
         joins++;
       } else output.push([...result.line]);
     }
-    return {parts: output, recorded, refs, source: 'saved match', projected, joins};
+    return {parts: output, recorded, refs, onFoot: foot, corrected, source: 'saved match', projected, joins};
   }
 
   return {reconstruct, lines};
