@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const page=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
-const start=page.indexOf('async function ensureRouteLedThrough(n){');
+const start=page.indexOf('async function showZipJourney(n) {');
 const end=page.indexOf('\nfunction updateZip(){',start);
 assert(start>=0&&end>start,'ZIP progressive navigation must exist');
 assert(page.includes('drawParts(0,Math.max(0,step-1),i=>zipRouteCache.get(i)'),
@@ -9,7 +9,7 @@ assert(page.includes('if(diagnosticsZip){')&&page.includes("if(mode==='canonical
  'ZIP source replay stays distinct from provisional canonical coverage');
 assert(page.includes("zipRouteCache.clear();zipCoverageCache.clear();zipCoverageLedger.clear();zipRouteLedCache.clear();zipRouteLedLedger.clear();currentCoverageAudit=null;$('coverageAuditSummary').textContent='';$('downloadCoverageAudit').disabled=true;mode=zip?'routeLed':'center'"),
  'changing input resets previously replayed route history');
-assert(page.includes('LAB r445')&&page.includes('>PR #445</a>'));
+assert(page.includes('LAB r446')&&page.includes('>PR #446</a>'));
 const seen=[];
 const zip={read:async index=>{seen.push(index);return {journey:{index}};}};
 const reconstruct=journey=>({
@@ -24,7 +24,7 @@ const harness=new Function('zip','reconstruct',`
  const RouteFirst={reconstruct};
  const CanonicalCoverage={accumulate:(set)=>({novel:[],repeat:[],held:[],next:new Set(set)})};
  let zipCoverageCache=new Map(),zipCoverageLedger=new Set(),zipRouteLedCache=new Map(),zipRouteLedLedger=new Set(),currentCoverageAudit=null;
- const RouteLedCoverage={accumulate:set=>({novel:[],repeat:[],next:new Set(set)})};
+ const RouteLedCoverage={accumulate:set=>({novel:[],repeat:[],held:[],next:new Set(set)})};
  const controlsById={};const $=id=>(controlsById[id]??={textContent:'',disabled:false});
  const tell=s=>messages.push(s),clearError=()=>{},controls=()=>{},focus=()=>{},update=()=>{},stop=()=>{};
  const problem=s=>{throw Error(s)},addWays=()=>{},match=()=>{throw Error('unexpected rematch')};
