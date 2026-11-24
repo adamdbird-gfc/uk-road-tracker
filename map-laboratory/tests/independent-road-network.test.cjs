@@ -65,6 +65,8 @@ test('independent lookup sends only bounded geographic rectangle, never journey 
   called=true;
   assert(url.startsWith('https://overpass-api.de/api/interpreter?data='));
   assert(url.includes('data=')&&decodeURIComponent(url).includes('out geom;'));
+  assert(decodeURIComponent(url).includes('(_link)?'), 'Overpass query uses compatible grouping');
+  assert(!decodeURIComponent(url).includes('(?:_link)'), 'Overpass query cannot contain noncapturing regex');
   assert(!url.includes('journey_id')&&!url.includes('tracepoints'));
   assert(options.signal,'network call is bounded by a timeout');
   return {ok:true,json:async()=>({elements:[publicWay(1,[p(0),p(140)])]})};
@@ -80,7 +82,7 @@ test('a long route is bounded and never triggers a massive public map query',()=
  const line=[p(0),p(6000)];
  assert.equal(Network.bounds({parts:[line]}),null);
 });
-test('LAB r452 has no cross-journey reference dependency and exposes moved metres',()=>{
+test('LAB r453 has no cross-journey reference dependency and exposes moved metres',()=>{
  const fs=require('node:fs'),path=require('node:path');
  const page=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
  const route=fs.readFileSync(path.join(__dirname,'..','route-led-coverage.js'),'utf8');
@@ -89,5 +91,5 @@ test('LAB r452 has no cross-journey reference dependency and exposes moved metre
  assert(page.includes('metres aligned to road centrelines'));
  assert(!page.includes('SharedRoadCatalogue')&&!route.includes('SharedRoadReferenceSource'));
  assert(!page.includes('zipRoadCatalogue')&&!route.includes('sharedRoadReferences'));
- assert(page.includes('LAB r452')&&page.includes('>PR #452</a>'));
+ assert(page.includes('LAB r453')&&page.includes('>PR #453</a>'));
 });

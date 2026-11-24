@@ -68,7 +68,7 @@ const IndependentRoadNetwork=(()=>{
  async function lookup(route,request=fetch){
   const b=bounds(route);if(!b)throw Error('Journey is outside safe road-network bounds');
   const rect=[b.south,b.west,b.north,b.east].map(n=>n.toFixed(7)).join(',');
-  const query='[out:json][timeout:20];way["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|road)(?:_link)?$"]('+rect+');out geom;';
+  const query='[out:json][timeout:20];way["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|road)(_link)?$"]('+rect+');out geom;';
   const url='https://overpass-api.de/api/interpreter?data='+encodeURIComponent(query);
   const response=await request(url,{signal:AbortSignal.timeout(25000)});
   if(!response.ok)throw Error('Independent road-network request returned '+response.status);
