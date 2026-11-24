@@ -93,14 +93,6 @@ test('LAB r453 has no cross-journey reference dependency and exposes moved metre
  assert(!page.includes('zipRoadCatalogue')&&!route.includes('sharedRoadReferences'));
  assert(page.includes('LAB r453')&&page.includes('>PR #453</a>'));
 });
-), 'Overpass query uses valid capturing group');
-  assert(!decodeURIComponent(url).includes('(?:_link)'), 'noncapturing regex groups are not supported by Overpass');
-  assert(!url.includes('journey_id')&&!url.includes('tracepoints'));
-  assert(options.signal,'network call is bounded by a timeout');
-  return {ok:true,json:async()=>({elements:[publicWay(1,[p(0),p(140)])]})};
- });
- assert(called&&result.length===1);
-});
 test('no local journey reference gap means no public query required',()=>{
  const line=[p(0,5),p(40,5),p(80,5),p(120,5),p(160,5)];
  const route={parts:[line],refs:[{kind:'residential',coords:[p(0),p(160)]}]};
