@@ -61,3 +61,19 @@ test('rejects an incomplete archive, duplicates, corrupted evidence and mismatch
   const complete=zip(encoded);
   await assert.rejects(open(complete.slice(0,complete.size-4)),/incomplete|invalid/i);
 });
+
+test('rail stays in the archive and is skipped in replay with original jump ordinals',async()=>{
+ const {roadReplay}=require('../bulk-diagnostics.js');
+ const read=[];
+ const archive={journeys:['walking','train','running','tram','ferry'].map(mode=>({mode})),
+  async read(index){read.push(index);return {journey:this.journeys[index]};}};
+ const replay=roadReplay(archive);
+ assert.equal(replay.archiveCount,5);
+ assert.equal(replay.railHidden,2);
+ assert.deepEqual(replay.journeys.map(row=>row.archiveOrdinal),[1,3,5]);
+ assert.equal((await replay.read(1)).journey.mode,'running');
+ assert.deepEqual(read,[2]);
+ assert.equal(archive.journeys.length,5);
+ assert.throws(()=>replay.read(3),/outside the replay index/);
+ assert.equal(roadReplay({journeys:[{mode:'train'}]}).journeys.length,0);
+});

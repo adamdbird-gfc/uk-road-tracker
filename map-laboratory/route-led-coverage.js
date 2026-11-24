@@ -168,6 +168,36 @@ const RouteLedCoverage=(()=>{
    return false;
   });
  }
+ // Remove a tiny loop that returns to the same travelled junction.
+ // An observation that favours the excursion, or independent crossing
+ // geometry on it, is stronger evidence than its shape.
+ function suppressMicroReturns(line,route,refs,held){
+  if(line.length<5||!refs.some(ref=>road.test(ref.kind)))return;
+  const cross=segments(refs.filter(ref=>ref.footway==='crossing'||/^(steps|corridor)$/.test(ref.kind)),foot);
+  const roadEdges=segments(refs,road);
+  const raw=(route.recorded||[]).flat().filter(valid);
+  for(let i=1;i<line.length-3;i++){
+   const junction=line[i];
+   let walked=0;
+   for(let j=i+1;j<Math.min(line.length-1,i+14);j++){
+    walked+=distance(line[j-1],line[j]);
+    if(walked>19)break;
+    if(j<i+2||walked<3||distance(junction,line[j])>2)continue;
+    if(nearest(junction,roadEdges)>1.25||nearest(line[j],roadEdges)>1.25)continue;
+    const span=line.slice(i,j+1),legs=span.slice(1).map((p,k)=>[span[k],p]);
+    if(!span.slice(1,-1).some(p=>distance(p,junction)>=1.4))continue;
+    const usesCrossing=legs.some(([a,b])=>distance(a,b)>1&&cross.some(([u,v])=>
+      cosine(a,b,u,v)>.9&&projection(point(a,b,.5),u,v).offset<1.25));
+    const savedReturn=usesCrossing&&route.parts.some(source=>source.some((p,at)=>
+      distance(p,junction)<.5&&span.every((q,k)=>source[at+k]&&distance(q,source[at+k])<.5)));
+    if(savedReturn)break;
+    if(raw.some(p=>nearest(p,legs)<7&&distance(p,junction)-nearest(p,legs)>4))break;
+    held.push({reason:'short-junction-return',metres:Number(walked.toFixed(1))});
+    line.splice(i+1,j-i);
+    break;
+   }
+  }
+ }
  function cleanup(route){
   const roads=segments(route?.refs,road),feet=segments(route?.refs,foot);
   // Static road geometry comes only from this journey's own references
@@ -181,6 +211,8 @@ const RouteLedCoverage=(()=>{
   for(const input of aligned.parts||[]){
    if(!Array.isArray(input)||input.length<2){parts.push(input);continue;}
    const line=input.slice();
+   if(route.onFoot&&!route.corrected&&route.source==='saved match')
+    suppressMicroReturns(line,route,withPhysicalRoads.refs||[],held);
    if(roads.length&&line.length>=5){
     // Suppress a short returning roadside excursion ONLY when:
     //  - it rejoins the same road location (not a through-shortcut);

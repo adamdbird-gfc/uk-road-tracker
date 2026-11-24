@@ -141,7 +141,7 @@ test('ZIP UI keeps canonical and route-led models isolated',()=>{
  assert(page.includes('RouteLedCoverage.accumulate(zipRouteLedLedger,route)'));
  assert(page.includes("mode==='routeLed'?zipRouteLedCache.get(n):zipCoverageCache.get(n)"));
  assert(page.includes("zipRouteLedCache.clear();zipRouteLedLedger.clear()"));
- assert(page.includes('LAB r457')&&page.includes('>PR #457</a>'));
+ assert(page.includes('LAB r458')&&page.includes('>PR #458</a>'));
  assert(page.includes('id="zipCompare"')&&page.includes('id="zipModeControls" hidden')&&page.includes("mode=zip?'routeLed':'center'"));
 });
 
@@ -157,4 +157,18 @@ test('detached roadside duplicate needs a continuing travelled road and no endpo
  assert.deepEqual(RouteLed.cleanup({...source,corrected:true}).parts,source.parts);
  assert.deepEqual(RouteLed.cleanup({...source,refs:[road,{...path,footway:'crossing'}]}).parts,source.parts);
  assert.deepEqual(RouteLed.cleanup({...source,refs:[path]}).parts,source.parts);
+});
+
+test('short junction reversal is withheld unless supported by a fix or saved mapped crossing',()=>{
+ const line=[p(0),p(20),p(20,5),p(20),p(35),p(50)];
+ const road={kind:'residential',coords:[p(0),p(50)]};
+ const base={onFoot:true,source:'saved match',parts:[line],refs:[road]};
+ const result=RouteLed.cleanup(base);
+ assert.deepEqual(result.parts,[[p(0),p(20),p(35),p(50)]]);
+ assert.equal(result.held[0].reason,'short-junction-return');
+ const recorded=[[p(0),p(20,5),p(50)]];
+ assert.deepEqual(RouteLed.cleanup({...base,recorded}).parts,[line]);
+ const crossing={kind:'footway',footway:'crossing',coords:[p(20),p(20,8)]};
+ assert.deepEqual(RouteLed.cleanup({...base,refs:[road,crossing]}).parts,[line]);
+ assert.deepEqual(RouteLed.cleanup({...base,corrected:true}).parts,[line]);
 });

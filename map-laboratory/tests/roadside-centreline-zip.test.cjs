@@ -89,11 +89,11 @@ test('without road reference geometry, no substitution is invented',()=>{
  const line=[p(0,4),p(20,4),p(40,4)];
  assert.deepEqual(Roadside.align({parts:[line],refs:[]}).parts,[line]);
 });
-test('LAB r457 one-map frontend loads alignment before route-led attribution',()=>{
+test('LAB r458 one-map frontend loads alignment before route-led attribution',()=>{
  const fs=require('node:fs'),path=require('node:path');
  const page=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
  assert(page.indexOf('roadside-centreline.js')<page.indexOf('route-led-coverage.js'));
- assert(page.includes('LAB r457')&&page.includes('>PR #457</a>'));
+ assert(page.includes('LAB r458')&&page.includes('>PR #458</a>'));
  assert(page.includes("mode=zip?'routeLed':'center'"));
  assert(page.includes('id="zipCompare"'));
 });
@@ -160,4 +160,13 @@ test('terminal access uses a connected road with saved movement and a corroborat
   assert(!preserved.promoted.some(run=>run.kind==='terminal-access'));
   assert(preserved.parts[0].some(v=>v===frontage[1]));
  }
+});
+
+test('a source already on one carriageway stays there when another carriageway runs in parallel',()=>{
+ const own={kind:'primary',name:'Road',nodes:[1,2,3],coords:[p(0),p(30),p(100)]};
+ const other={kind:'primary',name:'Road',nodes:[4,5],coords:[p(0,7),p(100,7)]};
+ const line=[p(5),p(40),p(70),p(90)];
+ const aligned=Roadside.align({parts:[line],refs:[own,other]});
+ assert.deepEqual(aligned.parts,[line]);
+ assert.deepEqual(aligned.promoted,[]);
 });

@@ -97,3 +97,23 @@ test('owner ZIP Journey 7 restores road corridors and retains pedestrian section
  assert.deepEqual(RouteLed.cleanup({...reconstructed,independentRoadReferences:outage.refs}).parts,reconstructed.parts);
  console.log('Real centreline gain: '+measurements.join(', ')+'. Community Square and the car park access tail exact.');
 });
+
+test('owner ZIP Journey 9 stays on its established carriageway and loses three small returns', {skip:!archive},async()=>{
+ const zip=await Bulk.open(new Blob([fs.readFileSync(archive)]));
+ const replay=Bulk.roadReplay(zip);
+ assert.equal(replay.railHidden,203);
+ assert.equal(replay.journeys.length,1511);
+ assert.equal(replay.journeys[7].archiveOrdinal,9);
+ const {journey}=await replay.read(7);
+ const original=JSON.stringify(journey);
+ const route=RouteFirst.reconstruct(journey);
+ const pinned=await Network.create(request).lookup(route);
+ const result=RouteLed.cleanup({...route,independentRoadReferences:pinned.refs});
+ assert.equal(result.parts.length,1);
+ assert(containsLine(result.parts,route.parts[0].slice(5,22)),'Strand carriageway is retained');
+ assert(containsLine(result.parts,route.parts[0].slice(32,55)),'through pedestrian branch is preserved');
+ assert(containsLine(result.parts,route.parts[0].slice(78,89)),'Temple Bar geometry is retained');
+ assert(!containsLine(result.parts,route.parts[0].slice(139,145)),'Fleet Street reversal does not survive');
+ assert.deepEqual(result.held.filter(item=>item.reason==='short-junction-return').map(item=>item.metres),[8.4,10.2,12.4]);
+ assert.equal(JSON.stringify(journey),original);
+});

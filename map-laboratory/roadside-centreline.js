@@ -403,6 +403,19 @@ const RoadsideCentreline=(()=>{
   }
   return candidates.length===1?candidates[0]:null;
  }
+ // A centreline already present in the source is stronger than a
+ // parallel reference on the other side of a divided road.
+ function onMappedRoad(a,b,graph){
+  if(metres(a,b)<1)return false;
+  const lonPad=.65/(M*Math.max(.1,Math.cos(a[1]*D))),latPad=.65/M;
+  const west=Math.min(a[0],b[0])-lonPad,east=Math.max(a[0],b[0])+lonPad;
+  const south=Math.min(a[1],b[1])-latPad,north=Math.max(a[1],b[1])+latPad;
+  const candidates=graph.filter(({a:u,b:v})=>
+   Math.max(u.p[0],v.p[0])>=west&&Math.min(u.p[0],v.p[0])<=east&&
+   Math.max(u.p[1],v.p[1])>=south&&Math.min(u.p[1],v.p[1])<=north&&
+   Math.abs(direction(a,b,u.p,v.p))>=.96);
+  return sampled([a,b],p=>candidates.some(({a:u,b:v})=>projected(p,u.p,v.p).offset<=.65));
+ }
  function align(route){
   const refs=route?.refs||[],roads=network(refs),parts=[],promoted=[];
   const graph=roadGraph(refs),protectedPaths=protectedWalks(refs);
@@ -414,7 +427,7 @@ const RoadsideCentreline=(()=>{
    const line=original;
    const protectedLegs=line.slice(1).map((b,i)=>{
     const a=line[i];
-    if(!valid(a)||!valid(b))return true;
+    if(!valid(a)||!valid(b)||onMappedRoad(a,b,graph))return true;
     return protectedPaths.some(({path})=>{
      const middle=snap(interpolate(a,b,.5),path);
      return middle.offset<=1.25&&Math.abs(direction(a,b,path.coords[middle.edge-1],path.coords[middle.edge]))>.85;
