@@ -9,7 +9,7 @@ assert(page.includes('if(diagnosticsZip){')&&page.includes("if(mode==='canonical
  'ZIP source replay stays distinct from provisional canonical coverage');
 assert(page.includes("zipRouteCache.clear();zipCoverageCache.clear();zipCoverageLedger.clear();zipRouteLedCache.clear();zipRouteLedLedger.clear();currentCoverageAudit=null;$('coverageAuditSummary').textContent='';$('downloadCoverageAudit').disabled=true;mode=zip?'routeLed':'center'"),
  'changing input resets previously replayed route history');
-assert(page.includes('LAB r457')&&page.includes('>PR #457</a>'));
+assert(page.includes('LAB r458')&&page.includes('>PR #458</a>'));
 const seen=[];
 const zip={read:async index=>{seen.push(index);return {journey:{index}};}};
 const reconstruct=journey=>({

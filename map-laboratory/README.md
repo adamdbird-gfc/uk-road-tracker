@@ -8,6 +8,22 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Rail-free replay and short junction returns (LAB r458)
+
+The Lab skips rail entries while building the cumulative road and path replay.
+The private ZIP still contains every exported record. The replay counter shows
+the filtered position and total, and direct jumps use the original chronological
+ZIP journey number so that existing screenshots and references still match.
+
+A source already supported by a mapped carriageway stays on that carriageway
+when a parallel road is a candidate. A short return to the same road junction
+can be withheld from the display when no fix supports the excursion. Known
+crossings in the saved route and manual corrections are respected. Journey 9
+replay retains its established Strand carriageway and removes three short
+returns at Agar Street, near St Clement Danes and at Fleet Street. The mapped
+pedestrian corridor and the road geometry around Temple Bar remain available
+to the replay.
+
 ## Continuous terminal access (LAB r457)
 
 The route can use a connected service-road entrance at the end of a walk

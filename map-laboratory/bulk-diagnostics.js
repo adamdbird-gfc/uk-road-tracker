@@ -124,6 +124,22 @@ const BulkDiagnostics = (() => {
     };
   }
 
-  return {open};
+  // Preserve the original replay ordinal for screenshots and direct jumps.
+  function roadReplay(archive) {
+    const entries = archive.journeys.map((journey, index) => ({...journey, archiveOrdinal: index + 1}))
+      .filter(journey => !/^(train|rail|railway|subway|metro|tram)$/i.test(journey.mode?.trim() || ''));
+    return {
+      journeys: entries,
+      archiveCount: archive.journeys.length,
+      railHidden: archive.journeys.length - entries.length,
+      read(index) {
+        const entry = entries[index];
+        if (!entry) throw Error('Journey is outside the replay index');
+        return archive.read(entry.archiveOrdinal - 1);
+      }
+    };
+  }
+
+  return {open, roadReplay};
 })();
 if (typeof module !== 'undefined') module.exports = BulkDiagnostics;
