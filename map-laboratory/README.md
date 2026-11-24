@@ -8,6 +8,14 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Explain actual centreline candidate failures (LAB r454)
+
+LAB r453 remained visually unchanged at both Clive Road and Prince of Orange in the owner’s Journey 7 screenshots. Synthetic tests alone do not establish why a real road was rejected. LAB r454 therefore instruments the normal Route-led cumulative display **without creating additional map modes or a new diagnostics button**.
+
+For each selected journey it now reports: independent public OSM lookup success or the actual error string; physical-road reference way count; metres of source geometry promoted onto road centrelines; source-length-weighted individual candidate screening outcomes (missing reference, road >15m distant, direction mismatch, longitudinal overlap mismatch, source already on reference centreline, or individually eligible); and the three nearest scored road options with names, source lengths, maximum lateral offsets and heading agreement. The top visible replay status includes the number of promoted metres and the primary rejection reason when no correction is achieved. A zero is explicitly **not accepted as a geometry fix**.
+
+The per-leg screening data is diagnostic and does not itself approve a corridor: the existing run-level requirements (sustained distance, monotonic progress, competition between road candidates) remain mandatory. The original matched route is not altered and no journey’s travel evidence is imported from other journeys. Real-device evidence is still necessary to know what public Overpass returned, because the original ZIP is held locally in the owner’s browser; this session’s available web access cannot retrieve the live API response. No Android changes. The user’s accepted Community Square and the earlier Haynes Road pedestrian shortcut remain protected.
+
 ## Independent road centrelines and measurable changes (LAB r452)
 
 LAB r451's ZIP-wide shared road catalogue violated the explicit requirement that a journey's geometry must not depend on other recorded journeys. **That mechanism and its tests are removed.** Historical travel is used only when aggregating independently interpreted journeys.
