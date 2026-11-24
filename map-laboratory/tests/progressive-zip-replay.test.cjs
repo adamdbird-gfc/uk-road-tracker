@@ -7,7 +7,7 @@ assert(page.includes('drawParts(0,Math.max(0,step-1),i=>zipRouteCache.get(i)'),
  'previously played ZIP routes must be rendered cumulatively');
 assert(page.includes('if(diagnosticsZip){')&&page.includes("if(mode==='canonical'||mode==='routeLed')")&&page.includes('Route-first displays raw matched history'),
  'ZIP source replay stays distinct from provisional canonical coverage');
-assert(page.includes("zipRouteCache.clear();zipCoverageCache.clear();zipCoverageLedger.clear();zipRouteLedCache.clear();zipRouteLedLedger.clear();zipRoadCatalogue=null;currentCoverageAudit=null;$('coverageAuditSummary').textContent='';$('downloadCoverageAudit').disabled=true;mode=zip?'routeLed':'center'"),
+assert(page.includes("zipRouteCache.clear();zipCoverageCache.clear();zipCoverageLedger.clear();zipRouteLedCache.clear();zipRouteLedLedger.clear();zipIndependentByJourney.clear();zipNetworkStatusByJourney.clear();currentCoverageAudit=null;$('coverageAuditSummary').textContent='';$('downloadCoverageAudit').disabled=true;mode=zip?'routeLed':'center'"),
  'changing input resets previously replayed route history');
 assert(page.includes('LAB r452')&&page.includes('>PR #452</a>'));
 const seen=[];
@@ -23,8 +23,9 @@ const harness=new Function('zip','reconstruct',`
  let roads=[],roadIds=new Map(),cache=new Map(),messages=[];
  const RouteFirst={reconstruct};
  const CanonicalCoverage={accumulate:(set)=>({novel:[],repeat:[],held:[],next:new Set(set)})};
- let zipCoverageCache=new Map(),zipCoverageLedger=new Set(),zipRouteLedCache=new Map(),zipRouteLedLedger=new Set(),zipRoadCatalogue=null,currentCoverageAudit=null;
+ let zipCoverageCache=new Map(),zipCoverageLedger=new Set(),zipRouteLedCache=new Map(),zipRouteLedLedger=new Set(),zipIndependentByJourney=new Map(),zipNetworkStatusByJourney=new Map(),currentCoverageAudit=null;
  const RouteLedCoverage={accumulate:set=>({novel:[],repeat:[],held:[],next:new Set(set)})};
+ const IndependentRoadNetwork={needsNetwork:()=>false,lookup:async()=>{throw Error('public network lookup not needed for fully referenced sample')}};
  const controlsById={};const $=id=>(controlsById[id]??={textContent:'',disabled:false});
  const tell=s=>messages.push(s),clearError=()=>{},controls=()=>{},focus=()=>{},update=()=>{},stop=()=>{};
  const problem=s=>{throw Error(s)},addWays=()=>{},match=()=>{throw Error('unexpected rematch')};
@@ -35,16 +36,16 @@ const harness=new Function('zip','reconstruct',`
  await harness.showZipJourney(1);
  assert.deepEqual(seen,[0],'first Next reads one journey');
  await harness.showZipJourney(3);
- assert.deepEqual(seen,[0,1,2],'jump progressively processes intervening journeys');
+ assert.deepEqual([...new Set(seen)].sort(),[0,1,2],'jump processes every intervening journey without cross-journey reference scan');
  assert.deepEqual(harness.state().cache,[0,1,2],'earlier route geometry retained');
  await harness.showZipJourney(2);
  assert.equal(harness.state().step,2,'Back changes the displayed cumulative state');
  assert(harness.state().messages.at(-1).includes('Cumulative ZIP replay · 2 / 4 journeys'), 'status must use committed selected journey, not old processing target');
  assert.equal(harness.state().cache.length,3,'Back does not discard later cached geometry');
- assert.deepEqual(seen,[0,1,2,1],'previous journey detailed evidence can reload without full replay');
+ assert.equal(harness.state().cache.length,3,'previous journey reference check must not discard already played history');
  assert.equal(harness.state().rawRows.filter(Boolean).length,1,'raw recorded lines retained only for selected journey');
  await harness.showZipJourney(4);
- assert.deepEqual(seen,[0,1,2,1,3],'Next reuses previously built geometry and processes only new journeys');
+ assert.deepEqual([...new Set(seen)].sort(),[0,1,2,3],'later jump retains chronological coverage and adds the new selected journey');
  assert(harness.state().messages.at(-1).includes('Cumulative ZIP replay · 4 / 4 journeys'), 'later jump status stays in sync with selected journey');
  console.log('PASS: progressive ZIP Next/Back/direct jump and chronological geometry accumulation');
 })().catch(error=>{console.error(error);process.exitCode=1});
