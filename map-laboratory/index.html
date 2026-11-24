@@ -4,7 +4,7 @@
 <style>
 :root{color-scheme:dark;--navy:#0c1c4c;--muted:#c0cbea;--mint:#45b9a6}*{box-sizing:border-box}body{margin:0;background:var(--navy);color:#fff;font:14px system-ui,Arial,sans-serif}header{padding:12px 14px 9px}#labBuild{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:5px;font-size:11px;font-weight:650;color:#b8f3e5;line-height:1.4}#labBuild a{color:#b8f3e5;text-decoration:underline;text-underline-offset:2px}#replaceFile:not([hidden]){display:inline-block;margin-bottom:9px}#labBuild .buildDot{color:#b9c9e8}#labBuild strong{color:#fff}h1{font-size:19px;margin:0 0 3px}h1 span{color:#54dac0}small,.muted{color:var(--muted)}#status{padding:7px 12px;background:#172b61;min-height:30px;font-size:12px}#map{height:calc(100dvh - 330px);min-height:200px;background:#e1ebec}.leaflet-container{background:#e1ebec}.leaflet-control-attribution{font-size:9px!important}footer{padding:10px 13px 14px;background:var(--navy)}.row{display:flex;gap:8px;align-items:center}.between{justify-content:space-between}button,label.import{border:1px solid #6784c0;background:#28467d;color:white;border-radius:11px;font:inherit;padding:11px 12px;cursor:pointer}button.primary,label.import{background:#36af9f;color:#001e39;border-color:#36af9f;font-weight:700}button:disabled{opacity:.45}input[type=range]{width:100%;accent-color:#54d9bc;margin:13px 0}#buttons{display:grid;grid-template-columns:1fr 1fr 1fr 44px;gap:8px}#buttons button{padding:13px 4px;font-weight:700}#mode{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0;align-items:center}#mode button,#advancedMode button{padding:9px;font-size:12px}#legacyModeControls{display:flex;gap:7px;flex-wrap:wrap}#zipModeControls>button{font-weight:700}#zipCompare{display:inline-block;margin-left:10px;color:#c0cbea;font-size:12px}#zipCompare summary{cursor:pointer;display:inline-block;text-decoration:underline;text-underline-offset:3px}#zipCompare .comparisonModes{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}#legacyModeControls[hidden],#zipModeControls[hidden]{display:none!important}#advanced{margin:6px 0 10px;border:1px solid #375491;border-radius:9px;padding:8px 10px}#advanced summary{cursor:pointer;color:#c0cbea;font-size:12px}#advancedMode{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}#experimentalCoverage[aria-pressed="true"]{background:#36af9f;color:#001e39;border-color:#36af9f;font-weight:700}.advancedLegend{display:none}body:has(#advanced[open]) .advancedLegend{display:inline}#mode .muted{margin-left:auto;font-size:11px}#title{font-weight:700}#count{background:#203d78;border-radius:16px;padding:5px 10px;white-space:nowrap}#meta{margin:4px 0;color:var(--muted);font-size:12px}#legend{display:flex;gap:10px;margin-top:10px;font-size:11px;flex-wrap:wrap}.chip{display:inline-block;width:19px;height:6px;border-radius:6px;margin-right:4px;vertical-align:middle}#setup{padding:14px;border:1px solid #375491;border-radius:12px;margin:10px 0}#setup p{margin:6px 0 10px;color:var(--muted)}input[type=file]{display:none}#error{display:none;padding:10px;background:#59333a;color:#fff;border-radius:8px;margin:6px 0}#detail{font-size:11px;color:#c8d8fc;min-height:14px}#inspectPanel{display:none;margin-top:8px;border:1px solid #496eae;border-radius:9px;padding:10px;background:#1b356a}#inspectPanel pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;line-height:1.35;max-height:150px;overflow:auto}#inspectPanel button{padding:8px 12px;font-size:12px}#inspect.active{background:#ebbd53;color:#15233c}#shadowRoads[aria-pressed="true"]{background:#00bcd4;color:#08263b;border-color:#00bcd4;font-weight:700}#gapMode[aria-pressed="true"]{background:#efb84c;color:#15233c;border-color:#efb84c;font-weight:700}#connectedShadow[aria-pressed="true"]{background:#f45cba;color:#231129;border-color:#f45cba;font-weight:700}#roadFirstShadow[aria-pressed="true"]{background:#f0cf64;color:#19264e;border-color:#f0cf64;font-weight:700}#independentRoads[aria-pressed="true"]{background:#60a5fa;color:#061731;border-color:#60a5fa;font-weight:700}
 </style></head>
-<body><header><h1>Roadprints <span>Map Laboratory</span></h1><small>Hosted experiment · original journeys stay on your device</small><div id="labBuild" aria-label="Laboratory code revision loaded in this browser"><strong>LAB r451</strong><span class="buildDot">·</span><span>24 Nov 2026</span><span class="buildDot">·</span><a href="https://github.com/adamdbird-gfc/uk-road-tracker/pull/451" target="_blank" rel="noopener noreferrer">PR #451</a><span class="buildDot">·</span><span>Loaded page version</span></div></header>
+<body><header><h1>Roadprints <span>Map Laboratory</span></h1><small>Hosted experiment · original journeys stay on your device</small><div id="labBuild" aria-label="Laboratory code revision loaded in this browser"><strong>LAB r452</strong><span class="buildDot">·</span><span>24 Nov 2026</span><span class="buildDot">·</span><a href="https://github.com/adamdbird-gfc/uk-road-tracker/pull/452" target="_blank" rel="noopener noreferrer">PR #452</a><span class="buildDot">·</span><span>Loaded page version</span></div></header>
 <div id="status">Import your private journey file to begin.</div><div id="map"></div>
 <footer><div id="setup"><b>Load your private journeys</b><p>Choose a Roadprints journey diagnostics ZIP or a legacy Laboratory journey file. Diagnostics are read locally.</p><label class="import" for="file">Choose journey file</label><input id="file" type="file" accept=".zip,.gz,.json,application/zip,application/gzip,application/json"></div>
 <label id="replaceFile" class="import" for="file" hidden>Choose another file</label> <button id="forgetZip" type="button" hidden>Forget stored ZIP</button><div id="zipStorageNotice" class="muted" hidden style="font-size:11px;margin:5px 0">Your diagnostic ZIP is stored privately in this browser on this device, not uploaded. You can remove it using Forget stored ZIP. Browser storage may be cleared by Android or Chrome.</div><div id="error" role="alert"></div><div class="row between"><div id="title">Ready for import</div><span id="count">0 / 0</span></div>
@@ -21,13 +21,13 @@
 <script src="route-first.js"></script>
 <script src="canonical-coverage.js"></script>
 <script src="roadside-centreline.js"></script>
-<script src="shared-road-catalogue.js"></script>
+<script src="independent-road-network.js"></script>
 <script src="route-led-coverage.js"></script>
 <script>
 'use strict';
 const $=x=>document.getElementById(x),D=Math.PI/180,M=111320;
 let androidMatchedEvidence=null,showAndroidOverlay=false,data=null,step=0,isolated=false,gapMode=false,shadowRoads=false,showConnectedShadow=false,roadFirstShadow=false,showIndependentRoads=false,experimentalRecovery=false,mode='center',busy=false,map,canvas,ctx,roads=[],roadIds=new Map(),regions=[],cache=new Map(),timer=null,drawPending=false,inspectMode=false,showLinks=true,promoteRoads=true,selectedRoad=-1,selectedReport=null;
-let diagnosticsZip=null,diagnosticRoute=null,backgroundTiles,zipRouteCache=new Map(),zipCoverageCache=new Map(),zipCoverageLedger=new Set(),zipRouteLedCache=new Map(),zipRouteLedLedger=new Set(),zipRoadCatalogue=null,currentCoverageAudit=null;
+let diagnosticsZip=null,diagnosticRoute=null,backgroundTiles,zipRouteCache=new Map(),zipCoverageCache=new Map(),zipCoverageLedger=new Set(),zipRouteLedCache=new Map(),zipRouteLedLedger=new Set(),zipIndependentByJourney=new Map(),zipNetworkStatusByJourney=new Map(),currentCoverageAudit=null;
 const net=$('net'),status=$('status'),error=$('error'),seek=$('seek');
 function tell(t){status.textContent=t}function problem(t){error.textContent=t;error.style.display='block';tell('Matching paused; no journey data has been changed.')}function clearError(){error.style.display='none'}
 function metres(a,b){return Math.hypot((a[0]-b[0])*M*Math.cos((a[1]+b[1])*.5*D),(a[1]-b[1])*M)}
@@ -2528,7 +2528,7 @@ async function forgetZipLocal(){
 async function install(bytes,remember=false){showAndroidOverlay=false;androidMatchedEvidence=null;$('matchedDebugStatus').textContent='Local-only journey debug; never uploaded or saved. Keep private.';tell('Loading private journeys locally…');const raw=await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).text();const d=JSON.parse(raw);if(!Array.isArray(d.journeys)||!Array.isArray(d.segments)||!d.journeys.length)throw Error('Not a Roadprints laboratory journey file');configureZip(null);data=d;step=0;isolated=false;gapMode=false;selectedRoad=-1;selectedReport=null;$('inspectPanel').style.display='none';roads=[];roadIds.clear();regions=[];cache.clear();if(remember)await save(bytes);$('setup').style.display='none';$('replaceFile').hidden=false;update();tell('Ready · '+data.journeys.length+' journeys · road centreline pilot')}
 function configureZip(zip) {
  if(zip){experimentalRecovery=false;$('experimentalCoverage').setAttribute('aria-pressed','false');$('experimentalCoverage').textContent='Coverage correction OFF'}
- diagnosticsZip=zip;diagnosticRoute=null;zipRouteCache.clear();zipCoverageCache.clear();zipCoverageLedger.clear();zipRouteLedCache.clear();zipRouteLedLedger.clear();zipRoadCatalogue=null;currentCoverageAudit=null;$('coverageAuditSummary').textContent='';$('downloadCoverageAudit').disabled=true;mode=zip?'routeLed':'center';
+ diagnosticsZip=zip;diagnosticRoute=null;zipRouteCache.clear();zipCoverageCache.clear();zipCoverageLedger.clear();zipRouteLedCache.clear();zipRouteLedLedger.clear();zipIndependentByJourney.clear();zipNetworkStatusByJourney.clear();currentCoverageAudit=null;$('coverageAuditSummary').textContent='';$('downloadCoverageAudit').disabled=true;mode=zip?'routeLed':'center';
  for(const id of ['routeFirst','canonicalMode','dateForm','coverageAuditPanel'])$(id).hidden=!zip;
  $('legacyModeControls').hidden=!!zip;$('zipModeControls').hidden=!zip;$('zipCompare').open=false;
  $('forgetZip').hidden=!zip;$('zipStorageNotice').hidden=!zip;
@@ -2561,38 +2561,56 @@ async function showZipJourney(n) {
  }
  clearError();busy=true;controls();
  try{
+  // Reconstruct only the SELECTED journey using its own recorded travel.
+  // Road shape is queried from public OSM in its locality, NOT other journeys.
+  // Queries never contain saved trace coordinates, only a bounded area.
+  const selectedIndex=n-1;
+  let preloadedSelected=null;
+  if(!zipIndependentByJourney.has(selectedIndex)){
+   const target=await diagnosticsZip.read(selectedIndex);
+   preloadedSelected=target;
+   const source=RouteFirst.reconstruct(target.journey);
+   let independent=[],networkStatus='Own journey references';
+   if(['walking','walk','running','run','on_foot'].includes(target.journey.mode)&&
+      IndependentRoadNetwork.needsNetwork(source)){
+    tell('Checking independent public OSM road centrelines for this journey…');
+    try{
+     independent=await IndependentRoadNetwork.lookup(source);
+     networkStatus=independent.length?
+      independent.length+' independent public OSM road references':
+      'No independent physical road references returned';
+    }catch(error){
+     networkStatus='Public road reference unavailable; saved route retained';
+    }
+   }
+   zipIndependentByJourney.set(selectedIndex,independent);
+   zipNetworkStatusByJourney.set(selectedIndex,networkStatus);
+   // On a revisit, the target may already have been credited without the
+   // independently retrieved network. Rebuild chronological attribution.
+   if(independent.length&&zipRouteCache.has(selectedIndex)){
+    zipRouteCache.clear();zipCoverageCache.clear();zipCoverageLedger.clear();
+    zipRouteLedCache.clear();zipRouteLedLedger.clear();
+   }
+  }
   // Forward travel accumulates every intervening journey in ZIP chronology.
-  // Only route coordinates are retained for history, not raw ZIP records.
+  // No prior journey is consulted to decide how the selected one was walked.
   let loadedSelection=false;
   for(let index=0;index<n;index++){
    if(zipRouteCache.has(index))continue;
    tell('Building cumulative routes · '+(index+1)+' / '+n+'…');
-   const record=await diagnosticsZip.read(index);
+   const record=index===selectedIndex&&preloadedSelected?
+    preloadedSelected:await diagnosticsZip.read(index);
    const route=RouteFirst.reconstruct(record.journey);
-   // Only expand the archive when the current source includes a substantial
-   // section without usable road references. Other journeys' exported road
-   // geometry is legitimate static network evidence, not travel evidence.
-   if(!zipRoadCatalogue&&
-      ['walking','walk','running','run','on_foot'].includes(record.journey.mode)&&
-      SharedRoadCatalogue.needsSupplement(route)){
-    tell('Finding existing physical-road references in the saved ZIP…');
-    zipRoadCatalogue=await SharedRoadCatalogue.fromZip(diagnosticsZip,
-     (done,total,count)=>tell('Reading local network evidence · '+done+' / '+total+
-      ' journeys · '+count+' distinct road lines'));
-    // Prior attribution may have used a poorer local reference collection;
-    // rebuild every credited interval so history is coherent across dates.
-    zipRouteCache.clear();zipCoverageCache.clear();zipCoverageLedger.clear();
-    zipRouteLedCache.clear();zipRouteLedLedger.clear();
-    index=-1;continue;
-   }
-   if(zipRoadCatalogue)route.sharedRoadReferences=
-    SharedRoadCatalogue.nearby(route,zipRoadCatalogue);
+   // Only a journey explicitly examined may use its own independently
+   // queried public road references. Do not cross-pollinate history.
+   if(zipIndependentByJourney.has(index))
+    route.independentRoadReferences=zipIndependentByJourney.get(index);
    zipRouteCache.set(index,route.parts);
    const attribution=CanonicalCoverage.accumulate(zipCoverageLedger,route);
    zipCoverageCache.set(index,{novel:attribution.novel,repeat:attribution.repeat,held:attribution.held,protectedTransferIntervals:attribution.protectedTransferIntervals,protectedPedestrianCorridorIntervals:attribution.protectedPedestrianCorridorIntervals});
    zipCoverageLedger=attribution.next;
    const routed=RouteLedCoverage.accumulate(zipRouteLedLedger,route);
-   zipRouteLedCache.set(index,{novel:routed.novel,repeat:routed.repeat,held:routed.held,centrelinePromotions:routed.centrelinePromotions});
+   zipRouteLedCache.set(index,{novel:routed.novel,repeat:routed.repeat,held:routed.held,centrelinePromotions:routed.centrelinePromotions,networkStatus:zipNetworkStatusByJourney.get(index)||'Own journey references'});
    zipRouteLedLedger=routed.next;
    if(index===n-1){diagnosticRoute=route;loadedSelection=true;}
    if(index%12===11)await new Promise(resolve=>setTimeout(resolve,0));
@@ -2647,7 +2665,9 @@ function updateZip(){
   'Route-led experiment — red: source segments first seen; black: earlier saved-match segments; green: repeated segments. The route is preserved in recorded order, without a second matcher. This is not validated physical-network credit.':
   'Red: first supported reference interval · Black: earlier reference coverage · Green: repeated interval · Grey dashed: original matched route, not credited. Canonical coverage is experimental and provisional; ambiguous geometry receives no new credit. Route-first displays raw matched history for comparison.';
  $('detail').textContent=!diagnosticRoute?'':mode==='routeLed'?
-  (()=>{const v=zipRouteLedCache.get(step-1);return (v?.novel.length||0)+' new saved-match segments · '+(v?.repeat.length||0)+' repeated source segments · '+(v?.held.length||0)+' uncredited roadside returns/entrances · '+(v?.centrelinePromotions?.length||0)+' road-centreline corridors · route-led experiment (not Android credit)';})():mode==='canonical'?
+  (()=>{const v=zipRouteLedCache.get(step-1);return (v?.novel.length||0)+' new saved-match segments · '+(v?.repeat.length||0)+' repeated source segments · '+(v?.held.length||0)+' uncredited roadside returns/entrances · '+Math.round((v?.centrelinePromotions||[]).reduce((m,p)=>m+p.metres,0))+' metres aligned to road centrelines'+
+  ((v?.centrelinePromotions?.length||0)?'':' — NO centreline correction achieved')+
+  ' · '+v?.networkStatus+' · route-led experiment (not Android credit)';})():mode==='canonical'?
   (()=>{const v=zipCoverageCache.get(step-1);return (v?.novel.length||0)+' provisional new intervals · '+(v?.repeat.length||0)+' repeated intervals · '+(v?.held.length||0)+' held alternatives · '+(v?.protectedTransferIntervals||0)+' supported pedestrian transfer intervals · '+(v?.protectedPedestrianCorridorIntervals||0)+' preserved pedestrian corridor intervals · no Android coverage records altered';})():mode==='center'?
   (cache.has(step-1)?cache.get(step-1).ids.size+' intervals using locally stored references.':'Stored route input or classified references are unavailable for this comparison.'):
   mode==='original'?diagnosticRoute.recorded.length+' recorded line components':

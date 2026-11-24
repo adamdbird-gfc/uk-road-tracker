@@ -50,13 +50,16 @@ const RoadsideCentreline=(()=>{
   const a=line[index],b=line[index+1],length=metres(a,b);
   if(length<1||length>120)return null;
   const x=snap(a,way),y=snap(b,way);
-  if(x.offset>8||y.offset>8)return null;
+  const wide=Math.max(x.offset,y.offset)>8;
+  // Pavements beside broad urban roads can be >8 m from the OSM
+  // centreline. Permit them ONLY as long, strongly parallel corridors.
+  if(x.offset>15||y.offset>15)return null;
   const along=y.along-x.along;
-  if(Math.abs(along)<length*.72)return null;
+  if(Math.abs(along)<length*(wide?.90:.72))return null;
   const r0=way.coords[x.edge-1],r1=way.coords[x.edge];
   const alignment=Math.abs(direction(a,b,r0,r1));
-  if(alignment<.94)return null;
-  return {x,y,length,sign:Math.sign(along),offset:(x.offset+y.offset)/2};
+  if(alignment<(wide?.97:.94))return null;
+  return {x,y,length,wide,sign:Math.sign(along),offset:(x.offset+y.offset)/2};
  }
  // Sparse imported routes often encode a long road-parallel passage as
  // ONE matched leg. Confirm its *interior* independently against the
@@ -65,13 +68,15 @@ const RoadsideCentreline=(()=>{
   const length=metres(a,b);
   if(length<32||length>120)return false;
   const first=snap(a,way),last=snap(b,way);
-  if(first.offset>8||last.offset>8)return false;
+  const wide=Math.max(first.offset,last.offset)>8;
+  if(first.offset>15||last.offset>15)return false;
+  if(wide&&length<50)return false;
   const sign=Math.sign(last.along-first.along);
   if(!sign||Math.abs(last.along-first.along)<length*.85)return false;
   let previous=first;
   for(const t of [.25,.5,.75,1]){
    const current=t===1?last:snap(interpolate(a,b,t),way);
-   if(current.offset>8||sign*(current.along-previous.along)<length*.12)return false;
+   if(current.offset>(wide?15:8)||sign*(current.along-previous.along)<length*.12)return false;
    previous=current;
   }
   return true;
@@ -87,16 +92,16 @@ const RoadsideCentreline=(()=>{
     const way=roads[w];
     if(line.every(p=>!valid(p)||p[0]<way.minX-.00012||p[0]>way.maxX+.00012||
      p[1]<way.minY-.00012||p[1]>way.maxY+.00012))continue;
-    let start=-1,last=null,length=0,offset=0,legs=0;
+    let start=-1,last=null,length=0,offset=0,legs=0,wideRun=false;
     const flush=()=>{
      const independentlySupported=legs===1&&start>=0&&
       supportedLongLeg(line[start],line[start+1],way);
-     if(start>=0&&(legs>=2||independentlySupported)&&length>=32&&length/legs>=2){
+     if(start>=0&&(legs>=2||independentlySupported)&&length>=(wideRun?50:32)&&length/legs>=2){
       const end=start+legs,averageOffset=offset/legs;
       // Do not change geometry already on the road centreline.
       if(averageOffset>=1.6)ranges.push({start,end,length,offset:averageOffset,w});
      }
-     start=-1;last=null;length=0;offset=0;legs=0;
+     start=-1;last=null;length=0;offset=0;legs=0;wideRun=false;
     };
     for(let i=0;i<line.length-1;i++){
      const next=valid(line[i])&&valid(line[i+1])?potential(line,way,i):null;
@@ -104,7 +109,7 @@ const RoadsideCentreline=(()=>{
       flush();if(!next)continue;
      }
      if(start<0)start=i;
-     last=next;length+=next.length;offset+=next.offset;legs++;
+     last=next;length+=next.length;offset+=next.offset;legs++;wideRun||=next.wide;
     }
     flush();
    }
