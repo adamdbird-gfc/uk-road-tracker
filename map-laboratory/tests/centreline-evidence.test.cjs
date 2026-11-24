@@ -41,6 +41,15 @@ test('genuine separate pedestrian shortcut remains untouched and evidence does n
  assert.equal(JSON.stringify(source),original);
 });
 
+test('historical cumulative replay does not eagerly analyse thousands of journey references',()=>{
+ const route={parts:[[p(0,10),p(35,10),p(70,10),p(105,10)]],
+  refs:[road([p(0),p(120)])]};
+ const background=RouteLed.accumulate(new Set(),route);
+ assert.equal(background.roadEvidence,null);
+ const inspected=RouteLed.accumulate(new Set(),{...route,diagnosticsRequested:true});
+ assert(inspected.roadEvidence?.references>0);
+ assert.deepEqual(RouteLed.evidence(route).reasons,inspected.roadEvidence.reasons);
+});
 test('evidence summary is present in visible current journey status without a new button or cross-journey input',()=>{
  const fs=require('node:fs'),path=require('node:path');
  const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
