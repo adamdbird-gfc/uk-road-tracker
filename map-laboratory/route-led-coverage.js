@@ -136,7 +136,7 @@ const RouteLedCoverage=(()=>{
   // or a separate public OSM network query, NEVER from other journeys.
   const withPhysicalRoads=route.independentRoadReferences?.length?
    {...route,refs:PublicRoadSource.merge(route.refs,route.independentRoadReferences)}:route;
-  const screening=CentrelinePromotion.evidence(withPhysicalRoads);
+  const screening=route.diagnosticsRequested?CentrelinePromotion.evidence(withPhysicalRoads):null;
   const aligned=CentrelinePromotion.align(withPhysicalRoads);
   const parts=[],held=[];
   for(const input of aligned.parts||[]){
@@ -221,6 +221,11 @@ const RouteLedCoverage=(()=>{
   }
   return {novel,repeat,next,held:prepared.held,centrelinePromotions:prepared.centrelinePromotions,roadEvidence:prepared.roadEvidence,sourceSegments:(route?.parts||[]).reduce((sum,line)=>sum+Math.max(0,(line?.length||0)-1),0)};
  }
- return {intervals,accumulate,cleanup,key};
+ function evidence(route){
+  const referenceRoute=route.independentRoadReferences?.length?
+   {...route,refs:PublicRoadSource.merge(route.refs,route.independentRoadReferences)}:route;
+  return CentrelinePromotion.evidence(referenceRoute);
+ }
+ return {intervals,accumulate,cleanup,evidence,key};
 })();
 if(typeof module!=='undefined')module.exports=RouteLedCoverage;
