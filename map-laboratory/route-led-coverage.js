@@ -134,8 +134,10 @@ const RouteLedCoverage=(()=>{
   const roads=segments(route?.refs,road),feet=segments(route?.refs,foot);
   // Static road geometry comes only from this journey's own references
   // or a separate public OSM network query, NEVER from other journeys.
-  const aligned=CentrelinePromotion.align(route.independentRoadReferences?.length?
-   {...route,refs:PublicRoadSource.merge(route.refs,route.independentRoadReferences)}:route);
+  const withPhysicalRoads=route.independentRoadReferences?.length?
+   {...route,refs:PublicRoadSource.merge(route.refs,route.independentRoadReferences)}:route;
+  const screening=CentrelinePromotion.evidence(withPhysicalRoads);
+  const aligned=CentrelinePromotion.align(withPhysicalRoads);
   const parts=[],held=[];
   for(const input of aligned.parts||[]){
    if(!Array.isArray(input)||input.length<2){parts.push(input);continue;}
@@ -190,7 +192,7 @@ const RouteLedCoverage=(()=>{
    if(roads.length)trimUnsupportedTerminalTurn(line,route,held);
    parts.push(line);
   }
-  return {parts,held,centrelinePromotions:aligned.promoted};
+  return {parts,held,centrelinePromotions:aligned.promoted,roadEvidence:screening};
  }
  function intervals(route){
   const result=[],seen=new Set();
@@ -217,7 +219,7 @@ const RouteLedCoverage=(()=>{
    if(next.has(part.id))repeat.push(part);
    else{novel.push(part);next.add(part.id)}
   }
-  return {novel,repeat,next,held:prepared.held,centrelinePromotions:prepared.centrelinePromotions,sourceSegments:(route?.parts||[]).reduce((sum,line)=>sum+Math.max(0,(line?.length||0)-1),0)};
+  return {novel,repeat,next,held:prepared.held,centrelinePromotions:prepared.centrelinePromotions,roadEvidence:prepared.roadEvidence,sourceSegments:(route?.parts||[]).reduce((sum,line)=>sum+Math.max(0,(line?.length||0)-1),0)};
  }
  return {intervals,accumulate,cleanup,key};
 })();
