@@ -7,9 +7,9 @@ assert(page.includes('drawParts(0,Math.max(0,step-1),i=>zipRouteCache.get(i)'),
  'previously played ZIP routes must be rendered cumulatively');
 assert(page.includes('if(diagnosticsZip){')&&page.includes("if(mode==='canonical'||mode==='routeLed')")&&page.includes('Route-first displays raw matched history'),
  'ZIP source replay stays distinct from provisional canonical coverage');
-assert(page.includes("zipRouteCache.clear();zipCoverageCache.clear();zipCoverageLedger.clear();zipRouteLedCache.clear();zipRouteLedLedger.clear();currentCoverageAudit=null;$('coverageAuditSummary').textContent='';$('downloadCoverageAudit').disabled=true;mode=zip?'route':'center'"),
+assert(page.includes("zipRouteCache.clear();zipCoverageCache.clear();zipCoverageLedger.clear();zipRouteLedCache.clear();zipRouteLedLedger.clear();currentCoverageAudit=null;$('coverageAuditSummary').textContent='';$('downloadCoverageAudit').disabled=true;mode=zip?'routeLed':'center'"),
  'changing input resets previously replayed route history');
-assert(page.includes('LAB r444')&&page.includes('>PR #444</a>'));
+assert(page.includes('LAB r445')&&page.includes('>PR #445</a>'));
 const seen=[];
 const zip={read:async index=>{seen.push(index);return {journey:{index}};}};
 const reconstruct=journey=>({
@@ -18,12 +18,13 @@ const reconstruct=journey=>({
  refs:[],source:'saved match',projected:0,joins:0
 });
 const harness=new Function('zip','reconstruct',`
- let diagnosticsZip=zip,diagnosticRoute=null,zipRouteCache=new Map(),busy=false,step=0,isolated=false,mode='route';
+ let diagnosticsZip=zip,diagnosticRoute=null,zipRouteCache=new Map(),busy=false,step=0,isolated=false,mode='routeLed';
  let data={journeys:Array.from({length:4},(_,i)=>['date'+i,'walk','walking',[],null])};
  let roads=[],roadIds=new Map(),cache=new Map(),messages=[];
  const RouteFirst={reconstruct};
  const CanonicalCoverage={accumulate:(set)=>({novel:[],repeat:[],held:[],next:new Set(set)})};
- let zipCoverageCache=new Map(),zipCoverageLedger=new Set(),currentCoverageAudit=null;
+ let zipCoverageCache=new Map(),zipCoverageLedger=new Set(),zipRouteLedCache=new Map(),zipRouteLedLedger=new Set(),currentCoverageAudit=null;
+ const RouteLedCoverage={accumulate:set=>({novel:[],repeat:[],next:new Set(set)})};
  const controlsById={};const $=id=>(controlsById[id]??={textContent:'',disabled:false});
  const tell=s=>messages.push(s),clearError=()=>{},controls=()=>{},focus=()=>{},update=()=>{},stop=()=>{};
  const problem=s=>{throw Error(s)},addWays=()=>{},match=()=>{throw Error('unexpected rematch')};
