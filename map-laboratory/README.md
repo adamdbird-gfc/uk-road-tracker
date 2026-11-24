@@ -8,7 +8,17 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
-## Shared physical road evidence from the local ZIP (LAB r451)
+## Independent road centrelines and measurable changes (LAB r452)
+
+LAB r451's ZIP-wide shared road catalogue violated the explicit requirement that a journey's geometry must not depend on other recorded journeys. **That mechanism and its tests are removed.** Historical travel is used only when aggregating independently interpreted journeys.
+
+The route-led Map Laboratory now combines the *selected journey's own* saved movement evidence with a separate **public OpenStreetMap road-network lookup** of its bounded locality. Only a geographic bounding rectangle (not the journey's GPS points, raw or matched route, ID, titles, or ZIP) is sent to an Overpass endpoint. The query is visible in the Map status, time-limited and only performed when the selected walking/running journey has a substantial section without usable physical-road references. No request is made while browsing earlier journeys merely to create cumulative history. If the external network is unavailable, the original match is preserved and the status explains that the reference lookup failed.
+
+The independent road data is **not travel evidence**: each source route still determines where the traveller walked. Sustained physical-road equivalence can promote a road-parallel walking corridor onto a unique public road centreline with strong heading and longitudinal agreement. Broad urban pavements can lie up to 15m from a centreline, but that wider distance requires at least 50m of strongly parallel source support; smaller corridors keep stricter geometry checks. Pub service roads, independent pedestrian shortcuts, diagonals, crossings, unsupported endpoints, and Community Square remain protected.
+
+The Lab now reports **metres of current journey geometry actually aligned**, not just a count of candidate corridors. The new two-corridor regression requires a genuinely shifted geometry result in both corridors and protects the original route. A zero-metre result or public network failure is a non-acceptance, not a claimed fix. This is a Lab-only experiment pending Journey 7 device comparison. Never credit movement on a road from its network presence alone.
+
+## Historical note: Superseded ZIP-wide shared road catalogue (LAB r451)
 
 The owner’s r450 Journey 7 screenshots showed that simply accepting longer roadside legs had not moved Clive Road or the Prince of Orange section onto physical road centrelines. Audit of the **actual private 1,714-journey ZIP** found that Journey 7 exports 24 local network ways, including 13 footways but **no Clive Road centreline reference**. Other journeys in the same ZIP contain multiple physical Clive Road references, as well as road references around the Prince of Orange. This is an evidence-availability defect, not a problem solved by another matching threshold.
 
