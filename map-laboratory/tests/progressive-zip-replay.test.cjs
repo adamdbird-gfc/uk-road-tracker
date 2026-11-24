@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const page=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
-const start=page.indexOf('async function showZipJourney(n) {');
+const start=page.indexOf('async function ensureRouteLedThrough(n){');
 const end=page.indexOf('\nfunction updateZip(){',start);
 assert(start>=0&&end>start,'ZIP progressive navigation must exist');
 assert(page.includes('drawParts(0,Math.max(0,step-1),i=>zipRouteCache.get(i)'),
