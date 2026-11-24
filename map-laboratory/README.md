@@ -8,6 +8,14 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Sparse-GPS unsupported terminal side-road turn (LAB r447)
+
+Owner accepted Journey 2 in LAB r446. Journey 3 (10 December 2025, 08:08 UTC) revealed a short end nib where the saved match turns from Haynes Road into Garden Row. The original Timeline-import recording has five GPS positions; its last recorded position lies approximately 0.9m from the matched main road, about 13m before the road junction, while the saved matcher continues another ~14m along Garden Row. This is a separate **terminal matched-route overshoot**, not the out-and-back or entrance nib already handled by r446.
+
+Before route-led cumulative attribution, the LAB can withhold just the side-road tail **only** when there is a last GPS fix close to the main-road approach, a near-right-angle turn to a distinct OSM road reference, an unobserved terminal tail of 6–24m, and no GPS fix near the terminal end. The main-road approach to the junction remains. Genuine GPS-supported destinations, straight-road continuations, and independent pedestrian footpaths are protected by regression tests. The original saved matched geometry is unchanged and remains available via Compare other views.
+
+No private coordinates are published. The Lab remains experimental and must be tested with the owner's cumulative ZIP before any Android release decision.
+
 ## Route-led roadside nib consolidation (LAB r446)
 
 The private Journey 2 replay showed two distinct anomalies in the saved match: a very short leading hook from a minor road onto a continuous major-road centreline, and a closed out-and-back excursion that follows a footway approximately parallel to the already used road before returning to its starting point. No private coordinates are committed.
