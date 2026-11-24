@@ -2565,8 +2565,10 @@ async function showZipJourney(n) {
   // Road shape is queried from public OSM in its locality, NOT other journeys.
   // Queries never contain saved trace coordinates, only a bounded area.
   const selectedIndex=n-1;
+  let preloadedSelected=null;
   if(!zipIndependentByJourney.has(selectedIndex)){
    const target=await diagnosticsZip.read(selectedIndex);
+   preloadedSelected=target;
    const source=RouteFirst.reconstruct(target.journey);
    let independent=[],networkStatus='Own journey references';
    if(['walking','walk','running','run','on_foot'].includes(target.journey.mode)&&
@@ -2585,7 +2587,7 @@ async function showZipJourney(n) {
    zipNetworkStatusByJourney.set(selectedIndex,networkStatus);
    // On a revisit, the target may already have been credited without the
    // independently retrieved network. Rebuild chronological attribution.
-   if(zipRouteCache.has(selectedIndex)){
+   if(independent.length&&zipRouteCache.has(selectedIndex)){
     zipRouteCache.clear();zipCoverageCache.clear();zipCoverageLedger.clear();
     zipRouteLedCache.clear();zipRouteLedLedger.clear();
    }
@@ -2596,7 +2598,8 @@ async function showZipJourney(n) {
   for(let index=0;index<n;index++){
    if(zipRouteCache.has(index))continue;
    tell('Building cumulative routes · '+(index+1)+' / '+n+'…');
-   const record=await diagnosticsZip.read(index);
+   const record=index===selectedIndex&&preloadedSelected?
+    preloadedSelected:await diagnosticsZip.read(index);
    const route=RouteFirst.reconstruct(record.journey);
    // Only a journey explicitly examined may use its own independently
    // queried public road references. Do not cross-pollinate history.
