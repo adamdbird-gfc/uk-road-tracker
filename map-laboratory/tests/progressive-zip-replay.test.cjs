@@ -7,7 +7,7 @@ assert(page.includes('drawParts(0,Math.max(0,step-1),i=>zipRouteCache.get(i)'),
  'previously played ZIP routes must be rendered cumulatively');
 assert(page.includes('if(diagnosticsZip){')&&page.includes("if(mode==='canonical'||mode==='routeLed')")&&page.includes('Route-first displays raw matched history'),
  'ZIP source replay stays distinct from provisional canonical coverage');
-assert(page.includes("zipRouteCache.clear();zipCoverageCache.clear();zipCoverageLedger.clear();zipRouteLedCache.clear();zipRouteLedLedger.clear();currentCoverageAudit=null;$('coverageAuditSummary').textContent='';$('downloadCoverageAudit').disabled=true;mode=zip?'routeLed':'center'"),
+assert(page.includes("zipRouteCache.clear();zipCoverageCache.clear();zipCoverageLedger.clear();zipRouteLedCache.clear();zipRouteLedLedger.clear();zipRoadCatalogue=null;currentCoverageAudit=null;$('coverageAuditSummary').textContent='';$('downloadCoverageAudit').disabled=true;mode=zip?'routeLed':'center'"),
  'changing input resets previously replayed route history');
 assert(page.includes('LAB r451')&&page.includes('>PR #451</a>'));
 const seen=[];
@@ -23,7 +23,7 @@ const harness=new Function('zip','reconstruct',`
  let roads=[],roadIds=new Map(),cache=new Map(),messages=[];
  const RouteFirst={reconstruct};
  const CanonicalCoverage={accumulate:(set)=>({novel:[],repeat:[],held:[],next:new Set(set)})};
- let zipCoverageCache=new Map(),zipCoverageLedger=new Set(),zipRouteLedCache=new Map(),zipRouteLedLedger=new Set(),currentCoverageAudit=null;
+ let zipCoverageCache=new Map(),zipCoverageLedger=new Set(),zipRouteLedCache=new Map(),zipRouteLedLedger=new Set(),zipRoadCatalogue=null,currentCoverageAudit=null;
  const RouteLedCoverage={accumulate:set=>({novel:[],repeat:[],held:[],next:new Set(set)})};
  const controlsById={};const $=id=>(controlsById[id]??={textContent:'',disabled:false});
  const tell=s=>messages.push(s),clearError=()=>{},controls=()=>{},focus=()=>{},update=()=>{},stop=()=>{};
