@@ -12,7 +12,9 @@ See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-forma
 
 The cumulative ZIP replay status now updates after the same selected journey state used by the map, title, counter and controls has committed. The request target and currently selected journey must not be shown as one inconsistent state. A chronological Back/Next/jump test asserts that the status reflects the committed selection, including revisiting earlier cached journeys.
 
-This revision **does not change the experimental canonical attribution algorithm**. The reference-gap defects identified on the owner's pedestrian shortcut and the Cross Lane East nib remain open until a complete route-ordered solution is validated with the private seven-journey baseline. Preserving the original matched journey, local ZIP and Android coverage is mandatory.
+This revision also adds an **opt-in Route-led cumulative** view that uses Sunday's preserved RouteFirst geometry (including corrected segments, pedestrian shortcuts and bounded centreline substitutions), accumulates successive saved source segments in journey order and compares repeats by direction-independent segment identity. Unlike the r438–r443 experimental canonical attribution, the route-led view does not re-filter a saved pedestrian shortcut against its separate reference collection. A/B comparison is available without replacing canonical code. Unlike physical-network interval identity, source segment identity is still sensitive to sampling and geometry variation, so this model is **not yet validated new network credit** and will not change Android completion.
+
+The reference-gap defects identified on the owner's pedestrian shortcut and the Cross Lane East nib remain open for seven-journey A/B field acceptance. Preserving the original matched journey, local ZIP and Android coverage is mandatory.
 
 ## Preserve source-backed pedestrian corridors (LAB r443)
 
