@@ -126,8 +126,18 @@ const BulkDiagnostics = (() => {
 
   // Preserve the original replay ordinal for screenshots and direct jumps.
   function roadReplay(archive) {
-    const entries = archive.journeys.map((journey, index) => ({...journey, archiveOrdinal: index + 1}))
-      .filter(journey => !/^(train|rail|railway|subway|metro|tram)$/i.test(journey.mode?.trim() || ''));
+    const rail = mode => /^(train|rail|railway|subway|metro|tram)$/i.test(mode?.trim() || '');
+    const adjacent = (from,to) => {
+      const gap = Date.parse(to) - Date.parse(from);
+      return gap >= 0 && gap <= 120000;
+    };
+    const entries = archive.journeys.flatMap((journey,index,all) => {
+      if(rail(journey.mode))return [];
+      const before=all[index-1],after=all[index+1];
+      return [{...journey,archiveOrdinal:index+1,
+        railBefore:rail(before?.mode)&&adjacent(before.ended_at,journey.started_at),
+        railAfter:rail(after?.mode)&&adjacent(journey.ended_at,after.started_at)}];
+    });
     return {
       journeys: entries,
       archiveCount: archive.journeys.length,

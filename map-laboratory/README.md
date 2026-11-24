@@ -8,6 +8,22 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Rail changeovers at mapped stations (LAB r461)
+
+The road and path replay uses the adjacent archive entry's rail mode and
+timing as context for a likely transfer. For a saved walking match, the
+street line can end or begin at a unique mapped railway entrance where
+connected indoor geometry supports the transition. A station marker
+identifies the likely changeover, and the display leaves the indoor path
+unresolved. Rail coordinates are never used to construct walking geometry.
+The saved match remains available in the comparison views.
+
+The initial railway entrance index covers the existing pinned pilot cells
+and uses their original OSM snapshots. Regenerate it with the same source
+arguments as the road tile builder and add `--entrances-only`. When the
+references, timing, topology or route evidence are insufficient, the Lab
+keeps the original replay display.
+
 ## Short junction transitions and weak endcaps (LAB r460)
 
 The Lab can replace a short pavement offset with a connected road

@@ -138,10 +138,10 @@ test('ZIP UI keeps canonical and route-led models isolated',()=>{
  const fs=require('node:fs'),path=require('node:path');
  const page=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
  assert(page.includes('route-led-coverage.js'));
- assert(page.includes('RouteLedCoverage.accumulate(zipRouteLedLedger,route)'));
+ assert(page.includes('RouteLedCoverage.accumulate(zipRouteLedLedger,route.surfaceParts?{...route,parts:route.surfaceParts}:route)'));
  assert(page.includes("mode==='routeLed'?zipRouteLedCache.get(n):zipCoverageCache.get(n)"));
  assert(page.includes("zipRouteLedCache.clear();zipRouteLedLedger.clear()"));
- assert(page.includes('LAB r460')&&page.includes('>PR #460</a>'));
+ assert(page.includes('LAB r461')&&page.includes('>PR #461</a>'));
  assert(page.includes('id="zipCompare"')&&page.includes('id="zipModeControls" hidden')&&page.includes("mode=zip?'routeLed':'center'"));
 });
 

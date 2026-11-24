@@ -146,3 +146,22 @@ test('owner ZIP Journey 10 cleans ordinary corners and keeps the supported Old B
  assert.equal(result.parts.length,1);
  assert.equal(JSON.stringify(journey),before);
 });
+
+test('City Thameslink street replay reaches the mapped entrance without drawing the inferred platform walk',{skip:!archive},async()=>{
+ const zip=await Bulk.open(new Blob([fs.readFileSync(archive)]));
+ const row=Bulk.roadReplay(zip).journeys.find(j=>j.archiveOrdinal===11);
+ assert.equal(row.railAfter,true);
+ const {journey}=await zip.read(10);
+ const reconstructed=RouteFirst.reconstruct(journey);
+ const pinned=await Network.create(request).lookup(reconstructed);
+ const route={...reconstructed,independentRoadReferences:pinned.refs};
+ const RailTransition=require('../rail-transition.js');
+ const guarded=await RailTransition.create(request)(route,row);
+ const door=pinned.refs.find(ref=>ref.id===815099762).coords[0];
+ assert.deepEqual(guarded.railTransitions,[{point:door,label:'Likely transfer to rail'}]);
+ assert.deepEqual(guarded.surfaceParts[0].at(-1),door);
+ assert.strictEqual(guarded.parts,route.parts);
+ assert(guarded.surfaceParts[0].length<route.parts[0].length);
+ const output=RouteLed.cleanup({...guarded,parts:guarded.surfaceParts});
+ assert.deepEqual(output.parts[0].at(-1),door);
+});
