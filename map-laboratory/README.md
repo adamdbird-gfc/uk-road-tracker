@@ -8,6 +8,12 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Preserve source-backed pedestrian corridors (LAB r443)
+
+The legacy Map Laboratory's tested footway-endcap principle from PR #386 is reused in the ZIP canonical attribution stage: consecutive, directly source-backed pedestrian reference intervals form one corridor, and a multi-interval corridor is protected **before** speculative short-terminal-branch pruning. The owner Journey 2 private audit showed four consecutive footway intervals with direct overlap and zero lateral offset incorrectly withheld by that pruning rule. The new regression uses synthetic geometry only (no private journey coordinates) and verifies a comparable continuous pedestrian corridor survives while a short dangling spur remains withheld.
+
+This is a bounded repair of one demonstrated regression, not a wholesale adoption of the legacy matcher and not a seven-journey field acceptance. The prior diagnostic audit remains available. The original matched journey, cumulative Android credit, private ZIP storage and replay are unchanged.
+
 ## Local interval-decision audit (LAB r442)
 
 Under **Canonical coverage decision audit (private)**, run **Diagnose this journey** to inspect the current ZIP journey's actual decision pipeline. The report counts reference roads and paths, supported network intervals, withheld alternatives, and intervals without sufficient overlap. **Save private audit JSON** includes exact coordinates and rejection reasons for each usable reference interval. The file is generated locally in Chrome and contains sensitive journey locations; do not commit it to GitHub or share it publicly. It is calculated on demand for the currently selected journey, never uploaded or stored as a separate long-term report.
