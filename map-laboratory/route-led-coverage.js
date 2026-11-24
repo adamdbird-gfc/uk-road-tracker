@@ -68,7 +68,7 @@ const RouteLedCoverage=(()=>{
   if(!raw.length||line.length<5)return;
   const destination=raw.at(-1);
   if(distance(destination,line.at(-1))<12)return;
-  const suffix=[0];for(let i=line.length-2;i>=0;i--)
+  const suffix=Array(line.length).fill(0);for(let i=line.length-2;i>=0;i--)
    suffix[i]=suffix[i+1]+distance(line[i],line[i+1]);
   const roadWays=refs.filter(r=>road.test(r.kind)&&Array.isArray(r.coords)&&r.coords.length>1);
   if(roadWays.length<2)return;
