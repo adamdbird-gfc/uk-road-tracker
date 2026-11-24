@@ -88,9 +88,9 @@ const RoadsideCentreline=(()=>{
   const u=(d[0]-c[0])*M*Math.cos(c[1]*D),v=(d[1]-c[1])*M;
   return (x*u+y*v)/(Math.hypot(x,y)*Math.hypot(u,v)||1);
  }
- function potential(line,way,index){
+ function potential(line,way,index,minLength=1){
   const a=line[index],b=line[index+1],length=metres(a,b);
-  if(length<1||length>120)return null;
+  if(length<minLength||length>120)return null;
   const x=snap(a,way),y=snap(b,way);
   const wide=Math.max(x.offset,y.offset)>8;
   // Pavements beside broad urban roads can be >8 m from the OSM
@@ -197,7 +197,7 @@ const RoadsideCentreline=(()=>{
    for(let i=1;i<ref.coords.length;i++){
     const a=vertex(ref.nodes[i-1],ref.coords[i-1]),b=vertex(ref.nodes[i],ref.coords[i]);
     if(a===b)continue;
-    const edge={a,b,name:ref.name||''};
+    const edge={a,b,name:ref.name||'',structure:structure(ref)};
     a.edges.push(edge);b.edges.push(edge);edges.push(edge);
    }
   }
@@ -242,15 +242,24 @@ const RoadsideCentreline=(()=>{
   for(let i=1;i<coords.length;i++)lengths.push(lengths.at(-1)+metres(coords[i-1],coords[i]));
   return {coords,lengths};
  }
- function junctionTrace(source,starts,ends){
+ function junctionTrace(source,starts,ends,protectedPaths){
   const guide=measured(source),length=guide.lengths.at(-1);
   const options=[],limit=Math.min(65,length*1.22),tolerance=9;
   let visits=0;
-  function accept(path,labels,travel){
+  function accept(pathPoints,edges,travel){
    if(travel<length*.72||travel>limit)return;
-   const coords=path.filter((p,i)=>!i||metres(p,path[i-1])>.01);
+   const coords=pathPoints.filter((p,i)=>!i||metres(p,pathPoints[i-1])>.01);
    if(coords.length<2||!orderedSupport(coords,guide,tolerance)||
       !orderedSupport(source,measured(coords),tolerance))return;
+   if(protectedPaths.some(({path,grade})=>{
+    const used=source.slice(1,-1).filter(p=>snap(p,path).offset<=1.25);
+    if(!used.length)return false;
+    // A pavement on the same mapped bridge may follow the road centreline.
+    // Check the actual clipped spans selected by the graph, at the same grade.
+    return !grade||used.some(p=>!edges.some((edge,i)=>edge.structure===grade&&
+     projected(p,pathPoints[i],pathPoints[i+1]).offset<=8));
+   }))return;
+   const labels=edges.map(edge=>edge.name);
    if(!options.some(other=>orderedSupport(coords,measured(other.coords),1.25)&&
       orderedSupport(other.coords,measured(coords),1.25)))options.push({coords,labels});
   }
@@ -259,11 +268,11 @@ const RoadsideCentreline=(()=>{
    for(const end of ends){
     if(start.edge===end.edge&&start.sign===end.sign&&
        direction(start.p,end.p,start.edge.a.p,start.edge.b.p)*start.sign>0)
-     accept([start.p,end.p],[start.edge.name],metres(start.p,end.p));
-    const walk=(node,travel,path,labels,seen)=>{
+     accept([start.p,end.p],[start.edge],metres(start.p,end.p));
+    const walk=(node,travel,path,edges,seen)=>{
      if(++visits>240||travel>limit||options.length>1)return;
      if(node===end.node&&fits(node.p,end.p)){
-      accept(path.concat([end.p]),labels.concat(end.edge.name),travel+metres(node.p,end.p));
+      accept(path.concat([end.p]),edges.concat(end.edge),travel+metres(node.p,end.p));
       return;
      }
      for(const edge of node.edges){
@@ -272,23 +281,31 @@ const RoadsideCentreline=(()=>{
       const nextLength=travel+metres(node.p,next.p);
       if(seen.has(next)||nextLength>limit||!fits(node.p,next.p))continue;
       seen.add(next);
-      walk(next,nextLength,path.concat([next.p]),labels.concat(edge.name),seen);
+      walk(next,nextLength,path.concat([next.p]),edges.concat(edge),seen);
       seen.delete(next);
      }
     };
     const first=metres(start.p,start.node.p);
     if(first<=limit&&fits(start.p,start.node.p))
-     walk(start.node,first,[start.p,start.node.p],[start.edge.name],new Set([start.node]));
+     walk(start.node,first,[start.p,start.node.p],[start.edge],new Set([start.node]));
     if(visits>240||options.length>1)return null;
    }
   }
   return options[0]||null;
  }
+ function structure(ref){
+  if(ref.bridge==='yes')return 'bridge:'+ (ref.layer||'0');
+  if(ref.tunnel==='yes')return 'tunnel:'+ (ref.layer||'0');
+  return '';
+ }
  function protectedWalks(refs){
-  return refs.filter(ref=>ref.footway==='crossing'||/^(steps|corridor|cycleway|bridleway)$/.test(ref.kind)||
-   ref.indoor==='yes'||ref.bridge==='yes'||ref.tunnel==='yes')
-   .filter(ref=>!road.test(ref.kind)&&ref.coords?.length>=2&&ref.coords.every(valid))
-   .map(ref=>measured(ref.coords));
+  return refs.filter(ref=>!road.test(ref.kind)&&ref.coords?.length>=2&&ref.coords.every(valid))
+   .flatMap(ref=>{
+    const dedicated=ref.footway==='crossing'||/^(steps|corridor|cycleway|bridleway)$/.test(ref.kind)||
+     ref.indoor==='yes';
+    const grade=structure(ref);
+    return dedicated||grade?[{path:measured(ref.coords),grade:dedicated?'':grade}]:[];
+   });
  }
  function joinJunctions(line,edges,protectedPaths){
   if(!edges.length||line.length<4)return {line,joins:[]};
@@ -312,10 +329,7 @@ const RoadsideCentreline=(()=>{
     if(!ends.length){offRoad=true;continue;}
     if(length<8||!offRoad)break;
     const span=line.slice(i,j+1);
-    // Explicit crossings, station structures and independent cycleways
-    // carry stronger facility evidence than mere proximity to a road.
-    if(protectedPaths.some(path=>span.slice(1,-1).some(p=>snap(p,path).offset<=1.25)))break;
-    const joined=junctionTrace(span,starts,ends);
+    const joined=junctionTrace(span,starts,ends,protectedPaths);
     if(!joined)break;
     output.splice(output.length-1,1,...joined.coords);
     joins.push({road:[...new Set(joined.labels.filter(Boolean))].join(' / '),
@@ -326,6 +340,21 @@ const RoadsideCentreline=(()=>{
   }
   output.push(line.at(-1));
   return {line:output,joins};
+ }
+ // Dense mapped pavement vertices can end a valid run prematurely. Extend
+ // only a confirmed run, over a few metres of tightly parallel geometry.
+ function extendBoundary(line,way,run,sign,protectedLegs,ranges,side){
+  let at=side<0?run.start:run.end,extra=0;
+  for(let next=at+side;next>=0&&next<line.length;next=at+side){
+   const index=Math.min(at,next);
+   if(protectedLegs[index])break;
+   const leg=potential(line,way,index,.2);
+   if(!leg||leg.length>4||leg.wide||leg.sign!==sign||extra+leg.length>8||
+      ranges.some(other=>other!==run&&other.start<=index+1&&other.end>=index))break;
+   extra+=leg.length;
+   at=next;
+  }
+  return {at,extra};
  }
  function align(route){
   const refs=route?.refs||[],roads=network(refs),parts=[],promoted=[];
@@ -339,7 +368,7 @@ const RoadsideCentreline=(()=>{
    const protectedLegs=line.slice(1).map((b,i)=>{
     const a=line[i];
     if(!valid(a)||!valid(b))return true;
-    return protectedPaths.some(path=>{
+    return protectedPaths.some(({path})=>{
      const middle=snap(interpolate(a,b,.5),path);
      return middle.offset<=1.25&&Math.abs(direction(a,b,path.coords[middle.edge-1],path.coords[middle.edge]))>.85;
     });
@@ -389,9 +418,17 @@ const RoadsideCentreline=(()=>{
       if(metres(snap(line[i],way).position,snap(line[i],rival).position)>1.25)return true;
      return false;
     }))continue;
-    const geometry=trace(way,snapped[0],snapped.at(-1));
-    chosen.push({...run,geometry});
-    promoted.push({metres:Number(run.length.toFixed(1)),offset:Number(run.offset.toFixed(1)),segments:run.end-run.start,
+    const start=extendBoundary(line,way,run,sign,protectedLegs,ranges,-1);
+    const end=extendBoundary(line,way,run,sign,protectedLegs,ranges,1);
+    const geometry=trace(way,start.extra?snap(line[start.at],way):snapped[0],
+     end.extra?snap(line[end.at],way):snapped.at(-1));
+    // Preserve the exact pavement vertex at the end of the transfer. A
+    // diagonal to the next access vertex would cut the mapped entrance.
+    if(start.extra&&start.at>0)geometry.unshift(line[start.at]);
+    if(end.extra&&end.at<line.length-1)geometry.push(line[end.at]);
+    chosen.push({...run,start:start.at,end:end.at,geometry});
+    promoted.push({metres:Number((run.length+start.extra+end.extra).toFixed(1)),
+     offset:Number(run.offset.toFixed(1)),segments:end.at-start.at,
      road:way.name});
    }
    const output=[];

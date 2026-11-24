@@ -58,13 +58,16 @@ test('owner ZIP Journey 7 restores road corridors and retains pedestrian section
  const output=corrected.parts;
  const source=reconstructed.parts[0];
  const measurements=[];
- for(const [road,min] of [['Old Road East',20],['Stone Street',40],['Clive Road',110]]){
+ for(const [road,min] of [['Old Road East',20],['Stone Street',73],['Clive Road',120]]){
   const gain=coveredMetres(output,lookup.refs,road)-coveredMetres(reconstructed.parts,lookup.refs,road);
   assert(gain>=min,road+' has independently measured centreline improvement');
   measurements.push(road+' '+gain.toFixed(1)+'m');
  }
  assert(corrected.centrelinePromotions.some(run=>run.kind==='junction'&&
   run.road==='Devonshire Road / Old Road East / Windmill Street'&&run.metres>=45));
+ assert(corrected.centrelinePromotions.some(run=>run.kind==='junction'&&
+  run.road==='Stone Street / Clive Road'&&run.metres>=40),'continuous road bridge and turn via Railway Place');
+ assert(!output[0].some(p=>p[0]===source[122][0]&&p[1]===source[122][1]),'dense pavement continues on Clive Road');
  // Compare the pre-existing route vertices through Community Square and
  // onward to Stone Street, and the independent station entry past Clive Road.
  assert(containsLine(output,source.slice(75,90)),'Community Square keeps its ordered source geometry');
