@@ -43,5 +43,6 @@ test('ZIP UI keeps canonical and route-led models isolated',()=>{
  assert(page.includes("if(mode==='routeLed')await ensureRouteLedThrough(n);"));
  assert(page.includes("mode==='routeLed'?zipRouteLedCache.get(n):zipCoverageCache.get(n)"));
  assert(page.includes("zipRouteLedCache.clear();zipRouteLedLedger.clear()"));
- assert(page.includes('LAB r444')&&page.includes('>PR #444</a>'));
+ assert(page.includes('LAB r445')&&page.includes('>PR #445</a>'));
+ assert(page.includes('id="zipCompare"')&&page.includes('id="zipModeControls" hidden')&&page.includes("mode=zip?'routeLed':'center'"));
 });
