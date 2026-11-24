@@ -45,6 +45,8 @@ jobs:
         run: node map-laboratory/tests/zip-persistence.test.cjs
       - name: Verify private coverage decision audit
         run: node --test map-laboratory/tests/coverage-decision-audit.test.cjs
+      - name: Verify physical road centreline equivalence without destroying independent footpaths
+        run: node --test map-laboratory/tests/roadside-centreline-zip.test.cjs
       - name: Verify route-led cumulative model preserves ordered shortcuts
         run: node --test map-laboratory/tests/route-led-cumulative.test.cjs
       - name: Verify canonical reference interval attribution safeguards
