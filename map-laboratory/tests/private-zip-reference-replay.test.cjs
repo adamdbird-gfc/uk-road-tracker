@@ -58,7 +58,7 @@ test('owner ZIP Journey 7 restores road corridors and retains pedestrian section
  const output=corrected.parts;
  const source=reconstructed.parts[0];
  const measurements=[];
- for(const [road,min] of [['Old Road East',20],['Stone Street',73],['Clive Road',120]]){
+ for(const [road,min] of [['Old Road East',20],['Stone Street',73],['Clive Road',145]]){
   const gain=coveredMetres(output,lookup.refs,road)-coveredMetres(reconstructed.parts,lookup.refs,road);
   assert(gain>=min,road+' has independently measured centreline improvement');
   measurements.push(road+' '+gain.toFixed(1)+'m');
@@ -68,10 +68,16 @@ test('owner ZIP Journey 7 restores road corridors and retains pedestrian section
  assert(corrected.centrelinePromotions.some(run=>run.kind==='junction'&&
   run.road==='Stone Street / Clive Road'&&run.metres>=40),'continuous road bridge and turn via Railway Place');
  assert(!output[0].some(p=>p[0]===source[122][0]&&p[1]===source[122][1]),'dense pavement continues on Clive Road');
- // Compare the pre-existing route vertices through Community Square and
- // onward to Stone Street, and the independent station entry past Clive Road.
+ // Keep exact Community Square and saved vehicle-entrance tail geometry.
  assert(containsLine(output,source.slice(75,90)),'Community Square keeps its ordered source geometry');
- assert(containsLine(output,source.slice(125)),'station access keeps its ordered source geometry');
+ assert(containsLine(output,source.slice(132)),'car park approach keeps the saved tail and endpoint');
+ assert(corrected.centrelinePromotions.some(run=>run.kind==='terminal-access'&&run.road==='Clive Road'));
+ const service=reconstructed.refs.find(ref=>ref.kind==='service'&&containsLine([ref.coords],[source.at(-1)]));
+ assert(service,'service road is in the selected journey’s own references');
+ assert(containsLine(output,[service.coords[0],...source.slice(132)]),'use the mapped road-to-car-park turn');
+ assert(!containsLine(output,[source[128],source[129]]),'frontage diversion is removed');
+ const withoutFix=RouteLed.cleanup({...route,recorded:[]});
+ assert(containsLine(withoutFix.parts,source.slice(125)),'keep frontage when endpoint evidence is absent');
  assert.equal(output.length,1,'the corrected journey remains one connected line');
  const alone=RouteLed.accumulate(new Set(),route);
  let history=new Set();
@@ -89,5 +95,5 @@ test('owner ZIP Journey 7 restores road corridors and retains pedestrian section
  const outage=await Network.create(async()=>new Response('',{status:503})).lookup(reconstructed);
  assert.match(outage.status,/index unavailable/);
  assert.deepEqual(RouteLed.cleanup({...reconstructed,independentRoadReferences:outage.refs}).parts,reconstructed.parts);
- console.log('Real centreline gain: '+measurements.join(', ')+'. Community Square and station access exact.');
+ console.log('Real centreline gain: '+measurements.join(', ')+'. Community Square and the car park access tail exact.');
 });
