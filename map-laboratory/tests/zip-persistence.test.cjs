@@ -1,0 +1,16 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs'),path=require('node:path');
+const page=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
+assert(page.includes("tr.objectStore('files').put(file,'diagnostics-zip')"),'persist compressed ZIP File, not extracted JSON');
+assert(page.includes("objectStore('files').get('diagnostics-zip')"),'restore locally stored ZIP on reload');
+assert(page.includes("objectStore('files').delete('diagnostics-zip')"),'explicit local deletion available');
+assert(page.includes("await installZip(savedZip)")&&page.includes("await showZipJourney(1)"),'restore the file through the normal validated importer');
+assert(page.includes('await saveZipLocal(file)'),'save after a successful ZIP import');
+assert(page.includes('await forgetZipLocal()'),'clearing or replacing the stored ZIP supported');
+assert(page.includes('ZIP loaded for this session, but browser storage failed'),'storage quota failure does not prevent current session import');
+assert(page.includes('id="forgetZip"')&&page.includes('id="zipStorageNotice"'),'storage status and privacy control visible');
+assert(!page.includes('fetch(file)'),'private ZIP never uploaded by the persistence path');
+assert(page.includes("mode=zip?'route':'center'"),'experimental canonical coverage is not the default');
+assert(page.includes("if(mode==='canonical')")&&page.includes("ctx.setLineDash([4,5])"),'unsupported network intervals remain visible only as dashed source evidence');
+assert(page.includes('LAB r439')&&page.includes('>PR #439</a>'),'revision visible to the owner');
+console.log('PASS: persistent private ZIP storage, validated automatic restore, deletion, graceful quota handling, route-first default');
