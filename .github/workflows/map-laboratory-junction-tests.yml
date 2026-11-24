@@ -45,6 +45,25 @@ jobs:
         run: node map-laboratory/tests/zip-persistence.test.cjs
       - name: Verify private coverage decision audit
         run: node --test map-laboratory/tests/coverage-decision-audit.test.cjs
+      - name: One-time public Gravesend OSM road-response probe (PR #454 only, non-gating)
+        if: github.head_ref == 'feat/map-lab-r454-real-journey-alignment-evidence'
+        continue-on-error: true
+        run: |
+          node - <<'NODE'
+          const OSM=require('./map-laboratory/independent-road-network.js');
+          (async()=>{
+            const publicTownArea={parts:[[[0.3660,51.4335],[0.3712,51.4417]]]};
+            try{
+              const roads=await OSM.lookup(publicTownArea);
+              console.log('PUBLIC_OSM_LOOKUP_SUCCESS',roads.length,'road ways');
+              const named=roads.filter(r=>/Clive Road|Windmill Street|Old Road East/i.test(r.name));
+              console.log('PUBLIC_NAMED_CENTRELINES',named.length);
+              for(const r of named.slice(0,18))console.log('PUBLIC_WAY',JSON.stringify({name:r.name,kind:r.kind,coords:r.coords}));
+            }catch(err){
+              console.log('PUBLIC_OSM_LOOKUP_FAILED',String(err?.message||err));
+            }
+          })();
+          NODE
       - name: Verify real route-candidate diagnostic and reasons for rejection
         run: node --test map-laboratory/tests/centreline-evidence.test.cjs
       - name: Verify independent OSM centrelines and actual geometry movement in two road corridors
