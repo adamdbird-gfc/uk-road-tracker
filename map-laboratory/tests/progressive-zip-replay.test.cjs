@@ -9,7 +9,7 @@ assert(page.includes('if(diagnosticsZip){')&&page.includes('Red: current journey
  'ZIP replay must be visually distinct from canonical coverage');
 assert(page.includes("zipRouteCache.clear();mode=zip?'route':'center'"),
  'changing input resets previously replayed route history');
-assert(page.includes('LAB r436')&&page.includes('>PR #436</a>'));
+assert(page.includes('LAB r437')&&page.includes('>PR #437</a>'));
 const seen=[];
 const zip={read:async index=>{seen.push(index);return {journey:{index}};}};
 const reconstruct=journey=>({
