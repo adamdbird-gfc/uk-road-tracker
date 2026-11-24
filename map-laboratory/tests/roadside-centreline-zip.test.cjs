@@ -89,11 +89,25 @@ test('without road reference geometry, no substitution is invented',()=>{
  const line=[p(0,4),p(20,4),p(40,4)];
  assert.deepEqual(Roadside.align({parts:[line],refs:[]}).parts,[line]);
 });
-test('LAB r454 one-map frontend loads alignment before route-led attribution',()=>{
+test('LAB r455 one-map frontend loads alignment before route-led attribution',()=>{
  const fs=require('node:fs'),path=require('node:path');
  const page=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
  assert(page.indexOf('roadside-centreline.js')<page.indexOf('route-led-coverage.js'));
- assert(page.includes('LAB r454')&&page.includes('>PR #454</a>'));
+ assert(page.includes('LAB r455')&&page.includes('>PR #455</a>'));
  assert(page.includes("mode=zip?'routeLed':'center'"));
  assert(page.includes('id="zipCompare"'));
+});
+
+test('a promoted interior run follows actual road vertices in both directions across split ways',()=>{
+ const first={id:1,kind:'residential',name:'Road',nodes:[1,2,3],coords:[p(15),p(31,1),p(50)]};
+ const second={id:2,kind:'residential',name:'Road',nodes:[3,4,5],coords:[p(50),p(65,1),p(90)]};
+ const foot=[p(15,16),p(15,5),p(30,5),p(48,5),p(64,5),p(90,5),p(90,16)];
+ for(const line of [foot,[...foot].reverse()]){
+  const {parts,promoted}=Roadside.align({parts:[line],refs:[first,second]});
+  assert(promoted.some(run=>run.road==='Road'&&run.metres>65));
+  assert.deepEqual(parts[0][0],line[0]);
+  assert.deepEqual(parts[0].at(-1),line.at(-1));
+  for(const vertex of [p(31,1),p(50),p(65,1)])
+   assert(parts[0].some(position=>position[0]===vertex[0]&&position[1]===vertex[1]));
+ }
 });

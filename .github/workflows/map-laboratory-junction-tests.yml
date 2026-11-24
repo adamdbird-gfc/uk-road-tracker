@@ -4,10 +4,12 @@ on:
     paths:
       - 'map-laboratory/**'
       - '.github/workflows/map-laboratory-junction-tests.yml'
+      - 'scripts/build_lab_reference_tiles.py'
   push:
     paths:
       - 'map-laboratory/**'
       - '.github/workflows/map-laboratory-junction-tests.yml'
+      - 'scripts/build_lab_reference_tiles.py'
   workflow_dispatch:
 
 permissions:
@@ -47,7 +49,7 @@ jobs:
         run: node --test map-laboratory/tests/coverage-decision-audit.test.cjs
       - name: Verify real route-candidate diagnostic and reasons for rejection
         run: node --test map-laboratory/tests/centreline-evidence.test.cjs
-      - name: Verify independent OSM centrelines and actual geometry movement in two road corridors
+      - name: Verify pinned OSM tile selection, caching and failure handling
         run: node --test map-laboratory/tests/independent-road-network.test.cjs
       - name: Verify physical road centreline equivalence without destroying independent footpaths
         run: node --test map-laboratory/tests/roadside-centreline-zip.test.cjs

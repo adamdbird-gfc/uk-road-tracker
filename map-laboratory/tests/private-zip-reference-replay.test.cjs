@@ -1,0 +1,90 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const {createHash}=require('node:crypto');
+const {test}=require('node:test');
+const Bulk=require('../bulk-diagnostics.js');
+const RouteFirst=require('../route-first.js');
+const Network=require('../independent-road-network.js');
+const RouteLed=require('../route-led-coverage.js');
+
+const archive=process.env.ROADPRINTS_DIAGNOSTICS_ZIP;
+const root=path.join(__dirname,'..');
+const request=async url=>new Response(fs.readFileSync(path.join(root,url)));
+const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
+const metres=(a,b)=>Math.hypot((a[0]-b[0])*111320*Math.cos(a[1]*Math.PI/180),(a[1]-b[1])*111320);
+
+function projection(point,a,b){
+ const scale=Math.cos(point[1]*Math.PI/180),x=(point[0]-a[0])*scale,y=point[1]-a[1];
+ const u=(b[0]-a[0])*scale,v=b[1]-a[1];
+ const t=Math.max(0,Math.min(1,(x*u+y*v)/(u*u+v*v)));
+ return Math.hypot(x-u*t,y-v*t)*111320;
+}
+
+function coveredMetres(lines,refs,name){
+ const edges=refs.filter(ref=>ref.name===name&&Network.isRoad(ref.kind)).flatMap(ref=>
+  ref.coords.slice(1).map((b,i)=>[ref.coords[i],b]).filter(([a,b])=>metres(a,b)>.01));
+ let total=0;
+ for(const line of lines)for(let i=1;i<line.length;i++){
+  const a=line[i-1],b=line[i],d=metres(a,b),n=Math.max(1,Math.ceil(d/2));
+  for(let k=0;k<n;k++){
+   const t=(k+.5)/n,p=[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];
+   if(edges.some(([u,v])=>projection(p,u,v)<.5))total+=d/n;
+  }
+ }
+ return total;
+}
+
+function containsLine(parts,expected){
+ return parts.some(line=>line.some((_,i)=>
+  expected.every((p,j)=>line[i+j]?.[0]===p[0]&&line[i+j]?.[1]===p[1])));
+}
+
+test('owner ZIP Journey 7 restores road corridors and retains pedestrian sections', {skip:!archive},async()=>{
+ const original=fs.readFileSync(archive);
+ const zip=await Bulk.open(new Blob([original]));
+ const realNetwork=Network.create(request);
+ const index=6;
+ assert.equal(zip.journeys.length,1714,'fixture is the original complete owner archive');
+ const {journey}=await zip.read(index);
+ const before=JSON.stringify(journey);
+ const reconstructed=RouteFirst.reconstruct(journey);
+ const sourceBefore=JSON.stringify(reconstructed);
+ const lookup=await realNetwork.lookup(reconstructed);
+ assert.match(lookup.status,/36 pinned OSM road references/);
+ assert.equal(RouteLed.cleanup(reconstructed).centrelinePromotions.length,0);
+ const route={...reconstructed,independentRoadReferences:lookup.refs};
+ const corrected=RouteLed.cleanup(route);
+ const output=corrected.parts;
+ const source=reconstructed.parts[0];
+ const measurements=[];
+ for(const [road,min] of [['Old Road East',20],['Stone Street',40],['Clive Road',110]]){
+  const gain=coveredMetres(output,lookup.refs,road)-coveredMetres(reconstructed.parts,lookup.refs,road);
+  assert(gain>=min,road+' has independently measured centreline improvement');
+  measurements.push(road+' '+gain.toFixed(1)+'m');
+ }
+ assert(corrected.centrelinePromotions.some(run=>run.kind==='junction'&&
+  run.road==='Devonshire Road / Old Road East / Windmill Street'&&run.metres>=45));
+ // Compare the pre-existing route vertices through Community Square and
+ // onward to Stone Street, and the independent station entry past Clive Road.
+ assert(containsLine(output,source.slice(75,90)),'Community Square keeps its ordered source geometry');
+ assert(containsLine(output,source.slice(125)),'station access keeps its ordered source geometry');
+ assert.equal(output.length,1,'the corrected journey remains one connected line');
+ const alone=RouteLed.accumulate(new Set(),route);
+ let history=new Set();
+ for(let i=0;i<index;i++){
+  const earlier=RouteFirst.reconstruct((await zip.read(i)).journey);
+  const pinned=earlier.onFoot&&earlier.source==='saved match'?await realNetwork.lookup(earlier):{refs:[]};
+  history=RouteLed.accumulate(history,{...earlier,independentRoadReferences:pinned.refs}).next;
+ }
+ const cumulative=RouteLed.accumulate(history,route);
+ const ordered=result=>[...result.novel,...result.repeat].sort((a,b)=>a.id.localeCompare(b.id));
+ assert.deepEqual(ordered(alone),ordered(cumulative),'prior journeys change repeat classification only');
+ assert.equal(JSON.stringify(journey),before);
+ assert.equal(JSON.stringify(reconstructed),sourceBefore);
+ assert.equal(hash(fs.readFileSync(archive)),hash(original));
+ const outage=await Network.create(async()=>new Response('',{status:503})).lookup(reconstructed);
+ assert.match(outage.status,/index unavailable/);
+ assert.deepEqual(RouteLed.cleanup({...reconstructed,independentRoadReferences:outage.refs}).parts,reconstructed.parts);
+ console.log('Real centreline gain: '+measurements.join(', ')+'. Community Square and station access exact.');
+});

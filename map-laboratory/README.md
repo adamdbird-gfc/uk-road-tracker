@@ -4,9 +4,76 @@ A mobile-first, static GitHub Pages-compatible laboratory for replaying accepted
 
 ## Bulk Android diagnostics ZIP
 
-Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, choose the ZIP to browse private, chronologically ordered journeys and switch between **Route-first**, **Existing interval engine**, and **Recorded lines**. References used for ZIP comparison come from the ZIP. **Next, Back, Play, the slider and direct journey selection** progressively display accumulated journey routes from the ZIP in chronological order. Earlier reconstructed routes remain dark; the selected journey is highlighted. A forward jump reads intervening journeys in sequence, so large jumps may require substantial processing. Existing interval engine and Recorded lines are A/B comparisons for the current journey only; earlier journeys remain route-first geometry. **These are displayed route lines, not automatic road-coverage credits.** The browser retains reconstructed geometry while this ZIP is loaded but does not retain previously decoded diagnostic records. The street basemap is visible by default in both ZIP and legacy modes; OpenStreetMap tile requests reveal the viewed area to the tile provider, but the private ZIP and journey records stay local.
+Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, choose the ZIP to browse private, chronologically ordered journeys and switch between **Route-first**, **Existing interval engine**, and **Recorded lines**. The interval comparison uses the selected journey’s ZIP references. The cumulative route display can also use the pinned public network. **Next, Back, Play, the slider and direct journey selection** progressively display accumulated journey routes from the ZIP in chronological order. Earlier reconstructed routes remain dark; the selected journey is highlighted. A forward jump reads intervening journeys in sequence, so large jumps may require substantial processing. Existing interval engine and Recorded lines are A/B comparisons for the current journey only; earlier journeys remain route-first geometry. **These are displayed route lines, not automatic road-coverage credits.** The browser retains reconstructed geometry while this ZIP is loaded but does not retain previously decoded diagnostic records. The street basemap is visible by default in both ZIP and legacy modes; OpenStreetMap tile requests reveal the viewed area to the tile provider, but the private ZIP and journey records stay local.
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
+
+## Pinned public network and corridor recovery (LAB r455)
+
+The normal cumulative ZIP replay reads versioned OpenStreetMap road and
+pedestrian reference tiles from the Laboratory host. The public data comes
+from checksum-pinned Geofabrik Kent and Greater London extracts dated
+23 November 2026. The initial index has nine 0.02-degree cells covering the
+previous Gravesend and central London pilot areas. The Lab reads only the cells
+near the current journey and shares the public tile cache across the replay.
+The static cell requests can reveal the approximate locality to the hosting
+service. Journey files, routes, GPS points and identifiers stay in the browser.
+
+The bundled network carries OSM way and node IDs, road classifications and
+pedestrian facility tags. The offline builder in
+[`scripts/build_lab_reference_tiles.py`](../scripts/build_lab_reference_tiles.py)
+accepts one or more checksum-verified local PBFs and area bounds. The
+[tile index](reference-network/v1/index.json) records the source URLs,
+timestamps, checksums and license. To extend coverage, generate a new immutable
+version directory using the same command format below and update the Lab’s
+reference version. Tiles derived from OpenStreetMap are distributed under
+[ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) with attribution to
+[OpenStreetMap contributors](https://www.openstreetmap.org/copyright).
+
+```sh
+python scripts/build_lab_reference_tiles.py map-laboratory/reference-network/v1 \
+  --region kent.osm.pbf https://download.geofabrik.de/europe/united-kingdom/england/kent-latest.osm.pbf \
+  95f7940ab8a873441fd59e0dbc1b46118ab4c78a6dc683e357b8d6bfac3f8a56 0.350 51.425 0.385 51.445 \
+  --region london.osm.pbf https://download.geofabrik.de/europe/united-kingdom/england/greater-london-latest.osm.pbf \
+  38ac4610926d465a1cdedf70d7887b2d2f4bbd45d8b2d91a4bfcd4863f45885b -0.145 51.500 -0.105 51.515
+```
+
+LAB r424 removed short off-centreline components after the legacy interval
+engine had credited a continuing road. Later revisions added bounded
+source-backed network joins and pedestrian connection safeguards. The ZIP
+migration began drawing the ordered saved match, bypassing the interval
+post-processing. LAB r454 also required a successful live public query for
+missing references, applied it only to explicitly selected journeys, and
+indexed accepted interior promotions with an absolute source index into a
+run-relative array.
+
+The new replay uses the same reference supply for earlier and selected
+journeys. It reconstructs sustained roadside alignments along the actual road
+vertices, including unambiguous ways split at shared OSM nodes. Compact
+junction alignments require a unique connected road trace with ordered support
+from the original journey and anchored approaches. Crossings and tagged
+pedestrian infrastructure are protected. A detached short footway duplicate
+requires a continuing road already traversed by that same journey and no
+nearby raw support. Outside the bundled area or after a tile failure, replay
+falls back to the journey’s own references and reports the reference state.
+Network geometry is never interpreted as movement by itself.
+
+The public test suite exercises tile selection, deduplication, provider errors,
+corridor geometry and progressive replay. The private Journey 7 regression
+can be repeated locally using the original owner archive, which must remain
+outside the repository and CI:
+
+```sh
+ROADPRINTS_DIAGNOSTICS_ZIP=/private/path/to/archive.zip \
+  node --test map-laboratory/tests/private-zip-reference-replay.test.cjs
+```
+
+In that replay, measured line length within 0.5 m of the public centreline
+increased by 35.2 m on Old Road East at the Prince of Orange junction, 47.2 m
+on Stone Street and 119.2 m on Clive Road. Community Square and the station
+entrance retained their exact ordered source vertices. The test also verifies
+ZIP and journey immutability, independence from prior journeys, and fallback
+when the reference index is unavailable.
 
 ## Explain actual centreline candidate failures (LAB r454)
 

@@ -130,14 +130,53 @@ const RouteLedCoverage=(()=>{
    break;
   }
  }
+ // Ordered equivalent of the legacy island safeguard. A detached interior
+ // part may be withheld only when one continuous, already travelled road
+ // covers its full length and the present journey offers no raw support.
+ function suppressIslands(parts,route,refs,held){
+  if(route.corrected||parts.length<3)return parts;
+  const roads=segments(refs,road);
+  const pedestrian=segments(refs.filter(ref=>!ref.footway||ref.footway==='sidewalk'),/^(footway|path)$/);
+  if(!roads.length||!pedestrian.length)return parts;
+  const raw=(route.recorded||[]).flat().filter(valid);
+  return parts.filter((part,index)=>{
+   if(index===0||index===parts.length-1||part.length<2)return true;
+   const length=part.reduce((sum,p,i)=>i?sum+distance(part[i-1],p):sum,0);
+   if(length<2||length>30||part.some(p=>raw.some(fix=>distance(p,fix)<6)))return true;
+   if(!part.slice(1).every((p,i)=>{
+    const a=part[i],mid=point(a,p,.5);
+    return nearest(mid,roads)>2&&nearest(mid,pedestrian)<1.25;
+   }))return true;
+   // Require both nearby parts to be already centred on the same road
+   // edge, and to meet or overlap. Never remove an island to fill a route gap.
+   const before=parts[index-1],after=parts[index+1];
+   if(before.length<2||after.length<2)return true;
+   const bridge=[before.at(-2),before.at(-1),after[0],after[1]];
+   if(distance(bridge[1],bridge[2])>2)return true;
+   const along=(a,b,p)=>(b[0]-a[0])*(p[1]-a[1])-(b[1]-a[1])*(p[0]-a[0]);
+   const duplicate=roads.some(([a,b])=>{
+    if(bridge.some(p=>projection(p,a,b).offset>1.25))return false;
+    const axis=[bridge[0],bridge[3]];
+    if(distance(...axis)<length*.72)return false;
+    const offsets=part.map(p=>projection(p,...axis));
+    return offsets.every(({offset,t})=>offset>=2&&offset<=16&&t>0&&t<1)&&
+     part.every(p=>Math.sign(along(...axis,p))===Math.sign(along(...axis,part[0])))&&
+     part.slice(1).every((p,i)=>cosine(part[i],p,...axis)>.85);
+   });
+   if(!duplicate)return true;
+   held.push({reason:'detached-roadside-duplicate',metres:length});
+   return false;
+  });
+ }
  function cleanup(route){
   const roads=segments(route?.refs,road),feet=segments(route?.refs,foot);
   // Static road geometry comes only from this journey's own references
-  // or a separate public OSM network query, NEVER from other journeys.
+  // or the pinned public OSM network, never from other journeys.
   const withPhysicalRoads=route.independentRoadReferences?.length?
    {...route,refs:PublicRoadSource.merge(route.refs,route.independentRoadReferences)}:route;
   const screening=route.diagnosticsRequested?CentrelinePromotion.evidence(withPhysicalRoads):null;
-  const aligned=CentrelinePromotion.align(withPhysicalRoads);
+  const aligned=route.onFoot===false||route.source==='recorded'?
+   {parts:route.parts,promoted:[]}:CentrelinePromotion.align(withPhysicalRoads);
   const parts=[],held=[];
   for(const input of aligned.parts||[]){
    if(!Array.isArray(input)||input.length<2){parts.push(input);continue;}
@@ -192,7 +231,9 @@ const RouteLedCoverage=(()=>{
    if(roads.length)trimUnsupportedTerminalTurn(line,route,held);
    parts.push(line);
   }
-  return {parts,held,centrelinePromotions:aligned.promoted,roadEvidence:screening};
+  const canClean=route.onFoot!==false&&route.source!=='recorded';
+  const output=canClean?suppressIslands(parts,route,withPhysicalRoads.refs||[],held):parts;
+  return {parts:output,held,centrelinePromotions:aligned.promoted,roadEvidence:screening};
  }
  function intervals(route){
   const result=[],seen=new Set();

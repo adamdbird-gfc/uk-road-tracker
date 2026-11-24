@@ -1,92 +1,123 @@
-/* Roadprints Lab: independent physical-road reference lookup.
- * Only a bounded geographic rectangle is sent to public OSM Overpass.
- * No user journeys, GPS points, titles or archived files are uploaded.
- * Never infer proof of travel from this network: the saved journey remains
- * the sole movement evidence for source-ordered centreline selection.
- */
-const IndependentRoadNetwork=(()=>{
- const ROAD=/^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|road)(_link)?$/;
- const M=111320, D=Math.PI/180;
- const valid=p=>Array.isArray(p)&&p.length===2&&p.every(Number.isFinite)&&Math.abs(p[0])<=180&&Math.abs(p[1])<=90;
- const distance=(a,b)=>Math.hypot((a[0]-b[0])*M*Math.cos((a[1]+b[1])*.5*D),(a[1]-b[1])*M);
- const coordsKey=c=>{const a=c.map(p=>p.map(v=>Number(v).toFixed(7)).join(','));
-  return a.join(';')<a.slice().reverse().join(';')?a.join(';'):a.slice().reverse().join(';');};
- function bounds(route){
-  const coords=(route?.parts||[]).flat().filter(valid);
-  if(coords.length<2)return null;
-  const lon=coords.map(p=>p[0]),lat=coords.map(p=>p[1]);
-  const south=Math.min(...lat)-.00030,north=Math.max(...lat)+.00030,
-    west=Math.min(...lon)-.00030,east=Math.max(...lon)+.00030;
-  if(north-south>.035||east-west>.035||north<=south||east<=west)return null;
-  return {south,west,north,east};
- }
- function needsNetwork(route){
-  if(!route||!(route.parts||[]).length)return false;
-  const own=(route.refs||[]).filter(r=>ROAD.test(r.kind||''));
-  const existing=[];
-  for(const ref of own)for(let i=1;i<(ref.coords||[]).length;i++)
-   if(valid(ref.coords[i-1])&&valid(ref.coords[i]))existing.push([ref.coords[i-1],ref.coords[i]]);
-  const distPoint=(p,a,b)=>{
-   const dx=(b[0]-a[0])*M*Math.cos(p[1]*D),dy=(b[1]-a[1])*M;
-   const x=(p[0]-a[0])*M*Math.cos(p[1]*D),y=(p[1]-a[1])*M;
-   const d=dx*dx+dy*dy,t=d>.01?Math.max(0,Math.min(1,(x*dx+y*dy)/d)):0;
-   return Math.hypot(x-t*dx,y-t*dy);
-  };
-  let without=0,total=0;
-  for(const part of route.parts)for(let i=1;i<part.length;i++){
-   const a=part[i-1],b=part[i];if(!valid(a)||!valid(b))continue;
-   const length=distance(a,b);if(length<2||length>120)continue;
-   const midpoint=[(a[0]+b[0])/2,(a[1]+b[1])/2];total+=length;
-   if(!existing.some(([u,v])=>distPoint(midpoint,u,v)<=8))without+=length;
+/* Immutable public OSM tiles supply network shape, never movement evidence. */
+const IndependentRoadNetwork = (() => {
+  const ROAD = /^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|road)(_link)?$/;
+  const PATH = /^(footway|pedestrian|path|steps|cycleway|bridleway|corridor)$/;
+  const valid = p => Array.isArray(p) && p.length === 2 && p.every(Number.isFinite) &&
+    Math.abs(p[0]) <= 180 && Math.abs(p[1]) <= 90;
+
+  function coordinatesKey(coords) {
+    const points = coords.map(p => p.map(v => v.toFixed(7)).join(','));
+    const forward = points.join(';'), reverse = points.reverse().join(';');
+    return forward < reverse ? forward : reverse;
   }
-  return total>=150&&without>=75&&!!bounds(route);
- }
- function parse(payload){
-  if(!Array.isArray(payload?.elements))throw Error('Unexpected public road-network response');
-  const results=[],seen=new Set();
-  for(const way of payload.elements){
-   if(way.type!=='way'||!ROAD.test(way.tags?.highway||'')||!Array.isArray(way.geometry))continue;
-   const coords=way.geometry.map(p=>[p.lon,p.lat]);
-   if(coords.length<2||coords.length>2500||!coords.every(valid))continue;
-   const key=coordsKey(coords);
-   if(seen.has(key))continue;
-   seen.add(key);
-   results.push({kind:way.tags.highway,name:way.tags.name||'',coords});
-   if(results.length>1500)throw Error('Local road network exceeds safe limit');
+
+  function merge(local, external) {
+    const refs = new Map();
+    for (const ref of [...(external || []), ...(local || [])]) {
+      if (!Array.isArray(ref?.coords) || ref.coords.length < 2 || !ref.coords.every(valid)) continue;
+      const key = (ROAD.test(ref.kind) ? 'road' : ref.kind) + ':' + coordinatesKey(ref.coords);
+      if (!refs.has(key)) refs.set(key, ref);
+    }
+    return [...refs.values()];
   }
-  return results;
- }
- function merge(local,external){
-  const map=new Map();
-  for(const ref of [...(local||[]),...(external||[])]){
-   if(!Array.isArray(ref?.coords)||ref.coords.length<2||!ref.coords.every(valid))continue;
-   const key=(ROAD.test(ref.kind)?'road':ref.kind)+':'+coordsKey(ref.coords);
-   if(!map.has(key))map.set(key,ref);
+
+  function windowFor(a, b) {
+    const lonScale = Math.cos((a[1] + b[1]) * Math.PI / 360);
+    const dx = (b[0] - a[0]) * lonScale, dy = b[1] - a[1];
+    if (Math.hypot(dx, dy) * 111320 > 500 || lonScale < 0.1) return null;
+    const lonPad = 20 / (111320 * lonScale), latPad = 20 / 111320;
+    return [Math.min(a[0], b[0]) - lonPad, Math.min(a[1], b[1]) - latPad,
+      Math.max(a[0], b[0]) + lonPad, Math.max(a[1], b[1]) + latPad];
   }
-  return [...map.values()];
- }
- async function lookup(route,request=fetch){
-  const b=bounds(route);if(!b)throw Error('Journey is outside safe road-network bounds');
-  const rect=[b.south,b.west,b.north,b.east].map(n=>n.toFixed(7)).join(',');
-  const query='[out:json][timeout:20];way["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|road)(_link)?$"]('+rect+');out geom;';
-  // The legacy public endpoint can reject generic clients with HTTP 406.
-  // Use the documented community-hosted service first; fall back at most
-  // once, never repeatedly hammering a rate-limited endpoint.
-  const endpoints=[
-   'https://overpass.private.coffee/api/interpreter',
-   'https://overpass-api.de/api/interpreter'
-  ];
-  const errors=[];
-  for(const endpoint of endpoints){
-   try{
-    const response=await request(endpoint+'?data='+encodeURIComponent(query),
-     {signal:AbortSignal.timeout(12000)});
-    if(!response.ok){errors.push(new URL(endpoint).hostname+': HTTP '+response.status);continue;}
-    return parse(await response.json());
-   }catch(err){errors.push(new URL(endpoint).hostname+': '+String(err?.message||err).slice(0,75))}
+
+  function routeWindows(route, scale, available) {
+    const windows = new Map();
+    for (const line of route.parts || []) for (let i = 1; i < line.length; i++) {
+      const a = line[i - 1], b = line[i];
+      if (!valid(a) || !valid(b)) continue;
+      const box = windowFor(a, b);
+      if (!box) continue;
+      for (let x = Math.floor(box[0] * scale); x <= Math.floor(box[2] * scale); x++)
+        for (let y = Math.floor(box[1] * scale); y <= Math.floor(box[3] * scale); y++) {
+          const key = x + '_' + y;
+          if (!available.has(key)) continue;
+          const list = windows.get(key) || [];
+          list.push(box);
+          windows.set(key, list);
+        }
+    }
+    return windows;
   }
-  throw Error('Public road-network lookup failed ('+errors.join('; ')+')');
- }
- return {bounds,needsNetwork,parse,merge,lookup};
+
+  function intersects(coords, boxes) {
+    for (let i = 1; i < coords.length; i++) {
+      const a = coords[i - 1], b = coords[i];
+      const minX = Math.min(a[0], b[0]), maxX = Math.max(a[0], b[0]);
+      const minY = Math.min(a[1], b[1]), maxY = Math.max(a[1], b[1]);
+      if (boxes.some(([west, south, east, north]) =>
+        maxX >= west && minX <= east && maxY >= south && minY <= north)) return true;
+    }
+    return false;
+  }
+
+  function create(request = fetch, root = './reference-network/v1/') {
+    let index;
+    const tiles = new Map();
+
+    async function read(name) {
+      const response = await request(root + name, {signal: AbortSignal.timeout(8000)});
+      if (!response.ok) throw Error('HTTP ' + response.status);
+      if (!name.endsWith('.gz')) return response.json();
+      return new Response(response.body.pipeThrough(new DecompressionStream('gzip'))).json();
+    }
+
+    function readIndex() {
+      return index ??= read('index.json').then(data => {
+        if (data?.schema !== 1 || data.cellsPerDegree !== 50 || !Array.isArray(data.tiles) ||
+            !data.tiles.every(key => /^-?\d+_-?\d+$/.test(key))) throw Error('Invalid network index');
+        return {scale: data.cellsPerDegree, available: new Set(data.tiles)};
+      });
+    }
+
+    function readTile(key) {
+      if (!tiles.has(key)) tiles.set(key, read(key + '.json.gz').then(data => {
+        if (!Array.isArray(data) || !data.every(ref => Number.isSafeInteger(ref?.id) &&
+            (ROAD.test(ref.kind) || PATH.test(ref.kind)) && Array.isArray(ref.coords) &&
+            ref.coords.length >= 2 && ref.coords.every(valid) && Array.isArray(ref.nodes) &&
+            ref.nodes.length === ref.coords.length && ref.nodes.every(Number.isSafeInteger))) throw Error('Invalid network tile');
+        return data;
+      }));
+      return tiles.get(key);
+    }
+
+    async function lookup(route) {
+      if (!route.parts?.some(line => line.length >= 2)) return {refs: [], status: 'Own journey references'};
+      try {
+        const {scale, available} = await readIndex();
+        const windows = routeWindows(route, scale, available);
+        if (!windows.size) return {refs: [], status: 'Outside pinned network coverage · own references'};
+        const results = await Promise.allSettled([...windows.keys()].map(readTile));
+        const refs = new Map();
+        let index = 0, failed = 0;
+        for (const boxes of windows.values()) {
+          const tile = results[index++];
+          if (tile.status === 'rejected') { failed++; continue; }
+          for (const ref of tile.value)
+            if (!refs.has(ref.id) && intersects(ref.coords, boxes)) refs.set(ref.id, ref);
+        }
+        const result = [...refs.values()].sort((a, b) => a.id - b.id);
+        // Missing tiles can hide a competing road. Fall back for the whole journey.
+        if (failed) return {refs: [], status: 'Pinned network tile unavailable · own references'};
+        return {refs: result, status: result.length ?
+          result.filter(ref => ROAD.test(ref.kind)).length + ' pinned OSM road references' :
+          'Pinned network has no nearby references · own references'};
+      } catch {
+        return {refs: [], status: 'Pinned network index unavailable · own references'};
+      }
+    }
+    return {lookup};
+  }
+
+  return {create, merge, isRoad: kind => ROAD.test(kind)};
 })();
-if(typeof module!=='undefined')module.exports=IndependentRoadNetwork;
+if (typeof module !== 'undefined') module.exports = IndependentRoadNetwork;

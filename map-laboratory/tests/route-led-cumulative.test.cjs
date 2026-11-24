@@ -141,6 +141,20 @@ test('ZIP UI keeps canonical and route-led models isolated',()=>{
  assert(page.includes('RouteLedCoverage.accumulate(zipRouteLedLedger,route)'));
  assert(page.includes("mode==='routeLed'?zipRouteLedCache.get(n):zipCoverageCache.get(n)"));
  assert(page.includes("zipRouteLedCache.clear();zipRouteLedLedger.clear()"));
- assert(page.includes('LAB r454')&&page.includes('>PR #454</a>'));
+ assert(page.includes('LAB r455')&&page.includes('>PR #455</a>'));
  assert(page.includes('id="zipCompare"')&&page.includes('id="zipModeControls" hidden')&&page.includes("mode=zip?'routeLed':'center'"));
+});
+
+test('detached roadside duplicate needs a continuing travelled road and no endpoint or crossing evidence',()=>{
+ const before=[p(0),p(20)],after=[p(20),p(40)],island=[p(14,6),p(26,6)];
+ const road={kind:'residential',coords:[p(0),p(40)]};
+ const path={kind:'footway',coords:island};
+ const source={parts:[before,island,after],refs:[road,path]};
+ const cleaned=RouteLed.cleanup(source);
+ assert.deepEqual(cleaned.parts,[before,after]);
+ assert.equal(cleaned.held[0].reason,'detached-roadside-duplicate');
+ assert.deepEqual(RouteLed.cleanup({...source,recorded:[[p(14,6),p(26,6)]]}).parts,source.parts);
+ assert.deepEqual(RouteLed.cleanup({...source,corrected:true}).parts,source.parts);
+ assert.deepEqual(RouteLed.cleanup({...source,refs:[road,{...path,footway:'crossing'}]}).parts,source.parts);
+ assert.deepEqual(RouteLed.cleanup({...source,refs:[path]}).parts,source.parts);
 });
