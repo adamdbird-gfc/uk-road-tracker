@@ -8,6 +8,20 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Continuous terminal access (LAB r457)
+
+The route can use a connected service-road entrance at the end of a walk
+when the saved match already follows that access road, the final fix
+supports the saved tail more closely than the frontage, and the candidate
+stays close to the original geometry in both directions. The rule retains
+the saved endpoint, leaves corrected journeys alone, and preserves the
+frontage if the evidence is missing or ambiguous.
+
+Journey 7 now follows Clive Road to the mapped turn into the station car
+park and then follows its existing saved access-road tail. The short
+frontage diversion was 22.1 m in the saved match. The new replay added
+17.7 m within 0.5 m of the Clive Road centreline relative to r456.
+
 ## Railway bridge and station access transitions (LAB r456)
 
 The Journey 7 device review accepted Prince of Orange and identified two

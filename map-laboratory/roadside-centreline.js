@@ -356,6 +356,53 @@ const RoadsideCentreline=(()=>{
   }
   return {at,extra};
  }
+ // A saved match can step off a road at the frontage, then continue
+ // along the mapped vehicle entrance to the same destination. Prefer the
+ // continuous road-to-access trace only when the saved tail and final fix
+ // support it, and the two references meet at a real junction.
+ function terminalAccess(line,run,roadWay,refs,route){
+  const approach=line.slice(run.end);
+  if(approach.length<5||approach.length>36)return null;
+  const source=measured(approach),length=source.lengths.at(-1);
+  if(length<16||length>45)return null;
+  const raw=(route.recorded||[]).flat().filter(valid);
+  if(!raw.length)return null;
+  const fix=raw.at(-1),exit=snap(approach[0],roadWay);
+  const candidates=[];
+  for(const ref of refs){
+   if(ref.kind!=='service'||!ref.coords?.every(valid)||ref.coords.length<2)continue;
+   for(const coords of [ref.coords,ref.coords.toReversed()]){
+    const junction=snap(coords[0],roadWay);
+    const continuation=run.sign*(junction.along-exit.along);
+    if(junction.offset>.2||continuation<5||continuation>24)continue;
+    const access=measured(coords);
+    const snaps=approach.map(p=>snap(p,access));
+    let seam=approach.length-1;
+    while(seam>0&&snaps[seam-1].offset<=.75&&snaps[seam].along>snaps[seam-1].along)seam--;
+    if(seam<2||snaps.at(-1).offset>.75||snaps[seam].along<3||snaps[seam].along>16||
+       snaps.at(-1).along-snaps[seam].along<10)continue;
+    const bypass=measured(approach.slice(0,seam+1)),tail=measured(approach.slice(seam));
+    const tailOffset=snap(fix,tail).offset;
+    if(bypass.lengths.at(-1)>30||tailOffset>13||
+       snap(fix,bypass).offset<tailOffset+5||
+       raw.some(p=>snap(p,bypass).offset<7))continue;
+    const independent=refs.some(path=>(path.footway==='crossing'||path.indoor==='yes'||structure(path))&&
+     !road.test(path.kind)&&path.coords?.length>=2&&path.coords.every(valid)&&
+     approach.slice(1,seam).some(p=>snap(p,measured(path.coords)).offset<1.25));
+    if(independent)continue;
+    const centreline=trace(roadWay,exit,junction);
+    const entry=trace(access,{position:coords[0],along:0,edge:1},snaps[seam]);
+    // Keep the saved terminal geometry and its endpoint exactly.
+    const replacement=centreline.concat(entry.slice(1,-1),approach.slice(seam));
+    const mapped=measured(replacement),newLength=mapped.lengths.at(-1);
+    if(newLength<length*.75||newLength>length*1.2||
+       !orderedSupport(replacement,source,10)||!orderedSupport(approach,mapped,10))continue;
+    candidates.push({geometry:replacement,metres:Number(bypass.lengths.at(-1).toFixed(1)),segments:seam,road:roadWay.name,
+     kind:'terminal-access'});
+   }
+  }
+  return candidates.length===1?candidates[0]:null;
+ }
  function align(route){
   const refs=route?.refs||[],roads=network(refs),parts=[],promoted=[];
   const graph=roadGraph(refs),protectedPaths=protectedWalks(refs);
@@ -426,18 +473,28 @@ const RoadsideCentreline=(()=>{
     // diagonal to the next access vertex would cut the mapped entrance.
     if(start.extra&&start.at>0)geometry.unshift(line[start.at]);
     if(end.extra&&end.at<line.length-1)geometry.push(line[end.at]);
-    chosen.push({...run,start:start.at,end:end.at,geometry});
+    chosen.push({...run,start:start.at,end:end.at,sign,exitAnchor:!!end.extra&&end.at<line.length-1,geometry});
     promoted.push({metres:Number((run.length+start.extra+end.extra).toFixed(1)),
      offset:Number(run.offset.toFixed(1)),segments:end.at-start.at,
      road:way.name});
    }
    const output=[];
+   chosen.sort((a,b)=>a.start-b.start);
+   const last=chosen.at(-1);
+   const access=last&&route.onFoot&&!route.corrected&&original===route.parts.at(-1)?
+    terminalAccess(line,last,roads[last.w],refs,route):null;
    let at=0;
-   for(const run of chosen.sort((a,b)=>a.start-b.start)){
+   for(const run of chosen){
     output.push(...line.slice(at,run.start),...run.geometry);
     at=run.end+1;
    }
-   output.push(...line.slice(at));
+   if(access){
+    // Replace the road exit anchor and all of the frontage, retaining the
+    // saved rejoin and the rest of the matched service-road tail.
+    output.splice(output.length-(last.exitAnchor?2:1),last.exitAnchor?2:1,...access.geometry);
+    const {geometry,...receipt}=access;
+    promoted.push(receipt);
+   }else output.push(...line.slice(at));
    const joined=joinJunctions(output,graph,protectedPaths);
    parts.push(joined.line);
    promoted.push(...joined.joins);

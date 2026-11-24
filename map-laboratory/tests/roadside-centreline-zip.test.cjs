@@ -89,11 +89,11 @@ test('without road reference geometry, no substitution is invented',()=>{
  const line=[p(0,4),p(20,4),p(40,4)];
  assert.deepEqual(Roadside.align({parts:[line],refs:[]}).parts,[line]);
 });
-test('LAB r456 one-map frontend loads alignment before route-led attribution',()=>{
+test('LAB r457 one-map frontend loads alignment before route-led attribution',()=>{
  const fs=require('node:fs'),path=require('node:path');
  const page=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
  assert(page.indexOf('roadside-centreline.js')<page.indexOf('route-led-coverage.js'));
- assert(page.includes('LAB r456')&&page.includes('>PR #456</a>'));
+ assert(page.includes('LAB r457')&&page.includes('>PR #457</a>'));
  assert(page.includes("mode=zip?'routeLed':'center'"));
  assert(page.includes('id="zipCompare"'));
 });
@@ -137,5 +137,27 @@ test('dense pavement vertices extend an accepted run to the mapped access transi
   const output=Roadside.align({parts:[line],refs:[main]}).parts[0];
   assert(output.some(point=>Math.abs(point[0]-p(66.5)[0])<1e-10&&point[1]===0));
   for(const point of access)assert(output.some(vertex=>vertex[0]===point[0]&&vertex[1]===point[1]));
+ }
+});
+
+test('terminal access uses a connected road with saved movement and a corroborating final fix',()=>{
+ const road={kind:'residential',name:'Street',coords:[p(0),p(82)]};
+ const access={kind:'service',coords:[p(82),p(87,3),p(95,6),p(110,6)]};
+ const tail=[p(87,3),p(95,6),p(103,6),p(107,6)];
+ const frontage=[p(70,8),p(75,8),p(81,7)];
+ const parts=[[p(0,5),p(20,5),p(40,5),p(65,5),p(65.5,5),...frontage,...tail]];
+ const route={onFoot:true,parts,refs:[road,access],recorded:[[p(0,5),p(103,-3)]]};
+ const result=Roadside.align(route);
+ assert(result.promoted.some(run=>run.kind==='terminal-access'));
+ assert.deepEqual(result.parts[0].slice(-5),[p(82),...tail]);
+ for(const variation of [
+  {recorded:[[p(0,5),p(75,8),p(103,-3)]]},
+  {recorded:[]},
+  {refs:[road,{...access,coords:[p(82,2),...access.coords.slice(1)]}]},
+  {corrected:true},
+ ]){
+  const preserved=Roadside.align({...route,...variation});
+  assert(!preserved.promoted.some(run=>run.kind==='terminal-access'));
+  assert(preserved.parts[0].some(v=>v===frontage[1]));
  }
 });
