@@ -8,6 +8,12 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Evidence-bounded termini on sparsely recorded journeys (LAB r448)
+
+This corrects the r447 assumption that an unsupported terminal side-road turn should leave coverage ending at the preceding junction. A junction is not independent evidence of the traveller's stopping point. When the r447 safeguards identify an unsupported terminal turn, the route-led accumulator instead locates the final recorded GPS position on the already matched road approach (within 3.5m, and no more than 40m before the saved-match endpoint), projects the terminal position onto that physical road geometry, and withholds **all** later unmatched approach and side-road segments. The traveller may have finished partway along the road. Without a reliable last fix on the approach, no new endpoint is invented and the original match is left unchanged for further diagnosis.
+
+This is a general GPS-evidence rule rather than a school- or town-specific correction. A GPS-backed final destination on the side road, a straight uninterrupted road, and a genuine pedestrian shortcut are protected by tests. The owner's private archive remains in the browser and the original matched history remains unchanged. These changes are to experimental Lab cumulative attribution only, not Android road-completion data.
+
 ## Sparse-GPS unsupported terminal side-road turn (LAB r447)
 
 Owner accepted Journey 2 in LAB r446. Journey 3 (10 December 2025, 08:08 UTC) revealed a short end nib where the saved match turns from Haynes Road into Garden Row. The original Timeline-import recording has five GPS positions; its last recorded position lies approximately 0.9m from the matched main road, about 13m before the road junction, while the saved matcher continues another ~14m along Garden Row. This is a separate **terminal matched-route overshoot**, not the out-and-back or entrance nib already handled by r446.

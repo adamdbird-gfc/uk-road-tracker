@@ -89,9 +89,29 @@ test('sparse destination GPS fixes main-road approach, not unsupported side-road
    {kind:'residential',coords:[p(80),p(80,14)]}]};
  const original=JSON.stringify(route),result=RouteLed.cleanup(route);
  assert(result.held.some(x=>x.reason==='unverified-terminal-road-turn'));
- assert.deepEqual(result.parts[0].at(-1),p(80),'full main road approach survives to physical junction');
- assert.equal(result.parts[0].length,5,'only unsupported road-turn tail removed');
+ assert.deepEqual(result.parts[0].at(-1),p(67),'the last recorded location, not a junction, is the credited endpoint');
+ assert.equal(result.parts[0].length,4,'the unsupported approach extension and side-road tail are both withheld');
+ assert(result.held[0].metres>20,'withheld distance includes unsupported approach after the final fix');
  assert.equal(JSON.stringify(route),original,'original matched history never altered');
+});
+test('last fix between matched road vertices ends partway along that road',()=>{
+ const line=[p(0),p(20),p(45),p(67),p(80),p(80,2),p(80,7),p(80,14)];
+ const route={parts:[line],recorded:[[p(0),p(30),p(50),p(70,1)]],
+  refs:[{kind:'tertiary',coords:[p(0),p(80)]},
+   {kind:'residential',coords:[p(80),p(80,14)]}]};
+ const result=RouteLed.cleanup(route);
+ assert(result.held.some(x=>x.reason==='unverified-terminal-road-turn'));
+ const end=result.parts[0].at(-1);
+ assert(Math.abs(end[0]-p(70)[0])<1e-7&&Math.abs(end[1])<1e-9,
+  'endpoint projected onto physical road where last position was recorded');
+ assert(end[0]<p(80)[0],'no automatic extension to the nearest junction');
+});
+test('no credible last fix on approach means do not fabricate a shorter route',()=>{
+ const line=[p(0),p(20),p(45),p(67),p(80),p(80,2),p(80,7),p(80,14)];
+ const route={parts:[line],recorded:[[p(0),p(30),p(50),p(68,9)]],
+  refs:[{kind:'tertiary',coords:[p(0),p(80)]},
+   {kind:'residential',coords:[p(80),p(80,14)]}]};
+ assert.deepEqual(RouteLed.cleanup(route).parts,[line],'ambiguous GPS cannot establish a new endpoint');
 });
 test('destination fix on side road prevents terminal trim',()=>{
  const line=[p(0),p(20),p(45),p(67),p(80),p(80,2),p(80,7),p(80,14)];
@@ -121,6 +141,6 @@ test('ZIP UI keeps canonical and route-led models isolated',()=>{
  assert(page.includes('RouteLedCoverage.accumulate(zipRouteLedLedger,route)'));
  assert(page.includes("mode==='routeLed'?zipRouteLedCache.get(n):zipCoverageCache.get(n)"));
  assert(page.includes("zipRouteLedCache.clear();zipRouteLedLedger.clear()"));
- assert(page.includes('LAB r447')&&page.includes('>PR #447</a>'));
+ assert(page.includes('LAB r448')&&page.includes('>PR #448</a>'));
  assert(page.includes('id="zipCompare"')&&page.includes('id="zipModeControls" hidden')&&page.includes("mode=zip?'routeLed':'center'"));
 });
