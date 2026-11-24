@@ -65,7 +65,9 @@ test('independent lookup sends only bounded geographic rectangle, never journey 
   called=true;
   assert(url.startsWith('https://overpass-api.de/api/interpreter?data='));
   assert(url.includes('data=')&&decodeURIComponent(url).includes('out geom;'));
-  assert(decodeURIComponent(url).includes('(_link)?
+  assert(decodeURIComponent(url).includes('(_link)?'), 'Overpass query uses compatible grouping');
+  assert(!decodeURIComponent(url).includes('(?:_link)'), 'Overpass query cannot contain noncapturing regex');
+  assert(!url.includes('journey_id')&&!url.includes('tracepoints'));
   assert(options.signal,'network call is bounded by a timeout');
   return {ok:true,json:async()=>({elements:[publicWay(1,[p(0),p(140)])]})};
  });
