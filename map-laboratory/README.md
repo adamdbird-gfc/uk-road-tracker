@@ -8,6 +8,16 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Explain actual centreline candidate failures (LAB r454)
+
+LAB r453 remained visually unchanged at both Clive Road and Prince of Orange in the owner’s Journey 7 screenshots. Synthetic tests alone do not establish why a real road was rejected. LAB r454 therefore instruments the normal Route-led cumulative display **without creating additional map modes or a new diagnostics button**.
+
+For each selected journey it now reports: independent public OSM lookup success or the actual error string; physical-road reference way count; metres of source geometry promoted onto road centrelines; source-length-weighted individual candidate screening outcomes (missing reference, road >15m distant, direction mismatch, longitudinal overlap mismatch, source already on reference centreline, or individually eligible); and the three nearest scored road options with names, source lengths, maximum lateral offsets and heading agreement. The top visible replay status includes the number of promoted metres and the primary rejection reason when no correction is achieved. A zero is explicitly **not accepted as a geometry fix**.
+
+The per-leg screening data is diagnostic and does not itself approve a corridor: the existing run-level requirements (sustained distance, monotonic progress, competition between road candidates) remain mandatory. The original matched route is not altered and no journey’s travel evidence is imported from other journeys.
+
+A one-time live public-road query from GitHub Actions was attempted to validate the data-supply dependency, without sharing any private journey details: overpass-api.de returned HTTP 406; the documented alternative overpass.private.coffee returned HTTP 429 (rate limiting) on a later request. These are **actual server-side observations**, not evidence that Chrome on the owner's Pixel receives the same responses. The one-time probe was removed rather than hammer rate-limited services. The Lab now prefers the community-hosted service, uses at most one bounded alternative, and displays the actual failure status. No production Android changes, and no claim that Journey 7's two locations have been corrected. The accepted Community Square and Haynes Road shortcut remain protected.
+
 ## Independent road centrelines and measurable changes (LAB r452)
 
 LAB r451's ZIP-wide shared road catalogue violated the explicit requirement that a journey's geometry must not depend on other recorded journeys. **That mechanism and its tests are removed.** Historical travel is used only when aggregating independently interpreted journeys.
