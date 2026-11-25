@@ -210,8 +210,12 @@ const RouteFirst = (() => {
         joins++;
       } else output.push([...result.line]);
     }
+    // Driving results retain the traversed matcher steps alongside the overview.
+    const roadSteps = drive ? features(journey.processing_result?.road_geojson)
+      .filter(feature => Number.isFinite(feature?.properties?.distance_m) && feature.properties.distance_m > 0)
+      .flatMap(feature => lines(feature.geometry)) : [];
     return {parts: output, recorded, refs, onFoot: foot, corrected, source: 'saved match',
-      sourceType: journey.source?.type, projected, joins};
+      sourceType: journey.source?.type, roadSteps, projected, joins};
   }
 
   return {reconstruct, lines};

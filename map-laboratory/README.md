@@ -8,6 +8,13 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Long saved driving steps (LAB r469)
+
+The cumulative replay retains a long edge inside a saved driving match when
+the saved matcher step contains the same pair of consecutive vertices and
+reports a positive distance. This preserves long straight road sections such
+as tunnels. Separate match components and manual breaks remain separate.
+
 ## Road excursions between pedestrian observations (LAB r468)
 
 The cumulative replay checks each street section in a sparse on-foot Timeline
