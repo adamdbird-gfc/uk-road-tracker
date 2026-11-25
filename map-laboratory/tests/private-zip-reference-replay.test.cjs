@@ -195,7 +195,20 @@ test('owner ZIP Journey 13 aligns Pentonville Road and retains the station appro
  const road='Pentonville Road';
  const gain=coveredMetres(result.parts,pinned.refs,road)-coveredMetres(route.parts,pinned.refs,road);
  assert.equal(result.parts.length,1);
- assert(gain>=575,'measure the change against the physical road');
+ assert(gain>=1100,'measure the change against the physical road');
+ assert(coveredMetres(result.parts,pinned.refs,'Islington High Street')>=90,'connect the Angel turn to the road');
+ const through=result.centrelinePromotions.find(run=>run.kind==='continuous-road-corridor');
+ assert(through?.metres>=1250);
+ assert.equal(through.road,'Upper Street / Islington High Street / Pentonville Road');
+ const pentonville=pinned.refs.filter(ref=>ref.name===road&&Network.isRoad(ref.kind));
+ const neighbourhoods=[-0.1112,-0.1169,-0.1183,-0.1209];
+ for(const lon of neighbourhoods){
+  const junction=result.parts[0].filter(([x])=>Math.abs(x-lon)<.00025);
+  assert(junction.length>0,'the route keeps its mapped junction vertices');
+  assert(junction.every(p=>pentonville.some(ref=>ref.coords.slice(1).some((b,i)=>
+   metres(ref.coords[i],b)>.01&&projection(p,ref.coords[i],b)<.5))),
+   'no pavement return inside the established road corridor');
+ }
  assert(containsLine(result.parts,route.parts[0].slice(-20)),'keep the station-side pedestrian approach');
  const outside=await Network.create(async url=>request(url.replace('r2-index.json','index.json'))).lookup(route);
  assert.deepEqual(outside.refs,[]);

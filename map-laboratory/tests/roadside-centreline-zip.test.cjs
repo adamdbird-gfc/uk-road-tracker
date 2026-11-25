@@ -85,15 +85,43 @@ test('already centreline-aligned journey does not introduce geometry changes',()
  assert.deepEqual(result.parts,[line]);
  assert.equal(result.promoted.length,0);
 });
+test('a connected road carries three pavement runs through staggered side-street crossings',()=>{
+ const centre=Array.from({length:10},(_,i)=>p(i*30));
+ const refs=centre.slice(1).map((b,i)=>({
+  id:i+1,kind:'primary',name:'Through Road',coords:[centre[i],b],nodes:[i,i+1]
+ }));
+ const line=[p(0,6),p(35,6),p(65,6),p(67,11),p(74,11),p(76,6),p(108,6),p(142,6),
+  p(144,11),p(150,11),p(153,6),p(185,6),p(225,6),p(270,6)];
+ const sideStreet={kind:'footway',footway:'crossing',coords:[line[3],line[4]]};
+ for(const part of [line,line.toReversed()]){
+  const result=Roadside.align({onFoot:true,parts:[part],refs:[...refs,sideStreet],
+   independentRoadReferences:refs});
+  assert(result.promoted.some(run=>run.kind==='continuous-road-corridor'));
+  assert(result.parts[0].every(point=>point[1]===0));
+  assert.deepEqual(result.parts[0],part===line?centre:centre.toReversed());
+ }
+ const protectedCrossing={kind:'steps',coords:[line[3],line[4]]};
+ const guarded=Roadside.align({onFoot:true,parts:[line],refs:[...refs,protectedCrossing],
+  independentRoadReferences:refs});
+ assert(!guarded.promoted.some(run=>run.kind==='continuous-road-corridor'));
+ assert(guarded.parts[0].includes(line[3]));
+
+ const opposite=line.map(([x,y],i)=>[x,i<4?y:-y]);
+ const across={kind:'footway',footway:'crossing',coords:opposite.slice(3,5)};
+ const crossing=Roadside.align({onFoot:true,parts:[opposite],refs:[...refs,across],
+  independentRoadReferences:refs});
+ assert(!crossing.promoted.some(run=>run.kind==='continuous-road-corridor'));
+ assert(crossing.parts[0].includes(opposite[3])&&crossing.parts[0].includes(opposite[4]));
+});
 test('without road reference geometry, no substitution is invented',()=>{
  const line=[p(0,4),p(20,4),p(40,4)];
  assert.deepEqual(Roadside.align({parts:[line],refs:[]}).parts,[line]);
 });
-test('LAB r463 one-map frontend loads alignment before route-led attribution',()=>{
+test('LAB r464 one-map frontend loads alignment before route-led attribution',()=>{
  const fs=require('node:fs'),path=require('node:path');
  const page=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
  assert(page.indexOf('roadside-centreline.js')<page.indexOf('route-led-coverage.js'));
- assert(page.includes('LAB r463')&&page.includes('>PR #463</a>'));
+ assert(page.includes('LAB r464')&&page.includes('>PR #464</a>'));
  assert(page.includes("mode=zip?'routeLed':'center'"));
  assert(page.includes('id="zipCompare"'));
 });
