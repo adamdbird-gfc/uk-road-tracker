@@ -41,6 +41,20 @@ function containsLine(parts,expected){
   expected.every((p,j)=>line[i+j]?.[0]===p[0]&&line[i+j]?.[1]===p[1])));
 }
 
+test('owner ZIP journey 25 keeps both station approach turns and the Prince of Orange alignment',{skip:!archive},async()=>{
+ const zip=Bulk.roadReplay(await Bulk.open(new Blob([fs.readFileSync(archive)])));
+ const index=zip.journeys.findIndex(item=>item.archiveOrdinal===25);
+ const {journey}=await zip.read(index);
+ const reconstructed=RouteFirst.reconstruct(journey);
+ const lookup=await Network.create(request).lookup(reconstructed);
+ const corrected=RouteLed.cleanup({...reconstructed,independentRoadReferences:lookup.refs});
+ assert.equal(corrected.parts.length,1);
+ assert(containsLine(corrected.parts,reconstructed.parts[0].slice(91)),
+  'junction exit and station frontage retain the connected saved footway');
+ assert(corrected.centrelinePromotions.some(run=>run.kind==='junction'&&
+  run.road==='Devonshire Road / Old Road East / Windmill Street'));
+});
+
 test('owner ZIP Journey 7 restores road corridors and retains pedestrian sections', {skip:!archive},async()=>{
  const original=fs.readFileSync(archive);
  const zip=await Bulk.open(new Blob([original]));
