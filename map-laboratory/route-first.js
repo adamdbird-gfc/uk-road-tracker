@@ -210,7 +210,8 @@ const RouteFirst = (() => {
         joins++;
       } else output.push([...result.line]);
     }
-    return {parts: output, recorded, refs, onFoot: foot, corrected, source: 'saved match', projected, joins};
+    return {parts: output, recorded, refs, onFoot: foot, corrected, source: 'saved match',
+      sourceType: journey.source?.type, projected, joins};
   }
 
   return {reconstruct, lines};

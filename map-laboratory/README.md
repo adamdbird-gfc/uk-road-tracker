@@ -8,6 +8,17 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Unsupported roads on sparse pedestrian loops (LAB r467)
+
+When a walking or running Timeline import starts and finishes near the same
+mapped off-road path area, the cumulative map withholds stretches that follow
+a surrounding street with no original Timeline point near that stretch. It
+keeps the other saved segments and leaves a gap in place of the withheld
+geometry. Road observations protect real outings, and a through walk with
+a different destination does not trigger the loop rule. The rule uses the
+current journey’s recorded points and saved or pinned path and road references.
+The full saved match remains available under **Compare other views**.
+
 ## Recovering pinned references and showing short path connections (LAB r466)
 
 The Lab retries failed pinned reference requests and accepts either gzip bytes
