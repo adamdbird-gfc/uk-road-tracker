@@ -8,6 +8,20 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Roundabout shortcuts and frontage hooks (LAB r471)
+
+The cumulative view can replace an unobserved service-road shortcut in a
+saved Timeline drive with a connected, directional roundabout path when
+the match supports the entry and exit roads. It preserves a service-road
+visit supported by a recorded point. The initial driving reference cell
+covers the east Gravesend pilot area. It uses the Kent snapshot below,
+generated with `--driving` and bounds `0.390 51.430 0.395 51.435`.
+
+For a two-point walking import, the Lab can withhold an initial reverse
+hook when the saved match doubles back to the same mapped road and the
+first fix is already close to the later road segment. The replay starts at
+the point on the road closest to that fix.
+
 ## Gillingham road junctions (LAB r470)
 
 The [third index](reference-network/v1/r3-index.json) adds two Medway cells

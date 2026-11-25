@@ -21,21 +21,21 @@ const IndependentRoadNetwork = (() => {
     return [...refs.values()];
   }
 
-  function windowFor(a, b) {
+  function windowFor(a, b, metres) {
     const lonScale = Math.cos((a[1] + b[1]) * Math.PI / 360);
     const dx = (b[0] - a[0]) * lonScale, dy = b[1] - a[1];
     if (Math.hypot(dx, dy) * 111320 > 500 || lonScale < 0.1) return null;
-    const lonPad = 20 / (111320 * lonScale), latPad = 20 / 111320;
+    const lonPad = metres / (111320 * lonScale), latPad = metres / 111320;
     return [Math.min(a[0], b[0]) - lonPad, Math.min(a[1], b[1]) - latPad,
       Math.max(a[0], b[0]) + lonPad, Math.max(a[1], b[1]) + latPad];
   }
 
-  function routeWindows(route, scale, available) {
+  function routeWindows(route, scale, available, padding) {
     const windows = new Map();
     for (const line of route.parts || []) for (let i = 1; i < line.length; i++) {
       const a = line[i - 1], b = line[i];
       if (!valid(a) || !valid(b)) continue;
-      const box = windowFor(a, b);
+      const box = windowFor(a, b, padding);
       if (!box) continue;
       for (let x = Math.floor(box[0] * scale); x <= Math.floor(box[2] * scale); x++)
         for (let y = Math.floor(box[1] * scale); y <= Math.floor(box[3] * scale); y++) {
@@ -60,7 +60,7 @@ const IndependentRoadNetwork = (() => {
     return false;
   }
 
-  function create(request = fetch, root = './reference-network/v1/', now = Date.now) {
+  function create(request = fetch, root = './reference-network/v1/', now = Date.now, driving = false) {
     const cache = new Map();
 
     async function read(name, retry) {
@@ -91,7 +91,7 @@ const IndependentRoadNetwork = (() => {
     }
 
     function readIndex() {
-      return cached('r3-index.json', data => {
+      return cached(driving ? 'index.json' : 'r3-index.json', data => {
         if (data?.schema !== 1 || data.cellsPerDegree !== 50 || !Array.isArray(data.tiles) ||
             !data.tiles.every(key => /^-?\d+_-?\d+$/.test(key))) throw Error('Invalid network index');
         return {scale: data.cellsPerDegree, available: new Set(data.tiles)};
@@ -101,7 +101,7 @@ const IndependentRoadNetwork = (() => {
     function readTile(key) {
       return cached(key + '.json.gz', data => {
         if (!Array.isArray(data) || !data.every(ref => Number.isSafeInteger(ref?.id) &&
-            (ROAD.test(ref.kind) || PATH.test(ref.kind)) && Array.isArray(ref.coords) &&
+            (ROAD.test(ref.kind) || PATH.test(ref.kind) || driving && ref.kind === 'service') && Array.isArray(ref.coords) &&
             ref.coords.length >= 2 && ref.coords.every(valid) && Array.isArray(ref.nodes) &&
             ref.nodes.length === ref.coords.length && ref.nodes.every(Number.isSafeInteger))) throw Error('Invalid network tile');
         return data;
@@ -112,7 +112,7 @@ const IndependentRoadNetwork = (() => {
       if (!route.parts?.some(line => line.length >= 2)) return {refs: [], status: 'Own journey references'};
       try {
         const {scale, available} = await readIndex();
-        const windows = routeWindows(route, scale, available);
+        const windows = routeWindows(route, scale, available, driving ? 90 : 20);
         if (!windows.size) return {refs: [], status: 'Outside pinned network coverage · own references'};
         const results = await Promise.allSettled([...windows.keys()].map(readTile));
         const refs = new Map();

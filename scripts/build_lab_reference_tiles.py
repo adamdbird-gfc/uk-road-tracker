@@ -36,6 +36,8 @@ def main():
                         metavar=("PBF", "SOURCE_URL", "SHA256", "WEST", "SOUTH", "EAST", "NORTH"))
     parser.add_argument("--entrances-only", action="store_true",
                         help="Build station entrance metadata for the named existing tile directory")
+    parser.add_argument("--driving", action="store_true",
+                        help="Build a separate road tile set with direction and service roads")
     args = parser.parse_args()
     tiles, sources, entrances = defaultdict(dict), [], {}
     for filename, url, expected, west, south, east, north in args.region:
@@ -63,11 +65,13 @@ def main():
             continue
         for way in osmium.FileProcessor(filename).with_locations().with_filter(osmium.filter.EntityFilter(osmium.osm.WAY)):
             kind = way.tags.get("highway", "")
-            if not ROAD.fullmatch(kind) and kind not in PATH:
+            if args.driving and not (ROAD.fullmatch(kind) or kind == "service"):
+                continue
+            if not args.driving and not ROAD.fullmatch(kind) and kind not in PATH:
                 continue
             if way.tags.get("area") == "yes":
                 continue
-            if ROAD.fullmatch(kind) and way.tags.get("access") in {"private", "no"}:
+            if (ROAD.fullmatch(kind) or args.driving) and way.tags.get("access") in {"private", "no"}:
                 continue
             if len(way.nodes) < 2 or not all(n.location.valid() for n in way.nodes):
                 continue
@@ -76,6 +80,8 @@ def main():
             if not hits:
                 continue
             tags = {key: way.tags[key] for key in ("name", "footway", "indoor", "layer", "bridge", "tunnel") if key in way.tags}
+            if args.driving:
+                tags.update({key: way.tags[key] for key in ("junction", "oneway") if key in way.tags})
             feature = {"id": way.id, "kind": kind, "coords": coords,
                        "nodes": [node.ref for node in way.nodes], **tags}
             for cell in hits:
