@@ -23,6 +23,17 @@ test('second separate pedestrian-to-road segment is promoted without naming any 
  assert.equal(result.promoted.length,2);
  assert(result.parts.flat().every(x=>Math.abs(x[1])<1e-10));
 });
+test('a centreline shift must retain mapped pedestrian turns at both ends',()=>{
+ const line=[p(0,18),p(0,12),p(0,5),p(20,5),p(40,5),p(60,5),p(80,5),
+  p(80,12),p(80,18),p(88,18)];
+ const carriageway=road([p(0),p(80)]);
+ const route={parts:[line],onFoot:true,sourceType:'timeline_import',refs:[carriageway]};
+ assert.equal(Roadside.align(route).promoted.length,1);
+ const path={kind:'footway',coords:line,nodes:line.map((_,i)=>i+1)};
+ const guarded=Roadside.align({...route,refs:[carriageway,path]});
+ assert.deepEqual(guarded.parts,[line]);
+ assert.equal(guarded.promoted.length,0);
+});
 test('single long road-parallel matched leg receives centreline despite sparse vertices',()=>{
  const route={parts:[[p(0,5),p(78,5)]],refs:[road([p(0),p(78)])]};
  const result=Roadside.align(route);
@@ -132,11 +143,11 @@ test('a short same-road interruption is removed in either direction with a recor
   assert.deepEqual(observed,source);
  }
 });
-test('LAB r471 one-map frontend loads alignment before route-led attribution',()=>{
+test('LAB r472 one-map frontend loads alignment before route-led attribution',()=>{
  const fs=require('node:fs'),path=require('node:path');
  const page=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
  assert(page.indexOf('roadside-centreline.js')<page.indexOf('route-led-coverage.js'));
- assert(page.includes('LAB r471')&&page.includes('>PR #471</a>'));
+ assert(page.includes('LAB r472')&&page.includes('>PR #472</a>'));
  assert(page.includes("mode=zip?'routeLed':'center'"));
  assert(page.includes('id="zipCompare"'));
 });

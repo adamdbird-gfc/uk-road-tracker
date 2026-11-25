@@ -734,9 +734,26 @@ const RoadsideCentreline=(()=>{
    Math.abs(direction(a,b,u.p,v.p))>=.96);
   return sampled([a,b],p=>candidates.some(({a:u,b:v})=>projected(p,u.p,v.p).offset<=.65));
  }
+ // A road-parallel span can be the middle of a connected pedestrian turn
+ // at both ends. Snapping only its middle creates unmapped joins.
+ function wouldBreakPedestrianTurns(line,start,end,geometry,paths) {
+  if(!paths.length||start<2||end+2>=line.length||geometry.length<2)return false;
+  const entry=[line[start-2],line[start-1]],exit=[line[end],line[end+1]];
+  if([...entry,...exit].some(p=>!valid(p))||
+     metres(...entry)<2||metres(...exit)<2)return false;
+  const first=[geometry[0],geometry[1]],last=[geometry.at(-2),geometry.at(-1)];
+  if(Math.abs(direction(...entry,...first))>.60||Math.abs(direction(...exit,...last))>.60||
+     metres(line[start],geometry[0])<3||metres(line[end],geometry.at(-1))<3)return false;
+  const mapped=p=>paths.some(path=>snap(p,path).offset<1.5);
+  return sampled(line.slice(start-2,end+3),mapped)&&
+   !sampled([line[start],geometry[0]],mapped)&&!sampled([line[end],geometry.at(-1)],mapped);
+ }
  function align(route){
   const refs=route?.refs||[],roads=network(refs),parts=[],promoted=[];
   const graph=roadGraph(refs),protectedPaths=protectedWalks(refs);
+  const walkingPaths=route.onFoot&&route.sourceType==='timeline_import'&&!route.corrected?
+   refs.filter(ref=>ref.nodes&&ref.kind==='footway'&&ref.coords?.length>=2&&
+    ref.coords.every(valid)).map(ref=>measured(ref.coords)):[];
   for(const original of route?.parts||[]){
    if(!Array.isArray(original)||original.length<2||!roads.length){
     parts.push(original);continue;
@@ -801,6 +818,7 @@ const RoadsideCentreline=(()=>{
     const end=extendBoundary(line,way,run,sign,protectedLegs,ranges,1);
     const geometry=trace(way,start.extra?snap(line[start.at],way):snapped[0],
      end.extra?snap(line[end.at],way):snapped.at(-1));
+    if(wouldBreakPedestrianTurns(line,start.at,end.at,geometry,walkingPaths))continue;
     // Preserve the exact pavement vertex at the end of the transfer. A
     // diagonal to the next access vertex would cut the mapped entrance.
     if(start.extra&&start.at>0)geometry.unshift(line[start.at]);

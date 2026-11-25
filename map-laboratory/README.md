@@ -8,6 +8,13 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Pedestrian turns on station approaches (LAB r472)
+
+A centreline shift is withheld when it would detach both turns of a saved
+Timeline walk from a fully mapped pedestrian path. The cumulative replay
+retains the saved path through those turns. Supported centreline corrections
+elsewhere on the same walk still apply.
+
 ## Roundabout shortcuts and frontage hooks (LAB r471)
 
 The cumulative view can replace an unobserved service-road shortcut in a
