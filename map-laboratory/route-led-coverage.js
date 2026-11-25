@@ -450,8 +450,10 @@ const RouteLedCoverage=(()=>{
    for(const line of output)if(line?.length>=4){
     aligned.promoted.push(...CentrelinePromotion.closeRoadInterruptions(line,withPhysicalRoads.refs,raw));
     aligned.promoted.push(...CentrelinePromotion.closePedestrianStreetCorridors(line,withPhysicalRoads.refs,raw));
-    if(route.sourceType==='timeline_import')
+    if(route.sourceType==='timeline_import'){
      aligned.promoted.push(...CentrelinePromotion.closeOffsetRoadTurns(line,withPhysicalRoads.refs,raw));
+     aligned.promoted.push(...CentrelinePromotion.closeKerbsideLoops(line,withPhysicalRoads.refs,raw));
+    }
     if(route.sourceType==='timeline_import'&&raw.length&&line===output.at(-1))
      aligned.promoted.push(...CentrelinePromotion.closeTerminalPavement(line,withPhysicalRoads.refs,raw));
    }
