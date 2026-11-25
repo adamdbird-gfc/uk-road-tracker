@@ -8,6 +8,15 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Sparse pedestrian return routes (LAB r476)
+
+A sparse Timeline return can reuse the pedestrian corridor it traversed
+earlier in the same saved match. Both branches must leave and rejoin at
+the same mapped points, and observations supporting the street detour
+prevent replacement. An exact service-road retrace with no nearby recorded
+observation can also be withheld from cumulative coverage. The saved match
+and recorded lines remain available for comparison.
+
 ## Retraced pavements and short corner crossings (LAB r475)
 
 The cumulative replay aligns both legs of a sustained pavement retrace across

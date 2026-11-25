@@ -292,7 +292,7 @@ test('ZIP UI keeps canonical and route-led models isolated',()=>{
  assert(page.includes('RouteLedCoverage.accumulate(zipRouteLedLedger,route.surfaceParts?{...route,parts:route.surfaceParts}:route)'));
  assert(page.includes("mode==='routeLed'?zipRouteLedCache.get(n):zipCoverageCache.get(n)"));
  assert(page.includes("zipRouteLedCache.clear();zipRouteLedLedger.clear()"));
- assert(page.includes('LAB r475')&&page.includes('>PR #475</a>'));
+ assert(page.includes('LAB r476')&&page.includes('>PR #476</a>'));
  assert(page.includes('id="zipCompare"')&&page.includes('id="zipModeControls" hidden')&&page.includes("mode=zip?'routeLed':'center'"));
 });
 
@@ -334,4 +334,40 @@ test('a weak final path nib at a previously travelled road junction is withheld'
  assert.deepEqual(RouteLed.cleanup({...route,corrected:true}).parts,parts);
  const noRevisit=[[p(80),p(60),p(50),p(35),p(35,-7)]];
  assert.deepEqual(RouteLed.cleanup({...route,parts:noRevisit}).parts,noRevisit);
+});
+
+test('a sparse pedestrian return can reuse its outward path across the same junctions',()=>{
+ const path=[p(-60),p(0),p(100),p(200),p(250),p(300)];
+ const detour=[p(200),p(200,65),p(100,65),p(0,65),p(0)];
+ const line=path.concat([p(250)],detour,[p(-60)]);
+ const raw=[p(-60),p(100),p(300),p(-60)];
+ const refs=[
+  {kind:'cycleway',coords:path},
+  {kind:'residential',coords:detour.slice(0,3)},
+  {kind:'residential',coords:detour.slice(2)}
+ ];
+ const route={parts:[line],recorded:[raw],refs,onFoot:true,source:'saved match',sourceType:'timeline_import'};
+ const before=JSON.stringify(route);
+ const result=RouteLed.cleanup(route);
+ assert.deepEqual(result.parts,[path.concat(path.slice(0,-1).reverse())]);
+ assert(result.held.some(x=>x.reason==='unobserved-street-detour-from-pedestrian-retrace'));
+ assert.equal(JSON.stringify(route),before);
+ const realDetour=RouteLed.cleanup({...route,recorded:[[...raw.slice(0,3),p(100,65),raw.at(-1)]]});
+ assert(!realDetour.held.some(x=>x.reason==='unobserved-street-detour-from-pedestrian-retrace'));
+ assert(realDetour.parts.flat().some(q=>q===detour[2]));
+});
+
+test('a sparse unobserved service retrace can be withheld without removing a recorded visit',()=>{
+ const path=[p(-180),p(-60),p(0),p(60),p(180)];
+ const service=[p(0),p(0,60),p(0,110)];
+ const loop=service.slice(1).concat([p(0,60),p(0)]);
+ const line=path.slice(0,3).concat(loop,path.slice(3));
+ const refs=[{kind:'cycleway',coords:path},{kind:'service',coords:service}];
+ const route={parts:[line],recorded:[[p(-180),p(-60),p(180)]],refs,onFoot:true,
+  source:'saved match',sourceType:'timeline_import'};
+ const result=RouteLed.cleanup(route);
+ assert.deepEqual(result.parts,[path]);
+ assert(result.held.some(x=>x.reason==='unobserved-service-retrace'));
+ const realVisit=RouteLed.cleanup({...route,recorded:[[p(-180),p(0,110),p(180)]]});
+ assert.deepEqual(realVisit.parts,[line]);
 });
