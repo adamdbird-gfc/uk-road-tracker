@@ -7,6 +7,7 @@ const Bulk=require('../bulk-diagnostics.js');
 const RouteFirst=require('../route-first.js');
 const Network=require('../independent-road-network.js');
 const RouteLed=require('../route-led-coverage.js');
+const RailTransition=require('../rail-transition.js');
 
 const archive=process.env.ROADPRINTS_DIAGNOSTICS_ZIP;
 const root=path.join(__dirname,'..');
@@ -155,7 +156,6 @@ test('City Thameslink street replay reaches the mapped entrance without drawing 
  const reconstructed=RouteFirst.reconstruct(journey);
  const pinned=await Network.create(request).lookup(reconstructed);
  const route={...reconstructed,independentRoadReferences:pinned.refs};
- const RailTransition=require('../rail-transition.js');
  const guarded=await RailTransition.create(request)(route,row);
  const door=pinned.refs.find(ref=>ref.id===815099762).coords[0];
  assert.deepEqual(guarded.railTransitions,[{point:door,label:'Likely transfer to rail'}]);
@@ -176,4 +176,31 @@ test('City Thameslink street replay reaches the mapped entrance without drawing 
  assert(next.repeat.some(leg=>leg.a[0]===circus[0][0]&&leg.a[1]===circus[0][1]),
   'the shared road interval overlays previous coverage');
 
+});
+
+test('owner ZIP Journey 13 aligns Pentonville Road and retains the station approach',{skip:!archive},async()=>{
+ const bytes=fs.readFileSync(archive);
+ const replay=Bulk.roadReplay(await Bulk.open(new Blob([bytes])));
+ const index=10, row=replay.journeys[index];
+ assert.equal(row.archiveOrdinal,13);
+ const {journey}=await replay.read(index);
+ const before=JSON.stringify(journey);
+ const route=RouteFirst.reconstruct(journey);
+ assert.equal(route.recorded.flat().length,2);
+ const pinned=await Network.create(request).lookup(route);
+ const withRoads={...route,independentRoadReferences:pinned.refs};
+ const transfer=RailTransition.create(request);
+ assert.strictEqual(await transfer(withRoads,row),withRoads,'no immediate rail transition');
+ const result=RouteLed.cleanup(withRoads);
+ const road='Pentonville Road';
+ const gain=coveredMetres(result.parts,pinned.refs,road)-coveredMetres(route.parts,pinned.refs,road);
+ assert.equal(result.parts.length,1);
+ assert(gain>=575,'measure the change against the physical road');
+ assert(containsLine(result.parts,route.parts[0].slice(-20)),'keep the station-side pedestrian approach');
+ const outside=await Network.create(async url=>request(url.replace('r2-index.json','index.json'))).lookup(route);
+ assert.deepEqual(outside.refs,[]);
+ assert.deepEqual(RouteLed.cleanup(route).parts,route.parts);
+ assert.equal(JSON.stringify(journey),before);
+ assert.equal(hash(fs.readFileSync(archive)),hash(bytes));
+ console.log('Pentonville Road centreline gain: '+gain.toFixed(1)+' m. Station-side pedestrian approach exact.');
 });
