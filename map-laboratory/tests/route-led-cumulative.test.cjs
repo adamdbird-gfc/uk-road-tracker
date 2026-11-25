@@ -1,7 +1,65 @@
 const assert=require('node:assert/strict');
 const {test}=require('node:test');
 const RouteLed=require('../route-led-coverage.js');
+const RouteFirst=require('../route-first.js');
 const p=(x,y=0)=>[x/111320,y/111320];
+
+function parkImport(){
+ const entrance=p(0,40),interior=p(45,80),exit=p(70),returnGate=p(30);
+ const approach=[entrance,interior,p(70,30),exit];
+ const street=[exit,p(45),p(45,-24),p(45),returnGate];
+ const parkReturn=[returnGate,p(30,35),entrance];
+ const feature=(kind,coordinates)=>({properties:{reference_kind:kind},
+  geometry:{type:'LineString',coordinates}});
+ const journey={mode:'walking',source:{type:'timeline_import'},
+  route_geometry:{type:'LineString',coordinates:[entrance,interior,entrance]},
+  processing_result:{
+   geojson:{features:[feature('',approach.concat(street.slice(1),parkReturn.slice(1)))]},
+   road_geojson:{features:[feature('footway',approach),feature('residential',[exit,returnGate]),
+    feature('residential',[p(45),p(45,-24)]),feature('path',parkReturn)]}
+  }};
+ return {journey,approach,street,parkReturn};
+}
+
+test('sparse Timeline loop retains independent paths and withholds unsupported street coverage',()=>{
+ const {journey,approach,parkReturn}=parkImport();
+ const original=JSON.stringify(journey);
+ const route=RouteFirst.reconstruct(journey);
+ const result=RouteLed.accumulate(RouteLed.createLedger(),route);
+ assert.deepEqual(RouteLed.cleanup(route).parts,[approach,parkReturn]);
+ const endpointsOnly={...route,recorded:[[approach[0],parkReturn.at(-1)]]};
+ assert.deepEqual(RouteLed.cleanup(endpointsOnly).parts,[approach,parkReturn]);
+ assert.deepEqual(result.held,[{reason:'unverified-road-excursion-on-pedestrian-loop',metres:88}]);
+ assert(result.novel.every(({a,b})=>a[1]>=0&&b[1]>=0&&(a[1]>0||b[1]>0)));
+ assert.deepEqual(result.links,[],'no connector is drawn across the withheld excursion');
+ const laterStreet=RouteLed.accumulate(result.next,{parts:[[p(45),p(45,-24)]]});
+ assert(laterStreet.novel.length>0&&laterStreet.repeat.length===0,'withheld street never enters the ledger');
+ assert.equal(JSON.stringify(journey),original);
+});
+
+test('a genuine exit and an observed street excursion retain their coverage',()=>{
+ const {journey,approach}=parkImport();
+ const streetFix=p(45,-24);
+ const loop=RouteFirst.reconstruct(journey);
+ const observed={...loop,recorded:[[approach[0],approach[1],streetFix,approach[0]]]};
+ assert.deepEqual(RouteLed.cleanup(observed).parts,loop.parts);
+ const through={...loop,parts:[approach.concat(p(45),[streetFix])],
+  recorded:[[approach[0],approach[1],streetFix]]};
+ assert.deepEqual(RouteLed.cleanup(through).parts,through.parts);
+ const withoutStreetObservation={...through,recorded:[[approach[0],approach[1]]]};
+ assert.deepEqual(RouteLed.cleanup(withoutStreetObservation).parts,through.parts);
+});
+
+test('loop rule requires independent path anchors and leaves corrections and native captures alone',()=>{
+ const {journey}=parkImport();
+ const route=RouteFirst.reconstruct(journey);
+ for(const changed of [
+  {...route,refs:route.refs.filter(ref=>ref.kind==='residential')},
+  {...route,recorded:[]},
+  {...route,sourceType:'android_activity_capture'},
+  {...route,corrected:true}
+ ]) assert.deepEqual(RouteLed.cleanup(changed).parts,route.parts);
+});
 test('ordered road-to-pedestrian-shortcut-to-road geometry is all retained',()=>{
  const parts=[[p(0),p(16),p(20,4),p(24,8),p(28,4),p(32),p(48)]];
  const original=JSON.stringify(parts);
@@ -157,7 +215,7 @@ test('ZIP UI keeps canonical and route-led models isolated',()=>{
  assert(page.includes('RouteLedCoverage.accumulate(zipRouteLedLedger,route.surfaceParts?{...route,parts:route.surfaceParts}:route)'));
  assert(page.includes("mode==='routeLed'?zipRouteLedCache.get(n):zipCoverageCache.get(n)"));
  assert(page.includes("zipRouteLedCache.clear();zipRouteLedLedger.clear()"));
- assert(page.includes('LAB r466')&&page.includes('>PR #466</a>'));
+ assert(page.includes('LAB r467')&&page.includes('>PR #467</a>'));
  assert(page.includes('id="zipCompare"')&&page.includes('id="zipModeControls" hidden')&&page.includes("mode=zip?'routeLed':'center'"));
 });
 

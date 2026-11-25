@@ -260,6 +260,54 @@ const RouteLedCoverage=(()=>{
   }
   return [connect(line,raw[0]),connect(line.toReversed(),raw.at(-1))].filter(Boolean);
  }
+ // A sparsely observed loop anchored on independent paths can pick up
+ // surrounding streets in its saved match. Use only actual import vertices
+ // as observations. Interpolation across a gap cannot corroborate a street.
+ function withholdLoopRoadExcursions(parts,route,refs,held){
+  if(!route.onFoot||route.corrected||route.source!=='saved match'||
+     route.sourceType!=='timeline_import'||parts.length!==1||route.railTransitions?.length)
+   return parts;
+  const line=parts[0],raw=route.recorded?.length===1?route.recorded[0]:[];
+  if(raw.length<2||!raw.every(valid)||line.length<3||!line.every(valid)||
+     distance(raw[0],raw.at(-1))>55||
+     (raw.length>3&&!raw.slice(1).some((p,i)=>distance(raw[i],p)>50)))return parts;
+  const roads=segments(refs,road);
+  const paths=segments(refs.filter(ref=>!['sidewalk','crossing'].includes(ref.footway)&&
+   !ref.bridge&&!ref.tunnel&&ref.indoor!=='yes'),/^(footway|path|pedestrian|track)$/);
+  if(!roads.length||!paths.length)return parts;
+  const anchors=[[raw[0],line[0]],[raw.at(-1),line.at(-1)]];
+  if(!anchors.every(([fix,end])=>distance(fix,end)<=20&&nearest(fix,paths)<=10&&
+     nearest(end,paths)<=5&&nearest(fix,roads)>=20&&nearest(end,roads)>=20))
+   return parts;
+
+  function roadLeg(a,b){
+   // Use the whole leg. A footpath that crosses a street or runs close by
+   // should not classify as a road.
+   return roads.some(([u,v])=>cosine(a,b,u,v)>=.97&&
+    projection(a,u,v).offset<=2&&projection(b,u,v).offset<=2);
+  }
+  const kept=[];
+  let start=0;
+  for(let i=1;i<line.length;){
+   if(!roadLeg(line[i-1],line[i])){i++;continue;}
+   const entry=i-1;
+   let metres=0;
+   const edges=[];
+   do{
+    const a=line[i-1],b=line[i++];
+    metres+=distance(a,b);
+    edges.push([a,b]);
+   }while(i<line.length&&roadLeg(line[i-1],line[i]));
+   if(metres<8||raw.some(fix=>nearest(fix,edges)<=18))continue;
+   if(entry>start)kept.push(line.slice(start,entry+1));
+   start=i-1;
+   held.push({reason:'unverified-road-excursion-on-pedestrian-loop',
+    metres:Number(metres.toFixed(1))});
+  }
+  if(!start)return parts;
+  if(start<line.length-1)kept.push(line.slice(start));
+  return kept;
+ }
  function cleanup(route){
   const roads=segments(route?.refs,road),feet=segments(route?.refs,foot);
   // Static road geometry comes only from this journey's own references
@@ -335,8 +383,9 @@ const RouteLedCoverage=(()=>{
    for(const line of output)if(line?.length>=4)
     aligned.promoted.push(...CentrelinePromotion.closeRoadInterruptions(line,withPhysicalRoads.refs,raw));
   }
-  return {parts:output,held,centrelinePromotions:aligned.promoted,roadEvidence:screening,
-   links:endpointLinks(output,route)};
+  const credited=withholdLoopRoadExcursions(output,route,withPhysicalRoads.refs||[],held);
+  return {parts:credited,held,centrelinePromotions:aligned.promoted,roadEvidence:screening,
+   links:endpointLinks(credited,route)};
  }
  function* sourceIntervals(a,b){
   const length=distance(a,b);

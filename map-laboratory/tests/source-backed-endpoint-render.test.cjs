@@ -74,5 +74,5 @@ result=link(base,joined,[[p(0),p(27,1)]]);
 assert.equal(result.links.length,0,'already touching accepted edges require no rendered bridge');
 assert(page.includes('const endpointVisual=experimentalCorrection.enabled?sourceBackedEndpointRenderLinks(')&&page.includes('const terminalVisual=experimentalCorrection.enabled?resolveTerminalVisualJunctions('),'OFF remains unchanged');
 assert(page.includes('stroke(connectors,\'#ff4b55\',3.2)'),'display-only links are rendered');
-assert(page.includes('LAB r466')&&page.includes('>PR #466</a>'));
+assert(page.includes('LAB r467')&&page.includes('>PR #467</a>'));
 console.log('PASS: source-backed visual road-to-footway joins, no invented coverage, no-source/far/connected guards');
