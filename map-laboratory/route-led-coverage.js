@@ -297,6 +297,101 @@ const RouteLedCoverage=(()=>{
   }
   return [connect(line,raw[0]),connect(line.toReversed(),raw.at(-1))].filter(Boolean);
  }
+ // Use a previously traversed pedestrian corridor within this journey
+ // when a sparse return takes an unobserved street detour between the
+ // same junctions. An unobserved exact retrace into a service road can
+ // also be withheld without inferring any replacement geometry.
+ function correctSparsePedestrianRetraces(route,held){
+  if(!route.onFoot||route.corrected||route.source!=='saved match'||
+     route.sourceType!=='timeline_import'||route.parts.length!==1||
+     route.recorded?.length!==1||route.railTransitions?.length)return route;
+  const line=route.parts[0],raw=route.recorded[0];
+  if(raw.length<3||!raw.every(valid)||!line.every(valid)||
+     !raw.slice(1).some((fix,i)=>distance(raw[i],fix)>150))return route;
+
+  const edges=line.slice(1).map((b,i)=>[line[i],b]);
+  const pathRefs=segments(route.refs?.filter(ref=>!['sidewalk','crossing'].includes(ref.footway)),
+   /^(footway|cycleway|path|pedestrian|track)$/);
+  const follows=([a,b],network)=>network.some(([u,v])=>cosine(a,b,u,v)>.97&&
+   [a,b].every(p=>projection(p,u,v).offset<=1.25));
+  if(!pathRefs.length)return route;
+
+  const length=[0];
+  for(const edge of edges)length.push(length.at(-1)+distance(...edge));
+  const vertices=line.map(p=>p.join(','));
+  const visits=new Map();
+  for(let i=0;i<vertices.length;i++){
+   const indices=visits.get(vertices[i])||[];
+   indices.push(i);
+   visits.set(vertices[i],indices);
+  }
+  const streetRefs=(route.refs||[]).filter(ref=>road.test(ref.kind))
+   .map(ref=>segments([ref],road));
+  const service=segments(route.refs,/^service$/);
+  const receipts=[],result=[];
+  const hasFix=(span,radius)=>raw.some(fix=>nearest(fix,span)<=radius);
+  const pathMatch=new Map();
+  const onPath=i=>{
+   if(!pathMatch.has(i))pathMatch.set(i,follows(edges[i],pathRefs));
+   return pathMatch.get(i);
+  };
+
+  for(let i=0;i<line.length;i++){
+   result.push(line[i]);
+   if(i===0||i>=line.length-2||!onPath(i-1))continue;
+   const revisit=visits.get(vertices[i]);
+   const loopEnd=revisit.find(j=>j>i&&j<edges.length&&length[j]-length[i]>=80);
+   if(loopEnd!==undefined&&length[loopEnd]-length[i]<=400&&(loopEnd-i)%2===0&&
+      onPath(loopEnd)&&vertices.slice(i,(i+loopEnd)/2)
+       .every((vertex,k)=>vertex===vertices[loopEnd-k])){
+    const loop=edges.slice(i,loopEnd);
+    const serviceMetres=loop.reduce((sum,edge)=>sum+(follows(edge,service)?distance(...edge):0),0);
+    if(serviceMetres>=70&&!hasFix(loop,32)){
+     receipts.push({reason:'unobserved-service-retrace',metres:Number((length[loopEnd]-length[i]).toFixed(1))});
+     i=loopEnd;
+     continue;
+    }
+   }
+
+   if(!streetRefs.length||i+1>=edges.length)continue;
+   // The current trace must be returning along the earlier path before
+   // it diverges. The same return must continue after the second junction.
+   const candidates=[];
+   for(const previous of revisit){
+    if(previous>=i-1||vertices[previous+1]!==vertices[i-1]||
+       vertices[previous-1]===vertices[i+1])continue;
+    for(let earlier=previous-1;earlier>0&&length[previous]-length[earlier]<=1600;earlier--){
+     if(!onPath(earlier))break;
+     const walked=length[previous]-length[earlier];
+     if(walked<150)continue;
+     for(const end of visits.get(vertices[earlier])){
+      if(end<=i+1||vertices[end+1]!==vertices[earlier-1]||
+         vertices[end-1]===vertices[earlier+1])continue;
+      const detour=length[end]-length[i];
+      if(detour<walked*.65||detour>walked*1.8)continue;
+      const span=edges.slice(i,end),alternate=edges.slice(earlier,previous);
+      const roadRuns=streetRefs.map(ref=>span.filter(edge=>follows(edge,ref))).filter(run=>run.length);
+      const roadEdges=[...new Set(roadRuns.flat())];
+      const streetMetres=roadEdges.reduce((sum,edge)=>sum+distance(...edge),0);
+      if(roadRuns.length<2||streetMetres<60||!hasFix(alternate,24)||hasFix(roadEdges,28))continue;
+      // A recorded point that favours an isolated part of the detour
+      // over the returned path is evidence for keeping that detour.
+      if(raw.some(fix=>nearest(fix,span)<30&&nearest(fix,alternate)>40))continue;
+      candidates.push({earlier,previous,end,detour,walked});
+     }
+    }
+   }
+   if(candidates.length!==1)continue;
+   const {earlier,previous,end,detour,walked}=candidates[0];
+   result.push(...line.slice(earlier,previous).reverse());
+   receipts.push({reason:'unobserved-street-detour-from-pedestrian-retrace',
+    metres:Number(detour.toFixed(1)),reusedMetres:Number(walked.toFixed(1))});
+   i=end;
+  }
+  held.push(...receipts);
+  return receipts.length?{...route,parts:[result]}:route;
+ }
+
  // Assess each street excursion between pedestrian observations. An import
  // can include a genuine road approach as well as an off-road section.
  function withholdRoadExcursions(route,held){
@@ -380,7 +475,8 @@ const RouteLedCoverage=(()=>{
   const physical=route.independentRoadReferences?.length?
    {...route,refs:PublicRoadSource.merge(route.refs,route.independentRoadReferences)}:route;
   const parts=[],held=[];
-  const withPhysicalRoads=withholdRoadExcursions(physical,held);
+  const retraced=correctSparsePedestrianRetraces(physical,held);
+  const withPhysicalRoads=withholdRoadExcursions(retraced,held);
   const screening=route.diagnosticsRequested?CentrelinePromotion.evidence(withPhysicalRoads):null;
   const aligned=route.onFoot===false||route.source==='recorded'?
    restoreRoundabout(route):CentrelinePromotion.align(withPhysicalRoads);
