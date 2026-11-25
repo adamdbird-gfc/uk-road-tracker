@@ -8,6 +8,17 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Recovering pinned references and showing short path connections (LAB r466)
+
+The Lab retries failed pinned reference requests and accepts either gzip bytes
+or JSON already decoded by the browser. A continuing outage temporarily uses
+the journey's own references. Revisiting the affected replay after recovery
+rebuilds the cumulative road colours in journey order.
+
+A clipped walk endpoint can connect to the same walk's later road segment
+via a single nearby mapped path supported by its endpoint fix and saved
+references. The dashed link shows the connection without adding new coverage.
+
 ## Return walks and road overlap (LAB r465)
 
 When both approaches establish the same physical road, the Lab can align

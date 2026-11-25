@@ -67,21 +67,40 @@ test('pinned real OSM network is geographically selected and reused across looku
  assert.match(outside.status,/Outside pinned network/);
  assert.deepEqual(outside.refs,[]);
 });
-test('a failed or corrupt tile yields stable own-reference fallback even after a repeat lookup',async()=>{
+test('a corrupt tile retries once, falls back during cooldown and recovers in the same session',async()=>{
  const calls=[];
- const provider=Network.create(async url=>{
-  calls.push(url);
-  return new Response(url.endsWith('index.json')?tileFile(url):'broken');
- });
+ let clock=0,healthy=false;
+ const provider=Network.create(async (url,options)=>{
+  calls.push([url,options.cache]);
+  return new Response(url.endsWith('index.json')||healthy?tileFile(url):'broken');
+ },undefined,()=>clock);
  const route={parts:[[[0.36685,51.44165],[0.3675,51.44154]]]};
  const first=await provider.lookup(route);
  assert.match(first.status,/tile unavailable/);
+ assert.equal(first.unavailable,true);
  assert.deepEqual(first.refs,[]);
  assert.deepEqual(await provider.lookup(route),first);
- assert.equal(calls.length,new Set(calls).size);
+ assert.equal(calls.length,3);
+ assert.equal(calls.at(-1)[1],'reload');
+ healthy=true;clock=16000;
+ assert((await provider.lookup(route)).refs.length>0);
+ assert.equal(calls.length,4);
  const noIndex=await Network.create(async()=>new Response('',{status:503})).lookup(route);
  assert.match(noIndex.status,/index unavailable/);
  assert.deepEqual(noIndex.refs,[]);
+});
+test('the same tile can be read after a retry when its bytes arrive as decoded JSON',async()=>{
+ const {gunzipSync}=require('node:zlib');
+ let attempts=0;
+ const provider=Network.create(async url=>{
+  const file=tileFile(url);
+  if(url.endsWith('index.json'))return new Response(file);
+  if(++attempts===1)return new Response('',{status:503});
+  return new Response(gunzipSync(file));
+ });
+ const result=await provider.lookup({parts:[[[0.36685,51.44165],[0.3675,51.44154]]]});
+ assert(result.refs.some(ref=>ref.name==='Clive Road'));
+ assert.equal(attempts,2);
 });
 test('Pentonville Road references span a pinned tile boundary',async()=>{
  const calls=[];
@@ -99,7 +118,7 @@ test('Pentonville Road references span a pinned tile boundary',async()=>{
  const broken=Network.create(async url=>url.endsWith('-6_2576.json.gz')?
   new Response('',{status:503}):new Response(tileFile(url)));
  assert.deepEqual(await broken.lookup(route),{
-  refs:[],status:'Pinned network tile unavailable · own references'
+  refs:[],status:'Pinned network tile unavailable · own references',unavailable:true
  });
 });
 test('merge retains explicit OSM tags and removes reverse duplicates of the same geometry',()=>{

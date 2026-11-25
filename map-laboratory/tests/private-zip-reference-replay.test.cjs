@@ -233,10 +233,17 @@ test('station return repeats Windmill Street and keeps its distinct square route
  const sameRoad=result.centrelinePromotions.filter(run=>run.kind==='road-interruption'&&run.road===street);
  assert.equal(sameRoad.length,3,'return uses the through road at all three interruptions');
  assert(containsLine(result.parts,home.parts[0].slice(0,17)),'the distinct square route remains visible');
+ assert.equal(result.links.length,1);
+ const connector=home.independentRoadReferences.find(ref=>ref.id===987392190).coords.slice(0,5);
+ assert.deepEqual(result.links[0],connector,'draw the mapped square exit up to the Windmill Street node');
+ assert.equal(RouteLed.cleanup({...home,recorded:[]}).links.length,0);
  const returnCoverage=RouteLed.accumulate(morning.next,home);
  const lines=parts=>parts.map(({a,b})=>[a,b]);
  assert(coveredMetres(lines(returnCoverage.repeat),home.independentRoadReferences,street)>860);
  assert(coveredMetres(lines(returnCoverage.novel),home.independentRoadReferences,street)<.1);
+ assert.deepEqual(returnCoverage.links,result.links);
+ assert(returnCoverage.centrelinePromotions.some(run=>run.kind==='junction'&&
+  run.road==='Windmill Street / Old Road East / Devonshire Road'));
  assert(returnCoverage.novel.some(leg=>leg.id.startsWith('saved:')),'distinct geometry remains new');
  assert.deepEqual(RouteLed.cleanup(home).parts,result.parts,'earlier journeys only affect classification');
  assert.equal(JSON.stringify(home),original);
