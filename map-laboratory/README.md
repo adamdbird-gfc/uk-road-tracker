@@ -8,6 +8,21 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Station arrival retraces and pedestrianised streets (LAB r473)
+
+An adjacent rail arrival, repeated original Timeline point and mirrored
+saved route through a mapped station door can identify an unresolved
+station retrace. Cumulative replay starts at the return point. The saved
+match retains the original station geometry for comparison.
+
+When the same named street is established on both sides, a connected and
+source-supported route may continue through its pedestrianised section
+and mapped public crossings. The fourth pinned index identifies existing
+cycleway ways tagged `cycleway=crossing` or `cycleway=traffic_island` and
+`foot=yes` or `foot=designated`, excluding private access, in the same
+Kent and London snapshots. Only the public geometry is shared across
+journeys. Each walk supplies its own route evidence.
+
 ## Pedestrian turns on station approaches (LAB r472)
 
 A centreline shift is withheld when it would detach both turns of a saved

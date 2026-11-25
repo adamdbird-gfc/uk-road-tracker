@@ -30,6 +30,19 @@ test('surface passers-by, ambiguous doors, corrections and disconnected topology
  assert.strictEqual(apply(passing,{railAfter:true},[entrance]),passing);
 });
 
+test('a mirrored arrival excursion with a repeated Timeline observation can be left unresolved',()=>{
+ const out=[p(0),p(10),p(20),p(35),p(45),p(60)];
+ const parts=[out.concat(out.slice(0,-1).toReversed(),[p(-15),p(-35)])];
+ const individual={...route,parts,recorded:[[p(0),p(60),p(0),p(-35)]],
+  sourceType:'timeline_import'};
+ const replay=apply(individual,{railBefore:true},[entrance]);
+ assert.deepEqual(replay.surfaceParts,[[p(0),p(-15),p(-35)]]);
+ assert.equal(replay.railTransitions[0].kind,'arrival-retrace');
+ assert.strictEqual(apply(individual,{},[entrance]),individual);
+ assert.strictEqual(apply({...individual,recorded:[[p(0),p(60),p(15),p(-35)]]},
+  {railBefore:true},[entrance]).surfaceParts,undefined);
+});
+
 test('the replay uses adjoining rail mode and time without reading its track',()=>{
  const at=(minute,seconds='00')=>'2026-01-01T12:'+minute+':'+seconds+'Z';
  const archive={journeys:[
