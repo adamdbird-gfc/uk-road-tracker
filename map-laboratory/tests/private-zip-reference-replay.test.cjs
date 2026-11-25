@@ -55,6 +55,22 @@ test('owner ZIP journey 25 keeps both station approach turns and the Prince of O
   run.road==='Devonshire Road / Old Road East / Windmill Street'));
 });
 
+test('owner ZIP journey 27 excludes the station retrace and follows the pedestrianised Strand',{skip:!archive},async()=>{
+ const zip=Bulk.roadReplay(await Bulk.open(new Blob([fs.readFileSync(archive)])));
+ const index=zip.journeys.findIndex(item=>item.archiveOrdinal===27);
+ const {journey}=await zip.read(index);
+ const source=RouteFirst.reconstruct(journey),lookup=await Network.create(request).lookup(source);
+ const route={...source,independentRoadReferences:lookup.refs};
+ const transition=await RailTransition.create(request)(route,zip.journeys[index]);
+ assert.equal(transition.railTransitions[0].kind,'arrival-retrace');
+ assert.deepEqual(transition.surfaceParts,[source.parts[0].slice(58)]);
+ const result=RouteLed.cleanup({...transition,parts:transition.surfaceParts});
+ assert.equal(result.parts.length,1);
+ assert(result.centrelinePromotions.some(run=>run.kind==='pedestrian-street-corridor'&&run.road==='Strand'));
+ assert(result.parts[0].some(p=>lookup.refs.some(ref=>ref.sharedCrossing&&ref.coords.some(q=>String(p)===String(q)))));
+ assert.deepEqual(result.parts[0].at(-1),source.parts[0].at(-1));
+});
+
 test('owner ZIP Journey 7 restores road corridors and retains pedestrian sections', {skip:!archive},async()=>{
  const original=fs.readFileSync(archive);
  const zip=await Bulk.open(new Blob([original]));
@@ -224,7 +240,7 @@ test('owner ZIP Journey 13 aligns Pentonville Road and retains the station appro
    'no pavement return inside the established road corridor');
  }
  assert(containsLine(result.parts,route.parts[0].slice(-20)),'keep the station-side pedestrian approach');
- const outside=await Network.create(async url=>request(url.replace('r3-index.json','index.json'))).lookup(route);
+ const outside=await Network.create(async url=>request(url.replace('r4-index.json','index.json'))).lookup(route);
  assert.deepEqual(outside.refs,[]);
  assert.deepEqual(RouteLed.cleanup(route).parts,route.parts);
  assert.equal(JSON.stringify(journey),before);

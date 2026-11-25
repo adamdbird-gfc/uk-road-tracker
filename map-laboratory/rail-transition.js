@@ -52,6 +52,24 @@ const RailTransition = (() => {
     return candidates.length===1?candidates[0]:null;
   }
 
+  function arrivalRetrace(line,raw,entrances,refs) {
+    if(raw?.length<4||!raw.slice(0,3).every(valid)||
+       distance(raw[0],raw[2])>4||distance(raw[0],raw[1])<50||
+       distance(raw[0],line[0])>5)return null;
+    const indoorNodes=new Set(refs.filter(ref=>ref.indoor==='yes').flatMap(ref=>ref.nodes||[]));
+    const stationDoors=entrances.filter(door=>indoorNodes.has(door.id));
+    for(let end=Math.min(120,line.length-3);end>=10;end--){
+      if(distance(line[end],raw[2])>5)continue;
+      const mid=Math.floor(end/2);
+      const prefix=line.slice(0,end+1);
+      if(prefix.some((p,i)=>distance(p,prefix[end-i])>5)||
+         distance(line[mid],raw[1])>30||
+         !stationDoors.some(door=>prefix.some(p=>distance(p,door.point)<1)))continue;
+      return {index:end,point:line[end]};
+    }
+    return null;
+  }
+
   function apply(route,context,entrances) {
     if(!route.onFoot||route.corrected||route.source!=='saved match'||
        route.parts.length!==1||!entrances.length)return route;
@@ -59,13 +77,16 @@ const RailTransition = (() => {
     if(line.length<4||!line.every(valid))return route;
     const out=context.railAfter?entranceOnApproach(line,entrances,refs,false):null;
     const back=context.railBefore?entranceOnApproach(line.toReversed(),entrances,refs,true):null;
-    const first=back?line.length-1-back.index:0,last=out?out.index:line.length-1;
-    if((!out&&!back)||last<=first)return route;
+    const retrace=context.railBefore&&!back&&route.sourceType==='timeline_import'?
+      arrivalRetrace(line,route.recorded?.[0],entrances,refs):null;
+    const first=back?line.length-1-back.index:(retrace?.index??0),last=out?out.index:line.length-1;
+    if((!out&&!back&&!retrace)||last<=first)return route;
     const surface=line.slice(first,last+1);
     if(back)surface[0]=back.point;
     if(out)surface[surface.length-1]=out.point;
     const marks=[];
     if(back)marks.push({point:back.point,label:'Likely transfer from rail'});
+    if(retrace)marks.push({point:retrace.point,label:'Likely transfer from rail',kind:'arrival-retrace'});
     if(out)marks.push({point:out.point,label:'Likely transfer to rail'});
     return {...route,surfaceParts:[surface],railTransitions:marks};
   }

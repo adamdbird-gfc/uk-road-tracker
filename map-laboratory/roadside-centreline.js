@@ -186,14 +186,15 @@ const RoadsideCentreline=(()=>{
   }
   return true;
  }
- function roadGraph(refs){
+ function roadGraph(refs,pedestrianStreets=false){
   const nodes=new Map(),edges=[];
   const vertex=(key,p)=>{
    if(!nodes.has(key))nodes.set(key,{p,edges:[]});
    return nodes.get(key);
   };
   for(const ref of refs){
-   if(!ref.nodes||!road.test(ref.kind))continue;
+   if(!ref.nodes||!(road.test(ref.kind)||pedestrianStreets&&
+      (ref.kind==='pedestrian'&&ref.name||ref.sharedCrossing)))continue;
    for(let i=1;i<ref.coords.length;i++){
     const a=vertex(ref.nodes[i-1],ref.coords[i-1]),b=vertex(ref.nodes[i],ref.coords[i]);
     if(a===b)continue;
@@ -394,7 +395,7 @@ const RoadsideCentreline=(()=>{
    if(travel<length*.72||travel>limit)return;
    const coords=pathPoints.filter((p,i)=>!i||metres(p,pathPoints[i-1])>.01);
    if(coords.length<2||!orderedSupport(coords,guide,tolerance)||
-      !orderedSupport(source,measured(coords),tolerance))return;
+     !orderedSupport(source,measured(coords),tolerance))return;
    if(protectedPaths.some(({path,grade})=>{
     const used=[];
     for(let i=1;i<source.length;i++){
@@ -410,7 +411,8 @@ const RoadsideCentreline=(()=>{
    }))return;
    const labels=edges.map(edge=>edge.name);
    if(!options.some(other=>orderedSupport(coords,measured(other.coords),1.25)&&
-      orderedSupport(other.coords,measured(coords),1.25)))options.push({coords,labels});
+      orderedSupport(other.coords,measured(coords),1.25)))options.push({coords,labels,
+       pedestrian:edges.some(edge=>edge.kind==='pedestrian')});
   }
   const fits=(a,b)=>sampled([a,b],p=>snap(p,guide).offset<=tolerance);
   for(const start of starts){
@@ -535,6 +537,39 @@ const RoadsideCentreline=(()=>{
     line.splice(i,j-i+1,...replacement.coords);
     joins.push({road:name,metres:Number(length.toFixed(1)),segments:j-i,kind:'road-interruption'});
     i+=replacement.coords.length-1;
+    break;
+   }
+  }
+  return joins;
+ }
+ function closePedestrianStreetCorridors(line,refs,recorded){
+  if(!refs.some(ref=>ref.kind==='pedestrian'&&ref.name))return [];
+  const graph=roadGraph(refs,true).filter(edge=>!edge.structure);
+  const roads=graph.filter(edge=>road.test(edge.kind)&&edge.name);
+  const names=new Set(graph.filter(edge=>edge.kind==='pedestrian').map(edge=>edge.name));
+  const protectedPaths=protectedWalks(refs).filter(path=>path.structural);
+  const joins=[];
+  for(let i=1;i<line.length-2;i++){
+   const starts=roadAnchors(line[i-1],line[i],roads,true).filter(a=>names.has(a.edge.name));
+   const name=starts[0]?.edge.name;
+   if(!name||starts.some(a=>a.edge.name!==name)||
+      roadAnchors(line[i],line[i+1],roads,true).some(a=>a.edge.name===name))continue;
+   const allowed=edge=>!edge.structure&&(edge.name===name||edge.kind==='cycleway');
+   let length=0;
+   for(let j=i+1;j<line.length-1;j++){
+    length+=metres(line[j-1],line[j]);
+    if(length>330)break;
+    const ends=roadAnchors(line[j],line[j+1],roads,false).filter(a=>a.edge.name===name);
+    if(!ends.length)continue;
+    if(length<50)break;
+    const source=line.slice(i,j+1),guide=measured(source);
+    const joined=junctionTrace(source,starts,ends,protectedPaths,allowed,{max:330,tolerance:21});
+    if(!joined?.pedestrian)break;
+    const path=measured(joined.coords);
+    if(recorded.some(p=>snap(p,guide).offset<=4&&snap(p,path).offset>13))break;
+    line.splice(i,j-i+1,...joined.coords);
+    joins.push({road:name,metres:Number(length.toFixed(1)),segments:j-i,kind:'pedestrian-street-corridor'});
+    i+=joined.coords.length-1;
     break;
    }
   }
@@ -837,7 +872,8 @@ const RoadsideCentreline=(()=>{
     if(name)byRoad.set(name,(byRoad.get(name)||0)+1);
    }
    if(route.onFoot&&!route.corrected&&route.independentRoadReferences?.length&&
-      !route.railTransitions?.length&&[...byRoad.values()].some(count=>count>=3)&&line.every(valid)){
+      !route.railTransitions?.some(mark=>mark.kind!=='arrival-retrace')&&
+      [...byRoad.values()].some(count=>count>=3)&&line.every(valid)){
     const corridor=continuousCorridor(line,graph,protectedPaths,raw);
     if(corridor){
      const anchors=chosen.filter(run=>run.start<=corridor.end&&run.end>=corridor.start);
@@ -892,6 +928,6 @@ const RoadsideCentreline=(()=>{
   }
   return {parts,promoted};
  }
- return {align,evidence,closeRoadInterruptions};
+ return {align,evidence,closeRoadInterruptions,closePedestrianStreetCorridors};
 })();
 if(typeof module!=='undefined')module.exports=RoadsideCentreline;

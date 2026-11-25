@@ -91,10 +91,11 @@ const IndependentRoadNetwork = (() => {
     }
 
     function readIndex() {
-      return cached(driving ? 'index.json' : 'r3-index.json', data => {
+      return cached(driving ? 'index.json' : 'r4-index.json', data => {
         if (data?.schema !== 1 || data.cellsPerDegree !== 50 || !Array.isArray(data.tiles) ||
             !data.tiles.every(key => /^-?\d+_-?\d+$/.test(key))) throw Error('Invalid network index');
-        return {scale: data.cellsPerDegree, available: new Set(data.tiles)};
+        return {scale: data.cellsPerDegree, available: new Set(data.tiles),
+          sharedCrossings: new Set(Array.isArray(data.sharedCrossings)?data.sharedCrossings:[])};
       });
     }
 
@@ -111,7 +112,7 @@ const IndependentRoadNetwork = (() => {
     async function lookup(route) {
       if (!route.parts?.some(line => line.length >= 2)) return {refs: [], status: 'Own journey references'};
       try {
-        const {scale, available} = await readIndex();
+        const {scale, available, sharedCrossings} = await readIndex();
         const windows = routeWindows(route, scale, available, driving ? 90 : 20);
         if (!windows.size) return {refs: [], status: 'Outside pinned network coverage · own references'};
         const results = await Promise.allSettled([...windows.keys()].map(readTile));
@@ -121,7 +122,8 @@ const IndependentRoadNetwork = (() => {
           const tile = results[index++];
           if (tile.status === 'rejected') { failed++; continue; }
           for (const ref of tile.value)
-            if (!refs.has(ref.id) && intersects(ref.coords, boxes)) refs.set(ref.id, ref);
+              if (!refs.has(ref.id) && intersects(ref.coords, boxes))
+                refs.set(ref.id, sharedCrossings.has(ref.id)?{...ref,sharedCrossing:true}:ref);
         }
         const result = [...refs.values()].sort((a, b) => a.id - b.id);
         // Missing tiles can hide a competing road. Fall back for the whole journey.

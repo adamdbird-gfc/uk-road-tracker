@@ -447,8 +447,10 @@ const RouteLedCoverage=(()=>{
   const output=canClean?suppressIslands(parts,route,withPhysicalRoads.refs||[],held):parts;
   if(route.onFoot&&!route.corrected&&route.source==='saved match'&&route.independentRoadReferences?.length){
    const raw=(route.recorded||[]).flat().filter(valid);
-   for(const line of output)if(line?.length>=4)
+   for(const line of output)if(line?.length>=4){
     aligned.promoted.push(...CentrelinePromotion.closeRoadInterruptions(line,withPhysicalRoads.refs,raw));
+    aligned.promoted.push(...CentrelinePromotion.closePedestrianStreetCorridors(line,withPhysicalRoads.refs,raw));
+   }
   }
   return {parts:output,held,centrelinePromotions:aligned.promoted,roadEvidence:screening,
    links:endpointLinks(output,route)};
@@ -577,7 +579,8 @@ const RouteLedCoverage=(()=>{
  function pinnedEdges(refs){
   const edges=new Map();
   for(const ref of refs||[]){
-   if(!road.test(ref.kind)||ref.nodes?.length!==ref.coords?.length)continue;
+   if(!(road.test(ref.kind)||ref.kind==='pedestrian'&&ref.name||ref.sharedCrossing)||
+      ref.nodes?.length!==ref.coords?.length)continue;
    for(let i=1;i<ref.coords.length;i++){
     let a=ref.coords[i-1],b=ref.coords[i],from=ref.nodes[i-1],to=ref.nodes[i];
     if(!valid(a)||!valid(b)||from===to||distance(a,b)<.1)continue;

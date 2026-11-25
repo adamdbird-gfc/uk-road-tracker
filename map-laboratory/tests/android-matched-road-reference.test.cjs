@@ -41,7 +41,7 @@ assert.throws(()=>validate({format:'roadprints_journey_diagnostics'}),/complete/
 assert(page.includes('androidEvidenceForJourney(j,androidMatchedEvidence)'),'current journey must match');
 assert(page.includes('consolidateExperimentalRoadsidePaths(androidRoadCorrespondence.canonical,roads)'),'road evidence enters final experimental coverage before footway normalisation');
 assert(page.includes('const networkGlue=experimentalCorrection.enabled?recoverSourceBackedNetworkConnections(')&&page.includes('const canonical=networkGlue.canonical'),'actual canonical output used');
-assert(page.includes('LAB r472')&&page.includes('>PR #472</a>'),'screenshot identifies current experimental build');
+assert(page.includes('LAB r473')&&page.includes('>PR #473</a>'),'screenshot identifies current experimental build');
 assert(page.includes("androidMatchedEvidence=null;"),'loading another archive clears private matched evidence');
 assert(page.includes("f.size>5_000_000"),'local debug input bounded');
 assert(!page.includes("await save(await f.text()"),'optional private debug is never saved');
