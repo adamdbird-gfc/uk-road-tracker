@@ -143,11 +143,11 @@ test('a short same-road interruption is removed in either direction with a recor
   assert.deepEqual(observed,source);
  }
 });
-test('LAB r474 one-map frontend loads alignment before route-led attribution',()=>{
+test('LAB r475 one-map frontend loads alignment before route-led attribution',()=>{
  const fs=require('node:fs'),path=require('node:path');
  const page=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
  assert(page.indexOf('roadside-centreline.js')<page.indexOf('route-led-coverage.js'));
- assert(page.includes('LAB r474')&&page.includes('>PR #474</a>'));
+ assert(page.includes('LAB r475')&&page.includes('>PR #475</a>'));
  assert(page.includes("mode=zip?'routeLed':'center'"));
  assert(page.includes('id="zipCompare"'));
 });
@@ -256,4 +256,36 @@ test('station transfer uses a connected street approach up to the preserved entr
  assert(!observed.promoted.some(run=>run.kind==='station-approach'));
  const withoutMarker=Roadside.align({...route,railTransitions:[]});
  assert(!withoutMarker.promoted.some(run=>run.kind==='station-approach'));
+});
+
+test('both directions of a retraced pavement align at one shared road turn',()=>{
+ const outward=[p(0,5),p(20,5),p(40,5),p(60,5)];
+ const line=outward.concat(outward.slice(0,-1).reverse());
+ const route={parts:[line],refs:[road([p(0),p(60)])]};
+ const result=Roadside.align(route);
+ assert.equal(result.promoted.length,2);
+ assert.deepEqual(result.parts[0],[p(0),p(60),p(0)]);
+ assert.deepEqual(route.parts,[line]);
+});
+
+test('a crossing around a junction corner can count on the through road',()=>{
+ const named=(name,coords,nodes,kind='tertiary')=>({name,kind,coords,nodes});
+ const refs=[
+  named('West Road',[p(-30),p(0)],[1,2]),
+  named('East Road',[p(0),p(7),p(30)],[2,3,4]),
+  named('Side Road',[p(0),p(0,11),p(0,30)],[2,5,6]),
+  named('',[p(-5,11),p(0,11),p(5,11)],[7,5,8],'footway'),
+  named('',[p(5,11),p(7,6),p(7)],[8,9,3],'footway')
+ ];
+ const line=[p(-30),p(0),p(0,11),p(5,11),p(7,6),p(7),p(30)];
+ for(const from of [line,line.toReversed()]){
+  const route=from.slice();
+  assert.equal(Roadside.closeKerbsideLoops(route,refs,[p(2,11)]).length,1);
+  assert.deepEqual(route,from.filter(pt=>pt[1]===0));
+ }
+ const genuineSideRoad=line.slice();
+ assert.equal(Roadside.closeKerbsideLoops(genuineSideRoad,refs,[p(0,5),p(2,11)]).length,0);
+ assert.deepEqual(genuineSideRoad,line);
+ const disconnected=refs.map(ref=>ref.name==='East Road'?{...ref,nodes:[11,3,4]}:ref);
+ assert.equal(Roadside.closeKerbsideLoops(line.slice(),disconnected,[p(2,11)]).length,0);
 });

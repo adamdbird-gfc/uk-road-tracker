@@ -8,6 +8,14 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Retraced pavements and short corner crossings (LAB r475)
+
+The cumulative replay aligns both legs of a sustained pavement retrace across
+one shared turn. A short crossing around a junction corner can contribute to
+the connected through road when the saved match and mapped geometry support
+it. Recorded evidence favouring travel along a side road protects that
+excursion. The recorded lines and saved match remain available for comparison.
+
 ## Connected pavement turns (LAB r474)
 
 The cumulative replay can align an offset pavement turn between two
