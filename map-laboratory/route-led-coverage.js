@@ -221,6 +221,45 @@ const RouteLedCoverage=(()=>{
    break;
   }
  }
+ // A clipped walking endpoint can meet a later stretch of this same journey
+ // via a mapped footway retained in its saved match references. Draw that
+ // connection without treating the inferred link as new coverage.
+ function endpointLinks(parts,route){
+  if(!route.onFoot||route.corrected||route.source!=='saved match'||parts.length!==1||
+     !route.independentRoadReferences?.length||route.railTransitions?.length)return [];
+  const line=parts[0],raw=(route.recorded||[]).flat().filter(valid);
+  if(line?.length<6||raw.length<2)return [];
+  const roads=segments(route.independentRoadReferences,road);
+  const footways=(route.refs||[]).filter(ref=>/^(footway|pedestrian|path)$/.test(ref.kind)&&
+   !ref.bridge&&!ref.tunnel&&ref.indoor!=='yes'&&ref.coords?.every(valid));
+  function connect(points,fix){
+   if(distance(points[0],fix)>6||nearest(points[0],roads)<3)return null;
+   const candidates=new Map();
+   let terminal=0;
+   for(let i=0;i<points.length-2;i++){
+    if(i)terminal+=distance(points[i-1],points[i]);
+    if(terminal>5)break;
+    for(const ref of footways)for(const path of [ref.coords,ref.coords.toReversed()]){
+     if(distance(points[i],path[0])>.25)continue;
+     let length=terminal;
+     for(let j=1;j<path.length;j++){
+      length+=distance(path[j-1],path[j]);
+      if(length>22)break;
+      const end=path[j];
+      if(length<5||nearest(end,roads)>.25||
+         !points.slice(i+5).some(p=>distance(p,end)<.25))continue;
+      const connector=path.slice(0,j+1);
+      const trail=connector.slice(1).map((b,k)=>[connector[k],b]);
+      if(nearest(fix,trail)>4.5||distance(fix,end)<1.5)continue;
+      candidates.set(connector.map(p=>p.join(',')).join(';'),connector);
+      break;
+     }
+    }
+   }
+   return candidates.size===1?[...candidates.values()][0]:null;
+  }
+  return [connect(line,raw[0]),connect(line.toReversed(),raw.at(-1))].filter(Boolean);
+ }
  function cleanup(route){
   const roads=segments(route?.refs,road),feet=segments(route?.refs,foot);
   // Static road geometry comes only from this journey's own references
@@ -296,7 +335,8 @@ const RouteLedCoverage=(()=>{
    for(const line of output)if(line?.length>=4)
     aligned.promoted.push(...CentrelinePromotion.closeRoadInterruptions(line,withPhysicalRoads.refs,raw));
   }
-  return {parts:output,held,centrelinePromotions:aligned.promoted,roadEvidence:screening};
+  return {parts:output,held,centrelinePromotions:aligned.promoted,roadEvidence:screening,
+   links:endpointLinks(output,route)};
  }
  function* sourceIntervals(a,b){
   const length=distance(a,b);
@@ -411,7 +451,9 @@ const RouteLedCoverage=(()=>{
    }
    if(at<1)addSource(point(a,b,at),b);
   }
-  return {novel:[...novel.values()],repeat:[...repeat.values()],next,held:prepared.held,centrelinePromotions:prepared.centrelinePromotions,roadEvidence:prepared.roadEvidence,sourceSegments:(route?.parts||[]).reduce((sum,line)=>sum+Math.max(0,(line?.length||0)-1),0)};
+  return {novel:[...novel.values()],repeat:[...repeat.values()],next,held:prepared.held,
+   centrelinePromotions:prepared.centrelinePromotions,roadEvidence:prepared.roadEvidence,links:prepared.links,
+   sourceSegments:(route?.parts||[]).reduce((sum,line)=>sum+Math.max(0,(line?.length||0)-1),0)};
  }
  function evidence(route){
   const referenceRoute=route.independentRoadReferences?.length?

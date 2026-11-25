@@ -24,5 +24,5 @@ assert(page.includes("nativeMatch=typeof androidMatchedEvidence!=='undefined'?an
 assert(page.includes('const prepared=coverageEvidence.prepared')||page.includes('prepared=coverageEvidence.prepared'),'normal matcher pipeline consumes selected source');
 assert(page.includes('matchPedestrianConstrainedRoadRoute(baselineCanonical,roads,prepared.lines)'),'route-level matcher uses selected primary evidence');
 assert(page.includes('coverageEvidence,androidRoadCorrespondence'),'provenance returned in diagnostics');
-assert(page.includes('LAB r465')&&page.includes('>PR #465</a>'));
+assert(page.includes('LAB r466')&&page.includes('>PR #466</a>'));
 console.log('PASS: saved Android matched route primary experimental evidence, OFF invariance, correction breaks, provenance');

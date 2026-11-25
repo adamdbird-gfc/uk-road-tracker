@@ -9,7 +9,7 @@ assert(page.includes('if(diagnosticsZip){')&&page.includes("if(mode==='canonical
  'ZIP source replay stays distinct from provisional canonical coverage');
 assert(page.includes("zipRouteCache.clear();zipCoverageCache.clear();zipCoverageLedger.clear();zipRouteLedCache.clear();zipRouteLedLedger.clear();currentCoverageAudit=null;$('coverageAuditSummary').textContent='';$('downloadCoverageAudit').disabled=true;mode=zip?'routeLed':'center'"),
  'changing input resets previously replayed route history');
-assert(page.includes('LAB r465')&&page.includes('>PR #465</a>'));
+assert(page.includes('LAB r466')&&page.includes('>PR #466</a>'));
 const seen=[];
 const zip={read:async index=>{seen.push(index);return {journey:{index}};}};
 const reconstruct=journey=>({
@@ -17,7 +17,7 @@ const reconstruct=journey=>({
  recorded:[[[journey.index,0],[journey.index+0.5,0]]],
  onFoot:true,refs:[],source:'saved match',projected:0,joins:0
 });
-const harness=new Function('zip','reconstruct',`
+const createHarness=new Function('zip','reconstruct','outage',`
  let diagnosticsZip=zip,diagnosticRoute=null,zipRouteCache=new Map(),busy=false,step=0,isolated=false,mode='routeLed';
  let data={journeys:Array.from({length:4},(_,i)=>['date'+i,'walk','walking',[],null])};
  let roads=[],roadIds=new Map(),cache=new Map(),messages=[];
@@ -29,6 +29,7 @@ const harness=new Function('zip','reconstruct',`
  const zipRailTransition=async route=>route;
  const zipReferenceNetwork={lookup:async route=>{
   const index=route.parts[0][0][0];referenceLookups.push(index);
+  if(index===outage.index)return {refs:[],status:'Pinned network tile unavailable',unavailable:true};
   return {refs:[index],status:'Pinned network fixture'};
  }};
  const controlsById={};const $=id=>(controlsById[id]??={textContent:'',disabled:false});
@@ -36,7 +37,8 @@ const harness=new Function('zip','reconstruct',`
  const problem=s=>{throw Error(s)},addWays=()=>{},match=()=>{throw Error('unexpected rematch')};
  ${page.slice(start,end)}
  return {showZipJourney,state:()=>({step,cache:[...zipRouteCache.keys()],parts:zipRouteCache.get(0),route:diagnosticRoute,rawRows:data.journeys.map(j=>j[3].length),messages,referenceLookups,credited:[...zipRouteLedCache.values()].map(result=>result.novel[0])})};
-`)(zip,reconstruct);
+`);
+const harness=createHarness(zip,reconstruct,{index:-1});
 (async()=>{
  await harness.showZipJourney(1);
  assert.deepEqual(seen,[0],'first Next reads one journey');
@@ -53,5 +55,13 @@ const harness=new Function('zip','reconstruct',`
  await harness.showZipJourney(4);
  assert.deepEqual([...new Set(seen)].sort(),[0,1,2,3],'later jump retains chronological coverage and adds the new selected journey');
  assert(harness.state().messages.at(-1).includes('Cumulative ZIP replay · 4 / 4 journeys'), 'later jump status stays in sync with selected journey');
+ const outage={index:1};
+ const recovery=createHarness(zip,reconstruct,outage);
+ await recovery.showZipJourney(3);
+ assert.deepEqual(recovery.state().credited,[0,undefined,2]);
+ outage.index=-1;
+ await recovery.showZipJourney(3);
+ assert.deepEqual(recovery.state().credited,[0,1,2],'rebuild the chronologically ordered prefix after recovery');
+ assert(recovery.state().messages.at(-1).includes('Pinned network fixture'));
  console.log('PASS: progressive ZIP Next/Back/direct jump and chronological geometry accumulation');
 })().catch(error=>{console.error(error);process.exitCode=1});

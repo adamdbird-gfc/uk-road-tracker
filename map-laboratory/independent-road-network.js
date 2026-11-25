@@ -60,19 +60,38 @@ const IndependentRoadNetwork = (() => {
     return false;
   }
 
-  function create(request = fetch, root = './reference-network/v1/') {
-    let index;
-    const tiles = new Map();
+  function create(request = fetch, root = './reference-network/v1/', now = Date.now) {
+    const cache = new Map();
 
-    async function read(name) {
-      const response = await request(root + name, {signal: AbortSignal.timeout(8000)});
+    async function read(name, retry) {
+      const response = await request(root + name, {
+        signal: AbortSignal.timeout(8000), ...(retry ? {cache: 'reload'} : {}),
+      });
       if (!response.ok) throw Error('HTTP ' + response.status);
       if (!name.endsWith('.gz')) return response.json();
-      return new Response(response.body.pipeThrough(new DecompressionStream('gzip'))).json();
+      const bytes = await response.arrayBuffer();
+      const header = new Uint8Array(bytes, 0, Math.min(2, bytes.byteLength));
+      // A browser or proxy may have already decoded a gzip HTTP response.
+      if (header[0] !== 0x1f || header[1] !== 0x8b) return new Response(bytes).json();
+      return new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).json();
+    }
+
+    function cached(name, validate) {
+      const existing = cache.get(name);
+      if (existing && (existing.retryAt === undefined || now() < existing.retryAt)) return existing.promise;
+      const entry = {};
+      entry.promise = read(name, false).then(validate)
+        .catch(() => read(name, true).then(validate))
+        .catch(error => {
+          entry.retryAt = now() + 15000;
+          throw error;
+        });
+      cache.set(name, entry);
+      return entry.promise;
     }
 
     function readIndex() {
-      return index ??= read('r2-index.json').then(data => {
+      return cached('r2-index.json', data => {
         if (data?.schema !== 1 || data.cellsPerDegree !== 50 || !Array.isArray(data.tiles) ||
             !data.tiles.every(key => /^-?\d+_-?\d+$/.test(key))) throw Error('Invalid network index');
         return {scale: data.cellsPerDegree, available: new Set(data.tiles)};
@@ -80,14 +99,13 @@ const IndependentRoadNetwork = (() => {
     }
 
     function readTile(key) {
-      if (!tiles.has(key)) tiles.set(key, read(key + '.json.gz').then(data => {
+      return cached(key + '.json.gz', data => {
         if (!Array.isArray(data) || !data.every(ref => Number.isSafeInteger(ref?.id) &&
             (ROAD.test(ref.kind) || PATH.test(ref.kind)) && Array.isArray(ref.coords) &&
             ref.coords.length >= 2 && ref.coords.every(valid) && Array.isArray(ref.nodes) &&
             ref.nodes.length === ref.coords.length && ref.nodes.every(Number.isSafeInteger))) throw Error('Invalid network tile');
         return data;
-      }));
-      return tiles.get(key);
+      });
     }
 
     async function lookup(route) {
@@ -107,12 +125,12 @@ const IndependentRoadNetwork = (() => {
         }
         const result = [...refs.values()].sort((a, b) => a.id - b.id);
         // Missing tiles can hide a competing road. Fall back for the whole journey.
-        if (failed) return {refs: [], status: 'Pinned network tile unavailable · own references'};
+        if (failed) return {refs: [], status: 'Pinned network tile unavailable · own references', unavailable: true};
         return {refs: result, status: result.length ?
           result.filter(ref => ROAD.test(ref.kind)).length + ' pinned OSM road references' :
           'Pinned network has no nearby references · own references'};
       } catch {
-        return {refs: [], status: 'Pinned network index unavailable · own references'};
+        return {refs: [], status: 'Pinned network index unavailable · own references', unavailable: true};
       }
     }
     return {lookup};
