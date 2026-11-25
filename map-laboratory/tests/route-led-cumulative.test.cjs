@@ -21,6 +21,22 @@ test('bidirectional revisit remains one cumulative source identity',()=>{
  assert.equal(second.novel.length,0);
  assert.equal(second.repeat.length,first.novel.length);
 });
+test('physical road overlap is independent of direction, vertices and partial coverage',()=>{
+ const ref={kind:'primary',nodes:[5,2,7],coords:[p(0),p(25),p(50)]};
+ const route=parts=>({parts,independentRoadReferences:[ref]});
+ const morning=RouteLed.accumulate(RouteLed.createLedger(),route([[p(10),p(32),p(37)]]));
+ const evening=RouteLed.accumulate(morning.next,route([[p(45),p(31),p(26),p(11),p(5)]]));
+ const length=parts=>parts.reduce((total,{a,b})=>total+111320*Math.abs(b[0]-a[0]),0);
+ assert(Math.abs(length(evening.repeat)-27)<.01,'only the actually shared distance repeats');
+ assert(Math.abs(length(evening.novel)-13)<.01,'the two real extensions remain new');
+ assert(evening.repeat.every(({a,b})=>a[0]>=b[0]),'preserve the direction of the current walk');
+ const near=RouteLed.accumulate(morning.next,route([[p(37,2),p(10,2)]]));
+ assert.equal(near.repeat.length,0,'a parallel path outside the reference is not merged');
+ assert(Math.abs(length(near.novel)-27)<.01);
+ assert(Math.abs(length(RouteLed.accumulate(evening.next,route([[p(6),p(43)]])).repeat)-37)<.01);
+ assert(Math.abs(length(RouteLed.accumulate(morning.next,route([[p(6),p(43)]])).repeat)-27)<.01,
+  'processing a later walk does not alter prior history');
+});
 test('distinct branches are not deduplicated just because they share a junction',()=>{
  const first=RouteLed.accumulate(new Set(),{parts:[[p(0),p(20)]]});
  const second=RouteLed.accumulate(first.next,{parts:[[p(20),p(20,20)]]});
@@ -141,7 +157,7 @@ test('ZIP UI keeps canonical and route-led models isolated',()=>{
  assert(page.includes('RouteLedCoverage.accumulate(zipRouteLedLedger,route.surfaceParts?{...route,parts:route.surfaceParts}:route)'));
  assert(page.includes("mode==='routeLed'?zipRouteLedCache.get(n):zipCoverageCache.get(n)"));
  assert(page.includes("zipRouteLedCache.clear();zipRouteLedLedger.clear()"));
- assert(page.includes('LAB r464')&&page.includes('>PR #464</a>'));
+ assert(page.includes('LAB r465')&&page.includes('>PR #465</a>'));
  assert(page.includes('id="zipCompare"')&&page.includes('id="zipModeControls" hidden')&&page.includes("mode=zip?'routeLed':'center'"));
 });
 

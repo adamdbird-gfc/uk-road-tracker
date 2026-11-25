@@ -291,40 +291,133 @@ const RouteLedCoverage=(()=>{
   }
   const canClean=route.onFoot!==false&&route.source!=='recorded';
   const output=canClean?suppressIslands(parts,route,withPhysicalRoads.refs||[],held):parts;
+  if(route.onFoot&&!route.corrected&&route.source==='saved match'&&route.independentRoadReferences?.length){
+   const raw=(route.recorded||[]).flat().filter(valid);
+   for(const line of output)if(line?.length>=4)
+    aligned.promoted.push(...CentrelinePromotion.closeRoadInterruptions(line,withPhysicalRoads.refs,raw));
+  }
   return {parts:output,held,centrelinePromotions:aligned.promoted,roadEvidence:screening};
  }
+ function* sourceIntervals(a,b){
+  const length=distance(a,b);
+  if(length<.5||length>500)return;
+  const n=Math.ceil(length/STEP);
+  for(let k=0;k<n;k++){
+   const x=point(a,b,k/n),y=point(a,b,(k+1)/n);
+   yield {id:key(x,y),a:x,b:y,type:'source',source:'saved-match'};
+  }
+ }
  function intervals(route){
-  const result=[],seen=new Set();
-  for(const line of route?.parts||[]){
-   if(!Array.isArray(line))continue;
-   for(let i=1;i<line.length;i++){
-    const a=line[i-1],b=line[i];if(!valid(a)||!valid(b))continue;
-    const length=distance(a,b);
-    if(length<.5||length>500)continue;
-    const n=Math.ceil(length/STEP);
-    for(let k=0;k<n;k++){
-     const x=point(a,b,k/n),y=point(a,b,(k+1)/n),id=key(x,y);
-     if(seen.has(id))continue;
-     seen.add(id);result.push({id,a:x,b:y,type:'source',source:'saved-match'});
-    }
+  const result=new Map();
+  for(const line of route?.parts||[])for(let i=1;i<(line?.length||0);i++){
+   const a=line[i-1],b=line[i];
+   if(valid(a)&&valid(b))for(const part of sourceIntervals(a,b))
+    if(!result.has(part.id))result.set(part.id,part);
+  }
+  return [...result.values()];
+ }
+ function createLedger(history){
+  const sources=new Set(history?.sources||history),roads=new Map(history?.roads);
+  return {sources,roads,get size(){return sources.size+roads.size;},
+   clear(){sources.clear();roads.clear();}};
+ }
+ function pinnedEdges(refs){
+  const edges=new Map();
+  for(const ref of refs||[]){
+   if(!road.test(ref.kind)||ref.nodes?.length!==ref.coords?.length)continue;
+   for(let i=1;i<ref.coords.length;i++){
+    let a=ref.coords[i-1],b=ref.coords[i],from=ref.nodes[i-1],to=ref.nodes[i];
+    if(!valid(a)||!valid(b)||from===to||distance(a,b)<.1)continue;
+    if(from>to)[a,b,from,to]=[b,a,to,from];
+    const id='road:'+from+':'+to;
+    edges.set(id,{id,a,b,west:Math.min(a[0],b[0]),east:Math.max(a[0],b[0]),
+     south:Math.min(a[1],b[1]),north:Math.max(a[1],b[1])});
    }
   }
-  return result;
+  return [...edges.values()];
+ }
+ function fraction(p,a,b){
+  const scale=Math.cos(a[1]*D),x=(b[0]-a[0])*scale,y=b[1]-a[1];
+  return ((p[0]-a[0])*scale*x+(p[1]-a[1])*y)/(x*x+y*y);
+ }
+ function roadSpans(a,b,edges){
+  const margin=.4/M,lonMargin=margin/Math.max(.1,Math.cos(a[1]*D));
+  const west=Math.min(a[0],b[0])-lonMargin,east=Math.max(a[0],b[0])+lonMargin;
+  const south=Math.min(a[1],b[1])-margin,north=Math.max(a[1],b[1])+margin;
+  const spans=[];
+  for(const edge of edges){
+   if(edge.west>east||edge.east<west||edge.south>north||edge.north<south||
+      cosine(a,b,edge.a,edge.b)<.98)continue;
+   const x=fraction(edge.a,a,b),y=fraction(edge.b,a,b);
+   const start=Math.max(0,Math.min(x,y)),end=Math.min(1,Math.max(x,y));
+   if(end-start<1e-7)continue;
+   const u=point(a,b,start),v=point(a,b,end);
+   const from=projection(u,edge.a,edge.b),to=projection(v,edge.a,edge.b);
+   if(from.offset>.35||to.offset>.35||Math.abs(to.t-from.t)<1e-7)continue;
+   spans.push({edge,start,end,from:from.t,to:to.t});
+  }
+  spans.sort((x,y)=>x.start-y.start);
+  return spans.some((span,i)=>i&&span.start<spans[i-1].end-1e-6)?[]:spans;
+ }
+ function attributeRoad({edge,from,to},previous,next,novel,repeat){
+  const lo=Math.min(from,to),hi=Math.max(from,to),epsilon=1e-7;
+  const travelled=previous.get(edge.id)||[];
+  const parts=[];
+  let start=lo;
+  for(const [a,b] of travelled){
+   if(b<=lo+epsilon)continue;
+   if(a>=hi-epsilon)break;
+   const end=Math.min(b,hi);
+   if(a>start+epsilon)parts.push([start,a,false]);
+   if(end>start+epsilon)parts.push([Math.max(start,a),end,true]);
+   start=Math.max(start,end);
+  }
+  if(start<hi-epsilon)parts.push([start,hi,false]);
+  for(const [a,b,seen] of from<to?parts:parts.toReversed()){
+   const id=edge.id+':'+a.toFixed(7)+':'+b.toFixed(7);
+   const p=point(edge.a,edge.b,from<to?a:b),q=point(edge.a,edge.b,from<to?b:a);
+   // A journey can double back without promoting itself to repeated coverage.
+   const target=seen?repeat:novel;
+   target.set(id,{id,a:p,b:q,type:'source',source:'saved-match'});
+  }
+  const united=[];
+  for(const interval of [...(next.get(edge.id)||[]),[lo,hi]].sort((a,b)=>a[0]-b[0])){
+   const last=united.at(-1);
+   if(last&&last[1]>=interval[0]-epsilon)last[1]=Math.max(last[1],interval[1]);
+   else united.push(interval.slice());
+  }
+  next.set(edge.id,united);
  }
  function accumulate(history,route){
-  const next=new Set(history||[]),novel=[],repeat=[];
+  const next=createLedger(history),novel=new Map(),repeat=new Map();
+  const previousSources=history?.sources||history,previousRoads=history?.roads||new Map();
   const prepared=cleanup(route);
-  for(const part of intervals(prepared)){
-   if(next.has(part.id))repeat.push(part);
-   else{novel.push(part);next.add(part.id)}
+  const edges=pinnedEdges(route.independentRoadReferences);
+  const addSource=(a,b)=>{
+   for(const part of sourceIntervals(a,b)){
+    const target=previousSources?.has(part.id)?repeat:novel;
+    if(!target.has(part.id))target.set(part.id,part);
+    next.sources.add(part.id);
+   }
+  };
+  for(const line of prepared.parts||[])for(let i=1;i<(line?.length||0);i++){
+   const a=line[i-1],b=line[i];
+   if(!valid(a)||!valid(b)||distance(a,b)>500)continue;
+   let at=0;
+   for(const span of roadSpans(a,b,edges)){
+    if(span.start>at)addSource(point(a,b,at),point(a,b,span.start));
+    attributeRoad(span,previousRoads,next.roads,novel,repeat);
+    at=span.end;
+   }
+   if(at<1)addSource(point(a,b,at),b);
   }
-  return {novel,repeat,next,held:prepared.held,centrelinePromotions:prepared.centrelinePromotions,roadEvidence:prepared.roadEvidence,sourceSegments:(route?.parts||[]).reduce((sum,line)=>sum+Math.max(0,(line?.length||0)-1),0)};
+  return {novel:[...novel.values()],repeat:[...repeat.values()],next,held:prepared.held,centrelinePromotions:prepared.centrelinePromotions,roadEvidence:prepared.roadEvidence,sourceSegments:(route?.parts||[]).reduce((sum,line)=>sum+Math.max(0,(line?.length||0)-1),0)};
  }
  function evidence(route){
   const referenceRoute=route.independentRoadReferences?.length?
    {...route,refs:PublicRoadSource.merge(route.refs,route.independentRoadReferences)}:route;
   return CentrelinePromotion.evidence(referenceRoute);
  }
- return {intervals,accumulate,cleanup,evidence,key};
+ return {intervals,accumulate,cleanup,evidence,key,createLedger};
 })();
 if(typeof module!=='undefined')module.exports=RouteLedCoverage;
