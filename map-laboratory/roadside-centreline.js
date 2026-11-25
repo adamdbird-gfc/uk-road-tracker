@@ -197,7 +197,7 @@ const RoadsideCentreline=(()=>{
    for(let i=1;i<ref.coords.length;i++){
     const a=vertex(ref.nodes[i-1],ref.coords[i-1]),b=vertex(ref.nodes[i],ref.coords[i]);
     if(a===b)continue;
-    const edge={a,b,name:ref.name||'',structure:structure(ref)};
+    const edge={a,b,name:ref.name||'',kind:ref.kind,structure:structure(ref)};
     a.edges.push(edge);b.edges.push(edge);edges.push(edge);
    }
   }
@@ -241,6 +241,145 @@ const RoadsideCentreline=(()=>{
   const lengths=[0];
   for(let i=1;i<coords.length;i++)lengths.push(lengths.at(-1)+metres(coords[i-1],coords[i]));
   return {coords,lengths};
+ }
+ // Match a sustained surface corridor as one ordered road trace. A side
+ // street crossing can interrupt the pavement without interrupting the road.
+ function continuousCorridor(line,graph,protectedPaths,recorded){
+  const major=edge=>edge.name&&/^(trunk|primary|secondary|tertiary)$/.test(edge.kind)&&!edge.structure;
+  const edges=graph.filter(major);
+  if(!edges.length||line.length<6)return null;
+  const guide=measured(line);
+  if(guide.lengths.at(-1)<180||guide.lengths.at(-1)>10000)return null;
+  const samples=[{p:line[0],at:0}];
+  for(let i=1;i<line.length;i++){
+   const a=line[i-1],b=line[i],length=guide.lengths[i]-guide.lengths[i-1];
+   if(length>500)return null;
+   const count=Math.max(1,Math.ceil(length/8));
+   for(let j=1;j<=count;j++)samples.push({p:interpolate(a,b,j/count),at:j===count?i:null});
+  }
+  const candidates=(point,before,after)=>{
+   const lonPad=.00017/Math.max(.1,Math.cos(point[1]*D));
+   const nearby=[];
+   for(const edge of edges){
+    const {a,b}=edge;
+    if(point[0]<Math.min(a.p[0],b.p[0])-lonPad||point[0]>Math.max(a.p[0],b.p[0])+lonPad||
+       point[1]<Math.min(a.p[1],b.p[1])-.00018||point[1]>Math.max(a.p[1],b.p[1])+.00018)continue;
+    const hit=projected(point,a.p,b.p),heading=direction(before,after,a.p,b.p);
+    if(hit.offset>18||Math.abs(heading)<.55)continue;
+    const forward=heading>0;
+    nearby.push({edge,p:hit.position,start:forward?a:b,end:forward?b:a,
+     cost:hit.offset+4*(1-Math.abs(heading))});
+   }
+   return nearby;
+  };
+  const advance=(from,to,limit,sourceA,sourceB)=>{
+   if(from.edge===to.edge){
+    const length=metres(from.p,to.p);
+    if(from.end!==to.end||length>limit||direction(from.p,to.p,from.start.p,from.end.p)<0)return null;
+    return {length,via:[]};
+   }
+   let best=null;
+   const exit=metres(to.start.p,to.p);
+   const visited=new Map();
+   const visit=(node,length,via)=>{
+    if(length+exit>limit||best&&length+exit>=best.length||length>=(visited.get(node)??Infinity))return;
+    visited.set(node,length);
+    if(node===to.start){
+     best={length:length+exit,via};
+     return;
+    }
+    for(const edge of node.edges){
+     if(edge===from.edge||edge===to.edge||!major(edge))continue;
+     const next=edge.a===node?edge.b:edge.a;
+     if(projected(next.p,sourceA,sourceB).offset>19)continue;
+     visit(next,length+metres(node.p,next.p),via.concat([next.p]));
+    }
+   };
+   visit(from.end,metres(from.p,from.end.p),[from.end.p]);
+   return best;
+  };
+  let states=[],best=null;
+  function consider(state){
+   const start=samples[state.first].at,end=samples[state.last].at;
+   if(start===null||end===null)return;
+   const length=guide.lengths[end]-guide.lengths[start];
+   if(length<180||best&&length<=best.length)return;
+   best={state,length};
+  }
+  for(let i=0;i<samples.length;i++){
+   const {p,at}=samples[i];
+   const before=samples[Math.max(0,i-2)].p,after=samples[Math.min(samples.length-1,i+2)].p;
+   const previous=samples[Math.max(0,i-1)].p,step=metres(previous,p);
+   const next=candidates(p,before,after).map(candidate=>{
+    let choice=null;
+    for(const state of states){
+     const transition=advance(state,candidate,step*1.65+8,previous,p);
+     if(!transition)continue;
+     const cost=state.cost+candidate.cost+Math.abs(step-transition.length)*.6;
+     if(!choice||state.first<choice.first||state.first===choice.first&&cost<choice.cost)
+      choice={...candidate,first:state.first,last:i,cost,previous:state,via:transition.via};
+    }
+   return choice||{...candidate,first:i,last:i,cost:candidate.cost,previous:null,via:[]};
+   });
+   if(at!==null){
+    const longest=next.filter(state=>samples[state.first].at!==null)
+     .sort((a,b)=>a.first-b.first||a.cost-b.cost);
+    if(longest.length)consider(longest[0]);
+   }
+   // A new trace starts at an existing source vertex, so splicing cannot
+   // remove part of a genuine path outside the matched span.
+   states=next.filter(state=>samples[state.first].at!==null);
+  }
+  if(!best)return null;
+  let statesInOrder=[];
+  for(let state=best.state;state;state=state.previous)statesInOrder.push(state);
+  statesInOrder.reverse();
+  // Adjacent road stubs can catch projections close to a terminal turn.
+  // Keep those terminals in the source unless travel along the road is sustained.
+  const first=statesInOrder[0],last=statesInOrder.at(-1);
+  const firstChange=statesInOrder.findIndex(state=>state.edge.name!==first.edge.name);
+  const lastChange=statesInOrder.findLastIndex(state=>state.edge.name!==last.edge.name);
+  const startOffset=firstChange>0&&metres(first.p,statesInOrder[firstChange-1].p)<22?firstChange:0;
+  const endOffset=lastChange>=0&&metres(last.p,statesInOrder[lastChange+1].p)<22?
+   lastChange+1:statesInOrder.length;
+  statesInOrder=statesInOrder.slice(startOffset,endOffset);
+  const firstVertex=statesInOrder.findIndex(state=>samples[state.last].at!==null);
+  const lastVertex=statesInOrder.findLastIndex(state=>samples[state.last].at!==null);
+  if(firstVertex<0||lastVertex<=firstVertex)return null;
+  statesInOrder=statesInOrder.slice(firstVertex,lastVertex+1);
+  const start=samples[statesInOrder[0].last].at,end=samples[statesInOrder.at(-1).last].at;
+  const length=guide.lengths[end]-guide.lengths[start];
+  if(length<180)return null;
+  const coords=[statesInOrder[0].p],names=new Set([statesInOrder[0].edge.name]);
+  for(const state of statesInOrder.slice(1)){
+   if(state.via.length)coords.push(...state.via);
+   names.add(state.edge.name);
+  }
+  coords.push(statesInOrder.at(-1).p);
+  const geometry=coords.filter((point,i)=>!i||metres(point,coords[i-1])>.01);
+  if(geometry.length<2)return null;
+  const source=line.slice(start,end+1),path=measured(geometry),span=measured(source);
+  if(path.lengths.at(-1)<length*.8||path.lengths.at(-1)>length*1.1||
+     !orderedSupport(source,path,18)||!closeToWay(geometry,span,18))return null;
+  if(recorded.some(fix=>snap(fix,span).offset<=3&&snap(fix,path).offset>13))return null;
+  let dedicatedLength=0;
+  for(let i=1;i<source.length;i++){
+   const a=source[i-1],b=source[i],mid=interpolate(a,b,.5);
+   const used=protectedPaths.filter(({path:foot})=>{
+    const hit=snap(mid,foot);
+    return hit.offset<=1.25&&Math.abs(direction(a,b,foot.coords[hit.edge-1],foot.coords[hit.edge]))>=.85;
+   });
+   if(used.some(walk=>walk.structural))return null;
+   if(used.some(walk=>!walk.crossing))dedicatedLength+=metres(a,b);
+   if(dedicatedLength>15)return null;
+   if(used.some(walk=>walk.crossing)){
+    // Keep a crossing of the selected road. A crossing of a side road
+    // on the same pavement is part of the through corridor.
+    const road=snap(mid,path),u=path.coords[road.edge-1],v=path.coords[road.edge];
+    if(Math.abs(direction(a,b,u,v))<.6&&!sampled([a,b],p=>projected(p,u,v).offset>2))return null;
+   }
+  }
+  return {start,end,length,geometry,names};
  }
  function junctionTrace(source,starts,ends,protectedPaths,corridor,bounds={}){
   const guide=measured(source),length=guide.lengths.at(-1);
@@ -310,7 +449,9 @@ const RoadsideCentreline=(()=>{
     const dedicated=ref.footway==='crossing'||/^(steps|corridor|cycleway|bridleway)$/.test(ref.kind)||
      ref.indoor==='yes';
     const grade=structure(ref);
-    return dedicated||grade?[{path:measured(ref.coords),grade:dedicated?'':grade,structural:!!grade||ref.indoor==='yes'||ref.kind==='steps'}]:[];
+    const structural=!!grade||ref.indoor==='yes'||ref.kind==='steps';
+    return dedicated||grade?[{path:measured(ref.coords),grade:dedicated?'':grade,structural,
+     crossing:!structural&&ref.footway==='crossing'}]:[];
    });
  }
  function joinJunctions(line,edges,protectedPaths,raw,allowPavementJoin){
@@ -564,6 +705,7 @@ const RoadsideCentreline=(()=>{
    }
    const ranges=[];
    const line=original;
+   const raw=route.onFoot&&!route.corrected?(route.recorded||[]).flat().filter(valid):[];
    const protectedLegs=line.slice(1).map((b,i)=>{
     const a=line[i];
     if(!valid(a)||!valid(b)||onMappedRoad(a,b,graph))return true;
@@ -625,20 +767,47 @@ const RoadsideCentreline=(()=>{
     // diagonal to the next access vertex would cut the mapped entrance.
     if(start.extra&&start.at>0)geometry.unshift(line[start.at]);
     if(end.extra&&end.at<line.length-1)geometry.push(line[end.at]);
-    chosen.push({...run,start:start.at,end:end.at,sign,exitAnchor:!!end.extra&&end.at<line.length-1,geometry});
-    promoted.push({metres:Number((run.length+start.extra+end.extra).toFixed(1)),
+    const promotion={metres:Number((run.length+start.extra+end.extra).toFixed(1)),
      offset:Number(run.offset.toFixed(1)),segments:end.at-start.at,
-     road:way.name});
+     road:way.name};
+    chosen.push({...run,start:start.at,end:end.at,sign,entryAnchor:!!start.extra&&start.at>0,
+     exitAnchor:!!end.extra&&end.at<line.length-1,geometry,promotion});
    }
+   // Let an established road guide the repair. The graph may connect
+   // interruptions, but it must retain the physical carriageway of each run.
+   const byRoad=new Map();
+   for(const run of chosen){
+    const name=run.promotion.road;
+    if(name)byRoad.set(name,(byRoad.get(name)||0)+1);
+   }
+   if(route.onFoot&&!route.corrected&&route.independentRoadReferences?.length&&
+      !route.railTransitions?.length&&[...byRoad.values()].some(count=>count>=3)&&line.every(valid)){
+    const corridor=continuousCorridor(line,graph,protectedPaths,raw);
+    if(corridor){
+     const anchors=chosen.filter(run=>run.start<=corridor.end&&run.end>=corridor.start);
+     const path=measured(corridor.geometry);
+     if([...corridor.names].some(name=>anchors.filter(run=>run.promotion.road===name).length>=3)&&
+        anchors.every(run=>run.start>=corridor.start&&run.end<=corridor.end&&
+         closeToWay(run.geometry.slice(run.entryAnchor?1:0,
+          run.exitAnchor?-1:undefined),path,2.5))){
+      const retained=chosen.filter(run=>!anchors.includes(run));
+      const promotion={road:[...corridor.names].join(' / '),metres:Number(corridor.length.toFixed(1)),
+       segments:corridor.end-corridor.start,kind:'continuous-road-corridor'};
+      chosen.splice(0,chosen.length,...retained,{...corridor,promotion});
+     }
+    }
+   }
+   promoted.push(...chosen.map(run=>run.promotion));
    const output=[],seams=[];
    chosen.sort((a,b)=>a.start-b.start);
    const last=chosen.at(-1);
-   const access=last&&route.onFoot&&!route.corrected&&original===route.parts.at(-1)?
+   const access=last?.w!==undefined&&route.onFoot&&!route.corrected&&original===route.parts.at(-1)?
     terminalAccess(line,last,roads[last.w],refs,route):null;
    let at=0;
    for(const run of chosen){
     output.push(...line.slice(at,run.start),...run.geometry);
-    if(run!==last||!access)seams.push({at:output.length-(run.exitAnchor?2:1),name:roads[run.w].name});
+    if(run.w!==undefined&&(run!==last||!access))
+     seams.push({at:output.length-(run.exitAnchor?2:1),name:roads[run.w].name});
     at=run.end+1;
    }
    if(access){
@@ -648,7 +817,6 @@ const RoadsideCentreline=(()=>{
     const {geometry,...receipt}=access;
     promoted.push(receipt);
    }else output.push(...line.slice(at));
-   const raw=route.onFoot&&!route.corrected?(route.recorded||[]).flat().filter(valid):[];
    if(route.onFoot&&!route.corrected&&seams.length){
     promoted.push(...joinDividedRoads(output,seams,graph,refs,raw));
    }

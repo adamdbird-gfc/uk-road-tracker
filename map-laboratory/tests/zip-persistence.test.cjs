@@ -12,5 +12,5 @@ assert(page.includes('id="forgetZip"')&&page.includes('id="zipStorageNotice"'),'
 assert(!page.includes('fetch(file)'),'private ZIP never uploaded by the persistence path');
 assert(page.includes("mode=zip?'routeLed':'center'"),'route-led cumulative map is the default');
 assert(page.includes("if(mode==='canonical'||mode==='routeLed')")&&page.includes("ctx.setLineDash([4,5])"),'unsupported network intervals remain visible only as dashed source evidence');
-assert(page.includes('LAB r463')&&page.includes('>PR #463</a>'),'revision visible to the owner');
+assert(page.includes('LAB r464')&&page.includes('>PR #464</a>'),'revision visible to the owner');
 console.log('PASS: persistent private ZIP storage, validated automatic restore, deletion, graceful quota handling, route-first default');

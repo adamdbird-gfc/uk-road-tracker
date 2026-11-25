@@ -8,6 +8,19 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Continuous road alignment through side streets (LAB r464)
+
+Where a saved walk has several separately supported runs on the same named
+road, the Lab can replace the interruptions with one connected physical road
+trace. The candidate must follow the saved walk in order and retain the
+carriageways already established by the individual journey. Short side-street
+crossings can stay on the centreline of the through road. Grade-separated
+routes, independent footpaths, supported turns off the road and station
+approaches retain their source geometry.
+
+This is a map display decision. The original Timeline fixes and saved match
+remain available for comparison and retain their original provenance.
+
 ## North London road references (LAB r463)
 
 The pinned road and path network adds two adjacent cells covering King's Cross,
