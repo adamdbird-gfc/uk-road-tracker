@@ -8,6 +8,19 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Return walks and road overlap (LAB r465)
+
+When both approaches establish the same physical road, the Lab can align
+a short intervening pavement section or junction indent using that road's
+connected centreline. Independent paths and recorded detours constrain this
+step. Each journey is still aligned using its own evidence.
+
+For geometry on a pinned road, the cumulative display compares the actual
+covered portions of its OpenStreetMap edges. Direction and differences in
+saved vertices no longer change the overlap. Only the shared portion turns
+green. The selected journey counter stays on the displayed journey until
+slider navigation completes.
+
 ## Continuous road alignment through side streets (LAB r464)
 
 Where a saved walk has several separately supported runs on the same named

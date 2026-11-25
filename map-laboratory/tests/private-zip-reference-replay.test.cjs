@@ -217,3 +217,27 @@ test('owner ZIP Journey 13 aligns Pentonville Road and retains the station appro
  assert.equal(hash(fs.readFileSync(archive)),hash(bytes));
  console.log('Pentonville Road centreline gain: '+gain.toFixed(1)+' m. Station-side pedestrian approach exact.');
 });
+
+test('station return repeats Windmill Street and keeps its distinct square route',{skip:!archive},async()=>{
+ const zip=await Bulk.open(new Blob([fs.readFileSync(archive)]));
+ const provider=Network.create(request);
+ const load=async index=>{
+  const {journey}=await zip.read(index);
+  const route=RouteFirst.reconstruct(journey);
+  return {...route,independentRoadReferences:(await provider.lookup(route)).refs};
+ };
+ const morning=RouteLed.accumulate(RouteLed.createLedger(),await load(6));
+ const home=await load(14),original=JSON.stringify(home);
+ const result=RouteLed.cleanup(home);
+ const street='Windmill Street';
+ const sameRoad=result.centrelinePromotions.filter(run=>run.kind==='road-interruption'&&run.road===street);
+ assert.equal(sameRoad.length,3,'return uses the through road at all three interruptions');
+ assert(containsLine(result.parts,home.parts[0].slice(0,17)),'the distinct square route remains visible');
+ const returnCoverage=RouteLed.accumulate(morning.next,home);
+ const lines=parts=>parts.map(({a,b})=>[a,b]);
+ assert(coveredMetres(lines(returnCoverage.repeat),home.independentRoadReferences,street)>860);
+ assert(coveredMetres(lines(returnCoverage.novel),home.independentRoadReferences,street)<.1);
+ assert(returnCoverage.novel.some(leg=>leg.id.startsWith('saved:')),'distinct geometry remains new');
+ assert.deepEqual(RouteLed.cleanup(home).parts,result.parts,'earlier journeys only affect classification');
+ assert.equal(JSON.stringify(home),original);
+});

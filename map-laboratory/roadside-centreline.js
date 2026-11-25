@@ -362,6 +362,10 @@ const RoadsideCentreline=(()=>{
   if(path.lengths.at(-1)<length*.8||path.lengths.at(-1)>length*1.1||
      !orderedSupport(source,path,18)||!closeToWay(geometry,span,18))return null;
   if(recorded.some(fix=>snap(fix,span).offset<=3&&snap(fix,path).offset>13))return null;
+  if(usesIndependentPath(source,path,protectedPaths))return null;
+  return {start,end,length,geometry,names};
+ }
+ function usesIndependentPath(source,path,protectedPaths){
   let dedicatedLength=0;
   for(let i=1;i<source.length;i++){
    const a=source[i-1],b=source[i],mid=interpolate(a,b,.5);
@@ -369,17 +373,17 @@ const RoadsideCentreline=(()=>{
     const hit=snap(mid,foot);
     return hit.offset<=1.25&&Math.abs(direction(a,b,foot.coords[hit.edge-1],foot.coords[hit.edge]))>=.85;
    });
-   if(used.some(walk=>walk.structural))return null;
+   if(used.some(walk=>walk.structural))return true;
    if(used.some(walk=>!walk.crossing))dedicatedLength+=metres(a,b);
-   if(dedicatedLength>15)return null;
+   if(dedicatedLength>15)return true;
    if(used.some(walk=>walk.crossing)){
     // Keep a crossing of the selected road. A crossing of a side road
     // on the same pavement is part of the through corridor.
     const road=snap(mid,path),u=path.coords[road.edge-1],v=path.coords[road.edge];
-    if(Math.abs(direction(a,b,u,v))<.6&&!sampled([a,b],p=>projected(p,u,v).offset>2))return null;
+    if(Math.abs(direction(a,b,u,v))<.6&&!sampled([a,b],p=>projected(p,u,v).offset>2))return true;
    }
   }
-  return {start,end,length,geometry,names};
+  return false;
  }
  function junctionTrace(source,starts,ends,protectedPaths,corridor,bounds={}){
   const guide=measured(source),length=guide.lengths.at(-1);
@@ -501,6 +505,40 @@ const RoadsideCentreline=(()=>{
   }
   output.push(line.at(-1));
   return {line:output,joins};
+ }
+ // A pavement can leave a centreline at one side street and rejoin it at
+ // the next. Both approaches must already establish the same through road.
+ function closeRoadInterruptions(line,refs,recorded){
+  const edges=roadGraph(refs).filter(edge=>edge.name&&!edge.structure);
+  const protectedPaths=protectedWalks(refs);
+  const joins=[];
+  for(let i=1;i<line.length-2;i++){
+   const starts=roadAnchors(line[i-1],line[i],edges,true);
+   if(!starts.length)continue;
+   const name=starts[0].edge.name;
+   if(starts.some(start=>start.edge.name!==name))continue;
+   const same=edge=>edge.name===name&&!edge.structure;
+   if(roadAnchors(line[i],line[i+1],edges,true).some(anchor=>same(anchor.edge)))continue;
+   let length=0;
+   for(let j=i+1;j<line.length-1;j++){
+    length+=metres(line[j-1],line[j]);
+    if(length>145)break;
+    const ends=roadAnchors(line[j],line[j+1],edges,false).filter(anchor=>same(anchor.edge));
+    if(!ends.length)continue;
+    const source=line.slice(i,j+1),guide=measured(source);
+    const replacement=junctionTrace(source,starts,ends,[],same,{max:145,tolerance:10.5});
+    if(!replacement)continue;
+    const path=measured(replacement.coords);
+    if(path.lengths.at(-1)<5||!source.some(p=>snap(p,path).offset>1.5)||
+       usesIndependentPath(source,path,protectedPaths)||
+       recorded.some(p=>snap(p,guide).offset<=4&&snap(p,path).offset>8))continue;
+    line.splice(i,j-i+1,...replacement.coords);
+    joins.push({road:name,metres:Number(length.toFixed(1)),segments:j-i,kind:'road-interruption'});
+    i+=replacement.coords.length-1;
+    break;
+   }
+  }
+  return joins;
  }
  // Preserve a corroborated out-and-back, but lay both directions on
  // the same connected road turn when the saved match follows a pavement.
@@ -836,6 +874,6 @@ const RoadsideCentreline=(()=>{
   }
   return {parts,promoted};
  }
- return {align,evidence};
+ return {align,evidence,closeRoadInterruptions};
 })();
 if(typeof module!=='undefined')module.exports=RoadsideCentreline;

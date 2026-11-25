@@ -117,11 +117,26 @@ test('without road reference geometry, no substitution is invented',()=>{
  const line=[p(0,4),p(20,4),p(40,4)];
  assert.deepEqual(Roadside.align({parts:[line],refs:[]}).parts,[line]);
 });
-test('LAB r464 one-map frontend loads alignment before route-led attribution',()=>{
+test('a short same-road interruption is removed in either direction with a recorded detour veto',()=>{
+ const main={kind:'unclassified',name:'Through Road',nodes:[1,2,3],coords:[p(0),p(30),p(65)]};
+ const side={kind:'residential',name:'Side Road',nodes:[2,4],coords:[p(30),p(30,25)]};
+ const crossing={kind:'footway',footway:'crossing',coords:[p(30,5),p(30,10)]};
+ const route=[p(0),p(20),p(30,9),p(40),p(65)];
+ for(const source of [route,route.toReversed()]){
+  const line=source.slice();
+  const joins=Roadside.closeRoadInterruptions(line,[main,side,crossing],[]);
+  assert.equal(joins.length,1);
+  assert(line.every(point=>point[1]===0),'leave the side road on the map without assigning it to the walk');
+  const observed=source.slice();
+  assert.equal(Roadside.closeRoadInterruptions(observed,[main,side,crossing],[p(30,9)]).length,0);
+  assert.deepEqual(observed,source);
+ }
+});
+test('LAB r465 one-map frontend loads alignment before route-led attribution',()=>{
  const fs=require('node:fs'),path=require('node:path');
  const page=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
  assert(page.indexOf('roadside-centreline.js')<page.indexOf('route-led-coverage.js'));
- assert(page.includes('LAB r464')&&page.includes('>PR #464</a>'));
+ assert(page.includes('LAB r465')&&page.includes('>PR #465</a>'));
  assert(page.includes("mode=zip?'routeLed':'center'"));
  assert(page.includes('id="zipCompare"'));
 });
