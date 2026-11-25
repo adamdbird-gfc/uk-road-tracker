@@ -91,7 +91,7 @@ const IndependentRoadNetwork = (() => {
     }
 
     function readIndex() {
-      return cached('r2-index.json', data => {
+      return cached('r3-index.json', data => {
         if (data?.schema !== 1 || data.cellsPerDegree !== 50 || !Array.isArray(data.tiles) ||
             !data.tiles.every(key => /^-?\d+_-?\d+$/.test(key))) throw Error('Invalid network index');
         return {scale: data.cellsPerDegree, available: new Set(data.tiles)};

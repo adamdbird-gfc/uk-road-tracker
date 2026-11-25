@@ -37,5 +37,5 @@ test('current journey only: no public-upload or persistent detailed report',()=>
  assert(page.includes("URL.createObjectURL(blob)")&&page.includes("link.download='roadprints-private-coverage-audit-journey-'"));
  assert(page.includes('id="coverageAuditPanel"')&&page.includes('id="runCoverageAudit"'));
  assert(!page.includes('fetch(url, {method:'));
- assert(page.includes('LAB r469')&&page.includes('>PR #469</a>'));
+ assert(page.includes('LAB r470')&&page.includes('>PR #470</a>'));
 });

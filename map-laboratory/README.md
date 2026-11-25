@@ -8,6 +8,18 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Gillingham road junctions (LAB r470)
+
+The [third index](reference-network/v1/r3-index.json) adds two Medway cells
+from the same checksum-pinned Kent extract. The shared public road nodes
+let the existing walking alignment follow the centreline from Ferndale
+Road onto Gillingham Road and Ingram Road. Entrance paths retain their
+saved geometry, and overlapping walks use the same road-edge identifiers.
+
+To reproduce the tiles, use the Kent source and builder below in a new
+directory with bounds `0.550 51.380 0.565 51.399`. Add the generated tile
+files to v1 and their keys to the new index.
+
 ## Long saved driving steps (LAB r469)
 
 The cumulative replay retains a long edge inside a saved driving match when
