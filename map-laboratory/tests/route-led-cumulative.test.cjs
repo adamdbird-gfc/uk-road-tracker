@@ -29,7 +29,7 @@ test('sparse Timeline loop retains independent paths and withholds unsupported s
  assert.deepEqual(RouteLed.cleanup(route).parts,[approach,parkReturn]);
  const endpointsOnly={...route,recorded:[[approach[0],parkReturn.at(-1)]]};
  assert.deepEqual(RouteLed.cleanup(endpointsOnly).parts,[approach,parkReturn]);
- assert.deepEqual(result.held,[{reason:'unverified-road-excursion-on-pedestrian-loop',metres:88}]);
+ assert.deepEqual(result.held,[{reason:'unverified-road-excursion-between-pedestrian-observations',metres:88}]);
  assert(result.novel.every(({a,b})=>a[1]>=0&&b[1]>=0&&(a[1]>0||b[1]>0)));
  assert.deepEqual(result.links,[],'no connector is drawn across the withheld excursion');
  const laterStreet=RouteLed.accumulate(result.next,{parts:[[p(45),p(45,-24)]]});
@@ -48,6 +48,27 @@ test('a genuine exit and an observed street excursion retain their coverage',()=
  assert.deepEqual(RouteLed.cleanup(through).parts,through.parts);
  const withoutStreetObservation={...through,recorded:[[approach[0],approach[1]]]};
  assert.deepEqual(RouteLed.cleanup(withoutStreetObservation).parts,through.parts);
+});
+
+test('local pedestrian observations isolate an unsupported mirrored detour after a genuine road approach',()=>{
+ const approach=[p(-100,80),p(-50,80)];
+ const pathIn=[approach.at(-1),p(0,45),p(0)];
+ const outbound=[p(0),p(60),p(100)];
+ const spur=[p(100),p(100,-35),p(100)];
+ const pathOut=[p(0),p(10,45),p(70,45)];
+ const line=approach.concat(pathIn.slice(1),outbound.slice(1),spur.slice(1),
+  outbound.toReversed().slice(1),pathOut.slice(1));
+ const route={onFoot:true,source:'saved match',sourceType:'timeline_import',parts:[line],
+  recorded:[[approach[0],pathIn[1],pathOut.at(-1)]],
+  refs:[{kind:'tertiary',coords:approach},{kind:'footway',coords:pathIn},
+   {kind:'tertiary',coords:outbound},{kind:'footway',coords:spur},{kind:'path',coords:pathOut}]};
+ const result=RouteLed.cleanup(route);
+ assert.deepEqual(result.parts,[approach.concat(pathIn.slice(1)),pathOut]);
+ assert.deepEqual(result.held,[{
+  reason:'unverified-road-excursion-between-pedestrian-observations',metres:270
+ }]);
+ const withVisit={...route,recorded:[[approach[0],pathIn[1],spur[1],pathOut.at(-1)]]};
+ assert.deepEqual(RouteLed.cleanup(withVisit).parts,[line]);
 });
 
 test('loop rule requires independent path anchors and leaves corrections and native captures alone',()=>{
@@ -215,7 +236,7 @@ test('ZIP UI keeps canonical and route-led models isolated',()=>{
  assert(page.includes('RouteLedCoverage.accumulate(zipRouteLedLedger,route.surfaceParts?{...route,parts:route.surfaceParts}:route)'));
  assert(page.includes("mode==='routeLed'?zipRouteLedCache.get(n):zipCoverageCache.get(n)"));
  assert(page.includes("zipRouteLedCache.clear();zipRouteLedLedger.clear()"));
- assert(page.includes('LAB r467')&&page.includes('>PR #467</a>'));
+ assert(page.includes('LAB r468')&&page.includes('>PR #468</a>'));
  assert(page.includes('id="zipCompare"')&&page.includes('id="zipModeControls" hidden')&&page.includes("mode=zip?'routeLed':'center'"));
 });
 

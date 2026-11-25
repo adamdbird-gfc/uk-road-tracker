@@ -8,6 +8,15 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Road excursions between pedestrian observations (LAB r468)
+
+The cumulative replay checks each street section in a sparse on-foot Timeline
+import. It withholds a street section bracketed by mapped pedestrian paths and
+ordered observations on those paths when no original point supports the street.
+An unsupported spur that leaves and rejoins the same out-and-back street can
+be withheld with it. A road approach or exit is evaluated on its own evidence.
+The original match remains available in the comparison view.
+
 ## Unsupported roads on sparse pedestrian loops (LAB r467)
 
 When a walking or running Timeline import starts and finishes near the same
