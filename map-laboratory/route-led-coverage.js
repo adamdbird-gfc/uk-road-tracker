@@ -415,9 +415,20 @@ const RouteLedCoverage=(()=>{
   return {parts:output,held,centrelinePromotions:aligned.promoted,roadEvidence:screening,
    links:endpointLinks(output,route)};
  }
+ function supportedLeg(route,a,b){
+  if(!valid(a)||!valid(b))return false;
+  const length=distance(a,b);
+  if(length<=500)return true;
+  // A sparse overview may still contain a long, measured road step. Require
+  // the same adjacent vertices in the saved step and cap interval expansion.
+  if(length>5000||route.source!=='saved match')return false;
+  const same=(p,q)=>p[0]===q[0]&&p[1]===q[1];
+  return route.roadSteps?.some(line=>line.some((p,i)=>i>0&&
+   (same(line[i-1],a)&&same(p,b)||same(line[i-1],b)&&same(p,a))));
+ }
  function* sourceIntervals(a,b){
   const length=distance(a,b);
-  if(length<.5||length>500)return;
+  if(length<.5)return;
   const n=Math.ceil(length/STEP);
   for(let k=0;k<n;k++){
    const x=point(a,b,k/n),y=point(a,b,(k+1)/n);
@@ -428,7 +439,7 @@ const RouteLedCoverage=(()=>{
   const result=new Map();
   for(const line of route?.parts||[])for(let i=1;i<(line?.length||0);i++){
    const a=line[i-1],b=line[i];
-   if(valid(a)&&valid(b))for(const part of sourceIntervals(a,b))
+   if(supportedLeg(route,a,b))for(const part of sourceIntervals(a,b))
     if(!result.has(part.id))result.set(part.id,part);
   }
   return [...result.values()];
@@ -519,7 +530,7 @@ const RouteLedCoverage=(()=>{
   };
   for(const line of prepared.parts||[])for(let i=1;i<(line?.length||0);i++){
    const a=line[i-1],b=line[i];
-   if(!valid(a)||!valid(b)||distance(a,b)>500)continue;
+   if(!supportedLeg(route,a,b))continue;
    let at=0;
    for(const span of roadSpans(a,b,edges)){
     if(span.start>at)addSource(point(a,b,at),point(a,b,span.start));

@@ -132,6 +132,28 @@ test('long unsupported straight-line gap cannot earn source-led coverage',()=>{
  assert.equal(attributed.novel.length,0);
 });
 
+test('saved driving step restores a long matched edge and leaves split or corrected gaps open',()=>{
+ const feature=(coordinates,distance_m)=>({geometry:{type:'LineString',coordinates},
+  properties:{distance_m}});
+ const journey={mode:'driving',processing_result:{
+  geojson:{features:[feature([p(0),p(20)],20),feature([p(4000),p(4566),p(4590)],590)]},
+  road_geojson:{features:[feature([p(4566),p(4000)],566)]}
+ }};
+ const route=RouteFirst.reconstruct(journey);
+ const result=RouteLed.accumulate(new Set(),route);
+ const metres=result.novel.reduce((sum,{a,b})=>sum+(b[0]-a[0])*111320,0);
+ assert(Math.abs(metres-610)<.01);
+ assert.equal(RouteLed.intervals(route).length,result.novel.length);
+ assert(result.novel.every(({a,b})=>b[0]<=p(20)[0]||a[0]>=p(4000)[0]));
+ const measure=record=>RouteLed.accumulate(new Set(),RouteFirst.reconstruct(record)).novel
+  .reduce((sum,{a,b})=>sum+(b[0]-a[0])*111320,0);
+ assert(Math.abs(measure({...journey,journey_corrections:{removed_matched_segments:[1]}})-44)<.01);
+ assert(Math.abs(measure({...journey,mode:'walking'})-44)<.01);
+ for(const step of [feature([p(4000),p(4566)],0),feature([p(4010),p(4566)],556)])
+  assert(Math.abs(measure({...journey,processing_result:{...journey.processing_result,
+   road_geojson:{features:[step]}}})-44)<.01);
+});
+
 test('source-backed road-parallel out-and-back is consolidated without deleting the through road',()=>{
  const points=[p(120,-6),p(120),p(90),p(60),p(40),p(40,-5),p(60,-5),
   p(60.3,-5),p(60,-5),p(40,-5),p(40),p(20),p(0)];
@@ -236,7 +258,7 @@ test('ZIP UI keeps canonical and route-led models isolated',()=>{
  assert(page.includes('RouteLedCoverage.accumulate(zipRouteLedLedger,route.surfaceParts?{...route,parts:route.surfaceParts}:route)'));
  assert(page.includes("mode==='routeLed'?zipRouteLedCache.get(n):zipCoverageCache.get(n)"));
  assert(page.includes("zipRouteLedCache.clear();zipRouteLedLedger.clear()"));
- assert(page.includes('LAB r468')&&page.includes('>PR #468</a>'));
+ assert(page.includes('LAB r469')&&page.includes('>PR #469</a>'));
  assert(page.includes('id="zipCompare"')&&page.includes('id="zipModeControls" hidden')&&page.includes("mode=zip?'routeLed':'center'"));
 });
 
