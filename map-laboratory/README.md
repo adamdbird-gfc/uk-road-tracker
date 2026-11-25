@@ -8,6 +8,20 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## North London road references (LAB r463)
+
+The pinned road and path network adds two adjacent cells covering King's Cross,
+Pentonville Road and Angel. Eligible roadside sections use the same alignment
+rules as other walks. The saved route and recorded points remain available for
+comparison, including where the Timeline import has sparse evidence.
+
+The [updated index](reference-network/v1/r2-index.json) reuses all nine original
+tiles and adds the two new tiles from the same checksum-pinned London extract.
+To reproduce the extension, run the builder below with the London input only
+and bounds `-0.139 51.521 -0.101 51.539` in a new working directory. The two
+tiles can be added under their existing grid keys because those keys were
+previously absent. The original index remains available to earlier Lab builds.
+
 ## Station approaches on the road centreline (LAB r462)
 
 A supported station transfer can follow the mapped road from an already
@@ -128,9 +142,9 @@ pedestrian facility tags. The offline builder in
 [`scripts/build_lab_reference_tiles.py`](../scripts/build_lab_reference_tiles.py)
 accepts one or more checksum-verified local PBFs and area bounds. The
 [tile index](reference-network/v1/index.json) records the source URLs,
-timestamps, checksums and license. To extend coverage, generate a new immutable
-version directory using the same command format below and update the Lab’s
-reference version. Tiles derived from OpenStreetMap are distributed under
+timestamps, checksums and license. Use an immutable index revision to add
+previously absent tiles from the same snapshot. Use a new version directory
+when existing tile content changes. Tiles derived from OpenStreetMap are distributed under
 [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) with attribution to
 [OpenStreetMap contributors](https://www.openstreetmap.org/copyright).
 
