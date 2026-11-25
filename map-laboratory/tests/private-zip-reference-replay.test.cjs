@@ -67,7 +67,21 @@ test('owner ZIP journey 27 excludes the station retrace and follows the pedestri
  const result=RouteLed.cleanup({...transition,parts:transition.surfaceParts});
  assert.equal(result.parts.length,1);
  assert(result.centrelinePromotions.some(run=>run.kind==='pedestrian-street-corridor'&&run.road==='Strand'));
+ assert(result.centrelinePromotions.some(run=>run.kind==='terminal-pavement-crossing'&&run.road==='Strand'));
  assert(result.parts[0].some(p=>lookup.refs.some(ref=>ref.sharedCrossing&&ref.coords.some(q=>String(p)===String(q)))));
+ assert.deepEqual(result.parts[0].at(-1),source.parts[0].at(-1));
+});
+
+test('owner ZIP journey 29 uses the shared Bride Lane and Fleet Street junction in both directions',{skip:!archive},async()=>{
+ const zip=Bulk.roadReplay(await Bulk.open(new Blob([fs.readFileSync(archive)])));
+ const {journey}=await zip.read(zip.journeys.findIndex(item=>item.archiveOrdinal===29));
+ const source=RouteFirst.reconstruct(journey),lookup=await Network.create(request).lookup(source);
+ const result=RouteLed.cleanup({...source,independentRoadReferences:lookup.refs});
+ const joins=result.centrelinePromotions.filter(run=>run.kind==='offset-road-turn');
+ assert.deepEqual(joins.map(run=>run.road),[
+  'Ludgate Hill / Fleet Street / Bride Lane','Bride Lane / Fleet Street / Ludgate Hill'
+ ]);
+ assert.deepEqual(result.parts[0][0],source.parts[0][0]);
  assert.deepEqual(result.parts[0].at(-1),source.parts[0].at(-1));
 });
 

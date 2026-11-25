@@ -8,6 +8,14 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Connected pavement turns (LAB r474)
+
+The cumulative replay can align an offset pavement turn between two
+established roads via the connected road junction. A terminal sidewalk can
+rejoin the mapped road at a connected pedestrian crossing. Both checks use
+the current walk and public geometry, and retain supported approach paths
+and the original destination.
+
 ## Station arrival retraces and pedestrianised streets (LAB r473)
 
 An adjacent rail arrival, repeated original Timeline point and mirrored
