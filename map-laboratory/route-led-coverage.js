@@ -260,64 +260,93 @@ const RouteLedCoverage=(()=>{
   }
   return [connect(line,raw[0]),connect(line.toReversed(),raw.at(-1))].filter(Boolean);
  }
- // A sparsely observed loop anchored on independent paths can pick up
- // surrounding streets in its saved match. Use only actual import vertices
- // as observations. Interpolation across a gap cannot corroborate a street.
- function withholdLoopRoadExcursions(parts,route,refs,held){
+ // Assess each street excursion between pedestrian observations. An import
+ // can include a genuine road approach as well as an off-road section.
+ function withholdRoadExcursions(route,held){
+  const {parts,refs=[]}=route;
   if(!route.onFoot||route.corrected||route.source!=='saved match'||
      route.sourceType!=='timeline_import'||parts.length!==1||route.railTransitions?.length)
-   return parts;
+   return route;
   const line=parts[0],raw=route.recorded?.length===1?route.recorded[0]:[];
   if(raw.length<2||!raw.every(valid)||line.length<3||!line.every(valid)||
-     distance(raw[0],raw.at(-1))>55||
-     (raw.length>3&&!raw.slice(1).some((p,i)=>distance(raw[i],p)>50)))return parts;
-  const roads=segments(refs,road);
+     (raw.length>3&&!raw.slice(1).some((p,i)=>distance(raw[i],p)>50)))return route;
+  const roadWays=refs.filter(ref=>road.test(ref.kind)).map(ref=>({ref,edges:segments([ref],road)}));
+  const roads=roadWays.flatMap(way=>way.edges);
   const paths=segments(refs.filter(ref=>!['sidewalk','crossing'].includes(ref.footway)&&
    !ref.bridge&&!ref.tunnel&&ref.indoor!=='yes'),/^(footway|path|pedestrian|track)$/);
-  if(!roads.length||!paths.length)return parts;
-  const anchors=[[raw[0],line[0]],[raw.at(-1),line.at(-1)]];
-  if(!anchors.every(([fix,end])=>distance(fix,end)<=20&&nearest(fix,paths)<=10&&
-     nearest(end,paths)<=5&&nearest(fix,roads)>=20&&nearest(end,roads)>=20))
-   return parts;
+  if(!roads.length||!paths.length)return route;
 
-  function roadLeg(a,b){
-   // Use the whole leg. A footpath that crosses a street or runs close by
-   // should not classify as a road.
-   return roads.some(([u,v])=>cosine(a,b,u,v)>=.97&&
-    projection(a,u,v).offset<=2&&projection(b,u,v).offset<=2);
+  const edges=line.slice(1).map((b,i)=>[line[i],b]);
+  // Match the whole leg so a crossing or a nearby path is not a road leg.
+  const follows=(edge,network)=>network.some(([u,v])=>cosine(...edge,u,v)>=.97&&
+   edge.every(p=>projection(p,u,v).offset<=2));
+  const runs=[];
+  for(let i=0;i<edges.length;i++){
+   const matched=roadWays.filter(way=>follows(edges[i],way.edges));
+   if(!matched.length)continue;
+   const last=runs.at(-1);
+   if(last?.end===i){
+    last.end=i+1;
+    for(const way of matched)last.ways.add(way.ref);
+   }else runs.push({start:i,end:i+1,ways:new Set(matched.map(way=>way.ref))});
   }
-  const kept=[];
-  let start=0;
-  for(let i=1;i<line.length;){
-   if(!roadLeg(line[i-1],line[i])){i++;continue;}
-   const entry=i-1;
+  const length=(start,end)=>edges.slice(start,end).reduce((sum,[a,b])=>sum+distance(a,b),0);
+  const observed=(start,end)=>{
+   const span=edges.slice(start,end);
+   return raw.some(fix=>nearest(fix,span)<=18);
+  };
+  const onPath=raw.map(fix=>nearest(fix,paths)<=30&&nearest(fix,roads)>=25);
+  function anchors(from,limit,direction){
+   const nearby=[];
    let metres=0;
-   const edges=[];
-   do{
-    const a=line[i-1],b=line[i++];
-    metres+=distance(a,b);
-    edges.push([a,b]);
-   }while(i<line.length&&roadLeg(line[i-1],line[i]));
-   if(metres<8||raw.some(fix=>nearest(fix,edges)<=18))continue;
-   if(entry>start)kept.push(line.slice(start,entry+1));
-   start=i-1;
-   held.push({reason:'unverified-road-excursion-on-pedestrian-loop',
+   for(let i=from;i!==limit&&metres<550;i+=direction){
+    const edge=edges[direction>0?i:i-1];
+    metres+=distance(...edge);
+    if(follows(edge,paths))nearby.push(edge);
+   }
+   return raw.flatMap((fix,i)=>onPath[i]&&nearest(fix,nearby)<=30?[i]:[]);
+  }
+  const kept=[],withheldWays=new Set();
+  let start=0;
+  for(let n=0;n<runs.length;n++){
+   const run=runs[n],next=runs[n+1];
+   // Assess the street and its returning branch together so an observed
+   // visit to the branch also protects the streets that provide access.
+   const returns=next&&distance(line[run.end],line[next.start])<=1.25&&
+    distance(line[run.start],line[next.end])<=1.25&&
+    length(run.end,next.start)<=150;
+   const end=returns?next.end:run.end;
+   const previousEnd=runs[n-1]?.end??0;
+   if(returns)n++;
+   const metres=length(run.start,end);
+   if(metres<32||observed(run.start,end))continue;
+   const before=anchors(run.start,previousEnd,-1);
+   const after=anchors(end,runs[n+1]?.start??edges.length,1);
+   if(!before.length||!after.length||before[0]>=after.at(-1))continue;
+   if(run.start>start)kept.push(line.slice(start,run.start+1));
+   start=end;
+   for(const ref of run.ways)withheldWays.add(ref);
+   if(returns)for(const ref of next.ways)withheldWays.add(ref);
+   held.push({reason:'unverified-road-excursion-between-pedestrian-observations',
     metres:Number(metres.toFixed(1))});
   }
-  if(!start)return parts;
+  if(!start)return route;
   if(start<line.length-1)kept.push(line.slice(start));
-  return kept;
+  // Do not snap surviving paths back onto the same uncorroborated way.
+  // Original geometry on that way can still be retained elsewhere.
+  return {...route,parts:kept,refs:refs.filter(ref=>!withheldWays.has(ref))};
  }
  function cleanup(route){
   const roads=segments(route?.refs,road),feet=segments(route?.refs,foot);
   // Static road geometry comes only from this journey's own references
   // or the pinned public OSM network, never from other journeys.
-  const withPhysicalRoads=route.independentRoadReferences?.length?
+  const physical=route.independentRoadReferences?.length?
    {...route,refs:PublicRoadSource.merge(route.refs,route.independentRoadReferences)}:route;
+  const parts=[],held=[];
+  const withPhysicalRoads=withholdRoadExcursions(physical,held);
   const screening=route.diagnosticsRequested?CentrelinePromotion.evidence(withPhysicalRoads):null;
   const aligned=route.onFoot===false||route.source==='recorded'?
    {parts:route.parts,promoted:[]}:CentrelinePromotion.align(withPhysicalRoads);
-  const parts=[],held=[];
   for(const input of aligned.parts||[]){
    if(!Array.isArray(input)||input.length<2){parts.push(input);continue;}
    const line=input.slice();
@@ -383,9 +412,8 @@ const RouteLedCoverage=(()=>{
    for(const line of output)if(line?.length>=4)
     aligned.promoted.push(...CentrelinePromotion.closeRoadInterruptions(line,withPhysicalRoads.refs,raw));
   }
-  const credited=withholdLoopRoadExcursions(output,route,withPhysicalRoads.refs||[],held);
-  return {parts:credited,held,centrelinePromotions:aligned.promoted,roadEvidence:screening,
-   links:endpointLinks(credited,route)};
+  return {parts:output,held,centrelinePromotions:aligned.promoted,roadEvidence:screening,
+   links:endpointLinks(output,route)};
  }
  function* sourceIntervals(a,b){
   const length=distance(a,b);
