@@ -132,6 +132,40 @@ test('long unsupported straight-line gap cannot earn source-led coverage',()=>{
  assert.equal(attributed.novel.length,0);
 });
 
+test('sparse driving replay repairs a service-road shortcut using directed roundabout edges',()=>{
+ const a=p(0),b=p(80),ring=[p(15,20),p(30,37),p(50,37),p(66,20)];
+ const service=[a,p(20,-20),p(43,-22),p(63,-17),b];
+ const saved=[p(-20),...service,p(100)];
+ const ref=(kind,coords,nodes,junction)=>({kind,coords,nodes,junction,oneway:'yes'});
+ const refs=[
+  ref('secondary',[p(-20),a,ring[0]],[1,2,3]),
+  ref('primary',ring,[3,4,5,6],'roundabout'),
+  ref('primary',[ring[3],b,p(100)],[6,7,8]),
+  ref('service',service,[2,9,10,11,7]),
+ ];
+ const route={onFoot:false,source:'saved match',sourceType:'timeline_import',
+  roadSteps:[service],recorded:[[p(-20),p(100)]],parts:[saved],drivingReferences:refs};
+ const replay=RouteLed.cleanup(route);
+ assert.deepEqual(replay.parts,[[p(-20),a,...ring,b,p(100)]]);
+ assert.equal(replay.centrelinePromotions[0].kind,'driving-roundabout');
+ assert.deepEqual(RouteLed.cleanup({...route,recorded:[[p(-20),p(43,-22),p(100)]]}).parts,[saved]);
+ assert.deepEqual(RouteLed.cleanup({...route,corrected:true}).parts,[saved]);
+ const wrongWay=ref('primary',ring.toReversed(),[6,5,4,3],'roundabout');
+ assert.deepEqual(RouteLed.cleanup({...route,drivingReferences:[refs[0],wrongWay,...refs.slice(2)]}).parts,[saved]);
+});
+
+test('a redundant walking start hook can stop at the original fix projected onto the same road',()=>{
+ const road={kind:'residential',coords:[p(0),p(100)],nodes:[1,2]};
+ const line=[p(25,6),p(12,6),p(0,6),p(0),p(10),p(25),p(50),p(100)];
+ const route={onFoot:true,source:'saved match',sourceType:'timeline_import',parts:[line],
+  recorded:[[p(25,6),p(100)]],independentRoadReferences:[road],refs:[]};
+ const output=RouteLed.cleanup(route);
+ assert.deepEqual(output.parts,[[p(25),p(50),p(100)]]);
+ assert.equal(output.held[0].reason,'redundant-pedestrian-start-hook');
+ assert.deepEqual(RouteLed.cleanup({...route,recorded:[[p(25,6),p(0,6),p(100)]]}).parts,[line]);
+ assert.deepEqual(RouteLed.cleanup({...route,recorded:[[p(25,12),p(100)]]}).parts,[line]);
+});
+
 test('saved driving step restores a long matched edge and leaves split or corrected gaps open',()=>{
  const feature=(coordinates,distance_m)=>({geometry:{type:'LineString',coordinates},
   properties:{distance_m}});
@@ -258,7 +292,7 @@ test('ZIP UI keeps canonical and route-led models isolated',()=>{
  assert(page.includes('RouteLedCoverage.accumulate(zipRouteLedLedger,route.surfaceParts?{...route,parts:route.surfaceParts}:route)'));
  assert(page.includes("mode==='routeLed'?zipRouteLedCache.get(n):zipCoverageCache.get(n)"));
  assert(page.includes("zipRouteLedCache.clear();zipRouteLedLedger.clear()"));
- assert(page.includes('LAB r470')&&page.includes('>PR #470</a>'));
+ assert(page.includes('LAB r471')&&page.includes('>PR #471</a>'));
  assert(page.includes('id="zipCompare"')&&page.includes('id="zipModeControls" hidden')&&page.includes("mode=zip?'routeLed':'center'"));
 });
 

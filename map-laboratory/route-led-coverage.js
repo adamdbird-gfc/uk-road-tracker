@@ -60,6 +60,43 @@ const RouteLedCoverage=(()=>{
   }
   return length?backed/length:0;
  }
+ // With two Timeline points the initial fix can plausibly belong to the
+ // same road the match subsequently follows in the opposite direction.
+ // Keep only that already-travelled road from the projected start.
+ function trimRedundantStartHook(line,route,refs,held){
+  if(!route.onFoot||route.corrected||route.sourceType!=='timeline_import'||
+     route.source!=='saved match'||route.parts.length!==1||line.length<6)return;
+  const raw=route.recorded?.[0];
+  if(route.recorded?.length!==1||raw.length!==2||
+     !raw.every(valid)||distance(raw[0],line[0])>5)return;
+  const roads=segments(refs.filter(ref=>ref.nodes),road);
+  if(!roads.length||nearest(raw[1],roads)>17)return;
+  let walked=0;
+  for(let i=1;i<line.length-2;i++){
+   const a=line[i-1],b=line[i];
+   walked+=distance(a,b);
+   if(walked>72)break;
+   if(walked<24||distance(a,b)<5)continue;
+   const hit=projection(raw[0],a,b);
+   const snapped=point(a,b,hit.t);
+   if(hit.offset>7.5||nearest(snapped,roads)>1.25||
+      roadsideFraction(line.slice(i-1,i+3),roads)<.90)continue;
+   // The hook heads away from the destination before returning to its
+   // starting corridor. A straight or sideways access leg fails this.
+   const out=[line[0],line[1]],back=[a,b];
+   const axis=(x,y)=>[(y[0]-x[0])*Math.cos(x[1]*D),y[1]-x[1]];
+   const [u,v]=axis(...out),[x,y]=axis(...back);
+   if((u*x+v*y)/(Math.hypot(u,v)*Math.hypot(x,y))>-.8||
+      line.slice(0,i).some(p=>nearest(p,roads)>14))continue;
+   // Only the same physical road can explain the short reverse excursion.
+   if(!roads.some(([u,v])=>projection(snapped,u,v).offset<=1.25&&
+      projection(b,u,v).offset<=1.25))continue;
+   held.push({reason:'redundant-pedestrian-start-hook',
+    metres:Number((walked-distance(snapped,b)).toFixed(1))});
+   line.splice(0,i,...(distance(snapped,b)>.25?[snapped]:[]));
+   return;
+  }
+ }
  // A sparse saved match can overshoot its final recorded position and
  // turn onto another road. Preserve the directly corroborated approach
  // up to the last observed position, not an invented junction endpoint.
@@ -346,12 +383,13 @@ const RouteLedCoverage=(()=>{
   const withPhysicalRoads=withholdRoadExcursions(physical,held);
   const screening=route.diagnosticsRequested?CentrelinePromotion.evidence(withPhysicalRoads):null;
   const aligned=route.onFoot===false||route.source==='recorded'?
-   {parts:route.parts,promoted:[]}:CentrelinePromotion.align(withPhysicalRoads);
+   restoreRoundabout(route):CentrelinePromotion.align(withPhysicalRoads);
   for(const input of aligned.parts||[]){
    if(!Array.isArray(input)||input.length<2){parts.push(input);continue;}
    const line=input.slice();
    if(route.onFoot&&!route.corrected&&route.source==='saved match'){
     const refs=withPhysicalRoads.refs||[];
+    if(input===aligned.parts[0])trimRedundantStartHook(line,route,refs,held);
     suppressMicroReturns(line,route,refs,held);
     if(input===aligned.parts.at(-1))trimShortPathNib(line,route,refs,held);
    }
@@ -425,6 +463,93 @@ const RouteLedCoverage=(()=>{
   const same=(p,q)=>p[0]===q[0]&&p[1]===q[1];
   return route.roadSteps?.some(line=>line.some((p,i)=>i>0&&
    (same(line[i-1],a)&&same(p,b)||same(line[i-1],b)&&same(p,a))));
+ }
+ // A sparse driving match can shortcut a roundabout through a parallel
+ // service road. Check the connected, directed public network, bounded by
+ // the existing main-road approach and exit inside the same saved part.
+ function restoreRoundabout(route){
+  const result={parts:route.parts,promoted:[]};
+  const refs=route.drivingReferences||[];
+  const raw=(route.recorded||[]).flat().filter(valid);
+  if(route.corrected||route.source!=='saved match'||route.sourceType!=='timeline_import'||
+     !route.roadSteps?.length||raw.length<2||!refs.some(ref=>ref.junction==='roundabout'))
+   return result;
+  const services=segments(refs,/^service$/);
+  if(!services.length)return result;
+  const graph=new Map(),major=[];
+  for(const ref of refs){
+   if(!/^(primary|secondary|tertiary)(?:_link)?$/.test(ref.kind))continue;
+   for(let i=1;i<ref.nodes.length;i++){
+    let from=ref.nodes[i-1],to=ref.nodes[i],a=ref.coords[i-1],b=ref.coords[i];
+    if(ref.oneway==='-1')[from,to,a,b]=[to,from,b,a];
+    const ring=ref.junction==='roundabout';
+    for(const edge of [{from,to,a,b,ring},...(ring||['yes','1','-1','true'].includes(ref.oneway)?
+     []:[{from:to,to:from,a:b,b:a,ring}])]){
+     const outgoing=graph.get(edge.from)||[];
+     outgoing.push(edge);
+     graph.set(edge.from,outgoing);
+     major.push(edge);
+    }
+   }
+  }
+  function shortest(from,to,limit){
+   const queue=[{node:from,metres:0,edges:[]}],seen=new Set();
+   while(queue.length){
+    queue.sort((a,b)=>b.metres-a.metres);
+    const next=queue.pop();
+    if(seen.has(next.node))continue;
+    if(next.node===to)return next;
+    seen.add(next.node);
+    for(const edge of graph.get(next.node)||[]){
+     const metres=next.metres+distance(edge.a,edge.b);
+     if(metres<=limit&&!seen.has(edge.to))
+      queue.push({node:edge.to,metres,edges:next.edges.concat(edge)});
+    }
+   }
+   return null;
+  }
+  function anchor(line,at,direction){
+   let walked=0;
+   for(let i=at;i>0&&i<line.length-1&&walked<=35;i+=direction){
+    const p=line[i],q=line[i+direction];
+    if(distance(p,q)>.5){
+     const candidates=major.filter(edge=>!edge.ring&&
+      distance(p,direction<0?edge.b:edge.a)<=.45&&
+      projection(q,edge.a,edge.b).offset<=.75);
+     const nodes=new Set(candidates.map(edge=>direction<0?edge.to:edge.from));
+     if(nodes.size===1)return {at:i,node:[...nodes][0]};
+    }
+    walked+=distance(p,q);
+   }
+   return null;
+  }
+  result.parts=(route.parts||[]).map(line=>{
+   const output=[];
+   let kept=0;
+   const onService=(a,b)=>distance(a,b)<40&&[a,point(a,b,.5),b]
+    .every(p=>nearest(p,services)<=2);
+   for(let i=1;i<line.length;){
+    if(!onService(line[i-1],line[i])){i++;continue;}
+    const start=i-1,service=[];
+    let metres=0;
+    do {
+     const a=line[i-1],b=line[i++];
+     service.push([a,b]);
+     metres+=distance(a,b);
+    }while(i<line.length&&onService(line[i-1],line[i]));
+    if(metres<35||metres>160||raw.some(fix=>nearest(fix,service)<=12))continue;
+    const entry=anchor(line,start,-1),exit=anchor(line,i-1,1);
+    if(!entry||!exit||entry.at<kept||entry.node===exit.node)continue;
+    const path=shortest(entry.node,exit.node,Math.min(250,metres*2.5));
+    if(!path?.edges.some(edge=>edge.ring))continue;
+    output.push(...line.slice(kept,entry.at),path.edges[0].a,...path.edges.map(edge=>edge.b));
+    kept=exit.at+1;
+    result.promoted.push({kind:'driving-roundabout',road:'Mapped roundabout',
+     metres:Number(path.metres.toFixed(1)),segments:exit.at-entry.at});
+   }
+   return kept?output.concat(line.slice(kept)):line;
+  });
+  return result;
  }
  function* sourceIntervals(a,b){
   const length=distance(a,b);
