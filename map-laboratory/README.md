@@ -10,13 +10,14 @@ See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-forma
 
 The [archive validation procedure](archive-validation.md) describes full replay and review.
 
-## Redrawn journeys and divided streets (LAB r490)
+## Redrawn journeys and divided streets (LAB r491)
 
 Roadprints road exclusions apply to cumulative attribution without altering the
 recorded or saved route. For a reviewed divided street, the pinned network can
 identify overlapping same-grade carriageways as one walking corridor. This
-allows repeat walking coverage on Strand to use one line while retaining the
-approaches, independent footpaths and driving direction.
+keeps repeat coverage on Strand on one line for a Roadprints-edited walk.
+Automatically matched walks retain their mapped lane until corresponding
+approaches can be linked by verified crossing evidence.
 
 ## Archive validation and through streets (LAB r489)
 

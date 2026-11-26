@@ -1362,9 +1362,13 @@ const RouteLedCoverage=(()=>{
   const pavementRoads=Map.groupBy(edges.concat(displayEdges).filter(({id,ref})=>
    ref.name&&(names.has(ref.name)||names.has(''))&&(road.test(ref.kind)||ref.kind==='pedestrian')&&
    surface(ref)&&!forks?.aliases.has(id)),edge=>edge.ref.name);
+  // Apply this reviewed equivalence to Roadprints edits. Automatic
+  // matches still use their exact lanes where changing sides could
+  // disconnect an approach that has no verified crossing.
+  const useEditedCarriageway=!paired&&route.onFoot&&route.source==='saved match'&&route.removedRoadIds?.size;
   const attribute=span=>{
    for(const fork of forks?streetForkSpans(span,forks.aliases):[span])
-    for(const mapped of !paired&&route.onFoot&&route.source==='saved match'?
+    for(const mapped of useEditedCarriageway?
      walkingCarriagewaySpans(fork,edges,route.removedEdges):[fork])
      attributeRoad(mapped,previousRoads,next.roads,novel,repeat);
   };
