@@ -468,7 +468,7 @@ const RouteLedCoverage=(()=>{
   // Original geometry on that way can still be retained elsewhere.
   return {...route,parts:kept,refs:refs.filter(ref=>!withheldWays.has(ref))};
  }
- function cleanup(route){
+ function cleanup(route,footways=publicFootways(route),edges=pinnedEdges(route.independentRoadReferences)){
   const roads=segments(route?.refs,road),feet=segments(route?.refs,foot);
   // Static road geometry comes only from this journey's own references
   // or the pinned public OSM network, never from other journeys.
@@ -478,8 +478,11 @@ const RouteLedCoverage=(()=>{
   const retraced=correctSparsePedestrianRetraces(physical,held);
   const withPhysicalRoads=withholdRoadExcursions(retraced,held);
   const screening=route.diagnosticsRequested?CentrelinePromotion.evidence(withPhysicalRoads):null;
+  const shadowed=footways.length?legacyFootwayReferences(route.refs,footways,edges):new Set();
+  const alignmentRoute=shadowed.size?
+   {...withPhysicalRoads,refs:withPhysicalRoads.refs.filter(ref=>!shadowed.has(ref))}:withPhysicalRoads;
   const aligned=route.onFoot===false||route.source==='recorded'?
-   restoreRoundabout(route):CentrelinePromotion.align(withPhysicalRoads);
+   restoreRoundabout(route):CentrelinePromotion.align(alignmentRoute);
   for(const input of aligned.parts||[]){
    if(!Array.isArray(input)||input.length<2){parts.push(input);continue;}
    const line=input.slice();
@@ -698,16 +701,16 @@ const RouteLedCoverage=(()=>{
   return {sources,roads,get size(){return sources.size+roads.size;},
    clear(){sources.clear();roads.clear();}};
  }
- function pinnedEdges(refs){
+ function pinnedEdges(refs,footways=false){
   const edges=new Map();
   for(const ref of refs||[]){
-   if(!(road.test(ref.kind)||ref.kind==='pedestrian'&&ref.name||ref.sharedCrossing)||
-      ref.nodes?.length!==ref.coords?.length)continue;
+   if((!footways&&!(road.test(ref.kind)||ref.kind==='pedestrian'&&ref.name||ref.sharedCrossing))||
+      !ref.nodes||!ref.coords||ref.nodes.length!==ref.coords.length)continue;
    for(let i=1;i<ref.coords.length;i++){
     let a=ref.coords[i-1],b=ref.coords[i],from=ref.nodes[i-1],to=ref.nodes[i];
     if(!valid(a)||!valid(b)||from===to||distance(a,b)<.1)continue;
     if(from>to)[a,b,from,to]=[b,a,to,from];
-    const id='road:'+from+':'+to;
+    const id=(footways?'footway:':'road:')+from+':'+to;
     edges.set(id,{id,a,b,from,to,ref,west:Math.min(a[0],b[0]),east:Math.max(a[0],b[0]),
      south:Math.min(a[1],b[1]),north:Math.max(a[1],b[1])});
    }
@@ -866,7 +869,7 @@ const RouteLedCoverage=(()=>{
   }
   if(names.size!==1)return [];
   const [name]=names,near=roads.get(name)||[];
-  const normal=roadSpans(a,b,near,true);
+  const normal=roadSpans(a,b,near,12,.88);
   if(!normal.length)return [];
   // A loose pavement projection may stop at a corner or at a fork.
   // Require most of the leg and one connected road trace.
@@ -877,8 +880,7 @@ const RouteLedCoverage=(()=>{
    overlapsRemovedEdge(point(edge.a,edge.b,from),point(edge.a,edge.b,to),removed)))return [];
   return normal;
  }
- function roadSpans(a,b,edges,pavement=false){
-  const tolerance=pavement?12:.35,heading=pavement ? .88 : .98;
+ function roadSpans(a,b,edges,tolerance=.35,heading=.98){
   const margin=(tolerance+.05)/M,lonMargin=margin/Math.max(.1,Math.cos(a[1]*D));
   const west=Math.min(a[0],b[0])-lonMargin,east=Math.max(a[0],b[0])+lonMargin;
   const south=Math.min(a[1],b[1])-margin,north=Math.max(a[1],b[1])+margin;
@@ -890,7 +892,7 @@ const RouteLedCoverage=(()=>{
    const start=Math.max(0,Math.min(x,y)),end=Math.min(1,Math.max(x,y));
    if(end-start<1e-7)continue;
    const u=point(a,b,start),v=point(a,b,end);
-   const uv=pavement?[u,v].map((p,i)=>{
+   const uv=tolerance>.35?[u,v].map((p,i)=>{
     const t=((i?end:start)-x)/(y-x);
     return {t,offset:distance(p,point(edge.a,edge.b,t))};
    }):[projection(u,edge.a,edge.b),projection(v,edge.a,edge.b)];
@@ -900,6 +902,95 @@ const RouteLedCoverage=(()=>{
   }
   spans.sort((x,y)=>x.start-y.start);
   return spans.some((span,i)=>i&&span.start<spans[i-1].end-1e-6)?[]:spans;
+ }
+ function publicFootways(route){
+  if(!route.onFoot||route.source!=='saved match')return [];
+  return pinnedEdges((route.independentRoadReferences||[]).filter(ref=>
+   Number.isSafeInteger(ref.id)&&ref.kind==='footway'&&!ref.footway&&!ref.sharedCrossing&&surface(ref)),true);
+ }
+ function legacyFootwaySpans(a,b,footways,roads){
+  const spans=roadSpans(a,b,footways,5,.94);
+  const way=spans[0]?.edge.ref.id;
+  if(way===undefined||!spans.every(({edge})=>edge.ref.id===way))return [];
+  for(const edges of roads.values()){
+   if(roadSpans(a,b,edges,5,.94).reduce((sum,span)=>sum+span.end-span.start,0)>.5)return [];
+  }
+  return spans;
+ }
+ // Prevent a saved road reference from pulling an already mapped walk
+ // off a footway when that legacy reference mostly describes the footway.
+ function legacyFootwayReferences(refs,footways,edges){
+  const shadowed=new Set(),roads=Map.groupBy(edges,edge=>edge.ref);
+  for(const ref of refs||[]){
+   if(!ref.name||!road.test(ref.kind)||!surface(ref)||!ref.coords?.every(valid))continue;
+   let total=0;
+   const overlap=new Map();
+   for(let i=1;i<ref.coords.length;i++){
+    const a=ref.coords[i-1],b=ref.coords[i],length=distance(a,b);
+    total+=length;
+    for(const span of legacyFootwaySpans(a,b,footways,roads)){
+     const way=span.edge.ref.id;
+     overlap.set(way,(overlap.get(way)||0)+(span.end-span.start)*length);
+    }
+   }
+   if([...overlap.values()].some(backed=>backed>=24&&backed>=total*.75))shadowed.add(ref);
+  }
+  return shadowed;
+ }
+ // A legacy walking match can still label a pedestrianised section as
+ // a road. A close, sustained match to one public surface footway gives
+ // both map sources a stable interval identity.
+ function sharedFootwaySpans(line,legs,seams,transitions,footways,edges,legacy,removed){
+  const roads=Map.groupBy(edges,edge=>edge.ref);
+  const candidates=legs.map((leg,i)=>{
+   if(!leg||leg.spans.length||seams?.omitted.has(i))return null;
+   const a=line[i],b=line[i+1];
+   const exact=roadSpans(a,b,footways);
+   if(exact.length)return {spans:exact,exact:true};
+   if(!legacy.length)return null;
+   const mid=point(a,b,.5);
+   if(!legacy.some(([u,v])=>cosine(a,b,u,v)>.96&&
+      [a,mid,b].every(p=>projection(p,u,v).offset<=.8)))return null;
+   const spans=legacyFootwaySpans(a,b,footways,roads);
+   if(!spans.length||spans.some(({edge,from,to})=>overlapsRemovedEdge(
+       point(edge.a,edge.b,from),point(edge.a,edge.b,to),removed)))return null;
+   return {spans,way:spans[0].edge.ref.id};
+  });
+  for(const [start,{end}] of transitions||[])
+   candidates.fill(null,start,end);
+  const result=new Map();
+  for(let i=0;i<candidates.length;){
+   const first=candidates[i];
+   if(!first||first.exact){
+    if(first?.exact)result.set(i,first.spans);
+    i++;
+    continue;
+   }
+   let end=i,metres=0;
+   const intervals=new Map();
+   while(candidates[end]?.way===first.way){
+    for(const {edge,from,to} of candidates[end].spans){
+     if(!intervals.has(edge.id))intervals.set(edge.id,{edge,lo:1,hi:0});
+     const interval=intervals.get(edge.id);
+     interval.lo=Math.min(interval.lo,from,to);
+     interval.hi=Math.max(interval.hi,from,to);
+    }
+    end++;
+   }
+   for(const {edge,lo,hi} of intervals.values())metres+=(hi-lo)*distance(edge.a,edge.b);
+   if(metres>=24){
+    for(let j=i;j<end;j++)result.set(j,candidates[j].spans);
+    for(let j=i+1;j<end;j++){
+     const left=candidates[j-1].spans.at(-1),right=candidates[j].spans[0];
+     if(left.edge!==right.edge||left.end!==1||right.start!==0||
+        (right.from-left.to)*(right.to-right.from)<=0)continue;
+     const a=point(left.edge.a,left.edge.b,left.to),b=point(right.edge.a,right.edge.b,right.from);
+     if(distance(a,b)<=.5&&!overlapsRemovedEdge(a,b,removed))right.from=left.to;
+    }
+   }
+   i=end;
+  }
+  return result;
  }
  function attributeRoad({edge,from,to},previous,next,novel,repeat){
   const lo=Math.min(from,to),hi=Math.max(from,to),epsilon=1e-7;
@@ -1026,8 +1117,9 @@ const RouteLedCoverage=(()=>{
  function accumulate(history,route){
   const next=createLedger(history),novel=new Map(),repeat=new Map();
   const previousSources=history?.sources||history,previousRoads=history?.roads||new Map();
-  const prepared=cleanup(route);
-  const edges=pinnedEdges(route.independentRoadReferences);
+  const edges=pinnedEdges(route.independentRoadReferences),footways=publicFootways(route);
+  const prepared=cleanup(route,footways,edges);
+  const legacy=footways.length?segments((route.refs||[]).filter(ref=>ref.name&&surface(ref)),road):[];
   const forks=route.onFoot&&!route.corrected?shortStreetForks(edges):null;
   const pavements=route.onFoot&&route.source==='saved match'?
    pavementEdges(route.independentRoadReferences||[]):[];
@@ -1057,6 +1149,8 @@ const RouteLedCoverage=(()=>{
    const seams=pavements.length?pavementSeams(line,legs,route.independentRoadReferences):null;
    if(seams)accessLinks.push(...seams.links);
    const transitions=trace?shortRoadsideTransitions(line,legs,edges,trace,route.removedEdges):null;
+   const shared=footways.length?
+    sharedFootwaySpans(line,legs,seams,transitions,footways,edges,legacy,route.removedEdges):null;
    for(let i=0;i<legs.length;i++){
     const transition=transitions?.get(i);
     if(transition){
@@ -1067,7 +1161,8 @@ const RouteLedCoverage=(()=>{
      continue;
     }
     if(!legs[i]||seams?.omitted.has(i))continue;
-    const a=line[i],b=line[i+1],{spans,seam}=legs[i];
+    const a=line[i],b=line[i+1],{seam}=legs[i];
+    const spans=shared?.get(i)||legs[i].spans;
     let at=0;
     for(const span of spans){
      if(!seam&&span.start>at)addSource(point(a,b,at),point(a,b,span.start));

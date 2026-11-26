@@ -292,7 +292,7 @@ test('ZIP UI keeps canonical and route-led models isolated',()=>{
  assert(page.includes('RouteLedCoverage.accumulate(zipRouteLedLedger,route.surfaceParts?{...route,parts:route.surfaceParts}:route)'));
  assert(page.includes("mode==='routeLed'?zipRouteLedCache.get(n):zipCoverageCache.get(n)"));
  assert(page.includes("zipRouteLedCache.clear();zipRouteLedLedger.clear()"));
- assert(page.includes('LAB r481')&&page.includes('>PR #481</a>'));
+ assert(page.includes('LAB r482')&&page.includes('>PR #482</a>'));
  assert(page.includes('id="zipCompare"')&&page.includes('id="zipModeControls" hidden')&&page.includes("mode=zip?'routeLed':'center'"));
 });
 
@@ -511,4 +511,39 @@ test('a short mapped pavement interruption follows the connected street without 
  const left={...road,nodes:[1,2],coords:[p(0),p(20)]};
  const gap=replay({independentRoadReferences:[left,disconnected,crossing,sidewalk]});
  assert(gap.novel.some(x=>x.id.startsWith('saved:')));
+});
+
+test('saved road and public footway matches share the same cumulative walking corridor',()=>{
+ const footway={id:10,kind:'footway',nodes:[11,12,13],coords:[p(0),p(35),p(85)]};
+ const oldStreet={kind:'residential',name:'Example Street',coords:[p(0,4),p(40,4),p(85,4)]};
+ const earlier={onFoot:true,source:'saved match',parts:[oldStreet.coords.toReversed()],
+  refs:[oldStreet],independentRoadReferences:[footway]};
+ const revisit={...earlier,parts:[[p(8),p(28),p(35),p(72),p(85)]],corrected:true};
+ const original=JSON.stringify([earlier,revisit]);
+ const first=RouteLed.accumulate(RouteLed.createLedger(),earlier);
+ assert(first.novel.length>0&&first.novel.every(({id})=>id.startsWith('footway:')));
+ assert.deepEqual(RouteLed.cleanup(revisit).parts,revisit.parts);
+ const second=RouteLed.accumulate(first.next,revisit);
+ assert.deepEqual(second.novel,[]);
+ assert(second.repeat.length>0&&second.repeat.every(({id})=>id.startsWith('footway:')));
+ assert.equal(JSON.stringify([earlier,revisit]),original);
+});
+
+test('a footway cannot claim a competing road, brief overlap, or manually removed interval',()=>{
+ const footway={id:10,kind:'footway',nodes:[11,12],coords:[p(0),p(85)]};
+ const saved={kind:'residential',name:'Example Street',coords:[p(0,4),p(85,4)]};
+ const route={onFoot:true,source:'saved match',parts:[saved.coords],refs:[saved],
+  independentRoadReferences:[footway]};
+ const road={...saved,id:20,nodes:[21,22]};
+ const competingFootway={...footway,id:30,nodes:[31,32],coords:[p(0,7),p(85,7)]};
+ for(const variant of [
+  {...route,independentRoadReferences:[footway,road]},
+  {...route,independentRoadReferences:[footway,competingFootway]},
+  {...route,parts:[[p(5,4),p(25,4)]]},
+  {...route,corrected:true,removedEdges:[[p(35),p(52)]]},
+  {...route,refs:[]}
+ ]){
+  const result=RouteLed.accumulate(RouteLed.createLedger(),variant);
+  assert(result.novel.length>0&&result.novel.every(({id})=>!id.startsWith('footway:')));
+ }
 });
