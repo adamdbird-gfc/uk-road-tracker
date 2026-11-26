@@ -90,21 +90,34 @@ const IndependentRoadNetwork = (() => {
       return entry.promise;
     }
 
+    const validRef = ref => Number.isSafeInteger(ref?.id) && Array.isArray(ref.coords) &&
+      ref.coords.length >= 2 && ref.coords.every(valid) && Array.isArray(ref.nodes) &&
+      ref.nodes.length === ref.coords.length && ref.nodes.every(Number.isSafeInteger);
+
     function readIndex() {
-      return cached(driving ? 'index.json' : 'r4-index.json', data => {
+      return cached(driving ? 'index.json' : 'r5-index.json', data => {
         if (data?.schema !== 1 || data.cellsPerDegree !== 50 || !Array.isArray(data.tiles) ||
             !data.tiles.every(key => /^-?\d+_-?\d+$/.test(key))) throw Error('Invalid network index');
-        return {scale: data.cellsPerDegree, available: new Set(data.tiles),
+        const corridors = driving ? [] : data.displayCorridors || [];
+        const displayRoads = [], displayPavements = new Map();
+        for (const {roads, pavements} of corridors) {
+          const name = roads?.[0]?.name;
+          if (!name || !roads.every(ref => validRef(ref) && ROAD.test(ref.kind) &&
+              ref.name === name && ref.access === 'no') ||
+              !Array.isArray(pavements) || !pavements.every(Number.isSafeInteger))
+            throw Error('Invalid display corridor');
+          displayRoads.push(...roads.map(ref => ({...ref, displayOnly: true})));
+          for (const id of pavements) displayPavements.set(id, name);
+        }
+        return {scale: data.cellsPerDegree, available: new Set(data.tiles), displayRoads, displayPavements,
           sharedCrossings: new Set(Array.isArray(data.sharedCrossings)?data.sharedCrossings:[])};
       });
     }
 
     function readTile(key) {
       return cached(key + '.json.gz', data => {
-        if (!Array.isArray(data) || !data.every(ref => Number.isSafeInteger(ref?.id) &&
-            (ROAD.test(ref.kind) || PATH.test(ref.kind) || driving && ref.kind === 'service') && Array.isArray(ref.coords) &&
-            ref.coords.length >= 2 && ref.coords.every(valid) && Array.isArray(ref.nodes) &&
-            ref.nodes.length === ref.coords.length && ref.nodes.every(Number.isSafeInteger))) throw Error('Invalid network tile');
+        if (!Array.isArray(data) || !data.every(ref => validRef(ref) &&
+            (ROAD.test(ref.kind) || PATH.test(ref.kind) || driving && ref.kind === 'service'))) throw Error('Invalid network tile');
         return data;
       });
     }
@@ -112,23 +125,27 @@ const IndependentRoadNetwork = (() => {
     async function lookup(route) {
       if (!route.parts?.some(line => line.length >= 2)) return {refs: [], status: 'Own journey references'};
       try {
-        const {scale, available, sharedCrossings} = await readIndex();
+        const {scale, available, sharedCrossings, displayRoads, displayPavements} = await readIndex();
         const windows = routeWindows(route, scale, available, driving ? 90 : 20);
         if (!windows.size) return {refs: [], status: 'Outside pinned network coverage · own references'};
         const results = await Promise.allSettled([...windows.keys()].map(readTile));
-        const refs = new Map();
+        const refs = new Map(), display = new Map();
         let index = 0, failed = 0;
         for (const boxes of windows.values()) {
           const tile = results[index++];
           if (tile.status === 'rejected') { failed++; continue; }
-          for (const ref of tile.value)
-              if (!refs.has(ref.id) && intersects(ref.coords, boxes))
-                refs.set(ref.id, sharedCrossings.has(ref.id)?{...ref,sharedCrossing:true}:ref);
+          for (const ref of tile.value) {
+            if (refs.has(ref.id) || !intersects(ref.coords, boxes)) continue;
+            if (displayPavements.has(ref.id)) refs.set(ref.id, {...ref, displayPavement: displayPavements.get(ref.id)});
+            else refs.set(ref.id, sharedCrossings.has(ref.id) ? {...ref, sharedCrossing: true} : ref);
+          }
+          for (const ref of displayRoads)
+            if (!display.has(ref.id) && intersects(ref.coords, boxes)) display.set(ref.id, ref);
         }
         const result = [...refs.values()].sort((a, b) => a.id - b.id);
         // Missing tiles can hide a competing road. Fall back for the whole journey.
         if (failed) return {refs: [], status: 'Pinned network tile unavailable · own references', unavailable: true};
-        return {refs: result, status: result.length ?
+        return {refs: result, ...(display.size ? {displayRoads: [...display.values()]} : {}), status: result.length ?
           result.filter(ref => ROAD.test(ref.kind)).length + ' pinned OSM road references' :
           'Pinned network has no nearby references · own references'};
       } catch {

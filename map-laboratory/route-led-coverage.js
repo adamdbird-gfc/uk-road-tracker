@@ -841,6 +841,8 @@ const RouteLedCoverage=(()=>{
   function append(name,coords){
    for(let i=1;i<coords.length;i++)edges.push({name,u:coords[i-1],v:coords[i]});
   }
+  for(const ref of refs)
+   if(ref.displayPavement&&ref.kind==='footway'&&surface(ref))append(ref.displayPavement,ref.coords);
   for(const {name,nodes,coords} of sidewalks){
    append(name,coords);
    for(const node of nodes||[]){
@@ -1119,12 +1121,14 @@ const RouteLedCoverage=(()=>{
   const previousSources=history?.sources||history,previousRoads=history?.roads||new Map();
   const edges=pinnedEdges(route.independentRoadReferences),footways=publicFootways(route);
   const prepared=cleanup(route,footways,edges);
+  const displayEdges=route.onFoot&&route.source==='saved match'?
+   pinnedEdges(route.displayRoadReferences):[];
   const legacy=footways.length?segments((route.refs||[]).filter(ref=>ref.name&&surface(ref)),road):[];
   const forks=route.onFoot&&!route.corrected?shortStreetForks(edges):null;
   const pavements=route.onFoot&&route.source==='saved match'?
    pavementEdges(route.independentRoadReferences||[]):[];
   const names=new Set(pavements.map(ref=>ref.name));
-  const pavementRoads=Map.groupBy(edges.filter(({ref})=>names.has(ref.name)&&road.test(ref.kind)&&surface(ref)),edge=>edge.ref.name);
+  const pavementRoads=Map.groupBy(edges.concat(displayEdges).filter(({ref})=>names.has(ref.name)&&road.test(ref.kind)&&surface(ref)),edge=>edge.ref.name);
   const addSource=(a,b)=>{
    for(const part of sourceIntervals(a,b)){
     const target=previousSources?.has(part.id)?repeat:novel;
@@ -1142,11 +1146,20 @@ const RouteLedCoverage=(()=>{
     if(!supportedLeg(route,a,b))return null;
     const seam=forks&&forkSeamSpans(a,b,forks.merges);
     const exact=seam||roadSpans(a,b,edges);
+    if(!exact.length&&displayEdges.length){
+     const display=roadSpans(a,b,displayEdges).filter(({edge,from,to})=>
+      !overlapsRemovedEdge(point(edge.a,edge.b,from),point(edge.a,edge.b,to),route.removedEdges));
+     if(display.length)return {spans:display};
+    }
     if(exact.length||!pavements.length)return {spans:exact,seam};
     const spans=pavementRoadSpans(a,b,pavements,pavementRoads,route.removedEdges);
     return {spans,pavement:spans.length>0};
    });
-   const seams=pavements.length?pavementSeams(line,legs,route.independentRoadReferences):null;
+   // Preserve the original pedestrian approach when its neighbouring
+   // frontage pavement credits a street that is temporarily closed.
+   const seamLegs=displayEdges.length?legs.map(leg=>leg?.pavement&&
+    leg.spans.some(({edge})=>edge.ref.displayOnly)?{spans:[]}:leg):legs;
+   const seams=pavements.length?pavementSeams(line,seamLegs,route.independentRoadReferences):null;
    if(seams)accessLinks.push(...seams.links);
    const transitions=trace?shortRoadsideTransitions(line,legs,edges,trace,route.removedEdges):null;
    const shared=footways.length?

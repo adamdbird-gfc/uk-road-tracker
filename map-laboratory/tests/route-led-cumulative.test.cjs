@@ -292,7 +292,7 @@ test('ZIP UI keeps canonical and route-led models isolated',()=>{
  assert(page.includes('RouteLedCoverage.accumulate(zipRouteLedLedger,route.surfaceParts?{...route,parts:route.surfaceParts}:route)'));
  assert(page.includes("mode==='routeLed'?zipRouteLedCache.get(n):zipCoverageCache.get(n)"));
  assert(page.includes("zipRouteLedCache.clear();zipRouteLedLedger.clear()"));
- assert(page.includes('LAB r482')&&page.includes('>PR #482</a>'));
+ assert(page.includes('LAB r483')&&page.includes('>PR #483</a>'));
  assert(page.includes('id="zipCompare"')&&page.includes('id="zipModeControls" hidden')&&page.includes("mode=zip?'routeLed':'center'"));
 });
 
@@ -545,5 +545,29 @@ test('a footway cannot claim a competing road, brief overlap, or manually remove
  ]){
   const result=RouteLed.accumulate(RouteLed.createLedger(),variant);
   assert(result.novel.length>0&&result.novel.every(({id})=>!id.startsWith('footway:')));
+ }
+});
+
+test('temporary pedestrian access repeats on the closed street centreline without changing the walk',()=>{
+ const road={id:10,kind:'residential',name:'Example Street',access:'no',displayOnly:true,
+  nodes:[11,12,13],coords:[p(0),p(40),p(90)]};
+ const footway={id:20,kind:'footway',displayPavement:road.name,nodes:[21,22],coords:[p(5,4),p(85,4)]};
+ const earlier={onFoot:true,source:'saved match',parts:[road.coords.toReversed()],
+  independentRoadReferences:[footway],displayRoadReferences:[road]};
+ const revisit={...earlier,parts:[footway.coords],corrected:true};
+ const before=JSON.stringify(revisit);
+ const first=RouteLed.accumulate(RouteLed.createLedger(),earlier);
+ assert(first.novel.length>0&&first.novel.every(({id})=>id.startsWith('road:')));
+ const second=RouteLed.accumulate(first.next,revisit);
+ assert.deepEqual(second.novel,[]);
+ assert(second.repeat.length>0&&second.repeat.every(({a,b})=>a[1]===0&&b[1]===0));
+ assert.deepEqual(RouteLed.cleanup(revisit).parts,revisit.parts);
+ assert.equal(JSON.stringify(revisit),before);
+ for(const variant of [
+  {...revisit,independentRoadReferences:[{...footway,displayPavement:undefined}]},
+  {...revisit,removedEdges:[[p(35),p(45)]]}
+ ]){
+  const result=RouteLed.accumulate(first.next,variant);
+  assert(result.repeat.length===0&&result.novel.every(({a,b})=>a[1]>0&&b[1]>0));
  }
 });
