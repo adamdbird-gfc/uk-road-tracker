@@ -71,6 +71,16 @@ test('local pedestrian observations isolate an unsupported mirrored detour after
  assert.deepEqual(RouteLed.cleanup(withVisit).parts,[line]);
 });
 
+test('sparse pedestrian anchors do not cut a direct through street',()=>{
+ const {journey,approach,parkReturn}=parkImport();
+ const route=RouteFirst.reconstruct(journey);
+ const line=approach.concat(parkReturn);
+ const through={...route,parts:[line]};
+ const prepared=RouteLed.cleanup(through);
+ assert.deepEqual(prepared.parts,[line]);
+ assert.deepEqual(prepared.held,[]);
+});
+
 test('loop rule requires independent path anchors and leaves corrections and native captures alone',()=>{
  const {journey}=parkImport();
  const route=RouteFirst.reconstruct(journey);
@@ -292,7 +302,7 @@ test('ZIP UI keeps canonical and route-led models isolated',()=>{
  assert(page.includes('RouteLedCoverage.accumulate(zipRouteLedLedger,walkingRoute)'));
  assert(page.includes("mode==='routeLed'?zipRouteLedCache.get(n):zipCoverageCache.get(n)"));
  assert(page.includes("zipRouteLedCache.clear();zipRouteLedLedger.clear()"));
- assert(page.includes('LAB r488')&&page.includes('>PR #488</a>'));
+ assert(page.includes('LAB r489')&&page.includes('>PR #489</a>'));
  assert(page.includes('id="zipCompare"')&&page.includes('id="zipModeControls" hidden')&&page.includes("mode=zip?'routeLed':'center'"));
 });
 
