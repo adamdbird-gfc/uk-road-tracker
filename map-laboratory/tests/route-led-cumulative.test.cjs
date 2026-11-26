@@ -292,7 +292,7 @@ test('ZIP UI keeps canonical and route-led models isolated',()=>{
  assert(page.includes('RouteLedCoverage.accumulate(zipRouteLedLedger,route.surfaceParts?{...route,parts:route.surfaceParts}:route)'));
  assert(page.includes("mode==='routeLed'?zipRouteLedCache.get(n):zipCoverageCache.get(n)"));
  assert(page.includes("zipRouteLedCache.clear();zipRouteLedLedger.clear()"));
- assert(page.includes('LAB r477')&&page.includes('>PR #477</a>'));
+ assert(page.includes('LAB r478')&&page.includes('>PR #478</a>'));
  assert(page.includes('id="zipCompare"')&&page.includes('id="zipModeControls" hidden')&&page.includes("mode=zip?'routeLed':'center'"));
 });
 
@@ -388,4 +388,35 @@ test('a manual cut does not disable a separate pedestrian street repair',()=>{
  assert(fixed.centrelinePromotions.some(run=>run.kind==='pedestrian-street-corridor'));
  const protectedCut=RouteLed.cleanup({...route,removedEdges:[...route.removedEdges, [p(40),p(55)]]});
  assert.deepEqual(protectedCut.parts,route.parts);
+});
+
+test('a short connected street split shares pedestrian coverage in either replay order',()=>{
+ const refs=[
+  {id:10,name:'High Street',kind:'tertiary',nodes:[1,2,3],coords:[p(0),p(36,-3),p(80)]},
+  {id:11,name:'High Street',kind:'tertiary',nodes:[1,4,5],coords:[p(0),p(24,3),p(52,3)]},
+  {id:12,name:'High Street',kind:'tertiary',nodes:[5,3],coords:[p(52,3),p(80)]},
+  {id:13,name:'High Street',kind:'tertiary',nodes:[6,1],coords:[p(-25),p(0)]},
+  {id:14,name:'High Street',kind:'tertiary',nodes:[3,7],coords:[p(80),p(102)]}
+ ];
+ const south=refs[0].coords,north=refs[1].coords.concat([p(80)]);
+ const stage=(line,history,network=refs)=>RouteLed.accumulate(history,
+  {parts:[line],independentRoadReferences:network,onFoot:true});
+ for(const [first,later] of [[south,north],[north,south]]){
+  const baseline=stage(first,new Set());
+  const replay=stage(later.toReversed(),baseline.next,refs.toReversed());
+  assert.equal(replay.novel.length,0);
+  assert(replay.repeat.length>=2);
+  assert(replay.repeat.every(({a,b})=>a[1]<=0&&b[1]<=0));
+ }
+ const baseline=stage(south,new Set());
+ const partial=stage([p(24,3),p(52,3)],new Set());
+ const higher=stage(south,partial.next);
+ assert(higher.novel.length>0&&higher.repeat.length>0);
+ const seam=stage([p(52,3),p(75,3*5/28),p(90)],baseline.next);
+ assert(seam.repeat.some(({a,b})=>Math.max(a[0],b[0])===p(80)[0]));
+ assert(seam.novel.every(e=>e.id.startsWith('road:')));
+ const incomplete=stage(north,baseline.next,refs.filter(ref=>ref.id!==14));
+ assert(incomplete.novel.length>0,'unverified merge cannot transfer credit');
+ const bridge=refs.map(ref=>ref.id===12?{...ref,bridge:'yes'}:ref);
+ assert(stage(north,baseline.next,bridge).novel.length>0,'a different grade remains independent');
 });
