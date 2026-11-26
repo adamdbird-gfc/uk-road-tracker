@@ -8,6 +8,16 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Roadside fragments on repeat walks (LAB r484)
+
+Named pavements can share a named pedestrian street's centreline. Where a
+road splits and rejoins in a verified short fork, the projection uses the
+same representative as direct road coverage. A mapped crossing between two
+projected pavements stays visible as a dashed link. Short endpoint fragments
+can share a street when the pavement and the adjoining credited span support
+the alignment. These decisions use the selected journey and the public
+network. The cumulative ledger decides whether the resulting line is new.
+
 ## Whitefriars Street centreline (LAB r483)
 
 The cumulative map can use a closed street's centreline when OpenStreetMap

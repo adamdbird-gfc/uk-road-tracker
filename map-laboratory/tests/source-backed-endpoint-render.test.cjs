@@ -77,5 +77,5 @@ assert(page.includes('stroke(connectors,\'#ff4b55\',3.2)'),'display-only links a
 assert(page.includes('accessLinks:routed.accessLinks'),'saved pedestrian approaches survive replay caching');
 assert(page.indexOf("stroke(access,'#64748b',3)")<page.indexOf("stroke(old,'#151a21',3.5)")&&
  page.includes('for(const line of attribution.accessLinks||[])'),'cumulative approaches are drawn under credited geometry');
-assert(page.includes('LAB r483')&&page.includes('>PR #483</a>'));
+assert(page.includes('LAB r484')&&page.includes('>PR #484</a>'));
 console.log('PASS: source-backed visual road-to-footway joins, no invented coverage, no-source/far/connected guards');

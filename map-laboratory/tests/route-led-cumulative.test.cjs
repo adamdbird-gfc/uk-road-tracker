@@ -292,7 +292,7 @@ test('ZIP UI keeps canonical and route-led models isolated',()=>{
  assert(page.includes('RouteLedCoverage.accumulate(zipRouteLedLedger,route.surfaceParts?{...route,parts:route.surfaceParts}:route)'));
  assert(page.includes("mode==='routeLed'?zipRouteLedCache.get(n):zipCoverageCache.get(n)"));
  assert(page.includes("zipRouteLedCache.clear();zipRouteLedLedger.clear()"));
- assert(page.includes('LAB r483')&&page.includes('>PR #483</a>'));
+ assert(page.includes('LAB r484')&&page.includes('>PR #484</a>'));
  assert(page.includes('id="zipCompare"')&&page.includes('id="zipModeControls" hidden')&&page.includes("mode=zip?'routeLed':'center'"));
 });
 
@@ -570,4 +570,38 @@ test('temporary pedestrian access repeats on the closed street centreline withou
   const result=RouteLed.accumulate(first.next,variant);
   assert(result.repeat.length===0&&result.novel.every(({a,b})=>a[1]>0&&b[1]>0));
  }
+});
+
+test('pavements of a named pedestrian street share its centreline and keep a crossing as an approach',()=>{
+ const street={id:100,kind:'pedestrian',name:'Example Street',nodes:[11,12],coords:[p(0),p(80)]};
+ const north={id:101,kind:'footway',footway:'sidewalk',name:street.name,
+  nodes:[21,22],coords:[p(0,5),p(40,5)]};
+ const south={...north,id:102,nodes:[23,24],coords:[p(40,-5),p(80,-5)]};
+ const crossing={id:103,kind:'footway',footway:'crossing',nodes:[22,23],coords:[p(40,5),p(40,-5)]};
+ const earlier={onFoot:true,source:'saved match',parts:[street.coords],
+  independentRoadReferences:[street,north,south,crossing]};
+ const first=RouteLed.accumulate(RouteLed.createLedger(),earlier);
+ const revisit={...earlier,parts:[[p(5,5),p(40,5),p(40,-5),p(75,-5)]]};
+ const second=RouteLed.accumulate(first.next,revisit);
+ assert.deepEqual(second.novel,[]);
+ assert(second.repeat.length>0&&second.repeat.every(({a,b})=>a[1]===0&&b[1]===0));
+ assert.deepEqual(second.accessLinks,[crossing.coords]);
+ const unmarked=RouteLed.accumulate(first.next,{...revisit,independentRoadReferences:[street,north,south]});
+ assert(unmarked.novel.length>0);
+ assert.deepEqual(unmarked.accessLinks,[]);
+});
+
+test('a short oblique pavement endcap shares its street without trimming a genuine branch',()=>{
+ const street={id:100,kind:'tertiary',name:'Example Street',nodes:[11,12],coords:[p(0),p(80)]};
+ const pavement={id:101,kind:'footway',footway:'sidewalk',name:street.name,
+  nodes:[21,22],coords:[p(0,4),p(60,4)]};
+ const earlier={onFoot:true,source:'saved match',parts:[street.coords],
+  independentRoadReferences:[street,pavement]};
+ const first=RouteLed.accumulate(RouteLed.createLedger(),earlier);
+ const revisit={...earlier,parts:[[p(5,4),p(17),p(30),p(42)]]};
+ const second=RouteLed.accumulate(first.next,revisit);
+ assert.deepEqual(second.novel,[]);
+ assert(second.repeat.some(({a,b})=>Math.min(a[0],b[0])<p(6)[0]));
+ const branch=RouteLed.accumulate(first.next,{...revisit,parts:[[p(17,8),p(17),p(30),p(42)]]});
+ assert(branch.novel.some(({a,b})=>Math.max(a[1],b[1])>0));
 });
