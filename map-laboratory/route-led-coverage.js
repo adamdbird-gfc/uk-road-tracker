@@ -1194,6 +1194,15 @@ const RouteLedCoverage=(()=>{
    }
    if(best){
     transitions.set(i,{end:best.end,spans:best.spans});
+    // Include the tiny unclipped end of the approach in its dashed trace.
+    const entry=legs[best.end];
+    if(entry?.pavement){
+     const start=entry.spans[0].start,a=line[best.end],b=line[best.end+1];
+     if(start>0&&start*distance(a,b)<=1){
+      entry.entryLinked=true;
+      best.source.push(point(a,b,start));
+     }
+    }
     links.push(best.source);
     i=best.end-1;
    }
@@ -1282,11 +1291,11 @@ const RouteLedCoverage=(()=>{
      continue;
     }
     if(!legs[i]||seams?.omitted.has(i))continue;
-    const a=line[i],b=line[i+1],{seam,endcap}=legs[i];
+    const a=line[i],b=line[i+1],{seam,endcap,entryLinked}=legs[i];
     const spans=shared?.get(i)||legs[i].spans;
     let at=0;
     for(const span of spans){
-     if(!seam&&!(endcap&&at===0)&&span.start>at)addSource(point(a,b,at),point(a,b,span.start));
+     if(!seam&&!((endcap||entryLinked)&&at===0)&&span.start>at)addSource(point(a,b,at),point(a,b,span.start));
      for(const mapped of forks?streetForkSpans(span,forks.aliases):[span])
       attributeRoad(mapped,previousRoads,next.roads,novel,repeat);
      at=seam?1:span.end;
