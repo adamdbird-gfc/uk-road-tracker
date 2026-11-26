@@ -8,6 +8,15 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Connected walking approaches (LAB r488)
+
+The cumulative view keeps a mapped terminal approach connected to the through route.
+Sparse adjacent Timeline walks can share one pedestrian route in both directions
+when they agree on a mapped crossing and one saved match clearly follows the
+connected public network. The saved and recorded comparisons keep their original
+geometry. The pinned network now includes Rochester station and the nearby
+Corporation Street crossings from the existing Kent OSM snapshot.
+
 ## Short Fleet Street approaches (LAB r487)
 
 A short walk can see one arm of a mapped fork without seeing where it

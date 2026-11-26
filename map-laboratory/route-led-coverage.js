@@ -469,6 +469,7 @@ const RouteLedCoverage=(()=>{
   return {...route,parts:kept,refs:refs.filter(ref=>!withheldWays.has(ref))};
  }
  function cleanup(route,footways=publicFootways(route),edges=pinnedEdges(route.independentRoadReferences)){
+  if(route.pairedWalk)return {parts:[route.pairedWalk.line],held:[],centrelinePromotions:[],links:[]};
   const roads=segments(route?.refs,road),feet=segments(route?.refs,foot);
   // Static road geometry comes only from this journey's own references
   // or the pinned public OSM network, never from other journeys.
@@ -1268,17 +1269,52 @@ const RouteLedCoverage=(()=>{
   }
   return links;
  }
+ // Keep a short, mapped terminal approach with its connection to the
+ // through route. Projecting part of it independently can strand the rest.
+ function extendTerminalApproaches(line,legs,footways,links,omitted,raw){
+  if(raw.length<2)return links;
+  return links.map(link=>{
+   const first=line.indexOf(link[0]),last=line.indexOf(link.at(-1));
+   if(first<0||last<=first)return link;
+   for(const start of [true,false]){
+    const end=start?0:legs.length,anchor=start?last:first;
+    const terminal=legs[start?0:legs.length-1];
+    if(Math.min(distance(line[end],raw[0]),distance(line[end],raw.at(-1)))>12)continue;
+    const lo=Math.min(end,anchor),hi=Math.max(end,anchor);
+    const approach=line.slice(lo,hi+1);
+    const length=approach.slice(1).reduce((sum,b,i)=>sum+distance(approach[i],b),0);
+    const span=start?terminal?.spans[0]:terminal?.spans.at(-1);
+    const offsetPavement=terminal?.pavement&&span&&
+     distance(line[end],point(span.edge.a,span.edge.b,start?span.from:span.to))>2;
+    if(length>(offsetPavement?43:30))continue;
+    const backed=legs.slice(lo,hi).every((leg,j)=>{
+     const i=lo+j;
+     if(i>=first&&i<last||omitted.has(i))return true;
+     if(!leg)return false;
+     if(leg.spans.length)return offsetPavement&&leg.pavement;
+     return roadSpans(line[i],line[i+1],footways)
+      .reduce((sum,span)=>sum+span.end-span.start,0)>.9;
+    });
+    if(!backed)continue;
+    for(let i=lo;i<hi;i++)omitted.add(i);
+    return approach;
+   }
+   return link;
+  });
+ }
  function accumulate(history,route){
   const next=createLedger(history),novel=new Map(),repeat=new Map();
   const previousSources=history?.sources||history,previousRoads=history?.roads||new Map();
-  const edges=pinnedEdges(route.independentRoadReferences),footways=publicFootways(route);
+  const paired=route.pairedWalk;
+  const edges=pinnedEdges(paired?.refs||route.independentRoadReferences);
+  const footways=paired?pinnedEdges(paired.refs.filter(ref=>!road.test(ref.kind)),true):publicFootways(route);
   const prepared=cleanup(route,footways,edges);
-  const displayEdges=route.onFoot&&route.source==='saved match'?
+  const displayEdges=!paired&&route.onFoot&&route.source==='saved match'?
    pinnedEdges(route.displayRoadReferences):[];
-  const legacy=footways.length?segments((route.refs||[]).filter(ref=>ref.name&&surface(ref)),road):[];
-  const forks=route.onFoot&&!route.corrected?shortStreetForks(
+  const legacy=!paired&&footways.length?segments((route.refs||[]).filter(ref=>ref.name&&surface(ref)),road):[];
+  const forks=!paired&&route.onFoot&&!route.corrected?shortStreetForks(
    route.forkContext?.length?[...edges,...pinnedEdges(route.forkContext)]:edges):null;
-  const pavements=route.onFoot&&route.source==='saved match'?
+  const pavements=!paired&&route.onFoot&&route.source==='saved match'?
    pavementEdges(route.independentRoadReferences||[]):[];
   const names=new Set(pavements.map(ref=>ref.name));
   // A named pedestrian street also has a centreline. Resolve verified
@@ -1341,12 +1377,14 @@ const RouteLedCoverage=(()=>{
    const seamLegs=displayEdges.length?legs.map(leg=>leg?.pavement&&
     leg.spans.some(({edge})=>edge.ref.displayOnly)?{spans:[]}:leg):legs;
    const seams=pavements.length?pavementSeams(line,seamLegs,route.independentRoadReferences):null;
+   const links=[];
    if(seams){
-    accessLinks.push(...seams.links,...pavementCrossings(line,legs,route.independentRoadReferences,seams.omitted));
-    if(!route.corrected)accessLinks.push(...pavementAccessLinks(line,legs,pavements,footways,seams.omitted));
+    links.push(...seams.links,...pavementCrossings(line,legs,route.independentRoadReferences,seams.omitted));
+    if(!route.corrected)links.push(...pavementAccessLinks(line,legs,pavements,footways,seams.omitted));
    }
    const transitions=trace?shortRoadsideTransitions(line,legs,edges,trace,route.removedEdges):new Map();
-   if(junctionTrace)junctionCrossings(line,legs,edges,route.independentRoadReferences,junctionTrace,transitions,accessLinks);
+   if(junctionTrace)junctionCrossings(line,legs,edges,route.independentRoadReferences,junctionTrace,transitions,links);
+   accessLinks.push(...(!seams||route.corrected?links:extendTerminalApproaches(line,legs,footways,links,seams.omitted,raw)));
    const shared=footways.length?
     sharedFootwaySpans(line,legs,seams,transitions,footways,edges,legacy,route.removedEdges):null;
    for(let i=0;i<legs.length;i++){

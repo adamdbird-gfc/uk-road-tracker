@@ -95,7 +95,7 @@ const IndependentRoadNetwork = (() => {
       ref.nodes.length === ref.coords.length && ref.nodes.every(Number.isSafeInteger);
 
     function readIndex() {
-      return cached(driving ? 'index.json' : 'r6-index.json', data => {
+      return cached(driving ? 'index.json' : 'r7-index.json', data => {
         if (data?.schema !== 1 || data.cellsPerDegree !== 50 || !Array.isArray(data.tiles) ||
             !data.tiles.every(key => /^-?\d+_-?\d+$/.test(key))) throw Error('Invalid network index');
         const corridors = driving ? [] : data.displayCorridors || [];
