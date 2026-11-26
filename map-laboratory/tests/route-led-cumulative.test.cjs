@@ -292,7 +292,7 @@ test('ZIP UI keeps canonical and route-led models isolated',()=>{
  assert(page.includes('RouteLedCoverage.accumulate(zipRouteLedLedger,route.surfaceParts?{...route,parts:route.surfaceParts}:route)'));
  assert(page.includes("mode==='routeLed'?zipRouteLedCache.get(n):zipCoverageCache.get(n)"));
  assert(page.includes("zipRouteLedCache.clear();zipRouteLedLedger.clear()"));
- assert(page.includes('LAB r478')&&page.includes('>PR #478</a>'));
+ assert(page.includes('LAB r479')&&page.includes('>PR #479</a>'));
  assert(page.includes('id="zipCompare"')&&page.includes('id="zipModeControls" hidden')&&page.includes("mode=zip?'routeLed':'center'"));
 });
 
@@ -419,4 +419,48 @@ test('a short connected street split shares pedestrian coverage in either replay
  assert(incomplete.novel.length>0,'unverified merge cannot transfer credit');
  const bridge=refs.map(ref=>ref.id===12?{...ref,bridge:'yes'}:ref);
  assert(stage(north,baseline.next,bridge).novel.length>0,'a different grade remains independent');
+});
+
+test('named mapped pavement contributes only its traversed road interval, with crossings and edits preserved',()=>{
+ const road={kind:'primary',name:'High Street',coords:[p(0),p(50),p(100)],nodes:[1,2,3]};
+ const sidewalk={kind:'footway',footway:'sidewalk',name:'High Street',
+  coords:[p(20,8),p(40,8),p(60,8),p(80,8)],nodes:[4,5,6,7]};
+ const previous=RouteLed.accumulate(new Set(),{parts:[[p(0),p(50)]],independentRoadReferences:[road]});
+ const line=[p(20,16),p(20,8),p(40,8),p(60,8),p(80,8)];
+ const route={onFoot:true,source:'saved match',corrected:true,recorded:[line],
+  parts:[line.slice(0,3),line.slice(2,4),line.slice(3)],independentRoadReferences:[road,sidewalk]};
+ const before=JSON.stringify(route);
+ const result=RouteLed.accumulate(previous.next,route);
+ const metres=spans=>spans.reduce((sum,{a,b})=>sum+Math.abs(b[0]-a[0])*111320,0);
+ const roadOnly=spans=>spans.filter(x=>x.id.startsWith('road:'));
+ assert(Math.abs(metres(roadOnly(result.repeat))-30)<.01);
+ assert(Math.abs(metres(roadOnly(result.novel))-30)<.01);
+ assert(result.novel.some(({a,b})=>a[1]>0&&a[0]===b[0]));
+ assert(!result.novel.some(({a,b})=>a[1]>0&&a[0]!==b[0]));
+ assert.equal(JSON.stringify(route),before);
+
+ const removed=RouteLed.accumulate(previous.next,{...route,removedEdges:[[p(45),p(52)]]});
+ assert(!roadOnly(removed.novel).some(({a,b})=>Math.min(a[0],b[0])<p(52)[0]));
+
+ for(const changed of [{...sidewalk,footway:'crossing'},{...sidewalk,name:'Another Street'},{...sidewalk,bridge:'yes'}]){
+  const remaining=RouteLed.accumulate(previous.next,{...route,independentRoadReferences:[road,changed]});
+  assert.equal(roadOnly(remaining.repeat).length,0);
+  assert.equal(roadOnly(remaining.novel).length,0);
+ }
+ const rival={...road,coords:[p(0,2),p(50,2),p(100,2)],nodes:[8,9,10]};
+ assert.equal(roadOnly(RouteLed.accumulate(previous.next,
+  {...route,independentRoadReferences:[road,rival,sidewalk]}).novel).length,0);
+});
+
+test('a side-street crossing can share coverage only when it connects same-name pavements',()=>{
+ const road={kind:'primary',name:'High Street',coords:[p(0),p(90)],nodes:[1,2]};
+ const pavement={kind:'footway',footway:'sidewalk',name:'High Street'};
+ const before={...pavement,coords:[p(20,8),p(35,8)],nodes:[3,4]};
+ const after={...pavement,coords:[p(45,8),p(60,8)],nodes:[5,6]};
+ const crossing={kind:'footway',footway:'crossing',coords:[p(35,8),p(45,8)],nodes:[4,5]};
+ const replay=tail=>RouteLed.accumulate(new Set(),{onFoot:true,source:'saved match',
+  parts:[crossing.coords],independentRoadReferences:[road,before,tail,crossing]});
+ assert(replay(after).novel.every(item=>item.id.startsWith('road:')));
+ assert(replay({...after,nodes:[7,6]}).novel.every(item=>item.id.startsWith('saved:')));
+ assert(replay({...after,name:'Side Street'}).novel.every(item=>item.id.startsWith('saved:')));
 });

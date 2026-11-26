@@ -8,6 +8,15 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Named pavement coverage (LAB r479)
+
+The cumulative replay can credit a named pavement on its mapped road when
+the saved route follows that pavement and the road geometry gives a single
+connected match. A mapped side-street crossing can continue the pavement if
+both ends connect to pavements of the same name and the crossing runs in the
+same direction as the road. Independent footpaths, ambiguous road matches,
+removed edges and the saved route are preserved.
+
 ## Coverage through short street splits (LAB r478)
 
 Pedestrian cumulative coverage can use one mapped representation for a
