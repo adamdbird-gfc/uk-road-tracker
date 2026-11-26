@@ -541,9 +541,35 @@ const RouteLedCoverage=(()=>{
   }
   const canClean=route.onFoot!==false&&route.source!=='recorded';
   const output=canClean?suppressIslands(parts,route,withPhysicalRoads.refs||[],held):parts;
-  if(route.onFoot&&!route.corrected&&route.source==='saved match'&&route.independentRoadReferences?.length){
+  if(route.onFoot&&route.source==='saved match'&&route.independentRoadReferences?.length){
    const raw=(route.recorded||[]).flat().filter(valid);
    for(const line of output)if(line?.length>=4){
+    if(route.corrected){
+     if(!route.removedEdges?.length)continue;
+     // Work within one retained component. Keep the manual cut points and
+     // reject any new coverage that follows an explicitly removed edge.
+     const candidate=line.slice(),refs=withPhysicalRoads.refs;
+     const repairs=CentrelinePromotion.closePedestrianStreetCorridors(candidate,refs,raw);
+     if(!repairs.length||candidate[0]!==line[0]||candidate.at(-1)!==line.at(-1))continue;
+     const removed=route.removedEdges;
+     const edgeKey=(a,b)=>[a.join(','),b.join(',')].sort().join(';');
+     const kept=new Set(line.slice(1).map((b,i)=>edgeKey(line[i],b)));
+     const restoresCut=candidate.slice(1).some((b,i)=>{
+      const a=candidate[i];
+      if(kept.has(edgeKey(a,b)))return false;
+      return removed.some(([u,v])=>{
+       if(cosine(a,b,u,v)<=.9)return false;
+       const x=fraction(u,a,b),y=fraction(v,a,b);
+       const lo=Math.max(0,Math.min(x,y)),hi=Math.min(1,Math.max(x,y));
+       return (hi-lo)*distance(a,b)>.5&&
+        [point(a,b,lo),point(a,b,hi)].every(p=>projection(p,u,v).offset<=.6);
+      });
+     });
+     if(restoresCut)continue;
+     line.splice(0,line.length,...candidate);
+     aligned.promoted.push(...repairs);
+     continue;
+    }
     aligned.promoted.push(...CentrelinePromotion.closeRoadInterruptions(line,withPhysicalRoads.refs,raw));
     aligned.promoted.push(...CentrelinePromotion.closePedestrianStreetCorridors(line,withPhysicalRoads.refs,raw));
     if(route.sourceType==='timeline_import'){

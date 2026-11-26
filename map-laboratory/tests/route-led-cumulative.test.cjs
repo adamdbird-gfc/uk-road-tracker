@@ -292,7 +292,7 @@ test('ZIP UI keeps canonical and route-led models isolated',()=>{
  assert(page.includes('RouteLedCoverage.accumulate(zipRouteLedLedger,route.surfaceParts?{...route,parts:route.surfaceParts}:route)'));
  assert(page.includes("mode==='routeLed'?zipRouteLedCache.get(n):zipCoverageCache.get(n)"));
  assert(page.includes("zipRouteLedCache.clear();zipRouteLedLedger.clear()"));
- assert(page.includes('LAB r476')&&page.includes('>PR #476</a>'));
+ assert(page.includes('LAB r477')&&page.includes('>PR #477</a>'));
  assert(page.includes('id="zipCompare"')&&page.includes('id="zipModeControls" hidden')&&page.includes("mode=zip?'routeLed':'center'"));
 });
 
@@ -370,4 +370,22 @@ test('a sparse unobserved service retrace can be withheld without removing a rec
  assert(result.held.some(x=>x.reason==='unobserved-service-retrace'));
  const realVisit=RouteLed.cleanup({...route,recorded:[[p(-180),p(0,110),p(180)]]});
  assert.deepEqual(realVisit.parts,[line]);
+});
+
+test('a manual cut does not disable a separate pedestrian street repair',()=>{
+ const refs=[
+  {kind:'primary',name:'High Street',coords:[p(-20),p(0)],nodes:[1,2]},
+  {kind:'pedestrian',name:'High Street',coords:[p(0),p(100)],nodes:[2,3]},
+  {kind:'primary',name:'High Street',coords:[p(100),p(125)],nodes:[3,4]}
+ ];
+ const line=[p(-20),p(0),p(20,5),p(80,5),p(100),p(125)];
+ const other=[p(170,30),p(185,30)];
+ const route={parts:[line,other],recorded:[line],refs,independentRoadReferences:refs,
+  onFoot:true,source:'saved match',sourceType:'timeline_import',corrected:true,
+  removedEdges:[[line.at(-1),other[0]]]};
+ const fixed=RouteLed.cleanup(route);
+ assert.deepEqual(fixed.parts,[[p(-20),p(0),p(100),p(125)],other]);
+ assert(fixed.centrelinePromotions.some(run=>run.kind==='pedestrian-street-corridor'));
+ const protectedCut=RouteLed.cleanup({...route,removedEdges:[...route.removedEdges, [p(40),p(55)]]});
+ assert.deepEqual(protectedCut.parts,route.parts);
 });
