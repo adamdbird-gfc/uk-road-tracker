@@ -8,6 +8,13 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Pavement transitions and pedestrian access (LAB r480)
+
+A short lateral transition from a street to its credited pavement no
+longer adds an extra spur to the street coverage. When the retained
+pavement continues into an independent pedestrian path, the cumulative
+map draws the original approach as a dashed link without new road credit.
+
 ## Named pavement coverage (LAB r479)
 
 The cumulative replay can credit a named pavement on its mapped road when

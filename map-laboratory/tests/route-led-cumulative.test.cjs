@@ -292,7 +292,7 @@ test('ZIP UI keeps canonical and route-led models isolated',()=>{
  assert(page.includes('RouteLedCoverage.accumulate(zipRouteLedLedger,route.surfaceParts?{...route,parts:route.surfaceParts}:route)'));
  assert(page.includes("mode==='routeLed'?zipRouteLedCache.get(n):zipCoverageCache.get(n)"));
  assert(page.includes("zipRouteLedCache.clear();zipRouteLedLedger.clear()"));
- assert(page.includes('LAB r479')&&page.includes('>PR #479</a>'));
+ assert(page.includes('LAB r480')&&page.includes('>PR #480</a>'));
  assert(page.includes('id="zipCompare"')&&page.includes('id="zipModeControls" hidden')&&page.includes("mode=zip?'routeLed':'center'"));
 });
 
@@ -463,4 +463,28 @@ test('a side-street crossing can share coverage only when it connects same-name 
  assert(replay(after).novel.every(item=>item.id.startsWith('road:')));
  assert(replay({...after,nodes:[7,6]}).novel.every(item=>item.id.startsWith('saved:')));
  assert(replay({...after,name:'Side Street'}).novel.every(item=>item.id.startsWith('saved:')));
+});
+
+test('pavement seams stop earning spur credit and keep the saved pedestrian approach connected',()=>{
+ const road={kind:'primary',name:'High Street',coords:[p(0),p(80)],nodes:[1,2]};
+ const pavement={kind:'footway',footway:'sidewalk',name:'High Street',
+  coords:[p(20,8),p(42,8)],nodes:[3,4]};
+ const entrance={kind:'footway',coords:[p(42,8),p(42,18),p(42,26)],nodes:[4,5,6]};
+ const line=[p(0),p(20),p(20,8),p(42,8),p(42,18),p(42,26)];
+ const route={onFoot:true,corrected:true,source:'saved match',parts:[line],
+  independentRoadReferences:[road,pavement,entrance]};
+ const result=RouteLed.accumulate(new Set(),route);
+ assert.deepEqual(result.accessLinks,[line.slice(1,4)]);
+ assert(result.novel.every(({a,b})=>a[0]!==p(20)[0]||b[0]!==p(20)[0]));
+ assert(result.novel.some(({a,b})=>a[0]===p(42)[0]&&b[0]===p(42)[0]));
+ const reverse=RouteLed.accumulate(new Set(),{...route,parts:[line.toReversed()]});
+ assert.deepEqual(reverse.accessLinks,[line.slice(1,4).toReversed()]);
+
+ const terminal=RouteLed.accumulate(new Set(),{...route,parts:[line.slice(0,4)]});
+ assert.deepEqual(terminal.accessLinks,[]);
+ assert(terminal.novel.every(item=>item.id.startsWith('road:')));
+
+ const excursion=[p(0),p(20),p(17,4),p(20,8),p(42,8)];
+ const protectedSpur=RouteLed.accumulate(new Set(),{...route,parts:[excursion]});
+ assert(protectedSpur.novel.some(item=>item.id.startsWith('saved:')));
 });
