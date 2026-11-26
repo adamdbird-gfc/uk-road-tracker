@@ -8,6 +8,15 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+The [archive validation procedure](archive-validation.md) describes full replay and review.
+
+## Archive validation and through streets (LAB r489)
+
+Replay the private archive against the pinned network to group potential
+continuity issues for review. A sparse pair of pedestrian observations no longer
+causes the intervening street to be removed when the saved street run proceeds
+directly between its endpoints.
+
 ## Connected walking approaches (LAB r488)
 
 The cumulative view keeps a mapped terminal approach connected to the through route.

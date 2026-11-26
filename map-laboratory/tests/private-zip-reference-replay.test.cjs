@@ -387,3 +387,18 @@ test('London and Gravesend approaches stay connected and Rochester walks share o
  }
  assert.deepEqual(checked,[104,105,107,108,112,114,115,121,122]);
 });
+
+test('owner ZIP through streets between sparse pedestrian anchors stay connected',{skip:!archive},async()=>{
+ const zip=Bulk.roadReplay(await Bulk.open(new Blob([fs.readFileSync(archive)])));
+ const network=Network.create(request);
+ for(const archiveOrdinal of [647,793]){
+  const index=zip.journeys.findIndex(row=>row.archiveOrdinal===archiveOrdinal);
+  const {journey}=await zip.read(index);
+  const route=RouteFirst.reconstruct(journey),pinned=await network.lookup(route);
+  assert.equal(route.parts.length,1);
+  assert(pinned.refs.length>0);
+  const result=RouteLed.cleanup({...route,independentRoadReferences:pinned.refs});
+  assert.equal(result.parts.length,1,`ZIP ${archiveOrdinal} remains one supported route`);
+  assert(!result.held.some(row=>row.reason==='unverified-road-excursion-between-pedestrian-observations'));
+ }
+});

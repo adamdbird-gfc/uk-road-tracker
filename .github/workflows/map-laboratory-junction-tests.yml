@@ -53,6 +53,8 @@ jobs:
         run: node --test map-laboratory/tests/independent-road-network.test.cjs
       - name: Verify physical road centreline equivalence without destroying independent footpaths
         run: node --test map-laboratory/tests/roadside-centreline-zip.test.cjs
+      - name: Verify archive audit signals and held-back review groups
+        run: node --test map-laboratory/tests/archive-audit.test.cjs
       - name: Verify paired walking routes use mapped pedestrian crossings
         run: node --test map-laboratory/tests/paired-walk.test.cjs
       - name: Verify route-led cumulative model preserves ordered shortcuts

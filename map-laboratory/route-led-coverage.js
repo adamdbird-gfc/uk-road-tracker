@@ -452,6 +452,9 @@ const RouteLedCoverage=(()=>{
    if(returns)n++;
    const metres=length(run.start,end);
    if(metres<32||observed(run.start,end))continue;
+   // Sparse observations on two paths cannot disprove a direct through
+   // street between them. Only withhold a run that actually detours.
+   if(!returns&&distance(line[run.start],line[end])>=metres*.85)continue;
    const before=anchors(run.start,previousEnd,-1);
    const after=anchors(end,runs[n+1]?.start??edges.length,1);
    if(!before.length||!after.length||before[0]>=after.at(-1))continue;
