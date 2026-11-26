@@ -8,6 +8,8 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+The [archive validation procedure](archive-validation.md) describes full replay and review.
+
 ## Connected walking approaches (LAB r488)
 
 The cumulative view keeps a mapped terminal approach connected to the through route.
