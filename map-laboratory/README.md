@@ -8,6 +8,14 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Coverage through short street splits (LAB r478)
+
+Pedestrian cumulative coverage can use one mapped representation for a
+short local street split when both same-name, same-class arms share
+the two public junctions, advance along the same corridor and stay within
+nine metres. Coverage transfers only along the traversed interval. The saved
+route and its original geometry remain available in the comparison views.
+
 ## Pedestrian street alignment within manually edited journeys (LAB r477)
 
 A manually removed section still divides the saved match. Within each

@@ -714,7 +714,7 @@ const RouteLedCoverage=(()=>{
     if(!valid(a)||!valid(b)||from===to||distance(a,b)<.1)continue;
     if(from>to)[a,b,from,to]=[b,a,to,from];
     const id='road:'+from+':'+to;
-    edges.set(id,{id,a,b,west:Math.min(a[0],b[0]),east:Math.max(a[0],b[0]),
+    edges.set(id,{id,a,b,from,to,ref,west:Math.min(a[0],b[0]),east:Math.max(a[0],b[0]),
      south:Math.min(a[1],b[1]),north:Math.max(a[1],b[1])});
    }
   }
@@ -723,6 +723,107 @@ const RouteLedCoverage=(()=>{
  function fraction(p,a,b){
   const scale=Math.cos(a[1]*D),x=(b[0]-a[0])*scale,y=b[1]-a[1];
   return ((p[0]-a[0])*scale*x+(p[1]-a[1])*y)/(x*x+y*y);
+ }
+ // Attribute a short split and rejoin on a named local street to one
+ // mapped road line. Require two complete, narrow arms in the public graph.
+ function shortStreetForks(edges){
+  const adjacency=new Map(),aliases=new Map(),merges=new Map();
+  for(const edge of edges){
+   const {ref}=edge;
+   if(!ref.name||!Number.isSafeInteger(ref.id)||
+      !/^(tertiary|unclassified|residential)$/.test(ref.kind)||
+      ref.bridge==='yes'||ref.tunnel==='yes'||(ref.layer&&ref.layer!=='0'))continue;
+   for(const node of [edge.from,edge.to]){
+    if(!adjacency.has(node))adjacency.set(node,[]);
+    adjacency.get(node).push(edge);
+   }
+  }
+  const same=(edge,ref)=>edge.ref.name===ref.name&&edge.ref.kind===ref.kind;
+  const other=(edge,node)=>edge.from===node?edge.to:edge.from;
+  const arm=(node,first)=>{
+   const path=[],seen=new Set([node]);
+   let edge=first,length=0;
+   while(edge){
+    const forward=edge.from===node;
+    path.push({edge,forward,start:forward?edge.a:edge.b,end:forward?edge.b:edge.a});
+    length+=distance(edge.a,edge.b);
+    node=other(edge,node);
+    if(length>115||seen.has(node))return null;
+    seen.add(node);
+    const next=adjacency.get(node).filter(candidate=>same(candidate,first.ref));
+    if(next.length!==2)return next.length===3?{node,path,length}:null;
+    edge=next.find(candidate=>candidate!==edge);
+   }
+   return null;
+  };
+  for(const [node,incident] of adjacency){
+   for(let a=0;a<incident.length;a++){
+    const first=incident[a],streets=incident.filter(edge=>same(edge,first.ref));
+    if(streets.length!==3)continue;
+    for(const second of incident.slice(a+1)){
+     if(!same(second,first.ref))continue;
+     const left=arm(node,first),right=arm(node,second);
+     if(!left||!right||left.node!==right.node||node>=left.node)continue;
+     const start=left.path[0].start,end=left.path.at(-1).end,span=distance(start,end);
+     if(span<15||Math.max(left.length,right.length)>span*1.16)continue;
+     const station=p=>fraction(p,start,end);
+     const measured=path=>path.map(item=>({...item,lo:station(item.start),hi:station(item.end)}));
+     const x=measured(left.path),y=measured(right.path);
+     if([...x,...y].some(item=>item.hi-item.lo<1e-6))continue;
+     const close=(path,otherPath)=>path.every(({start,end})=>
+      [start,point(start,end,.5),end].every(p=>nearest(p,otherPath)<9));
+     if(!close(x,y.map(e=>[e.start,e.end]))||!close(y,x.map(e=>[e.start,e.end])))continue;
+     // OSM way identity makes the representative independent of replay order.
+     const oldest=path=>Math.min(...path.map(({edge})=>edge.ref.id));
+     if(oldest(x)===oldest(y))continue;
+     const [target,alternate]=oldest(x)<oldest(y)?[x,y]:[y,x];
+     if(merges.has(node)||merges.has(left.node))continue;
+     const boundary=[node,left.node];
+     const ends=boundary.map((id,index)=>{
+      const edgeAt=path=>index?path.at(-1).edge:path[0].edge;
+      const forkEdges=[edgeAt(target),edgeAt(alternate)];
+      const through=adjacency.get(id).find(edge=>same(edge,first.ref)&&!forkEdges.includes(edge));
+      return {forkEdges,through,junction:through.from===id?through.a:through.b,id};
+     });
+     for(const merge of ends)merges.set(merge.id,merge);
+     for(const item of alternate)aliases.set(item.edge.id,{...item,target});
+    }
+   }
+  }
+  return {aliases,merges};
+ }
+ function forkSeamSpans(a,b,merges){
+  const length=distance(a,b);
+  if(length<2||length>22)return null;
+  const candidates=[];
+  for(const {forkEdges,through,junction,id} of merges.values()){
+   if(distance(a,junction)<1||distance(b,junction)<1||
+      projection(junction,a,b).offset>3)continue;
+   for(const branch of forkEdges){
+    for(const [first,last] of [[branch,through],[through,branch]]){
+     const at=projection(a,first.a,first.b),bt=projection(b,last.a,last.b);
+     if(at.offset>.45||bt.offset>.45)continue;
+     const end=first.from===id?0:1,start=last.from===id?0:1;
+     if(Math.abs(end-at.t)*distance(first.a,first.b)<.5||
+        Math.abs(start-bt.t)*distance(last.a,last.b)<.5)continue;
+     candidates.push([{edge:first,start:0,from:at.t,to:end},
+      {edge:last,start:0,from:start,to:bt.t,end:1}]);
+    }
+   }
+  }
+  return candidates.length===1?candidates[0]:null;
+ }
+ function* streetForkSpans(span,aliases){
+  const fork=aliases.get(span.edge.id);
+  if(!fork){yield span;return;}
+  const station=t=>fork.lo+(fork.hi-fork.lo)*(fork.forward?t:1-t);
+  const start=station(span.from),end=station(span.to);
+  for(const {edge,forward,lo,hi} of start<end?fork.target:fork.target.toReversed()){
+   const a=Math.max(lo,Math.min(start,end)),b=Math.min(hi,Math.max(start,end));
+   if(b-a<1e-7)continue;
+   const fraction=t=>forward?(t-lo)/(hi-lo):(hi-t)/(hi-lo);
+   yield {edge,from:fraction(start<end?a:b),to:fraction(start<end?b:a)};
+  }
  }
  function roadSpans(a,b,edges){
   const margin=.4/M,lonMargin=margin/Math.max(.1,Math.cos(a[1]*D));
@@ -777,6 +878,7 @@ const RouteLedCoverage=(()=>{
   const previousSources=history?.sources||history,previousRoads=history?.roads||new Map();
   const prepared=cleanup(route);
   const edges=pinnedEdges(route.independentRoadReferences);
+  const forks=route.onFoot&&!route.corrected?shortStreetForks(edges):null;
   const addSource=(a,b)=>{
    for(const part of sourceIntervals(a,b)){
     const target=previousSources?.has(part.id)?repeat:novel;
@@ -788,10 +890,12 @@ const RouteLedCoverage=(()=>{
    const a=line[i-1],b=line[i];
    if(!supportedLeg(route,a,b))continue;
    let at=0;
-   for(const span of roadSpans(a,b,edges)){
-    if(span.start>at)addSource(point(a,b,at),point(a,b,span.start));
-    attributeRoad(span,previousRoads,next.roads,novel,repeat);
-    at=span.end;
+   const seam=forks&&forkSeamSpans(a,b,forks.merges);
+   for(const span of seam||roadSpans(a,b,edges)){
+    if(!seam&&span.start>at)addSource(point(a,b,at),point(a,b,span.start));
+    for(const mapped of forks?streetForkSpans(span,forks.aliases):[span])
+     attributeRoad(mapped,previousRoads,next.roads,novel,repeat);
+    at=seam?1:span.end;
    }
    if(at<1)addSource(point(a,b,at),b);
   }
