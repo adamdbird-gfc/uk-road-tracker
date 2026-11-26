@@ -8,6 +8,13 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Junction approaches and replay controls (LAB r485)
+
+Previous, Next, Play and map focus sit immediately below the map. A short
+pedestrian approach between connected through-street anchors can remain
+visible as a dashed trace while the cumulative map credits the through
+centreline. The junction rule uses mapped crossings and each saved walk.
+
 ## Roadside fragments on repeat walks (LAB r484)
 
 Named pavements can share a named pedestrian street's centreline. Where a
