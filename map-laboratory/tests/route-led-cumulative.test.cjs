@@ -292,7 +292,7 @@ test('ZIP UI keeps canonical and route-led models isolated',()=>{
  assert(page.includes('RouteLedCoverage.accumulate(zipRouteLedLedger,route.surfaceParts?{...route,parts:route.surfaceParts}:route)'));
  assert(page.includes("mode==='routeLed'?zipRouteLedCache.get(n):zipCoverageCache.get(n)"));
  assert(page.includes("zipRouteLedCache.clear();zipRouteLedLedger.clear()"));
- assert(page.includes('LAB r480')&&page.includes('>PR #480</a>'));
+ assert(page.includes('LAB r481')&&page.includes('>PR #481</a>'));
  assert(page.includes('id="zipCompare"')&&page.includes('id="zipModeControls" hidden')&&page.includes("mode=zip?'routeLed':'center'"));
 });
 
@@ -487,4 +487,28 @@ test('pavement seams stop earning spur credit and keep the saved pedestrian appr
  const excursion=[p(0),p(20),p(17,4),p(20,8),p(42,8)];
  const protectedSpur=RouteLed.accumulate(new Set(),{...route,parts:[excursion]});
  assert(protectedSpur.novel.some(item=>item.id.startsWith('saved:')));
+});
+
+test('a short mapped pavement interruption follows the connected street without crossing a manual cut',()=>{
+ const road={kind:'primary',name:'High Street',coords:[p(0),p(20),p(40),p(55)],nodes:[1,2,3,4]};
+ const crossing={kind:'footway',footway:'crossing',coords:[p(20),p(27,7),p(33,7),p(40)],nodes:[2,5,6,3]};
+ const sidewalk={kind:'footway',footway:'sidewalk',name:'High Street',coords:[p(27,7),p(33,7)],nodes:[5,6]};
+ const line=[p(0),...crossing.coords,p(55)];
+ const route={onFoot:true,corrected:true,source:'saved match',parts:[line],recorded:[[p(0),p(30,6),p(55)]],
+  independentRoadReferences:[road,crossing,sidewalk]};
+ const old=RouteLed.accumulate(new Set(),{parts:[road.coords],independentRoadReferences:[road]});
+ const replay=changes=>RouteLed.accumulate(old.next,{...route,...changes});
+ const matched=replay({});
+ assert.equal(matched.novel.length,0);
+ assert(matched.repeat.length>=3);
+ assert(matched.repeat.every(({a,b})=>a[1]===0&&b[1]===0));
+ const cut=replay({removedEdges:[[p(20),p(40)]]});
+ assert(cut.novel.some(x=>x.id.startsWith('saved:')));
+ const walkedSteps=replay({independentRoadReferences:[road,crossing,sidewalk,
+  {kind:'steps',coords:crossing.coords,nodes:crossing.nodes}]});
+ assert(walkedSteps.novel.some(x=>x.id.startsWith('saved:')));
+ const disconnected={...road,nodes:[8,9],coords:[p(40),p(55)]};
+ const left={...road,nodes:[1,2],coords:[p(0),p(20)]};
+ const gap=replay({independentRoadReferences:[left,disconnected,crossing,sidewalk]});
+ assert(gap.novel.some(x=>x.id.startsWith('saved:')));
 });

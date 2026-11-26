@@ -8,6 +8,13 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Short pavement interruptions (LAB r481)
+
+A short pavement bend between two supported spans of the same named road
+can count along its mapped road when the network supplies one connected
+surface route. The cumulative replay keeps the saved walk, crossings
+between opposite sides, independent links and manual cuts.
+
 ## Pavement transitions and pedestrian access (LAB r480)
 
 A short lateral transition from a street to its credited pavement no
