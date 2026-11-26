@@ -39,17 +39,28 @@ const RouteFirst = (() => {
     return {parts, corrected: removed.size > 0, legCount, removedEdges};
   }
 
+  function isRemovedRoad(ref, removed) {
+    if (!removed?.size) return false;
+    const name = String(ref.name || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    if (name && removed.has('name:' + name)) return true;
+    return String(ref.roadRef || '').split(/[;,/]/).some(value =>
+      value && removed.has('ref:' + value.replace(/\s+/g, '').toUpperCase()));
+  }
+
   function references(journey) {
     const result = journey.processing_result;
     const seen = new Set(), output = [];
     for (const key of ['road_geojson', 'cycling_geojson', 'a_road_geojson', 'motorway_geojson']) {
       for (const feature of features(result?.[key])) {
-        const kind = feature?.properties?.reference_kind || feature?.properties?.highway || '';
+        const properties = feature?.properties || {};
+        const kind = properties.reference_kind || properties.highway || '';
+        const name = properties.name || properties.road_name || '';
+        const roadRef = properties.road_ref || properties.ref;
         for (const coords of lines(feature?.geometry)) {
-          const fingerprint = JSON.stringify([kind, coords]);
+          const fingerprint = JSON.stringify([kind, name, roadRef, coords]);
           if (!seen.has(fingerprint)) {
             seen.add(fingerprint);
-            output.push({coords, kind, name: feature.properties?.name || ''});
+            output.push({coords, kind, name, ...(roadRef ? {roadRef} : {})});
           }
         }
       }
@@ -191,13 +202,19 @@ const RouteFirst = (() => {
   function reconstruct(journey) {
     const recorded = lines(journey.route_geometry);
     const {parts, corrected, legCount, removedEdges} = matched(journey);
-    const refs = references(journey);
+    const allRefs = references(journey);
+    const storedRoadIds = journey.journey_corrections?.removed_road_ids;
+    const removedRoadIds = new Set(Array.isArray(storedRoadIds) ?
+      storedRoadIds.filter(id => typeof id === 'string').map(id => id.trim()).filter(Boolean) : []);
+    const refs = allRefs.filter(ref => !isRemovedRoad(ref, removedRoadIds));
+    const roadEdits = removedRoadIds.size ? {removedRoadIds,
+      removedRoadReferences: allRefs.filter(ref => isRemovedRoad(ref, removedRoadIds))} : {};
     const mode = journey.mode;
     const foot = ['walk', 'walking', 'running', 'run', 'on_foot'].includes(mode);
     const cycle = ['bicycle', 'cycling', 'cycle'].includes(mode);
     const drive = ['driving', 'car', 'bus', 'motorcycling', 'truck'].includes(mode);
     const allowed = kind => roads.test(kind) || ((foot || cycle) && paths.test(kind));
-    if (!legCount) return {parts: recorded, recorded, refs, onFoot: foot, corrected, source: recorded.length ? 'recorded' : 'unavailable', projected: 0, joins: 0};
+    if (!legCount) return {parts: recorded, recorded, refs, ...roadEdits, onFoot: foot, corrected, source: recorded.length ? 'recorded' : 'unavailable', projected: 0, joins: 0};
     const output = [];
     let projected = 0, joins = 0;
     for (const part of parts) {
@@ -215,10 +232,10 @@ const RouteFirst = (() => {
     const roadSteps = drive ? features(journey.processing_result?.road_geojson)
       .filter(feature => Number.isFinite(feature?.properties?.distance_m) && feature.properties.distance_m > 0)
       .flatMap(feature => lines(feature.geometry)) : [];
-    return {parts: output, recorded, refs, onFoot: foot, corrected, source: 'saved match',
+    return {parts: output, recorded, refs, ...roadEdits, onFoot: foot, corrected, source: 'saved match',
       sourceType: journey.source?.type, roadSteps, projected, joins, ...(removedEdges.length ? {removedEdges} : {})};
   }
 
-  return {reconstruct, lines};
+  return {reconstruct, lines, isRemovedRoad};
 })();
 if (typeof module !== 'undefined') module.exports = RouteFirst;

@@ -255,7 +255,7 @@ test('owner ZIP Journey 13 aligns Pentonville Road and retains the station appro
    'no pavement return inside the established road corridor');
  }
  assert(containsLine(result.parts,route.parts[0].slice(-20)),'keep the station-side pedestrian approach');
- const outside=await Network.create(async url=>request(url.replace('r7-index.json','index.json'))).lookup(route);
+ const outside=await Network.create(async url=>request(url.replace('r8-index.json','index.json'))).lookup(route);
  assert.deepEqual(outside.refs,[]);
  assert.deepEqual(RouteLed.cleanup(route).parts,route.parts);
  assert.equal(JSON.stringify(journey),before);
@@ -401,4 +401,46 @@ test('owner ZIP through streets between sparse pedestrian anchors stay connected
   assert.equal(result.parts.length,1,`ZIP ${archiveOrdinal} remains one supported route`);
   assert(!result.held.some(row=>row.reason==='unverified-road-excursion-between-pedestrian-observations'));
  }
+});
+
+const editedJourney=process.env.ROADPRINTS_EDITED_JOURNEY;
+test('redrawn ZIP journey retains Roadprints road edits and reuses Strand walking coverage',{skip:!archive||!editedJourney},async()=>{
+ const {journey:edited}=JSON.parse(fs.readFileSync(editedJourney));
+ const original=JSON.stringify(edited);
+ const zip=Bulk.roadReplay(await Bulk.open(new Blob([fs.readFileSync(archive)])));
+ const selected=zip.journeys.findIndex(row=>row.started_at===edited.started_at);
+ assert(selected>=0);
+ const stored=(await zip.read(selected)).journey;
+ assert.equal(stored.journey_id,edited.journey_id);
+ assert(edited.revision>stored.revision);
+ const network=Network.create(request),rail=RailTransition.create(request);
+ async function load(index){
+  const row=zip.journeys[index];
+  const journey=index===selected?edited:(await zip.read(index)).journey;
+  const route=RouteFirst.reconstruct(journey);
+  const lookup=route.onFoot&&route.source==='saved match'?await network.lookup(route):{refs:[]};
+  return rail({...route,independentRoadReferences:lookup.refs,
+   displayRoadReferences:lookup.displayRoads,forkContext:lookup.forkContext},row);
+ }
+ let ledger=RouteLed.createLedger();
+ for(let i=0;i<=selected;i++){
+  const route=await load(i);
+  const surface=route.surfaceParts?{...route,parts:route.surfaceParts}:route;
+  const matched=await PairedWalk.forReplay(i,surface,zip.journeys,load);
+  const coverage=RouteLed.accumulate(ledger,matched);
+  ledger=coverage.next;
+  if(i!==selected)continue;
+  assert.equal(route.removedRoadIds.size,6);
+  assert.deepEqual(route.recorded,[edited.route_geometry.coordinates]);
+  const alternate=route.independentRoadReferences.filter(ref=>ref.walkingCarriageway);
+  const representative=route.independentRoadReferences.filter(ref=>
+   alternate.some(side=>side.walkingCarriageway.includes(ref.id)));
+  assert(alternate.length&&representative.length);
+  assert.equal(coveredMetres(coverage.novel.map(({a,b})=>[a,b]),alternate,'Strand'),0);
+  assert(coveredMetres(coverage.repeat.map(({a,b})=>[a,b]),representative,'Strand')>360);
+  assert(coverage.novel.some(edge=>edge.id.startsWith('footway:')),'keep the independent station approach');
+  for(const ref of route.independentRoadReferences.filter(ref=>RouteFirst.isRemovedRoad(ref,route.removedRoadIds)))
+   assert.equal(coveredMetres(coverage.novel.map(({a,b})=>[a,b]),[ref],ref.name),0);
+ }
+ assert.equal(JSON.stringify(edited),original);
 });
