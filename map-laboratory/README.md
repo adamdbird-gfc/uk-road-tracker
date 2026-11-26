@@ -8,6 +8,14 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Shared walking corridors (LAB r482)
+
+Cumulative ZIP replay uses one pinned footway for a saved street match and a
+later footway match when both follow the same corridor. A legacy street match
+needs sustained, close alignment with one mapped surface footway and no
+competing mapped road. Existing footway matches keep that geometry even when
+the journey also carries the older street reference.
+
 ## Short pavement interruptions (LAB r481)
 
 A short pavement bend between two supported spans of the same named road
