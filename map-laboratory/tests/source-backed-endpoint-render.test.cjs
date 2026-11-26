@@ -74,5 +74,8 @@ result=link(base,joined,[[p(0),p(27,1)]]);
 assert.equal(result.links.length,0,'already touching accepted edges require no rendered bridge');
 assert(page.includes('const endpointVisual=experimentalCorrection.enabled?sourceBackedEndpointRenderLinks(')&&page.includes('const terminalVisual=experimentalCorrection.enabled?resolveTerminalVisualJunctions('),'OFF remains unchanged');
 assert(page.includes('stroke(connectors,\'#ff4b55\',3.2)'),'display-only links are rendered');
-assert(page.includes('LAB r479')&&page.includes('>PR #479</a>'));
+assert(page.includes('accessLinks:routed.accessLinks'),'saved pedestrian approaches survive replay caching');
+assert(page.indexOf("stroke(access,'#64748b',3)")<page.indexOf("stroke(old,'#151a21',3.5)")&&
+ page.includes('for(const line of attribution.accessLinks||[])'),'cumulative approaches are drawn under credited geometry');
+assert(page.includes('LAB r480')&&page.includes('>PR #480</a>'));
 console.log('PASS: source-backed visual road-to-footway joins, no invented coverage, no-source/far/connected guards');

@@ -930,6 +930,68 @@ const RouteLedCoverage=(()=>{
   }
   next.set(edge.id,united);
  }
+ // Moving a named pavement onto a road can expose a lateral seam
+ // at the end of the projected run. Only consider short, continuous
+ // transitions that start and finish on the same credited road.
+ function pavementSeams(line,legs,refs){
+  const omitted=new Set(),links=[];
+  const pedestrian=segments(refs.filter(ref=>ref.kind==='steps'||
+   ref.kind==='footway'&&!ref.footway||ref.kind==='pedestrian'),foot);
+  const endPoint=(span,t)=>point(span.edge.a,span.edge.b,span[t]);
+  for(let start=0;start<legs.length;start++){
+   if(!legs[start]?.pavement)continue;
+   const name=legs[start].spans[0].edge.ref.name;
+   let end=start;
+   while(end+1<legs.length&&legs[end+1]?.pavement&&
+      legs[end+1].spans[0].edge.ref.name===name)end++;
+   function join(boundary,step){
+    const inner=step<0?boundary:boundary+1;
+    const projected=endPoint(step<0?legs[boundary].spans[0]:legs[boundary].spans.at(-1),step<0?'from':'to');
+    let length=0;
+    for(let i=boundary+step;legs[i]&&!legs[i].pavement;i+=step){
+     if(length>18)break;
+     const {spans}=legs[i],adjacent=step<0?spans.at(-1):spans[0];
+     if(adjacent?.edge.ref.name===name){
+      const outer=step<0?i+1:i;
+      const anchor=endPoint(adjacent,step<0?'to':'from');
+      if(length<1||length>18||distance(line[outer],anchor)>1||
+         distance(anchor,projected)>6||distance(line[inner],projected)<2)break;
+      const lower=Math.min(inner,outer),upper=Math.max(inner,outer);
+      const a=line[lower],b=line[upper];
+      if(cosine(a,b,adjacent.edge.a,adjacent.edge.b)>.65||
+         line.slice(lower+1,upper).some(p=>projection(p,a,b).offset>2))break;
+      for(let j=lower;j<upper;j++)omitted.add(j);
+      return outer;
+     }
+     length+=distance(line[i],line[i+1]);
+    }
+    return null;
+   }
+   function keepApproach(outer,boundary,step){
+    if(outer===null)return;
+    let short=0;
+    for(let i=boundary+step;legs[i]&&!legs[i].spans.length;i+=step){
+     const a=line[i],b=line[i+1],length=distance(a,b);
+     if(length<.5){
+      short+=length;
+      if(short>2)return;
+      continue;
+     }
+     if(nearest(point(a,b,.5),pedestrian)>2.5)return;
+     const inner=step<0?i+1:i;
+     const path=line.slice(Math.min(inner,outer),Math.max(inner,outer)+1);
+     const metres=path.slice(1).reduce((sum,b,i)=>sum+distance(path[i],b),0);
+     if(metres<=40)links.push(path);
+     return;
+    }
+   }
+   const before=join(start,-1),after=join(end,1);
+   keepApproach(before,end,1);
+   keepApproach(after,start,-1);
+   start=end;
+  }
+  return {omitted,links};
+ }
  function accumulate(history,route){
   const next=createLedger(history),novel=new Map(),repeat=new Map();
   const previousSources=history?.sources||history,previousRoads=history?.roads||new Map();
@@ -947,23 +1009,34 @@ const RouteLedCoverage=(()=>{
     next.sources.add(part.id);
    }
   };
-  for(const line of prepared.parts||[])for(let i=1;i<(line?.length||0);i++){
-   const a=line[i-1],b=line[i];
-   if(!supportedLeg(route,a,b))continue;
-   let at=0;
-   const seam=forks&&forkSeamSpans(a,b,forks.merges);
-   const exact=seam||roadSpans(a,b,edges);
-   const spans=exact.length||!pavements.length?exact:pavementRoadSpans(a,b,pavements,pavementRoads,route.removedEdges);
-   for(const span of spans){
-    if(!seam&&span.start>at)addSource(point(a,b,at),point(a,b,span.start));
-    for(const mapped of forks?streetForkSpans(span,forks.aliases):[span])
-     attributeRoad(mapped,previousRoads,next.roads,novel,repeat);
-    at=seam?1:span.end;
+  const accessLinks=[];
+  for(const line of prepared.parts||[]){
+   const legs=line.slice(1).map((b,i)=>{
+    const a=line[i];
+    if(!supportedLeg(route,a,b))return null;
+    const seam=forks&&forkSeamSpans(a,b,forks.merges);
+    const exact=seam||roadSpans(a,b,edges);
+    if(exact.length||!pavements.length)return {spans:exact,seam};
+    const spans=pavementRoadSpans(a,b,pavements,pavementRoads,route.removedEdges);
+    return {spans,pavement:spans.length>0};
+   });
+   const seams=pavements.length?pavementSeams(line,legs,route.independentRoadReferences):null;
+   if(seams)accessLinks.push(...seams.links);
+   for(let i=0;i<legs.length;i++){
+    if(!legs[i]||seams?.omitted.has(i))continue;
+    const a=line[i],b=line[i+1],{spans,seam}=legs[i];
+    let at=0;
+    for(const span of spans){
+     if(!seam&&span.start>at)addSource(point(a,b,at),point(a,b,span.start));
+     for(const mapped of forks?streetForkSpans(span,forks.aliases):[span])
+      attributeRoad(mapped,previousRoads,next.roads,novel,repeat);
+     at=seam?1:span.end;
+    }
+    if(at<1)addSource(point(a,b,at),b);
    }
-   if(at<1)addSource(point(a,b,at),b);
   }
   return {novel:[...novel.values()],repeat:[...repeat.values()],next,held:prepared.held,
-   centrelinePromotions:prepared.centrelinePromotions,roadEvidence:prepared.roadEvidence,links:prepared.links,
+   centrelinePromotions:prepared.centrelinePromotions,roadEvidence:prepared.roadEvidence,links:prepared.links,accessLinks,
    sourceSegments:(route?.parts||[]).reduce((sum,line)=>sum+Math.max(0,(line?.length||0)-1),0)};
  }
  function evidence(route){
