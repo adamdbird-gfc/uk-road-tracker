@@ -8,6 +8,19 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Staggered junctions and station pavements (LAB r486)
+
+Walking replay can join two aligned approaches across a staggered junction
+when a unique connected surface road fits the saved walk and observations.
+An unsupported retrace off a straight-through junction can be withheld when
+the mapped crossing and the reversed leg corroborate the return.
+
+The [r6 index](reference-network/v1/r6-index.json) marks only the two
+Rathmore Road pavement sections alongside the road as eligible for shared
+cumulative coverage. The selected road ways and pavement node ranges come
+from the pinned OSM graph. Station access stays visible and saved routes are
+preserved.
+
 ## Junction approaches and replay controls (LAB r485)
 
 Previous, Next, Play and map focus sit immediately below the map. A short

@@ -491,12 +491,13 @@ const RoadsideCentreline=(()=>{
      // An unobserved pavement offset can follow the connected junction
      // when the road continues or makes the same distinct turn.
      if(wideTurns){
-      if(!entry.name||!exit.name||entry.name===exit.name||!corner||length<45||
+      if(!entry.name||!exit.name||entry.name===exit.name||length<45||
          entry.structure||exit.structure)break;
       const namedSurface=edge=>edge.name&&!edge.structure;
       const candidate=junctionTrace(span,starts,ends,protectedPaths.filter(w=>w.structural),namedSurface,
        {max:110,tolerance:16});
-      if(!candidate)break;
+      if(!candidate||!corner&&(!candidate.labels.some(name=>name!==entry.name&&name!==exit.name)||
+        direction(line[i-1],line[i],line[j],line[j+1])<.65))break;
       const path=measured(candidate.coords),guide=measured(span);
       if(raw.some(p=>snap(p,guide).offset<=4&&snap(p,path).offset>13))break;
       joined=candidate;
@@ -576,18 +577,30 @@ const RoadsideCentreline=(()=>{
    let length=0;
    for(let j=i+1;j<line.length-1;j++){
     length+=metres(line[j-1],line[j]);
-    if(length>33)break;
+    if(length>75)break;
     if(j<i+2||metres(line[i],line[j])>9||
        direction(line[i-1],line[i],line[j],line[j+1])<.88)continue;
     const ends=approachAnchors(line[j],line[j+1],false);
     if(!ends.length)continue;
     const span=line.slice(i,j+1),guide=measured(span);
+    // A doubled-back side arm can be longer than a kerbside crossing.
+    // Require opposite travel over a substantive leg before using the
+    // tighter through-junction anchors to exclude that excursion.
+    const retraced=length>33&&span.slice(1).some((b,k)=>{
+     const a=span[k];
+     return metres(a,b)>=8&&span.slice(k+2).some((d,l)=>{
+      const c=span[k+l+1];
+      return metres(c,d)>=8&&direction(a,b,c,d)<-.95&&
+       projected(interpolate(a,b,.5),c,d).offset<=1;
+     });
+    });
+    if(length>33&&!retraced)continue;
     const candidates=[];
     for(const start of starts)for(const end of ends){
      if(start.edge.kind!==end.edge.kind)continue;
      const same=edge=>[start.edge.name,end.edge.name].includes(edge.name)&&
       edge.kind===start.edge.kind&&!edge.structure;
-     const replacement=junctionTrace(span,[start],[end],[],same,
+     const replacement=junctionTrace(retraced?[start.p,end.p]:span,[start],[end],[],same,
       {max:10,tolerance:14,minRatio:0});
      if(!replacement)continue;
      const path=measured(replacement.coords),spanLength=path.lengths.at(-1);
@@ -604,7 +617,7 @@ const RoadsideCentreline=(()=>{
          [a,b].some(p=>projected(p,edge.a.p,edge.b.p).offset<.25)));
      if(start.edge.name!==end.edge.name&&!crossesSideRoad)continue;
      if(recorded.some(fix=>snap(fix,guide).offset<=5&&snap(fix,path).offset>4&&
-       !relevantCrossings.some(([a,b])=>projected(fix,a,b).offset<=4)))continue;
+       (retraced||!relevantCrossings.some(([a,b])=>projected(fix,a,b).offset<=4))))continue;
      if(!candidates.some(other=>orderedSupport(path.coords,other.path,.25)&&
        orderedSupport(other.path.coords,path,.25)))candidates.push({path,replacement});
     }

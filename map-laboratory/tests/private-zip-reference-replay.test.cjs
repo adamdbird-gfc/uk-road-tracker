@@ -254,7 +254,7 @@ test('owner ZIP Journey 13 aligns Pentonville Road and retains the station appro
    'no pavement return inside the established road corridor');
  }
  assert(containsLine(result.parts,route.parts[0].slice(-20)),'keep the station-side pedestrian approach');
- const outside=await Network.create(async url=>request(url.replace('r5-index.json','index.json'))).lookup(route);
+ const outside=await Network.create(async url=>request(url.replace('r6-index.json','index.json'))).lookup(route);
  assert.deepEqual(outside.refs,[]);
  assert.deepEqual(RouteLed.cleanup(route).parts,route.parts);
  assert.equal(JSON.stringify(journey),before);
@@ -293,13 +293,13 @@ test('station return repeats Windmill Street and keeps its distinct square route
  assert.equal(JSON.stringify(home),original);
 });
 
-test('Ludgate Circus and Strand approaches remain visible without adding side-road credit',{skip:!archive},async()=>{
+test('London and Gravesend junctions retain through coverage and genuine approaches',{skip:!archive},async()=>{
  const zip=Bulk.roadReplay(await Bulk.open(new Blob([fs.readFileSync(archive)])));
  const network=Network.create(request),rail=RailTransition.create(request);
  let ledger=RouteLed.createLedger();
  const checked=[];
  for(const [index,row] of zip.journeys.entries()){
-  if(row.archiveOrdinal>105)break;
+  if(row.archiveOrdinal>112)break;
   const {journey}=await zip.read(index);
   const route=RouteFirst.reconstruct(journey);
   const pinned=route.onFoot&&route.source==='saved match'?await network.lookup(route):{refs:[]};
@@ -323,6 +323,20 @@ test('Ludgate Circus and Strand approaches remain visible without adding side-ro
    const side=pinned.refs.find(ref=>ref.id===974786028);
    assert.equal(coveredMetres(result.novel.map(({a,b})=>[a,b]),[side],side.name),0);
   }
+  if(row.archiveOrdinal===107){
+   checked.push(107);
+   const lines=parts=>parts.map(({a,b})=>[a,b]);
+   assert(coveredMetres(lines(result.repeat),pinned.refs,'Rathmore Road')>70);
+   assert(coveredMetres(lines(result.novel),pinned.refs,'Rathmore Road')<3);
+   assert(result.novel.every(({id})=>id.startsWith('road:')));
+   assert(result.accessLinks.length>0);
+  }
+  if(row.archiveOrdinal===108||row.archiveOrdinal===112){
+   checked.push(row.archiveOrdinal);
+   assert.deepEqual(result.novel,[]);
+   const kind=row.archiveOrdinal===108?'kerbside-loop':'offset-road-turn';
+   assert(result.centrelinePromotions.some(run=>run.kind===kind));
+  }
  }
- assert.deepEqual(checked,[104,105]);
+ assert.deepEqual(checked,[104,105,107,108,112]);
 });
