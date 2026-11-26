@@ -1147,6 +1147,58 @@ const RouteLedCoverage=(()=>{
   }
   return replacements;
  }
+ // Keep the actual junction walk as an access link. Street coverage
+ // follows the connected through line, without crediting a crossing arm.
+ function junctionCrossings(line,legs,edges,network,trace,transitions,links){
+  const paths=segments(network.filter(ref=>ref.kind==='footway'&&surface(ref)),foot);
+  const crossings=segments(network.filter(ref=>ref.footway==='crossing'&&surface(ref)),foot);
+  if(!paths.length)return;
+  const endPoint=(span,t)=>point(span.edge.a,span.edge.b,span[t]);
+  for(let i=1;i<legs.length-1;i++){
+   const prior=legs[i-1]?.spans.at(-1);
+   if(!prior?.edge.ref.name||legs[i]?.spans.length||transitions.has(i))continue;
+   let walked=0,footMetres=0,crossingMetres=0,best;
+   for(let j=i;legs[j]&&j<legs.length-1;j++){
+    if(transitions.has(j))break;
+    const a=line[j],b=line[j+1],metres=distance(a,b);
+    walked+=metres;
+    if(walked>65)break;
+    const backed=refs=>refs.some(([u,v])=>projection(point(a,b,.5),u,v).offset<=2.5&&cosine(a,b,u,v)>.8);
+    if(backed(paths))footMetres+=metres;
+    if(backed(crossings))crossingMetres+=metres;
+    const after=legs[j+1]?.spans[0];
+    if(!after?.edge.ref.name||best&&crossingMetres<=best.crossingMetres)continue;
+    const sameStreet=after.edge.ref.name===prior.edge.ref.name;
+    if(sameStreet&&!legs[i-1].pavement&&!legs[j+1].pavement)continue;
+    const directionPoint=(span,t,sign)=>point(span.edge.a,span.edge.b,
+     span[t]+sign*Math.sign(span.to-span.from)*2/distance(span.edge.a,span.edge.b));
+    const before=[directionPoint(prior,'to',-1),endPoint(prior,'to')];
+    const following=[endPoint(after,'from'),directionPoint(after,'from',1)];
+    if(crossingMetres<5){
+     if(walked>8||prior.edge.ref.name!==after.edge.ref.name||distance(before[1],following[0])>6)continue;
+    }else if(footMetres<walked*.66||walked-footMetres>13||
+      cosine(before[0],before[1],following[0],following[1])<.8||
+      fraction(following[1],...before)<=fraction(following[0],...before))continue;
+    const source=line.slice(i,j+2);
+    const separation=distance(before[1],following[0]);
+    if(crossingMetres<5&&separation<=2){
+     best={end:j+1,spans:[],source,crossingMetres};
+     continue;
+    }
+    const coords=trace(source,before,following,[prior.edge.ref.name,after.edge.ref.name]);
+    if(!coords)continue;
+    const roadLegs=coords.slice(1).map((b,k)=>roadSpans(coords[k],b,edges));
+    if(!roadLegs.length||roadLegs.some(spans=>!spans.length||spans[0].start>1e-6||
+       spans.at(-1).end<1-1e-6||spans.some((span,k)=>k&&span.start-spans[k-1].end>1e-6)))continue;
+    best={end:j+1,spans:roadLegs.flat(),source,crossingMetres};
+   }
+   if(best){
+    transitions.set(i,{end:best.end,spans:best.spans});
+    links.push(best.source);
+    i=best.end-1;
+   }
+  }
+ }
  function accumulate(history,route){
   const next=createLedger(history),novel=new Map(),repeat=new Map();
   const previousSources=history?.sources||history,previousRoads=history?.roads||new Map();
@@ -1175,6 +1227,8 @@ const RouteLedCoverage=(()=>{
   const raw=route.onFoot&&route.source==='saved match'?(route.recorded||[]).flat().filter(valid):[];
   const trace=raw.length&&pavements.length?
    CentrelinePromotion.roadsideTransition(route.independentRoadReferences,raw):null;
+  const junctionTrace=route.onFoot&&!route.corrected&&pavements.length?
+   CentrelinePromotion.junctionContinuation(route.independentRoadReferences):null;
   for(const line of prepared.parts||[]){
    const legs=line.slice(1).map((b,i)=>{
     const a=line[i];
@@ -1214,7 +1268,8 @@ const RouteLedCoverage=(()=>{
    const seams=pavements.length?pavementSeams(line,seamLegs,route.independentRoadReferences):null;
    if(seams)accessLinks.push(...seams.links,...pavementCrossings(
     line,legs,route.independentRoadReferences,seams.omitted));
-   const transitions=trace?shortRoadsideTransitions(line,legs,edges,trace,route.removedEdges):null;
+   const transitions=trace?shortRoadsideTransitions(line,legs,edges,trace,route.removedEdges):new Map();
+   if(junctionTrace)junctionCrossings(line,legs,edges,route.independentRoadReferences,junctionTrace,transitions,accessLinks);
    const shared=footways.length?
     sharedFootwaySpans(line,legs,seams,transitions,footways,edges,legacy,route.removedEdges):null;
    for(let i=0;i<legs.length;i++){

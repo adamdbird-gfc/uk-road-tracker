@@ -394,8 +394,9 @@ const RoadsideCentreline=(()=>{
   function accept(pathPoints,edges,travel){
    if(travel<length*(bounds.minRatio??.72)||travel>limit)return;
    const coords=pathPoints.filter((p,i)=>!i||metres(p,pathPoints[i-1])>.01);
-   if(coords.length<2||!orderedSupport(coords,guide,tolerance)||
-     !orderedSupport(source,measured(coords),tolerance))return;
+   if(coords.length<2||!(bounds.crossing?closeToWay(coords,guide,tolerance):orderedSupport(coords,guide,tolerance))||
+     !(bounds.crossing?closeToWay(source,measured(coords),tolerance):
+       orderedSupport(source,measured(coords),tolerance)))return;
    if(protectedPaths.some(({path,grade})=>{
     const used=[];
     for(let i=1;i<source.length;i++){
@@ -659,6 +660,23 @@ const RoadsideCentreline=(()=>{
    }
    if(sides.size>1)return null;
    return replacement.coords;
+  };
+ }
+ // A pedestrian crossing can sit beside the connected surface street.
+ // Use the road anchors from the same walk to verify the through line.
+ function junctionContinuation(refs){
+  const surfaceRefs=refs.filter(ref=>(!ref.layer||ref.layer==='0')&&ref.indoor!=='yes');
+  const graph=roadGraph(surfaceRefs,true).filter(edge=>!edge.structure);
+  const protectedPaths=protectedWalks(refs).filter(path=>path.structural);
+  return (source,before,after,names)=>{
+   const allowed=edge=>!edge.structure&&(names.includes(edge.name)||!edge.name&&edge.kind==='cycleway');
+   const edges=graph.filter(allowed);
+   const starts=roadAnchors(...before,edges,true,.4).filter(anchor=>anchor.edge.name===names[0]);
+   const ends=roadAnchors(...after,edges,false,.4).filter(anchor=>anchor.edge.name===names[1]);
+   if(!starts.length||!ends.length)return null;
+   const guide=[before[1],...source.slice(1,-1),after[0]];
+   return junctionTrace(guide,starts,ends,protectedPaths,allowed,
+    {max:62,tolerance:22,minRatio:.35,crossing:true})?.coords;
   };
  }
  function closeOffsetRoadTurns(line,refs,recorded){
@@ -1116,6 +1134,6 @@ const RoadsideCentreline=(()=>{
   }
   return {parts,promoted};
  }
- return {align,evidence,roadsideTransition,closeRoadInterruptions,closeKerbsideLoops,closePedestrianStreetCorridors,closeOffsetRoadTurns,closeTerminalPavement};
+ return {align,evidence,junctionContinuation,roadsideTransition,closeRoadInterruptions,closeKerbsideLoops,closePedestrianStreetCorridors,closeOffsetRoadTurns,closeTerminalPavement};
 })();
 if(typeof module!=='undefined')module.exports=RoadsideCentreline;

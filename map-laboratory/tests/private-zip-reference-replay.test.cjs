@@ -292,3 +292,37 @@ test('station return repeats Windmill Street and keeps its distinct square route
  assert.deepEqual(RouteLed.cleanup(home).parts,result.parts,'earlier journeys only affect classification');
  assert.equal(JSON.stringify(home),original);
 });
+
+test('Ludgate Circus and Strand approaches remain visible without adding side-road credit',{skip:!archive},async()=>{
+ const zip=Bulk.roadReplay(await Bulk.open(new Blob([fs.readFileSync(archive)])));
+ const network=Network.create(request),rail=RailTransition.create(request);
+ let ledger=RouteLed.createLedger();
+ const checked=[];
+ for(const [index,row] of zip.journeys.entries()){
+  if(row.archiveOrdinal>105)break;
+  const {journey}=await zip.read(index);
+  const route=RouteFirst.reconstruct(journey);
+  const pinned=route.onFoot&&route.source==='saved match'?await network.lookup(route):{refs:[]};
+  const guarded=await rail({...route,independentRoadReferences:pinned.refs,
+   displayRoadReferences:pinned.displayRoads},row);
+  const result=RouteLed.accumulate(ledger,guarded.surfaceParts?{...guarded,parts:guarded.surfaceParts}:guarded);
+  ledger=result.next;
+  if(row.archiveOrdinal===104){
+   checked.push(104);
+   const crossing=pinned.refs.find(ref=>ref.id===622526038);
+   assert(result.accessLinks.some(line=>line.some(p=>crossing.coords.some(q=>metres(p,q)<1))));
+   const side=pinned.refs.find(ref=>ref.id===112172868);
+   assert.equal(coveredMetres(result.novel.map(({a,b})=>[a,b]),[side],side.name),0);
+  }
+  if(row.archiveOrdinal===105){
+   checked.push(105);
+   const crossing=pinned.refs.find(ref=>ref.id===95373719);
+   const kerb=pinned.refs.find(ref=>ref.id===1510873254);
+   for(const ref of [crossing,kerb])
+    assert(result.accessLinks.some(line=>line.some(p=>ref.coords.some(q=>metres(p,q)<1))));
+   const side=pinned.refs.find(ref=>ref.id===974786028);
+   assert.equal(coveredMetres(result.novel.map(({a,b})=>[a,b]),[side],side.name),0);
+  }
+ }
+ assert.deepEqual(checked,[104,105]);
+});
