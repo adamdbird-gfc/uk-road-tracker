@@ -863,14 +863,17 @@ const RouteLedCoverage=(()=>{
  }
  // Only a named, mapped pavement can supply this road attribution. The
  // saved line still supplies travel and independent pedestrian links.
- function pavementRoadSpans(a,b,pavements,roads,removed){
+ function pavementRoadSpans(a,b,pavements,roads,removed,endcap){
   const mid=point(a,b,.5),names=new Set();
   for(const {name,u,v} of pavements){
-   if(projection(mid,u,v).offset<=.8&&cosine(a,b,u,v)>.93&&
-      projection(a,u,v).offset<=.8&&projection(b,u,v).offset<=.8)names.add(name);
+   const offsets=[a,mid,b].map(p=>projection(p,u,v).offset);
+   if(cosine(a,b,u,v)>.93&&(offsets.every(d=>d<=.8)||
+      name===endcap&&offsets.every(d=>d<=5)&&Math.min(...offsets)<=.8))names.add(name);
   }
   if(names.size!==1)return [];
-  const [name]=names,near=roads.get(name)||[];
+  const [name]=names;
+  if(endcap&&name!==endcap)return [];
+  const near=roads.get(name)||[];
   const normal=roadSpans(a,b,near,12,.88);
   if(!normal.length)return [];
   // A loose pavement projection may stop at a corner or at a fork.
@@ -878,8 +881,9 @@ const RouteLedCoverage=(()=>{
   const connected=normal.every((span,i)=>!i||distance(point(normal[i-1].edge.a,normal[i-1].edge.b,normal[i-1].to),
    point(span.edge.a,span.edge.b,span.from))<1);
   const length=normal.reduce((sum,span)=>sum+span.end-span.start,0);
-  if(!connected||length<.85||normal.some(({edge,from,to})=>
+  if(!connected||length<(endcap ? .75 : .85)||normal.some(({edge,from,to})=>
    overlapsRemovedEdge(point(edge.a,edge.b,from),point(edge.a,edge.b,to),removed)))return [];
+  if(endcap&&(normal[0].start+1-normal.at(-1).end)*distance(a,b)>3)return [];
   return normal;
  }
  function roadSpans(a,b,edges,tolerance=.35,heading=.98){
@@ -1085,6 +1089,33 @@ const RouteLedCoverage=(()=>{
   }
   return {omitted,links};
  }
+ // Keep a mapped crossing between two pavements of the same street
+ // visible without adding a second line of street coverage.
+ function pavementCrossings(line,legs,refs,omitted){
+  const links=[];
+  const crossings=segments(refs.filter(ref=>ref.footway==='crossing'&&surface(ref)),foot);
+  for(let i=1;i<legs.length-1;i++){
+   const prior=legs[i-1]?.pavement&&legs[i-1].spans.at(-1);
+   if(!prior||legs[i]?.spans.length)continue;
+   let length=0,backed=0,j=i;
+   while(legs[j]&&!legs[j].spans.length&&length<=18){
+    const a=line[j],b=line[j+1],metres=distance(a,b);
+    length+=metres;
+    if(crossings.some(([u,v])=>projection(point(a,b,.5),u,v).offset<1&&
+       cosine(a,b,u,v)>.9))backed+=metres;
+    j++;
+   }
+   const after=legs[j]?.pavement&&legs[j].spans[0];
+   if(!after||after.edge.ref.name!==prior.edge.ref.name||
+      distance(point(prior.edge.a,prior.edge.b,prior.to),point(after.edge.a,after.edge.b,after.from))>5)continue;
+   const seam=length<=2;
+   if(!seam&&(length>18||backed<3||backed<length*.65))continue;
+   for(let k=i;k<j;k++)omitted.add(k);
+   if(!seam)links.push(line.slice(i,j+1));
+   i=j-1;
+  }
+  return links;
+ }
  function shortRoadsideTransitions(line,legs,edges,trace,removed){
   const replacements=new Map();
   const endPoint=(span,t)=>point(span.edge.a,span.edge.b,span[t]);
@@ -1128,7 +1159,11 @@ const RouteLedCoverage=(()=>{
   const pavements=route.onFoot&&route.source==='saved match'?
    pavementEdges(route.independentRoadReferences||[]):[];
   const names=new Set(pavements.map(ref=>ref.name));
-  const pavementRoads=Map.groupBy(edges.concat(displayEdges).filter(({ref})=>names.has(ref.name)&&road.test(ref.kind)&&surface(ref)),edge=>edge.ref.name);
+  // A named pedestrian street also has a centreline. Resolve verified
+  // short forks before projecting a pavement across both branches.
+  const pavementRoads=Map.groupBy(edges.concat(displayEdges).filter(({id,ref})=>
+   names.has(ref.name)&&(road.test(ref.kind)||ref.kind==='pedestrian')&&
+   surface(ref)&&!forks?.aliases.has(id)),edge=>edge.ref.name);
   const addSource=(a,b)=>{
    for(const part of sourceIntervals(a,b)){
     const target=previousSources?.has(part.id)?repeat:novel;
@@ -1155,12 +1190,30 @@ const RouteLedCoverage=(()=>{
     const spans=pavementRoadSpans(a,b,pavements,pavementRoads,route.removedEdges);
     return {spans,pavement:spans.length>0};
    });
+   if(route.onFoot&&!route.corrected&&pavements.length&&legs.length>2){
+    // A short endpoint can join a known pavement a few metres to one side.
+    for(const [end,adjacent] of [[0,1],[legs.length-1,legs.length-2]]){
+     const adjacentSpans=legs[adjacent]?.spans;
+     const anchor=end===0?adjacentSpans?.[0]:adjacentSpans?.at(-1);
+     const name=anchor?.edge.ref.name;
+     if(!name||!legs[end]||legs[end].spans.length||distance(line[end],line[end+1])>14)continue;
+     const spans=pavementRoadSpans(line[end],line[end+1],pavements,pavementRoads,route.removedEdges,name);
+     const boundary=end===0?spans.at(-1):spans[0];
+     if(!boundary)continue;
+     const mapped=forks?[...streetForkSpans(anchor,forks.aliases)]:[anchor];
+     const join=end===0?mapped[0]:mapped.at(-1);
+     if(!join||distance(point(join.edge.a,join.edge.b,end===0?join.from:join.to),
+      point(boundary.edge.a,boundary.edge.b,end===0?boundary.to:boundary.from))>4)continue;
+     legs[end]={spans,pavement:true,endcap:true};
+    }
+   }
    // Preserve the original pedestrian approach when its neighbouring
    // frontage pavement credits a street that is temporarily closed.
    const seamLegs=displayEdges.length?legs.map(leg=>leg?.pavement&&
     leg.spans.some(({edge})=>edge.ref.displayOnly)?{spans:[]}:leg):legs;
    const seams=pavements.length?pavementSeams(line,seamLegs,route.independentRoadReferences):null;
-   if(seams)accessLinks.push(...seams.links);
+   if(seams)accessLinks.push(...seams.links,...pavementCrossings(
+    line,legs,route.independentRoadReferences,seams.omitted));
    const transitions=trace?shortRoadsideTransitions(line,legs,edges,trace,route.removedEdges):null;
    const shared=footways.length?
     sharedFootwaySpans(line,legs,seams,transitions,footways,edges,legacy,route.removedEdges):null;
@@ -1174,16 +1227,16 @@ const RouteLedCoverage=(()=>{
      continue;
     }
     if(!legs[i]||seams?.omitted.has(i))continue;
-    const a=line[i],b=line[i+1],{seam}=legs[i];
+    const a=line[i],b=line[i+1],{seam,endcap}=legs[i];
     const spans=shared?.get(i)||legs[i].spans;
     let at=0;
     for(const span of spans){
-     if(!seam&&span.start>at)addSource(point(a,b,at),point(a,b,span.start));
+     if(!seam&&!(endcap&&at===0)&&span.start>at)addSource(point(a,b,at),point(a,b,span.start));
      for(const mapped of forks?streetForkSpans(span,forks.aliases):[span])
       attributeRoad(mapped,previousRoads,next.roads,novel,repeat);
      at=seam?1:span.end;
     }
-    if(at<1)addSource(point(a,b,at),b);
+    if(at<1&&!endcap)addSource(point(a,b,at),b);
    }
   }
   return {novel:[...novel.values()],repeat:[...repeat.values()],next,held:prepared.held,
