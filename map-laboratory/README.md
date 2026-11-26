@@ -8,6 +8,15 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Whitefriars Street centreline (LAB r483)
+
+The cumulative map can use a closed street's centreline when OpenStreetMap
+explicitly identifies adjacent footways as temporary access. The
+[r5 index](reference-network/v1/r5-index.json) pins the Whitefriars Street
+centreline and its corresponding access ways with OSM way IDs, road versions,
+and source. The centreline is display-only. The pedestrian route and the
+public routing tiles retain their original geometry and access restrictions.
+
 ## Shared walking corridors (LAB r482)
 
 Cumulative ZIP replay uses one pinned footway for a saved street match and a

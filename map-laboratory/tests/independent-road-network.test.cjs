@@ -53,7 +53,7 @@ test('pinned real OSM network is geographically selected and reused across looku
  const provider=Network.create(async(url,options)=>{
   calls.push(url);
   assert(options.signal);
-  assert.match(url,/^\.\/reference-network\/v1\/(r4-index\.json|-?\d+_-?\d+\.json\.gz)$/);
+  assert.match(url,/^\.\/reference-network\/v1\/(r5-index\.json|-?\d+_-?\d+\.json\.gz)$/);
   return new Response(tileFile(url));
  });
  const route={parts:[[[0.36685,51.44165],[0.3675,51.44154]]]};
@@ -110,7 +110,7 @@ test('Pentonville Road references span a pinned tile boundary',async()=>{
  });
  const route={parts:[[[-0.121,51.53095],[-0.119,51.53118]]]};
  const result=await provider.lookup(route);
- assert.deepEqual(calls,['r4-index.json','-7_2576.json.gz','-6_2576.json.gz']);
+ assert.deepEqual(calls,['r5-index.json','-7_2576.json.gz','-6_2576.json.gz']);
  assert(result.refs.some(ref=>ref.name==='Pentonville Road'&&Network.isRoad(ref.kind)));
  assert(result.refs.some(ref=>ref.kind==='footway'));
  assert.equal(result.refs.length,new Set(result.refs.map(ref=>ref.id)).size);
@@ -132,4 +132,14 @@ test('ZIP source uses the same public reference loader for historical and select
  assert(page.includes('const route=await loadZipRoute(index)'));
  assert(page.includes('metres aligned to road centrelines'));
  assert(!page.includes('SharedRoadCatalogue')&&!page.includes('zipIndependentByJourney'));
+});
+
+test('the Whitefriars Street centreline is pinned separately from routable references',async()=>{
+ const provider=Network.create(async url=>new Response(tileFile(url)));
+ const route={parts:[[[-0.10748,51.51412],[-0.10716,51.51335]]]};
+ const result=await provider.lookup(route);
+ assert.deepEqual(result.displayRoads.map(ref=>ref.id),[888781926,888781923,901407354]);
+ assert(result.displayRoads.every(ref=>ref.access==='no'&&ref.displayOnly));
+ assert(result.displayRoads.every(ref=>!result.refs.some(way=>way.id===ref.id)));
+ assert.equal(result.refs.find(ref=>ref.id===1202405654).displayPavement,'Whitefriars Street');
 });
