@@ -136,13 +136,22 @@ const IndependentRoadNetwork = (() => {
         const windows = routeWindows(route, scale, available, driving ? 90 : 20);
         if (!windows.size) return {refs: [], status: 'Outside pinned network coverage · own references'};
         const results = await Promise.allSettled([...windows.keys()].map(readTile));
-        const refs = new Map(), display = new Map();
+        const refs = new Map(), display = new Map(), nearbyRoads = new Map();
+        // A cut-off fork cannot establish that its arms rejoin. Keep a
+        // small halo of named road ways from tiles already in this replay.
+        const roadWindows = driving ? new Map() : routeWindows(route, scale, new Set(windows.keys()), 36);
         let index = 0, failed = 0;
-        for (const boxes of windows.values()) {
+        for (const [key, boxes] of windows) {
           const tile = results[index++];
           if (tile.status === 'rejected') { failed++; continue; }
           for (const ref of tile.value) {
-            if (refs.has(ref.id) || !intersects(ref.coords, boxes)) continue;
+            if (refs.has(ref.id)) continue;
+            if (!intersects(ref.coords, boxes)) {
+              const halo = roadWindows.get(key);
+              if (halo && ref.name && /^(tertiary|unclassified|residential)$/.test(ref.kind) &&
+                  intersects(ref.coords, halo)) nearbyRoads.set(ref.id, ref);
+              continue;
+            }
             if (displayPavements.has(ref.id)) refs.set(ref.id, {...ref, displayPavement: displayPavements.get(ref.id)});
             else if (pavementSections.has(ref.id)) refs.set(ref.id, {...ref, pavementSections: pavementSections.get(ref.id)});
             else refs.set(ref.id, sharedCrossings.has(ref.id) ? {...ref, sharedCrossing: true} : ref);
@@ -150,10 +159,14 @@ const IndependentRoadNetwork = (() => {
           for (const ref of displayRoads)
             if (!display.has(ref.id) && intersects(ref.coords, boxes)) display.set(ref.id, ref);
         }
+        const pavementNames = new Set([...refs.values()].filter(ref =>
+          ref.kind === 'footway' && ref.footway === 'sidewalk' && ref.name).map(ref => ref.name));
+        const forkContext = [...nearbyRoads.values()].filter(ref => pavementNames.has(ref.name) &&
+          !refs.has(ref.id));
         const result = [...refs.values()].sort((a, b) => a.id - b.id);
         // Missing tiles can hide a competing road. Fall back for the whole journey.
         if (failed) return {refs: [], status: 'Pinned network tile unavailable · own references', unavailable: true};
-        return {refs: result, ...(display.size ? {displayRoads: [...display.values()]} : {}), status: result.length ?
+        return {refs: result, ...(forkContext.length ? {forkContext} : {}), ...(display.size ? {displayRoads: [...display.values()]} : {}), status: result.length ?
           result.filter(ref => ROAD.test(ref.kind)).length + ' pinned OSM road references' :
           'Pinned network has no nearby references · own references'};
       } catch {

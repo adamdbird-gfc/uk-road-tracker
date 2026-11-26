@@ -299,12 +299,12 @@ test('London and Gravesend junctions retain through coverage and genuine approac
  let ledger=RouteLed.createLedger();
  const checked=[];
  for(const [index,row] of zip.journeys.entries()){
-  if(row.archiveOrdinal>112)break;
+  if(row.archiveOrdinal>115)break;
   const {journey}=await zip.read(index);
   const route=RouteFirst.reconstruct(journey);
   const pinned=route.onFoot&&route.source==='saved match'?await network.lookup(route):{refs:[]};
   const guarded=await rail({...route,independentRoadReferences:pinned.refs,
-   displayRoadReferences:pinned.displayRoads},row);
+   displayRoadReferences:pinned.displayRoads,forkContext:pinned.forkContext},row);
   const result=RouteLed.accumulate(ledger,guarded.surfaceParts?{...guarded,parts:guarded.surfaceParts}:guarded);
   ledger=result.next;
   if(row.archiveOrdinal===104){
@@ -337,6 +337,20 @@ test('London and Gravesend junctions retain through coverage and genuine approac
    const kind=row.archiveOrdinal===108?'kerbside-loop':'offset-road-turn';
    assert(result.centrelinePromotions.some(run=>run.kind===kind));
   }
+  if(row.archiveOrdinal===114){
+   checked.push(114);
+   const lines=result.novel.map(({a,b})=>[a,b]);
+   assert(coveredMetres(lines,pinned.refs,'Limeburner Lane')>25);
+   assert(result.novel.some(({id})=>id.startsWith('footway:')));
+   assert(result.novel.every(({id})=>!id.startsWith('saved:')));
+  }
+  if(row.archiveOrdinal===115){
+   checked.push(115);
+   const lines=result.repeat.map(({a,b})=>[a,b]);
+   assert(pinned.forkContext.some(ref=>ref.name==='Fleet Street'));
+   assert(coveredMetres(lines,pinned.refs,'Fleet Street')>45);
+   assert(result.novel.reduce((total,{a,b})=>total+metres(a,b),0)<5);
+  }
  }
- assert.deepEqual(checked,[104,105,107,108,112]);
+ assert.deepEqual(checked,[104,105,107,108,112,114,115]);
 });

@@ -8,6 +8,14 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Short Fleet Street approaches (LAB r487)
+
+A short walk can see one arm of a mapped fork without seeing where it
+rejoins. The Lab uses nearby same-named road ways from tiles already loaded
+for that walk to verify the complete fork. It also aligns a mapped unnamed
+sidewalk to a single closely parallel street and keeps footway entrances
+visible when a short link joins the projected road.
+
 ## Staggered junctions and station pavements (LAB r486)
 
 Walking replay can join two aligned approaches across a staggered junction

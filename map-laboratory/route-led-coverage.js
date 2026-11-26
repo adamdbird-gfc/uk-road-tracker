@@ -849,6 +849,9 @@ const RouteLedCoverage=(()=>{
     if(a>=0&&b>=0)append(name,ref.coords.slice(Math.min(a,b),Math.max(a,b)+1),roadWays);
    }
   }
+  for(const ref of refs)
+   if(ref.kind==='footway'&&ref.footway==='sidewalk'&&!ref.name&&!ref.displayPavement&&surface(ref))
+    append('',ref.coords);
   for(const {name,nodes,coords} of sidewalks){
    append(name,coords);
    for(const node of nodes||[]){
@@ -867,10 +870,11 @@ const RouteLedCoverage=(()=>{
   }
   return edges;
  }
- // Only a named, mapped pavement can supply this road attribution. The
- // saved line still supplies travel and independent pedestrian links.
+ // Require a mapped sidewalk or an approved pavement section. An
+ // unnamed sidewalk needs one closely parallel, named street.
  function pavementRoadSpans(a,b,pavements,roads,removed,endcap){
   const mid=point(a,b,.5),names=new Set(),sections=new Map();
+  let unnamed=false;
   for(const {name,u,v,roadWays} of pavements){
    if(roadWays){
     if(!sections.has(roadWays))sections.set(roadWays,{name,legs:[]});
@@ -879,7 +883,10 @@ const RouteLedCoverage=(()=>{
    }
    const offsets=[a,mid,b].map(p=>projection(p,u,v).offset);
    if(cosine(a,b,u,v)>.93&&(offsets.every(d=>d<=.8)||
-      name===endcap&&offsets.every(d=>d<=5)&&Math.min(...offsets)<=.8))names.add(name);
+      name===endcap&&offsets.every(d=>d<=5)&&Math.min(...offsets)<=.8)){
+    if(name)names.add(name);
+    else unnamed=true;
+   }
   }
   const pinned=[];
   for(const [roadWays,{name,legs}] of sections){
@@ -892,11 +899,15 @@ const RouteLedCoverage=(()=>{
     pinned.push(...candidates);
    }
   }
+  const inferred=unnamed&&!names.size&&!endcap;
+  if(inferred)for(const [name,edges] of roads){
+   if(edges.some(edge=>cosine(a,b,edge.a,edge.b)>.93&&projection(mid,edge.a,edge.b).offset<4.5))names.add(name);
+  }
   if(names.size!==1)return [];
   const [name]=names;
   if(endcap&&name!==endcap)return [];
   const near=pinned.length?[...new Set(pinned)]:roads.get(name)||[];
-  const normal=roadSpans(a,b,near,12,.88);
+  const normal=roadSpans(a,b,near,inferred?4.5:12,.88);
   if(!normal.length)return [];
   // A loose pavement projection may stop at a corner or at a fork.
   // Require most of the leg and one connected road trace.
@@ -1230,24 +1241,28 @@ const RouteLedCoverage=(()=>{
    }
   }
  }
- // A change between a station-side footway and a projected
+ // A change between an independent footway and a projected
  // pavement can leave a lateral link. Preserve the saved access path
  // without crediting it as another section of the through road.
- function pavementSectionAccess(line,legs,pavements,footways,omitted){
-  const sections=pavements.filter(ref=>ref.roadWays);
+ function pavementAccessLinks(line,legs,pavements,footways,omitted){
+  const sections=pavements.filter(ref=>ref.name);
   const links=[];
-  if(!sections.length)return links;
   for(let i=1;i<legs.length-1;i++){
    if(!legs[i]||legs[i].spans.length||omitted.has(i))continue;
    const a=line[i],b=line[i+1],length=distance(a,b);
    if(length<2||length>13)continue;
-   const section=sections.find(({u,v})=>[a,b].every(p=>projection(p,u,v).offset<8)&&
-    cosine(a,b,u,v)<.6);
-   if(!section)continue;
-   const roadLeg=index=>legs[index]?.spans.some(({edge})=>section.roadWays.includes(edge.ref.id));
+   const roadLeg=(index,section)=>legs[index]?.spans.some(({edge})=>
+    section.roadWays?section.roadWays.includes(edge.ref.id):section.name===edge.ref.name);
    const pathLeg=index=>roadSpans(line[index],line[index+1],footways)
     .some(span=>span.end-span.start>.9);
-   if(!(roadLeg(i+1)&&pathLeg(i-1)||roadLeg(i-1)&&pathLeg(i+1)))continue;
+   const link=sections.some(section=>{
+    const {u,v,roadWays}=section;
+    const atA=projection(a,u,v).offset,atB=projection(b,u,v).offset;
+    if(atA>=8||atB>=8||cosine(a,b,u,v)>=.6)return false;
+    return roadLeg(i+1,section)&&(roadWays||atA<.8)&&pathLeg(i-1)||
+     roadLeg(i-1,section)&&(roadWays||atB<.8)&&pathLeg(i+1);
+   });
+   if(!link)continue;
    omitted.add(i);
    links.push([a,b]);
   }
@@ -1261,14 +1276,15 @@ const RouteLedCoverage=(()=>{
   const displayEdges=route.onFoot&&route.source==='saved match'?
    pinnedEdges(route.displayRoadReferences):[];
   const legacy=footways.length?segments((route.refs||[]).filter(ref=>ref.name&&surface(ref)),road):[];
-  const forks=route.onFoot&&!route.corrected?shortStreetForks(edges):null;
+  const forks=route.onFoot&&!route.corrected?shortStreetForks(
+   route.forkContext?.length?[...edges,...pinnedEdges(route.forkContext)]:edges):null;
   const pavements=route.onFoot&&route.source==='saved match'?
    pavementEdges(route.independentRoadReferences||[]):[];
   const names=new Set(pavements.map(ref=>ref.name));
   // A named pedestrian street also has a centreline. Resolve verified
   // short forks before projecting a pavement across both branches.
   const pavementRoads=Map.groupBy(edges.concat(displayEdges).filter(({id,ref})=>
-   names.has(ref.name)&&(road.test(ref.kind)||ref.kind==='pedestrian')&&
+   ref.name&&(names.has(ref.name)||names.has(''))&&(road.test(ref.kind)||ref.kind==='pedestrian')&&
    surface(ref)&&!forks?.aliases.has(id)),edge=>edge.ref.name);
   const addSource=(a,b)=>{
    for(const part of sourceIntervals(a,b)){
@@ -1299,8 +1315,13 @@ const RouteLedCoverage=(()=>{
     return {spans,pavement:spans.length>0};
    });
    if(route.onFoot&&!route.corrected&&pavements.length&&legs.length>2){
-    // A short endpoint can join a known pavement a few metres to one side.
-    for(const [end,adjacent] of [[0,1],[legs.length-1,legs.length-2]]){
+    // A short join can change from a pavement to its projected street.
+    for(let end=0;end<legs.length;end++){
+     const adjacent=end===0?1:end-1;
+     const before=legs[end-1]?.spans.at(-1),after=legs[end+1]?.spans[0];
+     const inner=end>0&&end<legs.length-1;
+     if(inner&&(!before||!after||before.edge.ref.name!==after.edge.ref.name||
+        !legs[end-1].pavement&&!legs[end+1].pavement))continue;
      const adjacentSpans=legs[adjacent]?.spans;
      const anchor=end===0?adjacentSpans?.[0]:adjacentSpans?.at(-1);
      const name=anchor?.edge.ref.name;
@@ -1322,7 +1343,7 @@ const RouteLedCoverage=(()=>{
    const seams=pavements.length?pavementSeams(line,seamLegs,route.independentRoadReferences):null;
    if(seams){
     accessLinks.push(...seams.links,...pavementCrossings(line,legs,route.independentRoadReferences,seams.omitted));
-    if(!route.corrected)accessLinks.push(...pavementSectionAccess(line,legs,pavements,footways,seams.omitted));
+    if(!route.corrected)accessLinks.push(...pavementAccessLinks(line,legs,pavements,footways,seams.omitted));
    }
    const transitions=trace?shortRoadsideTransitions(line,legs,edges,trace,route.removedEdges):new Map();
    if(junctionTrace)junctionCrossings(line,legs,edges,route.independentRoadReferences,junctionTrace,transitions,accessLinks);
