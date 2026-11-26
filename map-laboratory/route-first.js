@@ -24,18 +24,19 @@ const RouteFirst = (() => {
     const indices = journey.journey_corrections?.removed_matched_segments;
     const removed = new Set(Array.isArray(indices) ? indices.filter(n => Number.isInteger(n) && n >= 0) : []);
     let edge = 0;
-    const parts = [], legCount = source.length;
+    const parts = [], removedEdges = [], legCount = source.length;
     for (const line of source) {
       let part = [line[0]];
       for (let i = 1; i < line.length; i++) {
         if (removed.has(edge++)) {
+          removedEdges.push([line[i-1], line[i]]);
           if (part.length > 1) parts.push(part);
           part = [line[i]];
         } else part.push(line[i]);
       }
       if (part.length > 1) parts.push(part);
     }
-    return {parts, corrected: removed.size > 0, legCount};
+    return {parts, corrected: removed.size > 0, legCount, removedEdges};
   }
 
   function references(journey) {
@@ -189,7 +190,7 @@ const RouteFirst = (() => {
 
   function reconstruct(journey) {
     const recorded = lines(journey.route_geometry);
-    const {parts, corrected, legCount} = matched(journey);
+    const {parts, corrected, legCount, removedEdges} = matched(journey);
     const refs = references(journey);
     const mode = journey.mode;
     const foot = ['walk', 'walking', 'running', 'run', 'on_foot'].includes(mode);
@@ -215,7 +216,7 @@ const RouteFirst = (() => {
       .filter(feature => Number.isFinite(feature?.properties?.distance_m) && feature.properties.distance_m > 0)
       .flatMap(feature => lines(feature.geometry)) : [];
     return {parts: output, recorded, refs, onFoot: foot, corrected, source: 'saved match',
-      sourceType: journey.source?.type, roadSteps, projected, joins};
+      sourceType: journey.source?.type, roadSteps, projected, joins, ...(removedEdges.length ? {removedEdges} : {})};
   }
 
   return {reconstruct, lines};

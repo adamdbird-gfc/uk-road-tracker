@@ -8,6 +8,13 @@ Use **Utilities → Export all journey diagnostics** in Roadprints. In the Lab, 
 
 See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-format.md).
 
+## Pedestrian street alignment within manually edited journeys (LAB r477)
+
+A manually removed section still divides the saved match. Within each
+retained component the existing pedestrian street rule can align a mapped
+corridor when the recorded points support it. The repair preserves the
+component endpoints and checks proposed geometry against removed edges.
+
 ## Sparse pedestrian return routes (LAB r476)
 
 A sparse Timeline return can reuse the pedestrian corridor it traversed
