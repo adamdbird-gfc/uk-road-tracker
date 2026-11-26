@@ -95,7 +95,7 @@ const IndependentRoadNetwork = (() => {
       ref.nodes.length === ref.coords.length && ref.nodes.every(Number.isSafeInteger);
 
     function readIndex() {
-      return cached(driving ? 'index.json' : 'r7-index.json', data => {
+      return cached(driving ? 'index.json' : 'r8-index.json', data => {
         if (data?.schema !== 1 || data.cellsPerDegree !== 50 || !Array.isArray(data.tiles) ||
             !data.tiles.every(key => /^-?\d+_-?\d+$/.test(key))) throw Error('Invalid network index');
         const corridors = driving ? [] : data.displayCorridors || [];
@@ -116,7 +116,17 @@ const IndependentRoadNetwork = (() => {
               !roadWays.length || !roadWays.every(Number.isSafeInteger)) throw Error('Invalid pavement section');
         }
         const pavementSections = Map.groupBy(sections, section => section.way);
-        return {scale: data.cellsPerDegree, available: new Set(data.tiles), displayRoads, displayPavements, pavementSections,
+        const walkingCarriageways = new Map();
+        for (const {name, representative, parallel} of driving ? [] : data.walkingCarriageways || []) {
+          if (typeof name !== 'string' || !name || !Array.isArray(representative) ||
+              !Array.isArray(parallel) || !representative.length || !parallel.length ||
+              ![...representative, ...parallel].every(Number.isSafeInteger) ||
+              parallel.some(id => representative.includes(id) || walkingCarriageways.has(id)))
+            throw Error('Invalid walking carriageway');
+          for (const id of parallel) walkingCarriageways.set(id, {name, representative});
+        }
+
+        return {scale: data.cellsPerDegree, available: new Set(data.tiles), displayRoads, displayPavements, pavementSections, walkingCarriageways,
           sharedCrossings: new Set(Array.isArray(data.sharedCrossings)?data.sharedCrossings:[])};
       });
     }
@@ -132,7 +142,7 @@ const IndependentRoadNetwork = (() => {
     async function lookup(route) {
       if (!route.parts?.some(line => line.length >= 2)) return {refs: [], status: 'Own journey references'};
       try {
-        const {scale, available, sharedCrossings, displayRoads, displayPavements, pavementSections} = await readIndex();
+        const {scale, available, sharedCrossings, displayRoads, displayPavements, pavementSections, walkingCarriageways} = await readIndex();
         const windows = routeWindows(route, scale, available, driving ? 90 : 20);
         if (!windows.size) return {refs: [], status: 'Outside pinned network coverage · own references'};
         const results = await Promise.allSettled([...windows.keys()].map(readTile));
@@ -152,7 +162,10 @@ const IndependentRoadNetwork = (() => {
                   intersects(ref.coords, halo)) nearbyRoads.set(ref.id, ref);
               continue;
             }
-            if (displayPavements.has(ref.id)) refs.set(ref.id, {...ref, displayPavement: displayPavements.get(ref.id)});
+            const carriageway = walkingCarriageways.get(ref.id);
+            if (carriageway && carriageway.name === ref.name)
+              refs.set(ref.id, {...ref, walkingCarriageway: carriageway.representative});
+            else if (displayPavements.has(ref.id)) refs.set(ref.id, {...ref, displayPavement: displayPavements.get(ref.id)});
             else if (pavementSections.has(ref.id)) refs.set(ref.id, {...ref, pavementSections: pavementSections.get(ref.id)});
             else refs.set(ref.id, sharedCrossings.has(ref.id) ? {...ref, sharedCrossing: true} : ref);
           }

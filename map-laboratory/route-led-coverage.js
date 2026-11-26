@@ -4,6 +4,7 @@
  */
 const CentrelinePromotion=typeof module!=='undefined'?require('./roadside-centreline.js'):RoadsideCentreline;
 const PublicRoadSource=typeof module!=='undefined'?require('./independent-road-network.js'):IndependentRoadNetwork;
+const RouteEdits=typeof module!=='undefined'?require('./route-first.js'):RouteFirst;
 const RouteLedCoverage=(()=>{
  const M=111320,D=Math.PI/180,STEP=8;
  const valid=p=>Array.isArray(p)&&p.length===2&&p.every(Number.isFinite)&&Math.abs(p[0])<=180&&Math.abs(p[1])<=90;
@@ -826,6 +827,27 @@ const RouteLedCoverage=(()=>{
    yield {edge,from:fraction(start<end?a:b),to:fraction(start<end?b:a)};
   }
  }
+ // The public index can identify two ways as parts of one walking
+ // corridor. Map only parallel portions on the same surface street.
+ function* walkingCarriagewaySpans(span,edges,removed){
+  const {edge,from,to}=span;
+  const ids=edge.ref.walkingCarriageway;
+  if(!ids||!surface(edge.ref)){yield span;return;}
+  const a=point(edge.a,edge.b,from),b=point(edge.a,edge.b,to);
+  const candidates=edges.filter(other=>ids.includes(other.ref.id)&&
+   other.ref.name===edge.ref.name&&other.ref.kind===edge.ref.kind&&surface(other.ref));
+  const mapped=roadSpans(a,b,candidates,15,.95);
+  let at=0;
+  for(const part of mapped){
+   if(overlapsRemovedEdge(point(part.edge.a,part.edge.b,part.from),
+    point(part.edge.a,part.edge.b,part.to),removed))continue;
+   const original=t=>from+(to-from)*t;
+   if((part.start-at)*distance(a,b)>.5)yield {...span,from:original(at),to:original(part.start)};
+   yield part;
+   at=part.end;
+  }
+  if(!at||(1-at)*distance(a,b)>.5)yield {...span,from:from+(to-from)*at};
+ }
  function overlapsRemovedEdge(a,b,removed){
   return (removed||[]).some(([u,v])=>{
    if(cosine(a,b,u,v)<=.9)return false;
@@ -1306,6 +1328,21 @@ const RouteLedCoverage=(()=>{
   });
  }
  function accumulate(history,route){
+  const removed=ref=>RouteEdits.isRemovedRoad(ref,route.removedRoadIds);
+  const denied=[];
+  if(route.removedRoadIds?.size){
+   // Match only the actual excluded line. A footpath that runs near
+   // the edited road is separate evidence and is left intact.
+   const pinned=[...(route.independentRoadReferences||[]),...(route.displayRoadReferences||[])];
+   const saved=route.removedRoadReferences||[];
+   denied.push(...pinned.filter(removed),...saved);
+   route={...route,
+    independentRoadReferences:route.independentRoadReferences?.filter(ref=>!removed(ref)),
+    displayRoadReferences:route.displayRoadReferences?.filter(ref=>!removed(ref)),
+    forkContext:route.forkContext?.filter(ref=>!removed(ref)),
+    pairedWalk:undefined};
+  }
+  const excluded=denied.map(ref=>pinnedEdges([{...ref,nodes:ref.nodes||ref.coords.map((_,i)=>i)}],true));
   const next=createLedger(history),novel=new Map(),repeat=new Map();
   const previousSources=history?.sources||history,previousRoads=history?.roads||new Map();
   const paired=route.pairedWalk;
@@ -1325,7 +1362,23 @@ const RouteLedCoverage=(()=>{
   const pavementRoads=Map.groupBy(edges.concat(displayEdges).filter(({id,ref})=>
    ref.name&&(names.has(ref.name)||names.has(''))&&(road.test(ref.kind)||ref.kind==='pedestrian')&&
    surface(ref)&&!forks?.aliases.has(id)),edge=>edge.ref.name);
+  const attribute=span=>{
+   for(const fork of forks?streetForkSpans(span,forks.aliases):[span])
+    for(const mapped of !paired&&route.onFoot&&route.source==='saved match'?
+     walkingCarriagewaySpans(fork,edges,route.removedEdges):[fork])
+     attributeRoad(mapped,previousRoads,next.roads,novel,repeat);
+  };
   const addSource=(a,b)=>{
+   if(!excluded.length)return creditSource(a,b);
+   const held=excluded.flatMap(edges=>roadSpans(a,b,edges))
+    .sort((x,y)=>x.start-y.start);
+   let start=0;
+   for(const part of [...held,{start:1,end:1}]){
+    if(part.start>start)creditSource(point(a,b,start),point(a,b,part.start));
+    start=Math.max(start,part.end);
+   }
+  };
+  const creditSource=(a,b)=>{
    for(const part of sourceIntervals(a,b)){
     const target=previousSources?.has(part.id)?repeat:novel;
     if(!target.has(part.id))target.set(part.id,part);
@@ -1393,9 +1446,7 @@ const RouteLedCoverage=(()=>{
    for(let i=0;i<legs.length;i++){
     const transition=transitions?.get(i);
     if(transition){
-     for(const span of transition.spans)
-      for(const mapped of forks?streetForkSpans(span,forks.aliases):[span])
-       attributeRoad(mapped,previousRoads,next.roads,novel,repeat);
+     for(const span of transition.spans)attribute(span);
      i=transition.end-1;
      continue;
     }
@@ -1405,8 +1456,7 @@ const RouteLedCoverage=(()=>{
     let at=0;
     for(const span of spans){
      if(!seam&&!((endcap||entryLinked)&&at===0)&&span.start>at)addSource(point(a,b,at),point(a,b,span.start));
-     for(const mapped of forks?streetForkSpans(span,forks.aliases):[span])
-      attributeRoad(mapped,previousRoads,next.roads,novel,repeat);
+     attribute(span);
      at=seam?1:span.end;
     }
     if(at<1&&!endcap)addSource(point(a,b,at),b);

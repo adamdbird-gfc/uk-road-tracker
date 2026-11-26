@@ -27,7 +27,7 @@ const PairedWalk = (() => {
   return metres;
  }
  function eligible(route){
-  return route.onFoot&&!route.corrected&&!route.railTransitions?.length&&
+  return route.onFoot&&!route.corrected&&!route.removedRoadIds?.size&&!route.railTransitions?.length&&
    route.source==='saved match'&&route.sourceType==='timeline_import'&&
    route.parts.length===1&&route.parts[0].length>=5&&route.parts[0].every(valid)&&
    route.recorded.flat().length>=2&&route.recorded.flat().length<=3&&

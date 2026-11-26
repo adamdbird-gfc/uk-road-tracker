@@ -302,7 +302,7 @@ test('ZIP UI keeps canonical and route-led models isolated',()=>{
  assert(page.includes('RouteLedCoverage.accumulate(zipRouteLedLedger,walkingRoute)'));
  assert(page.includes("mode==='routeLed'?zipRouteLedCache.get(n):zipCoverageCache.get(n)"));
  assert(page.includes("zipRouteLedCache.clear();zipRouteLedLedger.clear()"));
- assert(page.includes('LAB r489')&&page.includes('>PR #489</a>'));
+ assert(page.includes('LAB r490')&&page.includes('>PR #490</a>'));
  assert(page.includes('id="zipCompare"')&&page.includes('id="zipModeControls" hidden')&&page.includes("mode=zip?'routeLed':'center'"));
 });
 
@@ -614,4 +614,40 @@ test('a short oblique pavement endcap shares its street without trimming a genui
  assert(second.repeat.some(({a,b})=>Math.min(a[0],b[0])<p(6)[0]));
  const branch=RouteLed.accumulate(first.next,{...revisit,parts:[[p(17,8),p(17),p(30),p(42)]]});
  assert(branch.novel.some(({a,b})=>Math.max(a[1],b[1])>0));
+});
+
+test('road editor exclusions never re-enter coverage through saved or pinned lines',()=>{
+ const road=[p(0),p(100)],path=[p(0,5),p(100,5)];
+ const journey={mode:'walking',route_geometry:{type:'LineString',coordinates:path},
+  journey_corrections:{removed_matched_segments:[],removed_road_ids:['name:example road']},
+  processing_result:{geojson:{features:[road,path].map(coordinates=>({geometry:{type:'LineString',coordinates}}))},
+   road_geojson:{features:[{properties:{name:'Example Road',reference_kind:'residential'},
+    geometry:{type:'LineString',coordinates:road}}]}}};
+ const original=JSON.stringify(journey);
+ const loaded=RouteFirst.reconstruct(journey);
+ assert.deepEqual(loaded.parts,[road,path]);
+ assert.equal(loaded.refs.length,0);
+ const pinned={id:1,kind:'residential',name:'Example Road',coords:road,nodes:[10,11]};
+ for(const independentRoadReferences of [[],[pinned]]){
+  const coverage=RouteLed.accumulate(null,{...loaded,independentRoadReferences});
+  assert(coverage.novel.length>0);
+  assert(coverage.novel.every(({a,b})=>a[1]===path[0][1]&&b[1]===path[0][1]));
+ }
+ assert.equal(JSON.stringify(journey),original);
+});
+
+test('verified carriageway equivalence credits one road for walks and keeps driving lanes distinct',()=>{
+ const primary={id:1,kind:'primary',name:'High Street',nodes:[1,2],coords:[p(0),p(160)]};
+ const parallel={...primary,id:2,nodes:[3,4],coords:[p(0,8),p(160,8)],walkingCarriageway:[1]};
+ const route=ref=>({source:'saved match',onFoot:true,parts:[ref.coords],
+  independentRoadReferences:[primary,parallel]});
+ for(const [out,back] of [[primary,parallel],[parallel,primary]]){
+  const first=RouteLed.accumulate(null,route(out));
+  const second=RouteLed.accumulate(first.next,route(back));
+  assert.equal(second.novel.length,0);
+  assert.equal(second.repeat.length,1);
+  assert.deepEqual([second.repeat[0].a,second.repeat[0].b],primary.coords);
+  const driving=RouteLed.accumulate(first.next,{...route(parallel),onFoot:false});
+  assert.deepEqual([driving.novel[0].a,driving.novel[0].b],parallel.coords);
+ }
 });
