@@ -557,13 +557,7 @@ const RouteLedCoverage=(()=>{
      const restoresCut=candidate.slice(1).some((b,i)=>{
       const a=candidate[i];
       if(kept.has(edgeKey(a,b)))return false;
-      return removed.some(([u,v])=>{
-       if(cosine(a,b,u,v)<=.9)return false;
-       const x=fraction(u,a,b),y=fraction(v,a,b);
-       const lo=Math.max(0,Math.min(x,y)),hi=Math.min(1,Math.max(x,y));
-       return (hi-lo)*distance(a,b)>.5&&
-        [point(a,b,lo),point(a,b,hi)].every(p=>projection(p,u,v).offset<=.6);
-      });
+      return overlapsRemovedEdge(a,b,removed);
      });
      if(restoresCut)continue;
      line.splice(0,line.length,...candidate);
@@ -825,21 +819,84 @@ const RouteLedCoverage=(()=>{
    yield {edge,from:fraction(start<end?a:b),to:fraction(start<end?b:a)};
   }
  }
- function roadSpans(a,b,edges){
-  const margin=.4/M,lonMargin=margin/Math.max(.1,Math.cos(a[1]*D));
+ function overlapsRemovedEdge(a,b,removed){
+  return (removed||[]).some(([u,v])=>{
+   if(cosine(a,b,u,v)<=.9)return false;
+   const x=fraction(u,a,b),y=fraction(v,a,b);
+   const lo=Math.max(0,Math.min(x,y)),hi=Math.min(1,Math.max(x,y));
+   return (hi-lo)*distance(a,b)>.5&&
+    [point(a,b,lo),point(a,b,hi)].every(p=>projection(p,u,v).offset<=.6);
+  });
+ }
+ function surface(ref){
+  return (!ref.layer||ref.layer==='0')&&ref.bridge!=='yes'&&ref.tunnel!=='yes'&&ref.indoor!=='yes';
+ }
+ function pavementEdges(refs){
+  const sidewalks=refs.filter(ref=>ref.kind==='footway'&&ref.footway==='sidewalk'&&ref.name&&surface(ref));
+  const atNode=new Map();
+  const edges=[];
+  function append(name,coords){
+   for(let i=1;i<coords.length;i++)edges.push({name,u:coords[i-1],v:coords[i]});
+  }
+  for(const {name,nodes,coords} of sidewalks){
+   append(name,coords);
+   for(const node of nodes||[]){
+    if(!atNode.has(node))atNode.set(node,new Set());
+    atNode.get(node).add(name);
+   }
+  }
+  // A tagged crossing can continue the pavement over a side street.
+  // Its heading must still agree with the named road at attribution time.
+  for(const ref of refs){
+   if(ref.kind!=='footway'||ref.footway!=='crossing'||!ref.nodes?.length||!surface(ref))continue;
+   const start=atNode.get(ref.nodes[0]),end=atNode.get(ref.nodes.at(-1));
+   if(start?.size!==1||end?.size!==1)continue;
+   const [name]=start;
+   if(end.has(name))append(name,ref.coords);
+  }
+  return edges;
+ }
+ // Only a named, mapped pavement can supply this road attribution. The
+ // saved line still supplies travel and independent pedestrian links.
+ function pavementRoadSpans(a,b,pavements,roads,removed){
+  const mid=point(a,b,.5),names=new Set();
+  for(const {name,u,v} of pavements){
+   if(projection(mid,u,v).offset<=.8&&cosine(a,b,u,v)>.93&&
+      projection(a,u,v).offset<=.8&&projection(b,u,v).offset<=.8)names.add(name);
+  }
+  if(names.size!==1)return [];
+  const [name]=names,near=roads.get(name)||[];
+  const normal=roadSpans(a,b,near,true);
+  if(!normal.length)return [];
+  // A loose pavement projection may stop at a corner or at a fork.
+  // Require most of the leg and one connected road trace.
+  const connected=normal.every((span,i)=>!i||distance(point(normal[i-1].edge.a,normal[i-1].edge.b,normal[i-1].to),
+   point(span.edge.a,span.edge.b,span.from))<1);
+  const length=normal.reduce((sum,span)=>sum+span.end-span.start,0);
+  if(!connected||length<.85||normal.some(({edge,from,to})=>
+   overlapsRemovedEdge(point(edge.a,edge.b,from),point(edge.a,edge.b,to),removed)))return [];
+  return normal;
+ }
+ function roadSpans(a,b,edges,pavement=false){
+  const tolerance=pavement?12:.35,heading=pavement ? .88 : .98;
+  const margin=(tolerance+.05)/M,lonMargin=margin/Math.max(.1,Math.cos(a[1]*D));
   const west=Math.min(a[0],b[0])-lonMargin,east=Math.max(a[0],b[0])+lonMargin;
   const south=Math.min(a[1],b[1])-margin,north=Math.max(a[1],b[1])+margin;
   const spans=[];
   for(const edge of edges){
    if(edge.west>east||edge.east<west||edge.south>north||edge.north<south||
-      cosine(a,b,edge.a,edge.b)<.98)continue;
+      cosine(a,b,edge.a,edge.b)<heading)continue;
    const x=fraction(edge.a,a,b),y=fraction(edge.b,a,b);
    const start=Math.max(0,Math.min(x,y)),end=Math.min(1,Math.max(x,y));
    if(end-start<1e-7)continue;
    const u=point(a,b,start),v=point(a,b,end);
-   const from=projection(u,edge.a,edge.b),to=projection(v,edge.a,edge.b);
-   if(from.offset>.35||to.offset>.35||Math.abs(to.t-from.t)<1e-7)continue;
-   spans.push({edge,start,end,from:from.t,to:to.t});
+   const uv=pavement?[u,v].map((p,i)=>{
+    const t=((i?end:start)-x)/(y-x);
+    return {t,offset:distance(p,point(edge.a,edge.b,t))};
+   }):[projection(u,edge.a,edge.b),projection(v,edge.a,edge.b)];
+   const [{t:from,offset:offsetFrom},{t:to,offset:offsetTo}]=uv;
+   if(offsetFrom>tolerance||offsetTo>tolerance||Math.abs(to-from)<1e-7)continue;
+   spans.push({edge,start,end,from,to});
   }
   spans.sort((x,y)=>x.start-y.start);
   return spans.some((span,i)=>i&&span.start<spans[i-1].end-1e-6)?[]:spans;
@@ -879,6 +936,10 @@ const RouteLedCoverage=(()=>{
   const prepared=cleanup(route);
   const edges=pinnedEdges(route.independentRoadReferences);
   const forks=route.onFoot&&!route.corrected?shortStreetForks(edges):null;
+  const pavements=route.onFoot&&route.source==='saved match'?
+   pavementEdges(route.independentRoadReferences||[]):[];
+  const names=new Set(pavements.map(ref=>ref.name));
+  const pavementRoads=Map.groupBy(edges.filter(({ref})=>names.has(ref.name)&&road.test(ref.kind)&&surface(ref)),edge=>edge.ref.name);
   const addSource=(a,b)=>{
    for(const part of sourceIntervals(a,b)){
     const target=previousSources?.has(part.id)?repeat:novel;
@@ -891,7 +952,9 @@ const RouteLedCoverage=(()=>{
    if(!supportedLeg(route,a,b))continue;
    let at=0;
    const seam=forks&&forkSeamSpans(a,b,forks.merges);
-   for(const span of seam||roadSpans(a,b,edges)){
+   const exact=seam||roadSpans(a,b,edges);
+   const spans=exact.length||!pavements.length?exact:pavementRoadSpans(a,b,pavements,pavementRoads,route.removedEdges);
+   for(const span of spans){
     if(!seam&&span.start>at)addSource(point(a,b,at),point(a,b,span.start));
     for(const mapped of forks?streetForkSpans(span,forks.aliases):[span])
      attributeRoad(mapped,previousRoads,next.roads,novel,repeat);
