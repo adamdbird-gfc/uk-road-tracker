@@ -53,10 +53,10 @@ test('historical cumulative replay does not eagerly analyse thousands of journey
 test('evidence summary is present in visible current journey status without a new button or cross-journey input',()=>{
  const fs=require('node:fs'),path=require('node:path');
  const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
- assert(html.includes('LAB r487')&&html.includes('>PR #487</a>'));
+ assert(html.includes('LAB r488')&&html.includes('>PR #488</a>'));
  assert(html.includes('metres aligned to road centrelines'));
  assert(html.includes('roadEvidence:routed.roadEvidence'));
- assert(html.includes("diagnosticRoute.source+' · centreline '+shifted+'m'"));
+ assert(html.includes("' · centreline '+shifted+'m'"));
  assert(html.includes('road reference ways screened'));
  assert(html.includes('networkStatus:route.networkStatus'));
  assert(!html.includes('SharedRoadCatalogue')&&!html.includes('sharedRoadReferences'));

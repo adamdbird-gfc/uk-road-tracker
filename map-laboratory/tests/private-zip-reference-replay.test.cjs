@@ -8,6 +8,7 @@ const RouteFirst=require('../route-first.js');
 const Network=require('../independent-road-network.js');
 const RouteLed=require('../route-led-coverage.js');
 const RailTransition=require('../rail-transition.js');
+const PairedWalk=require('../paired-walk.js');
 
 const archive=process.env.ROADPRINTS_DIAGNOSTICS_ZIP;
 const root=path.join(__dirname,'..');
@@ -254,7 +255,7 @@ test('owner ZIP Journey 13 aligns Pentonville Road and retains the station appro
    'no pavement return inside the established road corridor');
  }
  assert(containsLine(result.parts,route.parts[0].slice(-20)),'keep the station-side pedestrian approach');
- const outside=await Network.create(async url=>request(url.replace('r6-index.json','index.json'))).lookup(route);
+ const outside=await Network.create(async url=>request(url.replace('r7-index.json','index.json'))).lookup(route);
  assert.deepEqual(outside.refs,[]);
  assert.deepEqual(RouteLed.cleanup(route).parts,route.parts);
  assert.equal(JSON.stringify(journey),before);
@@ -293,19 +294,26 @@ test('station return repeats Windmill Street and keeps its distinct square route
  assert.equal(JSON.stringify(home),original);
 });
 
-test('London and Gravesend junctions retain through coverage and genuine approaches',{skip:!archive},async()=>{
+test('London and Gravesend approaches stay connected and Rochester walks share one path',{skip:!archive},async()=>{
  const zip=Bulk.roadReplay(await Bulk.open(new Blob([fs.readFileSync(archive)])));
  const network=Network.create(request),rail=RailTransition.create(request);
  let ledger=RouteLed.createLedger();
  const checked=[];
- for(const [index,row] of zip.journeys.entries()){
-  if(row.archiveOrdinal>115)break;
+ let outward;
+ const load=async index=>{
   const {journey}=await zip.read(index);
   const route=RouteFirst.reconstruct(journey);
   const pinned=route.onFoot&&route.source==='saved match'?await network.lookup(route):{refs:[]};
   const guarded=await rail({...route,independentRoadReferences:pinned.refs,
-   displayRoadReferences:pinned.displayRoads,forkContext:pinned.forkContext},row);
-  const result=RouteLed.accumulate(ledger,guarded.surfaceParts?{...guarded,parts:guarded.surfaceParts}:guarded);
+   displayRoadReferences:pinned.displayRoads,forkContext:pinned.forkContext},zip.journeys[index]);
+  return guarded.surfaceParts?{...guarded,parts:guarded.surfaceParts}:guarded;
+ };
+ for(const [index,row] of zip.journeys.entries()){
+  if(row.archiveOrdinal>122)break;
+  const guarded=await load(index);
+  const pinned={refs:guarded.independentRoadReferences,forkContext:guarded.forkContext};
+  const route=await PairedWalk.forReplay(index,guarded,zip.journeys,load);
+  const result=RouteLed.accumulate(ledger,route);
   ledger=result.next;
   if(row.archiveOrdinal===104){
    checked.push(104);
@@ -339,10 +347,14 @@ test('London and Gravesend junctions retain through coverage and genuine approac
   }
   if(row.archiveOrdinal===114){
    checked.push(114);
-   const lines=result.novel.map(({a,b})=>[a,b]);
-   assert(coveredMetres(lines,pinned.refs,'Limeburner Lane')>25);
-   assert(result.novel.some(({id})=>id.startsWith('footway:')));
-   assert(result.novel.every(({id})=>!id.startsWith('saved:')));
+   assert.deepEqual(result.novel,[]);
+   const saved=guarded.parts[0],lines=result.repeat.map(({a,b})=>[a,b]);
+   assert(coveredMetres(lines,pinned.refs,'Fleet Street')>80);
+   for(const end of [saved[0],saved.at(-1)]){
+    const approach=result.accessLinks.find(line=>line.some(point=>metres(point,end)<.3));
+    assert(approach);
+    assert(approach.some(point=>lines.some(([a,b])=>projection(point,a,b)<.5)));
+   }
   }
   if(row.archiveOrdinal===115){
    checked.push(115);
@@ -351,6 +363,27 @@ test('London and Gravesend junctions retain through coverage and genuine approac
    assert(coveredMetres(lines,pinned.refs,'Fleet Street')>45);
    assert(result.novel.reduce((total,{a,b})=>total+metres(a,b),0)<5);
   }
+  if(row.archiveOrdinal===121||row.archiveOrdinal===122){
+   checked.push(row.archiveOrdinal);
+   const pair=route.pairedWalk;
+   assert(pair);
+   assert.notDeepEqual(pair.line,guarded.parts[0]);
+   assert.equal(guarded.pairedWalk,undefined);
+   const edges=pair.refs.flatMap(ref=>ref.coords.slice(1).map((b,i)=>[ref.coords[i],b]));
+   const crosses=pair.refs.filter(ref=>ref.footway==='crossing');
+   const hasEdge=(list,a,b)=>list.some(([x,y])=>
+    x===a&&y===b||x===b&&y===a||metres(x,a)<.1&&metres(y,b)<.1||metres(x,b)<.1&&metres(y,a)<.1);
+   const lineEdges=pair.line.slice(1).map((b,i)=>[pair.line[i],b]);
+   assert(lineEdges.every(([a,b])=>hasEdge(edges,a,b)));
+   assert(crosses.some(ref=>ref.coords.slice(1).some((b,i)=>hasEdge(lineEdges,ref.coords[i],b))));
+   assert.equal(coveredMetres(lineEdges,pinned.refs,'Corporation Street'),0);
+   if(row.archiveOrdinal===121)outward=pair.line;
+   else{
+    assert.deepEqual(pair.line,outward.toReversed());
+    assert.deepEqual(result.novel,[]);
+    assert.equal(result.repeat.length,lineEdges.length);
+   }
+  }
  }
- assert.deepEqual(checked,[104,105,107,108,112,114,115]);
+ assert.deepEqual(checked,[104,105,107,108,112,114,115,121,122]);
 });

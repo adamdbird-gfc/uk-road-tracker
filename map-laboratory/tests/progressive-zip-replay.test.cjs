@@ -1,4 +1,5 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const PairedWalk=require('../paired-walk.js');
 const page=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
 const start=page.indexOf('async function loadZipRoute(index){');
 const end=page.indexOf('\nfunction updateZip(){',start);
@@ -9,7 +10,7 @@ assert(page.includes('if(diagnosticsZip){')&&page.includes("if(mode==='canonical
  'ZIP source replay stays distinct from provisional canonical coverage');
 assert(page.includes("zipRouteCache.clear();zipCoverageCache.clear();zipCoverageLedger.clear();zipRouteLedCache.clear();zipRouteLedLedger.clear();currentCoverageAudit=null;$('coverageAuditSummary').textContent='';$('downloadCoverageAudit').disabled=true;mode=zip?'routeLed':'center'"),
  'changing input resets previously replayed route history');
-assert(page.includes('LAB r487')&&page.includes('>PR #487</a>'));
+assert(page.includes('LAB r488')&&page.includes('>PR #488</a>'));
 const seen=[];
 const zip={read:async index=>{seen.push(index);return {journey:{index}};}};
 const reconstruct=journey=>({
@@ -17,7 +18,7 @@ const reconstruct=journey=>({
  recorded:[[[journey.index,0],[journey.index+0.5,0]]],
  onFoot:true,refs:[],source:'saved match',projected:0,joins:0
 });
-const createHarness=new Function('zip','reconstruct','outage',`
+const createHarness=new Function('zip','reconstruct','outage','PairedWalk',`
  let diagnosticsZip=zip,diagnosticRoute=null,zipRouteCache=new Map(),busy=false,step=0,isolated=false,mode='routeLed';
  let data={journeys:Array.from({length:4},(_,i)=>['date'+i,'walk','walking',[],null])};
  let roads=[],roadIds=new Map(),cache=new Map(),messages=[];
@@ -38,7 +39,7 @@ const createHarness=new Function('zip','reconstruct','outage',`
  ${page.slice(start,end)}
  return {showZipJourney,state:()=>({step,cache:[...zipRouteCache.keys()],parts:zipRouteCache.get(0),route:diagnosticRoute,rawRows:data.journeys.map(j=>j[3].length),messages,referenceLookups,credited:[...zipRouteLedCache.values()].map(result=>result.novel[0])})};
 `);
-const harness=createHarness(zip,reconstruct,{index:-1});
+const harness=createHarness(zip,reconstruct,{index:-1},PairedWalk);
 (async()=>{
  await harness.showZipJourney(1);
  assert.deepEqual(seen,[0],'first Next reads one journey');
@@ -56,7 +57,7 @@ const harness=createHarness(zip,reconstruct,{index:-1});
  assert.deepEqual([...new Set(seen)].sort(),[0,1,2,3],'later jump retains chronological coverage and adds the new selected journey');
  assert(harness.state().messages.at(-1).includes('Cumulative ZIP replay · 4 / 4 journeys'), 'later jump status stays in sync with selected journey');
  const outage={index:1};
- const recovery=createHarness(zip,reconstruct,outage);
+ const recovery=createHarness(zip,reconstruct,outage,PairedWalk);
  await recovery.showZipJourney(3);
  assert.deepEqual(recovery.state().credited,[0,undefined,2]);
  outage.index=-1;
