@@ -461,7 +461,7 @@ const RoadsideCentreline=(()=>{
      crossing:!structural&&ref.footway==='crossing'}]:[];
    });
  }
- function joinJunctions(line,edges,protectedPaths,raw,allowPavementJoin,wideTurns=false){
+ function joinJunctions(line,edges,protectedPaths,raw,allowPavementJoin,wideTurns=false,mappedPaths=[]){
   if(!edges.length||line.length<4)return {line,joins:[]};
   const output=[line[0]],joins=[];
   const anchors=new Map();
@@ -494,10 +494,23 @@ const RoadsideCentreline=(()=>{
       if(!entry.name||!exit.name||entry.name===exit.name||length<45||
          entry.structure||exit.structure)break;
       const namedSurface=edge=>edge.name&&!edge.structure;
-      const candidate=junctionTrace(span,starts,ends,protectedPaths.filter(w=>w.structural),namedSurface,
-       {max:110,tolerance:16});
-      if(!candidate||!corner&&(!candidate.labels.some(name=>name!==entry.name&&name!==exit.name)||
-        direction(line[i-1],line[i],line[j],line[j+1])<.65))break;
+      const structural=protectedPaths.filter(w=>w.structural);
+      let candidate=junctionTrace(span,starts,ends,structural,namedSurface,{max:110,tolerance:16});
+      // A tiny first edge of the next road can point along its kerb,
+      // even when the street makes a genuine turn. Check the sustained
+      // heading when the saved approach is backed by a mapped footway.
+      const local=edge=>/^(residential|unclassified|living_street)$/.test(edge.kind);
+      const departure=line.slice(j+1,j+8).find(p=>metres(line[j],p)>=8);
+      const mappedCorner=departure&&local(entry)&&local(exit)&&
+       Math.abs(direction(line[i-1],line[i],line[j],departure))<.55&&
+       sampled(span,p=>mappedPaths.some(path=>snap(p,path).offset<=3.5)||
+        metres(p,span[0])<5||metres(p,span.at(-1))<5);
+      const verifiedCorner=mappedCorner&&!corner&&junctionTrace(span,starts,ends,structural,
+       edge=>same(edge)&&local(edge),{max:110,tolerance:16,minRatio:.68,crossing:true});
+      if(verifiedCorner)candidate=verifiedCorner;
+      if(!candidate||!corner&&!verifiedCorner&&
+         (!candidate.labels.some(name=>name!==entry.name&&name!==exit.name)||
+          direction(line[i-1],line[i],line[j],line[j+1])<.65))break;
       const path=measured(candidate.coords),guide=measured(span);
       if(raw.some(p=>snap(p,guide).offset<=4&&snap(p,path).offset>13))break;
       joined=candidate;
@@ -693,7 +706,9 @@ const RoadsideCentreline=(()=>{
   };
  }
  function closeOffsetRoadTurns(line,refs,recorded){
-  const repaired=joinJunctions(line,roadGraph(refs),protectedWalks(refs),recorded,true,true);
+  const paths=refs.filter(ref=>ref.nodes&&ref.kind==='footway'&&!structure(ref)&&ref.indoor!=='yes')
+   .map(ref=>measured(ref.coords));
+  const repaired=joinJunctions(line,roadGraph(refs),protectedWalks(refs),recorded,true,true,paths);
   if(repaired.joins.length)line.splice(0,line.length,...repaired.line);
   return repaired.joins;
  }

@@ -64,3 +64,13 @@ test('entrance lookup is cached and unavailable data leaves the route as it was'
  assert.strictEqual(await transition(route,{railBefore:true}),route);
  assert.equal(calls,1);
 });
+
+test('an indoor door retrace does not add road coverage to a rail arrival',()=>{
+ const loop=[p(20),p(22,8),p(22,17),p(22,8),p(20),p(10),p(0)];
+ const arriving={...route,parts:[loop],sourceType:'timeline_import',recorded:[[p(25,8),p(0)]]};
+ const context={railBefore:true};
+ assert.deepEqual(apply(arriving,context,[entrance]).surfaceParts,[[p(20),p(10),p(0)]]);
+ assert.strictEqual(apply(arriving,{},[entrance]),arriving);
+ const offDoor={...arriving,parts:[[...loop.slice(0,3),p(30,8),...loop.slice(4)]]};
+ assert.equal(apply(offDoor,context,[entrance]).surfaceParts,undefined);
+});

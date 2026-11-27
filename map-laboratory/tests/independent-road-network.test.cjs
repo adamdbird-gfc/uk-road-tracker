@@ -53,7 +53,7 @@ test('pinned real OSM network is geographically selected and reused across looku
  const provider=Network.create(async(url,options)=>{
   calls.push(url);
   assert(options.signal);
-  assert.match(url,/^\.\/reference-network\/v1\/(r8-index\.json|-?\d+_-?\d+\.json\.gz)$/);
+  assert.match(url,/^\.\/reference-network\/v1\/(r9-index\.json|-?\d+_-?\d+\.json\.gz)$/);
   return new Response(tileFile(url));
  });
  const route={parts:[[[0.36685,51.44165],[0.3675,51.44154]]]};
@@ -110,7 +110,7 @@ test('Pentonville Road references span a pinned tile boundary',async()=>{
  });
  const route={parts:[[[-0.121,51.53095],[-0.119,51.53118]]]};
  const result=await provider.lookup(route);
- assert.deepEqual(calls,['r8-index.json','-7_2576.json.gz','-6_2576.json.gz']);
+ assert.deepEqual(calls,['r9-index.json','-7_2576.json.gz','-6_2576.json.gz']);
  assert(result.refs.some(ref=>ref.name==='Pentonville Road'&&Network.isRoad(ref.kind)));
  assert(result.refs.some(ref=>ref.kind==='footway'));
  assert.equal(result.refs.length,new Set(result.refs.map(ref=>ref.id)).size);

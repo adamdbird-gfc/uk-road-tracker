@@ -143,11 +143,11 @@ test('a short same-road interruption is removed in either direction with a recor
   assert.deepEqual(observed,source);
  }
 });
-test('LAB r491 one-map frontend loads alignment before route-led attribution',()=>{
+test('LAB r492 one-map frontend loads alignment before route-led attribution',()=>{
  const fs=require('node:fs'),path=require('node:path');
  const page=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
  assert(page.indexOf('roadside-centreline.js')<page.indexOf('route-led-coverage.js'));
- assert(page.includes('LAB r491')&&page.includes('>PR #491</a>'));
+ assert(page.includes('LAB r492')&&page.includes('>PR #492</a>'));
  assert(page.includes("mode=zip?'routeLed':'center'"));
  assert(page.includes('id="zipCompare"'));
 });

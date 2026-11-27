@@ -32,5 +32,5 @@ r=suppress({...base,ids:longSelected},network,source);
 assert.equal(r.suppressed.size,0,'four or more credited pieces are not casually removed');
 assert(page.includes('const partialFootwayFragments=experimentalCorrection.enabled?suppressRoadsidePartialFootwayFragments('));
 assert(page.includes('const networkGlue=experimentalCorrection.enabled?recoverSourceBackedNetworkConnections(roadsideConsolidation.canonical,roads,prepared.lines)')&&page.includes('const canonical=networkGlue.canonical'));
-assert(page.includes('LAB r491')&&page.includes('>PR #491</a>'));
+assert(page.includes('LAB r492')&&page.includes('>PR #492</a>'));
 console.log('PASS: partially credited 119-piece way nearby through-road, path/destination/long-way/no-road guards');

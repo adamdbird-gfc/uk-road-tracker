@@ -472,6 +472,53 @@ const RouteLedCoverage=(()=>{
   // Original geometry on that way can still be retained elsewhere.
   return {...route,parts:kept,refs:refs.filter(ref=>!withheldWays.has(ref))};
  }
+ // Chunked driving matches can overlap in the same direction and
+ // choose different branches at the end of the earlier chunk. The later
+ // chunk must repeat the entire prefix, have a mapped directed exit, and
+ // be preferred by a recorded observation.
+ function reconcileDrivingOverlap(route){
+  const raw=(route.recorded||[]).flat().filter(valid);
+  if(route.onFoot||route.corrected||route.removedRoadIds?.size||route.source!=='saved match'||
+     route.sourceType!=='timeline_import'||!route.roadSteps?.length||
+     route.parts.length<2||raw.length<2||!route.drivingReferences?.length)return route;
+  const directed=[];
+  for(const ref of route.drivingReferences){
+   if(!road.test(ref.kind)||ref.tunnel==='yes')continue;
+   for(let i=1;i<ref.coords.length;i++){
+    const a=ref.coords[i-1],b=ref.coords[i];
+    if(ref.oneway!=='-1')directed.push([a,b]);
+    if(!['yes','1','true','-1'].includes(ref.oneway)&&ref.junction!=='roundabout')directed.push([b,a]);
+   }
+  }
+  const parts=[],same=(a,b)=>a&&b&&a[0]===b[0]&&a[1]===b[1];
+  const legs=line=>line.slice(1).map((b,i)=>[line[i],b]);
+  for(const current of route.parts){
+   const previous=parts.at(-1);
+   const begin=previous?.findIndex(p=>same(p,current[0]))??-1;
+   if(begin<0||previous.findLastIndex(p=>same(p,current[0]))!==begin){parts.push(current);continue;}
+   let overlap=1,metres=0;
+   while(overlap<current.length&&same(previous[begin+overlap],current[overlap])){
+    metres+=distance(current[overlap-1],current[overlap]);overlap++;
+   }
+   const tail=legs(previous.slice(begin+overlap-1));
+   const tailMetres=tail.reduce((sum,[a,b])=>sum+distance(a,b),0);
+   if(overlap<4||metres<35||overlap>=current.length||tailMetres<3||tailMetres>75){
+    parts.push(current);continue;
+   }
+   const a=current[overlap-1],b=current[overlap],middle=point(a,b,.5);
+   const lawful=directed.some(([u,v])=>cosine(a,b,u,v)>.95&&
+    projection(middle,u,v).offset<1.25&&fraction(b,u,v)>fraction(a,u,v));
+   const continuation=legs(current.slice(overlap-1,overlap+23));
+   const exclusive=(fix,here,there)=>nearest(fix,here)<12&&nearest(fix,there)>20;
+   if(!lawful||raw.some(fix=>exclusive(fix,tail,continuation))||
+      !raw.some(fix=>exclusive(fix,continuation,tail))){
+    parts.push(current);continue;
+   }
+   parts[parts.length-1]=previous.slice(0,begin+overlap).concat(current.slice(overlap));
+  }
+  return parts.length<route.parts.length?{...route,parts}:route;
+ }
+
  function cleanup(route,footways=publicFootways(route),edges=pinnedEdges(route.independentRoadReferences)){
   if(route.pairedWalk)return {parts:[route.pairedWalk.line],held:[],centrelinePromotions:[],links:[]};
   const roads=segments(route?.refs,road),feet=segments(route?.refs,foot);
@@ -486,8 +533,22 @@ const RouteLedCoverage=(()=>{
   const shadowed=footways.length?legacyFootwayReferences(route.refs,footways,edges):new Set();
   const alignmentRoute=shadowed.size?
    {...withPhysicalRoads,refs:withPhysicalRoads.refs.filter(ref=>!shadowed.has(ref))}:withPhysicalRoads;
+  // Where the saved walk follows an independent path, adding public
+  // network tiles must not promote the park route onto a nearby trunk
+  // road unless there is saved road evidence as well.
+  const pathReferences=route.onFoot?segments(route.refs,/^path$/):[];
+  const independentPath=pathReferences.length&&route.parts.some(line=>
+   line.slice(1).reduce((sum,b,i)=>{
+    const a=line[i],middle=point(a,b,.5);
+    return sum+(pathReferences.some(([u,v])=>cosine(a,b,u,v)>.95&&
+     projection(middle,u,v).offset<1.25)?distance(a,b):0);
+   },0)>=40);
+  const major=/^(motorway|trunk)(?:_link)?$/;
+  const namedRoads=new Set((route.refs||[]).filter(ref=>road.test(ref.kind)&&ref.name).map(ref=>ref.name));
+  const promotable=independentPath?{...alignmentRoute,refs:(alignmentRoute.refs||[]).filter(ref=>
+   !major.test(ref.kind)||namedRoads.has(ref.name))}:alignmentRoute;
   const aligned=route.onFoot===false||route.source==='recorded'?
-   restoreRoundabout(route):CentrelinePromotion.align(alignmentRoute);
+   restoreRoundabout(reconcileDrivingOverlap(route)):CentrelinePromotion.align(promotable);
   for(const input of aligned.parts||[]){
    if(!Array.isArray(input)||input.length<2){parts.push(input);continue;}
    const line=input.slice();
