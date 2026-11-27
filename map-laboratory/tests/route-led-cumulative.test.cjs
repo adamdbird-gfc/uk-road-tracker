@@ -302,7 +302,7 @@ test('ZIP UI keeps canonical and route-led models isolated',()=>{
  assert(page.includes('RouteLedCoverage.accumulate(zipRouteLedLedger,walkingRoute)'));
  assert(page.includes("mode==='routeLed'?zipRouteLedCache.get(n):zipCoverageCache.get(n)"));
  assert(page.includes("zipRouteLedCache.clear();zipRouteLedLedger.clear()"));
- assert(page.includes('LAB r490')&&page.includes('>PR #490</a>'));
+ assert(page.includes('LAB r491')&&page.includes('>PR #491</a>'));
  assert(page.includes('id="zipCompare"')&&page.includes('id="zipModeControls" hidden')&&page.includes("mode=zip?'routeLed':'center'"));
 });
 
@@ -640,13 +640,15 @@ test('verified carriageway equivalence credits one road for walks and keeps driv
  const primary={id:1,kind:'primary',name:'High Street',nodes:[1,2],coords:[p(0),p(160)]};
  const parallel={...primary,id:2,nodes:[3,4],coords:[p(0,8),p(160,8)],walkingCarriageway:[1]};
  const route=ref=>({source:'saved match',onFoot:true,parts:[ref.coords],
-  independentRoadReferences:[primary,parallel]});
+  independentRoadReferences:[primary,parallel],removedRoadIds:new Set(['name:edited side road'])});
  for(const [out,back] of [[primary,parallel],[parallel,primary]]){
   const first=RouteLed.accumulate(null,route(out));
   const second=RouteLed.accumulate(first.next,route(back));
   assert.equal(second.novel.length,0);
   assert.equal(second.repeat.length,1);
   assert.deepEqual([second.repeat[0].a,second.repeat[0].b],primary.coords);
+  const untouched=RouteLed.accumulate(first.next,{...route(parallel),removedRoadIds:undefined});
+  assert.deepEqual([untouched.novel[0].a,untouched.novel[0].b],parallel.coords);
   const driving=RouteLed.accumulate(first.next,{...route(parallel),onFoot:false});
   assert.deepEqual([driving.novel[0].a,driving.novel[0].b],parallel.coords);
  }
