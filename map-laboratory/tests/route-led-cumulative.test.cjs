@@ -302,7 +302,7 @@ test('ZIP UI keeps canonical and route-led models isolated',()=>{
  assert(page.includes('RouteLedCoverage.accumulate(zipRouteLedLedger,walkingRoute)'));
  assert(page.includes("mode==='routeLed'?zipRouteLedCache.get(n):zipCoverageCache.get(n)"));
  assert(page.includes("zipRouteLedCache.clear();zipRouteLedLedger.clear()"));
- assert(page.includes('LAB r491')&&page.includes('>PR #491</a>'));
+ assert(page.includes('LAB r492')&&page.includes('>PR #492</a>'));
  assert(page.includes('id="zipCompare"')&&page.includes('id="zipModeControls" hidden')&&page.includes("mode=zip?'routeLed':'center'"));
 });
 
@@ -652,4 +652,16 @@ test('verified carriageway equivalence credits one road for walks and keeps driv
   const driving=RouteLed.accumulate(first.next,{...route(parallel),onFoot:false});
   assert.deepEqual([driving.novel[0].a,driving.novel[0].b],parallel.coords);
  }
+});
+
+test('a directed continuation joins overlapping driving chunks and preserves an observed turn',()=>{
+ const shared=[p(0),p(20),p(40),p(60)];
+ const through=[p(90),p(130)],branch=p(60,25);
+ const parts=[[p(-15),...shared,branch],[...shared,...through]];
+ const road={kind:'primary',oneway:'yes',coords:[p(40),p(60),...through],nodes:[1,2,3,4]};
+ const trip={onFoot:false,source:'saved match',sourceType:'timeline_import',parts,roadSteps:[shared],
+  recorded:[[p(-15),p(105)]],drivingReferences:[road]};
+ assert.deepEqual(RouteLed.cleanup(trip).parts,[[p(-15),...shared,...through]]);
+ assert.deepEqual(RouteLed.cleanup({...trip,recorded:[[p(-15),branch,p(105)]]}).parts,parts);
+ assert.deepEqual(RouteLed.cleanup({...trip,drivingReferences:[{...road,oneway:'-1'}]}).parts,parts);
 });

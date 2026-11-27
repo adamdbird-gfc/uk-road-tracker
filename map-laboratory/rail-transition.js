@@ -52,6 +52,36 @@ const RailTransition = (() => {
     return candidates.length===1?candidates[0]:null;
   }
 
+  // A transfer can start at an entrance, record a short interior
+  // retrace, then leave at the same door. Keep the street continuation.
+  function sampledAlong(points,edges) {
+    return points.slice(1).every((b,k)=>follows(points[k],b,edges));
+  }
+
+  function entranceRetrace(line,entrances,refs) {
+    const doors=entrances.filter(item=>distance(line[0],item.point)<=.75);
+    if(doors.length!==1)return null;
+    const [door]=doors;
+    const interior=refs.filter(ref=>ref.indoor==='yes'||ref.kind==='steps'&&Number(ref.layer)<0);
+    const exterior=refs.filter(ref=>ref.indoor!=='yes'&&(!ref.layer||ref.layer==='0')&&ref.tunnel!=='yes');
+    const incident=ways=>ways.filter(ref=>ref.nodes?.includes(door.id)).flatMap(ref=>
+      ref.coords.slice(1).map((b,i)=>({a:ref.coords[i],b})));
+    const inside=incident(interior),outside=incident(exterior);
+    if(!inside.length||!outside.length||!follows(line[0],line[1],inside))return null;
+    let walked=0;
+    for(let i=1;i<Math.min(45,line.length-2);i++){
+      walked+=distance(line[i-1],line[i]);
+      if(walked>110)break;
+      if(walked<16||distance(line[i],door.point)>.75||!follows(line[i],line[i+1],outside))continue;
+      const rise=line.slice(0,Math.floor(i/2)+1);
+      const returning=line.slice(Math.ceil(i/2),i+1).toReversed();
+      const edges=points=>points.slice(1).map((b,k)=>({a:points[k],b}));
+      if(sampledAlong(rise,edges(returning))&&sampledAlong(returning,edges(rise)))
+        return {index:i,point:door.point};
+    }
+    return null;
+  }
+
   function arrivalRetrace(line,raw,entrances,refs) {
     if(raw?.length<4||!raw.slice(0,3).every(valid)||
        distance(raw[0],raw[2])>4||distance(raw[0],raw[1])<50||
@@ -78,7 +108,7 @@ const RailTransition = (() => {
     const out=context.railAfter?entranceOnApproach(line,entrances,refs,false):null;
     const back=context.railBefore?entranceOnApproach(line.toReversed(),entrances,refs,true):null;
     const retrace=context.railBefore&&!back&&route.sourceType==='timeline_import'?
-      arrivalRetrace(line,route.recorded?.[0],entrances,refs):null;
+      entranceRetrace(line,entrances,refs)||arrivalRetrace(line,route.recorded?.[0],entrances,refs):null;
     const first=back?line.length-1-back.index:(retrace?.index??0),last=out?out.index:line.length-1;
     if((!out&&!back&&!retrace)||last<=first)return route;
     const surface=line.slice(first,last+1);
@@ -86,7 +116,10 @@ const RailTransition = (() => {
     if(out)surface[surface.length-1]=out.point;
     const marks=[];
     if(back)marks.push({point:back.point,label:'Likely transfer from rail'});
-    if(retrace)marks.push({point:retrace.point,label:'Likely transfer from rail',kind:'arrival-retrace'});
+    if(retrace){
+      surface[0]=retrace.point;
+      marks.push({point:retrace.point,label:'Likely transfer from rail',kind:'arrival-retrace'});
+    }
     if(out)marks.push({point:out.point,label:'Likely transfer to rail'});
     return {...route,surfaceParts:[surface],railTransitions:marks};
   }

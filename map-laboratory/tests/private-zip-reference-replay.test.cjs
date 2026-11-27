@@ -255,7 +255,7 @@ test('owner ZIP Journey 13 aligns Pentonville Road and retains the station appro
    'no pavement return inside the established road corridor');
  }
  assert(containsLine(result.parts,route.parts[0].slice(-20)),'keep the station-side pedestrian approach');
- const outside=await Network.create(async url=>request(url.replace('r8-index.json','index.json'))).lookup(route);
+ const outside=await Network.create(async url=>request(url.replace('r9-index.json','index.json'))).lookup(route);
  assert.deepEqual(outside.refs,[]);
  assert.deepEqual(RouteLed.cleanup(route).parts,route.parts);
  assert.equal(JSON.stringify(journey),before);
@@ -443,4 +443,56 @@ test('redrawn ZIP journey retains Roadprints road edits and reuses Strand walkin
    assert.equal(coveredMetres(coverage.novel.map(({a,b})=>[a,b]),[ref],ref.name),0);
  }
  assert.equal(JSON.stringify(edited),original);
+});
+
+test('batch replay keeps directed driving, station exit and park path evidence',{skip:!archive},async()=>{
+ const zip=Bulk.roadReplay(await Bulk.open(new Blob([fs.readFileSync(archive)])));
+ const network=Network.create(request);
+ const driving=Network.create(request,'./reference-network/driving-v1/',Date.now,true);
+ const rail=RailTransition.create(request);
+ for(const ordinal of [138,150,152,158]){
+  const index=zip.journeys.findIndex(row=>row.archiveOrdinal===ordinal),row=zip.journeys[index];
+  assert(index>=0);
+  const {journey}=await zip.read(index);
+  const route=RouteFirst.reconstruct(journey),original=JSON.stringify(route);
+  const pinned=route.onFoot?await network.lookup(route):{refs:[]};
+  const directed=route.roadSteps?.length?await driving.lookup(route):null;
+  const result=await rail({...route,independentRoadReferences:pinned.refs,
+   drivingReferences:directed?.refs,displayRoadReferences:pinned.displayRoads,forkContext:pinned.forkContext},row);
+  const surface=result.surfaceParts?{...result,parts:result.surfaceParts}:result;
+  const cleaned=RouteLed.cleanup(surface);
+  if(ordinal===138){
+   assert(directed.refs.some(ref=>ref.name==='St Clements Way'&&ref.oneway==='yes'));
+   assert.equal(route.parts.length,2);
+   assert.equal(cleaned.parts.length,1);
+   assert.deepEqual(cleaned.parts[0][0],route.parts[0][0]);
+   assert.deepEqual(cleaned.parts[0].at(-1),route.parts[1].at(-1));
+   assert(!containsLine(cleaned.parts,route.parts[0].slice(-4)));
+   assert(containsLine(cleaned.parts,route.parts[1].slice(-30)));
+   assert.equal(RouteLed.cleanup({...surface,corrected:true}).parts.length,2);
+  }
+  if(ordinal===150){
+   assert(cleaned.centrelinePromotions.some(run=>run.kind==='offset-road-turn'&&
+    run.road==="St James's Road / St James's Avenue"));
+   assert(metres(cleaned.parts[0].at(-1),route.recorded[0].at(-1))<1);
+  }
+  if(ordinal===152){
+   const [marker]=result.railTransitions;
+   assert.equal(marker.kind,'arrival-retrace');
+   assert.deepEqual(surface.parts[0][0],marker.point);
+   assert.deepEqual(surface.parts[0], [marker.point,...route.parts[0].slice(15)]);
+   const withoutRail=await rail({...route,independentRoadReferences:pinned.refs},{...row,railBefore:false});
+   assert.equal(withoutRail.surfaceParts,undefined);
+  }
+  if(ordinal===158){
+   assert(pinned.refs.some(ref=>ref.kind==='trunk'&&ref.name==='Great Chertsey Road'));
+   assert(pinned.refs.some(ref=>ref.kind==='footway'));
+   assert(!cleaned.centrelinePromotions.some(run=>run.road==='Great Chertsey Road'));
+   assert.equal(cleaned.parts.length,1);
+   assert.deepEqual(cleaned.parts[0][0],route.parts[0][0]);
+   assert.deepEqual(cleaned.parts[0].at(-1),route.parts[0].at(-1));
+   assert(containsLine(cleaned.parts,route.parts[0].slice(180,215)));
+  }
+  assert.equal(JSON.stringify(route),original);
+ }
 });

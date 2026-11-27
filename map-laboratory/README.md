@@ -10,6 +10,15 @@ See the [format and acceptance procedure](../docs/bulk-journey-diagnostics-forma
 
 The [archive validation procedure](archive-validation.md) describes full replay and review.
 
+## Junction and park-path batch (LAB r492)
+
+Use the supported continuation of overlapping driving chunks, retain the public
+surface route after a mapped same-door rail transfer retrace, and keep local
+pavement turns on the verified connected junction. The pinned tiles now cover
+Crane Park and the St Clements Way junction, using the same November OSM
+snapshots. Saved independent paths protect walkers from unsupported trunk-road
+centreline promotion. The recorded and saved-match views retain the originals.
+
 ## Redrawn journeys and divided streets (LAB r491)
 
 Roadprints road exclusions apply to cumulative attribution without altering the
